@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>El Oráculo - Vani & Fede</title>
+    
+    <!-- Tailwind CSS Integrado para un Layout Editorial Moderno y Fluido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tarot: {
+                            dark: '#050302',      /* Negro místico profundo */
+                            card: '#0D0A08',      /* Fondo de carta de tarot de lujo */
+                            gold: '#D4A373',      /* Oro cepillado de autor */
+                            bronze: '#AB7350',    /* Cobre de época */
+                            cream: '#F5EFE6',     /* Crema de lino fino */
+                            glow: 'rgba(212, 163, 115, 0.08)'
+                        }
+                    },
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        decorative: ['Cinzel Decorative', 'serif'],
+                        cormorant: ['Cormorant Garamond', 'serif'],
+                        montserrat: ['Montserrat', 'sans-serif'],
+                        cursive: ['Great Vibes', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts Premium de Alta Gama -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght=0,300;0,400;0,600;1,300;1,400&family=Great+Vibes&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* Desactivar selecciones de texto y gestos nativos del navegador móvil para evitar interrupciones táctiles */
+        * {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Contenedor con Perspectiva Física 3D */
+        .perspective-container {
+            perspective: 2500px;
+        }
+
+        /* Estructura de Tarjeta con Dos Caras Físicas (3D Card Flip) */
+        .card-3d {
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.25, 1, 0.30, 1), box-shadow 0.8s ease;
+        }
+
+        .card-face {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            transform: translate3d(0,0,0);
+            -webkit-transform: translate3d(0,0,0);
+        }
+
+        .card-back {
+            transform: rotateY(180deg) translate3d(0,0,0);
+            -webkit-transform: rotateY(180deg) translate3d(0,0,0);
+        }
+
+        /* Rotación física absoluta de 180° - Sobreescribe transformaciones inline de JS */
+        .card-flipped {
+            transform: rotateY(180deg) translate3d(0,0,0) !important;
+            -webkit-transform: rotateY(180deg) translate3d(0,0,0) !important;
+        }
+
+        /* Partículas de polvo de estrellas en suspensión */
+        .luciernaga {
+            position: absolute;
+            background-color: #D4A373;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1;
+            box-shadow: 0 0 10px #D4A373, 0 0 18px rgba(212, 163, 115, 0.4);
+            animation: floatGently linear forwards;
+        }
+
+        @keyframes floatGently {
+            0% { transform: translateY(105vh) scale(0); opacity: 0; }
+            20% { opacity: 0.5; }
+            80% { opacity: 0.3; }
+            100% { transform: translateY(-10vh) scale(1.3); opacity: 0; }
+        }
+
+        /* Manto de Estrellas Parpadeantes de Época */
+        .star-sky {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 40px 70px, #D4A373, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 50px 160px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 80px 120px, #D4A373, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 110px 210px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 140px 90px, #D4A373, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            opacity: 0.25;
+            animation: starsTwinkle 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes starsTwinkle {
+            0% { opacity: 0.15; }
+            50% { opacity: 0.35; }
+            100% { opacity: 0.20; }
+        }
+
+        /* Textura orgánica de lino del papel artesanal */
+        .cotton-texture {
+            background-image: 
+                radial-gradient(rgba(212, 163, 115, 0.04) 1px, transparent 0);
+            background-size: 28px 28px;
+        }
+
+        /* Personalizar la barra de desplazamiento del autocompletar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(22, 17, 14, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #D4A373;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-tarot-dark min-h-screen w-full flex items-center justify-center overflow-hidden font-montserrat relative select-none">
+
+    <!-- Clima lumínico natural, estrellas y chispas de luz de fondo -->
+    <div class="star-sky pointer-events-none"></div>
+    <div id="ambient-light" class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212, 163, 115, 0.05)_0%,transparent_70%)] pointer-events-none z-0 transition-all duration-1000"></div>
+    <div id="particles-container" class="absolute inset-0 pointer-events-none z-1"></div>
+
+    <!-- ESCENARIO 3D CON AJUSTE FLUIDO EDITORIAL -->
+    <div class="perspective-container w-[92%] max-w-[395px] aspect-[1/1.55] z-10 relative">
+        
+        <!-- TARJETA VIRTUAL DE TAROT BOTÁNICO -->
+        <div id="tarjeta" class="card-3d w-full h-full rounded-2xl shadow-[0_35px_85px_rgba(0,0,0,0.95)] relative">
+            
+            <!-- ==========================================
+                 CARA FRONTAL: EL INGRESO & EL ASTROLABIO
+            =========================================== -->
+            <div class="card-face card-front bg-tarot-card cotton-texture border border-tarot-gold/30 p-7 md:p-9 flex flex-col justify-between items-center h-full w-full">
+                
+                <!-- MAQUETACIÓN MARCOS DE ORO CEPILLADO DE CARA FRONTAL -->
+                <div class="absolute inset-3 border border-tarot-gold/40 pointer-events-none z-2 rounded-xl"></div>
+                <div class="absolute inset-[16px] border-[0.5px] border-tarot-bronze/20 pointer-events-none z-2 rounded-xl"></div>
+                
+                <!-- Esquinas de Orfebrería con Hojas de Eucalipto y Helecho (Follaje Fino SVG) -->
+                <div class="absolute top-[20px] left-[20px] w-12 h-12 pointer-events-none z-3 opacity-40">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 50 50">
+                        <!-- Arabesco clásico entrelazado -->
+                        <path d="M5,45 C5,10 10,5 45,5 M5,15 C5,5 15,5 15,5" stroke-width="1" />
+                        <!-- Pequeñas hojas botánicas -->
+                        <path d="M12,12 Q18,8 14,4 Q8,8 12,12 Z" fill="#D4A373" opacity="0.7"/>
+                        <path d="M22,6 Q28,4 26,0 Q20,2 22,6 Z" fill="#D4A373" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div class="absolute top-[20px] right-[20px] w-12 h-12 pointer-events-none z-3 opacity-40 scale-x-[-1]">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 50 50">
+                        <path d="M5,45 C5,10 10,5 45,5 M5,15 C5,5 15,5 15,5" stroke-width="1" />
+                        <path d="M12,12 Q18,8 14,4 Q8,8 12,12 Z" fill="#D4A373" opacity="0.7"/>
+                        <path d="M22,6 Q28,4 26,0 Q20,2 22,6 Z" fill="#D4A373" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div class="absolute bottom-[20px] left-[20px] w-12 h-12 pointer-events-none z-3 opacity-40 scale-y-[-1]">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 50 50">
+                        <path d="M5,45 C5,10 10,5 45,5 M5,15 C5,5 15,5 15,5" stroke-width="1" />
+                        <path d="M12,12 Q18,8 14,4 Q8,8 12,12 Z" fill="#D4A373" opacity="0.7"/>
+                        <path d="M22,6 Q28,4 26,0 Q20,2 22,6 Z" fill="#D4A373" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div class="absolute bottom-[20px] right-[20px] w-12 h-12 pointer-events-none z-3 opacity-40 scale-x-[-1] scale-y-[-1]">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 50 50">
+                        <path d="M5,45 C5,10 10,5 45,5 M5,15 C5,5 15,5 15,5" stroke-width="1" />
+                        <path d="M12,12 Q18,8 14,4 Q8,8 12,12 Z" fill="#D4A373" opacity="0.7"/>
+                        <path d="M22,6 Q28,4 26,0 Q20,2 22,6 Z" fill="#D4A373" opacity="0.7"/>
+                    </svg>
+                </div>
+
+                <!-- Ilustración de Follaje de Eucalipto Grabado SVG de Autor -->
+                <div class="absolute top-8 right-8 w-12 h-12 opacity-30 pointer-events-none z-1 rotate-90">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 100 100" stroke-width="1">
+                        <path d="M10,80 Q30,50 80,20 M30,55 Q20,40 10,48 M50,40 Q45,20 35,25 M65,30 Q65,10 55,15"/>
+                        <circle cx="10" cy="48" r="1.5" fill="#D4A373"/>
+                        <circle cx="35" cy="25" r="1.5" fill="#D4A373"/>
+                    </svg>
+                </div>
+                <div class="absolute bottom-8 left-8 w-12 h-12 opacity-30 pointer-events-none z-1 -rotate-90">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 100 100" stroke-width="1">
+                        <path d="M10,80 Q30,50 80,20 M30,55 Q20,40 10,48 M50,40 Q45,20 35,25 M65,30 Q65,10 55,15"/>
+                        <circle cx="10" cy="48" r="1.5" fill="#D4A373"/>
+                        <circle cx="35" cy="25" r="1.5" fill="#D4A373"/>
+                    </svg>
+                </div>
+
+                <!-- Cabecera de Prensa Romántica -->
+                <div class="text-center mt-3 flex flex-col items-center z-10">
+                    <h2 class="font-cursive text-tarot-gold text-5xl leading-none">Vani & Fede</h2>
+                    <div class="relative w-44 mt-1.5 py-1 border-b border-tarot-gold/25">
+                        <h3 class="font-cinzel text-tarot-cream font-medium tracking-[0.3em] uppercase text-[10px]">El Oráculo</h3>
+                        <div class="absolute -bottom-[7px] left-1/2 -translate-x-1/2 bg-tarot-card px-3 text-tarot-gold text-[8px]">✦</div>
+                    </div>
+                </div>
+
+                <!-- STAGE 1: INGRESO DE IDENTIDAD -->
+                <div id="stage-input" class="w-full flex flex-col items-center py-4 transition-all duration-500 z-30">
+                    <p class="font-cormorant text-tarot-cream/80 text-[1.15rem] italic text-center leading-relaxed px-4">
+                        "El pacto de octubre exige que las fuerzas se encuentren organizadas. La profecía aguarda para revelar tu bando."
+                    </p>
+                    <div class="w-full max-w-[250px] mt-8 mb-6 relative">
+                        <input type="text" id="guest-name" placeholder="Tu nombre y apellido" autocomplete="off" spellcheck="false"
+                            class="w-full bg-transparent border-b border-tarot-gold/40 text-tarot-cream font-cinzel text-lg text-center py-2 focus:outline-none focus:border-tarot-gold tracking-wider uppercase transition-all placeholder-tarot-cream/15">
+                        
+                        <!-- Contenedor del Autocompletar Premium -->
+                        <div id="autocomplete-list" class="absolute left-0 right-0 top-full mt-2 max-h-[140px] overflow-y-auto bg-tarot-card/95 border border-tarot-gold/30 rounded-lg shadow-2xl backdrop-blur-md z-50 hidden custom-scrollbar">
+                            <!-- Los elementos sugeridos se inyectan acá dinámicamente -->
+                        </div>
+
+                        <!-- Mensaje de error de alta gama -->
+                        <div id="error-message" class="absolute -bottom-6 left-0 right-0 text-center text-red-400 text-xs font-montserrat tracking-wide opacity-0 transition-opacity duration-300"></div>
+                    </div>
+                    <button id="btn-start" class="border border-tarot-gold text-tarot-gold px-7 py-3 mt-4 font-cinzel text-[10px] tracking-[0.25em] font-semibold uppercase hover:bg-tarot-gold hover:text-tarot-card transition-all duration-300">
+                        Invocar Destino
+                    </button>
+                </div>
+
+                <!-- STAGE 2: EL ASTROLABIO DEL DESTINO (INTERACTIVO) -->
+                <div id="stage-channel" class="hidden w-full flex flex-col items-center py-4 z-10">
+                    <p class="font-cormorant text-tarot-cream/85 text-[1.05rem] leading-relaxed text-center px-4 mb-4">
+                        Las sombras te reconocen, <strong id="display-name" class="text-tarot-gold font-cinzel font-semibold"></strong>.<br>Mantén presionado para conectar tu fuerza con el ritual.
+                    </p>
+
+                    <!-- ASTROLABIO SENSORIAL MODERN-BOHO -->
+                    <div id="crystal-interaction" class="relative w-36 h-36 my-3 cursor-pointer rounded-full flex items-center justify-center touch-none select-none">
+                        
+                        <!-- Engranajes y constelaciones finas en el dial con estrellas -->
+                        <div id="gear-ext" class="absolute inset-[-10px] border border-dashed border-tarot-gold/15 rounded-full transition-transform duration-100 ease-linear flex items-center justify-center">
+                            <!-- Mini constelación SVG decorativa de fondo -->
+                            <svg class="w-full h-full stroke-tarot-gold/10" viewBox="0 0 100 100">
+                                <line x1="10" y1="50" x2="90" y2="50" />
+                                <line x1="50" y1="10" x2="50" y2="90" />
+                            </svg>
+                        </div>
+                        <div id="gear-int" class="absolute inset-[-5px] border border-dotted border-tarot-gold/25 rounded-full transition-transform duration-100 ease-linear"></div>
+                        
+                        <!-- Arco de progreso circular SVG -->
+                        <svg class="absolute inset-[-15px] w-[174px] h-[174px] -rotate-90 pointer-events-none" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="46" stroke="rgba(230, 197, 148, 0.12)" stroke-width="1.2" fill="none" />
+                            <circle id="progress-circle" cx="50" cy="50" r="46" stroke="#E6C594" stroke-width="2.2" fill="none" 
+                                stroke-dasharray="289" stroke-dashoffset="289" stroke-linecap="round" class="transition-all duration-100" />
+                        </svg>
+
+                        <!-- Lente central de la esfera de cristal con destellos estelares -->
+                        <div id="crystal-ball" class="w-full h-full rounded-full bg-gradient-to-tr from-tarot-dark via-tarot-dark/95 to-tarot-gold/5 border border-tarot-gold/20 shadow-2xl relative overflow-hidden flex items-center justify-center transition-all duration-100">
+                            <div id="mist" class="absolute w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(230,197,148,0.18)_0%,transparent_60%)] animate-[spin_8s_linear_infinite] opacity-40"></div>
+                            
+                            <!-- Contador de porcentaje moderno -->
+                            <div id="percentage-counter" class="absolute font-cinzel text-tarot-gold text-lg tracking-widest hidden">0%</div>
+                            
+                            <div id="hold-text" class="absolute font-cinzel text-tarot-gold text-[9px] tracking-[0.2em] text-center pointer-events-none leading-relaxed select-none">
+                                MANTÉN<br>PRESIONADO
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Fecha -->
+                <div class="font-cinzel text-[10px] tracking-[0.3em] text-tarot-gold/50 mb-1 z-10">
+                    24 • OCTUBRE • 2026
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 CARA TRASERA: REVELACIÓN PRESTIGIOSA
+            =========================================== -->
+            <div class="card-face card-back bg-tarot-card cotton-texture border border-tarot-gold/30 p-7 md:p-9 flex flex-col justify-between items-center h-full w-full">
+                
+                <!-- MAQUETACIÓN MARCOS DE ORO CEPILLADO DE CARA TRASERA -->
+                <div class="absolute inset-3 border border-tarot-gold/40 pointer-events-none z-2 rounded-xl"></div>
+                <div class="absolute inset-[16px] border-[0.5px] border-tarot-bronze/20 pointer-events-none z-2 rounded-xl"></div>
+                
+                <!-- Esquinas de Orfebrería Botánica en Cara Trasera -->
+                <div class="absolute top-[20px] left-[20px] w-12 h-12 pointer-events-none z-3 opacity-40">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 50 50">
+                        <path d="M5,45 C5,10 10,5 45,5 M5,15 C5,5 15,5 15,5" stroke-width="1" />
+                        <path d="M12,12 Q18,8 14,4 Q8,8 12,12 Z" fill="#D4A373" opacity="0.7"/>
+                        <path d="M22,6 Q28,4 26,0 Q20,2 22,6 Z" fill="#D4A373" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div class="absolute top-[20px] right-[20px] w-12 h-12 pointer-events-none z-3 opacity-40 scale-x-[-1]">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 50 50">
+                        <path d="M5,45 C5,10 10,5 45,5 M5,15 C5,5 15,5 15,5" stroke-width="1" />
+                        <path d="M12,12 Q18,8 14,4 Q8,8 12,12 Z" fill="#D4A373" opacity="0.7"/>
+                        <path d="M22,6 Q28,4 26,0 Q20,2 22,6 Z" fill="#D4A373" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div class="absolute bottom-[20px] left-[20px] w-12 h-12 pointer-events-none z-3 opacity-40 scale-y-[-1]">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 50 50">
+                        <path d="M5,45 C5,10 10,5 45,5 M5,15 C5,5 15,5 15,5" stroke-width="1" />
+                        <path d="M12,12 Q18,8 14,4 Q8,8 12,12 Z" fill="#D4A373" opacity="0.7"/>
+                        <path d="M22,6 Q28,4 26,0 Q20,2 22,6 Z" fill="#D4A373" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div class="absolute bottom-[20px] right-[20px] w-12 h-12 pointer-events-none z-3 opacity-40 scale-x-[-1] scale-y-[-1]">
+                    <svg class="w-full h-full stroke-tarot-gold fill-none" viewBox="0 0 50 50">
+                        <path d="M5,45 C5,10 10,5 45,5 M5,15 C5,5 15,5 15,5" stroke-width="1" />
+                        <path d="M12,12 Q18,8 14,4 Q8,8 12,12 Z" fill="#D4A373" opacity="0.7"/>
+                        <path d="M22,6 Q28,4 26,0 Q20,2 22,6 Z" fill="#D4A373" opacity="0.7"/>
+                    </svg>
+                </div>
+
+                <div class="text-center mt-3 z-10">
+                    <p class="font-cinzel text-tarot-gold/60 text-[9px] tracking-[0.25em] uppercase">Tu bando revelado es:</p>
+                </div>
+
+                <!-- Blasón / Escudo de Autor (SVG) -->
+                <div id="clan-emblem-box" class="w-24 h-24 my-1 flex items-center justify-center z-10">
+                    <!-- Inyección SVG -->
+                </div>
+
+                <!-- Textos del Clan -->
+                <div class="text-center w-full px-2 flex flex-col items-center z-10">
+                    <h2 id="clan-title" class="font-decorative text-3xl font-bold tracking-widest uppercase transition-all duration-1000">CLAN</h2>
+                    <div id="clan-desc" class="font-cinzel text-[10px] tracking-[0.3em] text-tarot-gold/80 uppercase mt-1 mb-2">Fuerza</div>
+                    
+                    <div class="w-16 h-[0.5px] bg-tarot-gold/30 mb-2"></div>
+                    
+                    <p id="clan-lore" class="font-cormorant text-tarot-cream/90 text-[1rem] italic leading-relaxed px-2 font-light">
+                        Cargando destino...
+                    </p>
+                </div>
+
+                <!-- Ficha del Líder del Bando (Gabinete de Época) -->
+                <div class="w-full max-w-[270px] bg-tarot-gold/5 border border-tarot-gold/20 rounded p-3.5 text-center mt-2 z-10 shadow-[inset_0_0_15px_rgba(212,163,115,0.02)]">
+                    <p class="font-cinzel text-tarot-gold text-[8px] tracking-[0.2em] uppercase mb-1">Tu facción responde al Capitán:</p>
+                    <h4 id="lider-name" class="font-cursive text-tarot-cream text-2xl leading-none">Líder</h4>
+                    <p id="lider-sub" class="font-montserrat text-[9px] text-tarot-cream/50 italic mt-1"></p>
+                </div>
+
+                <!-- Botón de Reinicio -->
+                <button onclick="location.reload()" class="border border-tarot-gold text-tarot-gold px-6 py-2 mt-3 font-cinzel text-[9px] tracking-[0.2em] uppercase hover:bg-tarot-gold hover:text-tarot-card transition-all duration-300 z-10">
+                    Volver al inicio
+                </button>
+            </div>
+
+            <!-- Efecto de destello de luz al completarse -->
+            <div id="reveal-glow" class="reveal-glow absolute inset-0 pointer-events-none rounded-2xl z-20"></div>
+
+        </div>
+    </div>
+
+    <!-- ==========================================
+         LÓGICA SENSORIAL, AUDIO SINTETIZADO Y REGLAS DE ASIGNACIÓN
+    =========================================== -->
+    <script>
+        /* ----------------------------------------------------------------
+           DISEÑO DE LOGOS EN SVG VECTORIAL FINO (BOHO-1800)
+        ----------------------------------------------------------------- */
+        const svgLogos = {
+            "A": `<svg class="heraldic-svg w-full h-full animate-[spin_40s_linear_infinite]" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="#3a86ff" stroke-width="1.2" stroke-dasharray="2 2" />
+                    <circle cx="50" cy="50" r="38" stroke="#3a86ff" stroke-width="0.8" />
+                    <path d="M58,32 A18,18 0 1,0 58,68 A14,14 0 1,1 58,32 Z" fill="#3a86ff" stroke="#3a86ff" stroke-width="0.5" />
+                    <path d="M50,80 Q28,75 28,50 Q28,25 46,22" stroke="#3a86ff" stroke-width="1.2" fill="none"/>
+                    <path d="M28,50 L22,46 M28,40 L21,37 M31,60 L23,63" stroke="#3a86ff" stroke-width="1" />
+                    <circle cx="46" cy="22" r="2" fill="#3a86ff" />
+                  </svg>`,
+            "B": `<svg class="heraldic-svg w-full h-full" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="#8b5a2b" stroke-width="1.2" />
+                    <!-- Escudo geométrico heráldico (Roble) -->
+                    <polygon points="50,18 78,35 78,65 50,82 22,65 22,35" stroke="#8b5a2b" stroke-width="0.8" />
+                    <path d="M50,80 L50,30" stroke="#8b5a2b" stroke-width="1.5" />
+                    <path d="M50,65 Q35,60 38,50 Q50,55 50,65 Z" fill="none" stroke="#8b5a2b" stroke-width="1.2" />
+                    <path d="M50,65 Q65,60 62,50 Q50,55 50,65 Z" fill="none" stroke="#8b5a2b" stroke-width="1.2" />
+                    <circle cx="50" cy="26" r="2.5" fill="#8b5a2b" />
+                  </svg>`,
+            "C": `<svg class="heraldic-svg w-full h-full animate-[spin_60s_linear_infinite]" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="#ffcc00" stroke-width="1.2" />
+                    <circle cx="50" cy="50" r="14" stroke="#ffcc00" stroke-width="0.8" />
+                    <path d="M50,18 L50,26 M50,74 L50,82 M18,50 L26,50 M74,50 L82,50" stroke="#ffcc00" stroke-width="1.2"/>
+                    <path d="M28,28 L34,34 M66,66 L72,72 M28,66 L34,60 M66,28 L60,34" stroke="#ffcc00" stroke-width="0.8"/>
+                    <circle cx="50" cy="50" r="5" fill="#ffcc00" />
+                  </svg>`,
+            "D": `<svg class="heraldic-svg w-full h-full animate-[spin_55s_linear_infinite]" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="#198754" stroke-width="0.8" stroke-dasharray="3 1" />
+                    <circle cx="50" cy="50" r="34" stroke="#198754" stroke-width="1.2" fill="none" />
+                    <path d="M50,16 Q45,24 50,30 Q55,24 50,16 Z" fill="#198754" />
+                    <path d="M84,50 Q76,45 70,50 Q76,55 84,50 Z" fill="#198754" />
+                    <path d="M50,84 Q45,76 50,70 Q55,76 50,84 Z" fill="#198754" />
+                    <path d="M16,50 Q24,45 30,50 Q24,55 16,50 Z" fill="#198754" />
+                  </svg>`,
+            "E": `<svg class="heraldic-svg w-full h-full" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="#dc3545" stroke-width="1.2" />
+                    <path d="M50,80 Q32,70 36,45 Q40,48 50,22 Q60,48 64,45 Q68,70 50,80 Z" fill="none" stroke="#dc3545" stroke-width="1.2" />
+                    <path d="M50,72 Q40,65 42,52 Q45,55 50,38 Q55,55 58,52 Q60,65 50,72 Z" fill="#dc3545" opacity="0.3" />
+                    <circle cx="50" cy="16" r="2.5" fill="#dc3545" />
+                  </svg>`,
+            "F": `<svg class="heraldic-svg w-full h-full animate-[spin_50s_linear_infinite]" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="#9b5de5" stroke-width="1.2" />
+                    <path d="M25,50 Q35,35 50,50 T75,50" stroke="#9b5de5" stroke-width="1" fill="none" />
+                    <path d="M50,20 Q30,22 30,50 Q30,78 50,80" stroke="#9b5de5" stroke-width="1.2" fill="none" />
+                    <circle cx="50" cy="20" r="2" fill="#9b5de5" />
+                    <circle cx="50" cy="80" r="2" fill="#9b5de5" />
+                  </svg>`
+        };
+
+        /* ----------------------------------------------------------------
+           LORE DE CADA CLAN (MISTERIO BOTÁNICO)
+        ----------------------------------------------------------------- */
+        const teamsConfig = {
+            "A": { 
+                name: "NOCHE", 
+                color: "#3a86ff", 
+                desc: "Fuerza Azul - Familia Fede", 
+                capitan: "Mamá", 
+                sub: "Subcapitana: Meli",
+                lore: "El velo protector que resguarda los secretos de Los Candiles. Tu misión es custodiar la penumbra de la noche para que brille el amor eterno de la alianza."
+            },
+            "B": { 
+                name: "ROBLE", 
+                color: "#8b5a2b", 
+                desc: "Fuerza Marrón - Familia Fede", 
+                capitan: "Gina", 
+                sub: "",
+                lore: "La madera antigua que resiste el implacable paso del tiempo. Son los guardianes de la firmeza, la sabiduría, las raíces y el honor del pacto."
+            },
+            "C": { 
+                name: "LUZ", 
+                color: "#ffcc00", 
+                desc: "Fuerza Oro - Familia Vani", 
+                capitan: "Vani", 
+                sub: "",
+                lore: "El destello cálido que guía los corazones errantes en la penumbra. Son los custodios de la alegría, la esperanza y el renacimiento de la noche."
+            },
+            "D": { 
+                name: "BOSQUE", 
+                color: "#198754", 
+                desc: "Fuerza Verde - Amigos", 
+                capitan: "Carli", 
+                sub: "Subcapitán: Nico",
+                lore: "El follaje vivo y silvestre que oculta el sendero místico. Cómplices de los misterios botánicos, custodios de la lealtad y los lazos inquebrantables."
+            },
+            "E": { 
+                name: "FUEGO", 
+                color: "#dc3545", 
+                desc: "Fuerza Roja - Trabajo", 
+                capitan: "Agus", 
+                sub: "Subcapitán: Jhonny",
+                lore: "La chispa pasional que enciende el alma de la celebración. Guardianes de la energía, el festejo y el calor vivo que mantiene encendidos los candiles."
+            },
+            "F": { 
+                name: "BRUMA", 
+                color: "#9b5de5", 
+                desc: "Fuerza Violeta - Facultad", 
+                capitan: "La Facultad", 
+                sub: "",
+                lore: "El enigma incorpóreo que difumina los límites entre el mundo real y la ilusión. Sabios del oráculo, descifradores natos de las señales ocultas."
+            }
+        };
+
+        // Base de datos de invitados real mapeada de forma idéntica al archivo (1).csv
+        const guestDatabase = {
+            // EQUIPO A - NOCHE
+            "abuela dora": "A", "bruno": "A", "etty": "A", "nico baioni": "A", "novia bruno": "A", 
+            "rodri": "A", "tobi": "A", "valen/fran": "A", "delfi": "A", "griselda": "A", "holga": "A", 
+            "mama": "A", "marita": "A", "migue": "A", "pauli": "A", "pichi": "A", "dani": "A", "meli": "A",
+            
+            // EQUIPO B - ROBLE
+            "camila": "B", "camila novio": "B", "chiara": "B", "chiara novio": "B", "daniel": "B", 
+            "gina": "B", "nacho": "B",
+            
+            // EQUIPO C - LUZ
+            "cami": "C", "nico": "C", "vani": "C",
+            
+            // EQUIPO D - BOSQUE
+            "flor": "D", "karen": "D", "maca": "D", "mica": "D", "sabri": "D", "ceci": "D", 
+            "ceci fer": "D", "fer": "D", "franco": "D", "juan": "D", "maggi": "D", "miski": "D", 
+            "nico": "D", "ridi": "D", "vicky": "D", "carli": "D", "lauti": "D", "fede": "D",
+            
+            // EQUIPO E - FUEGO
+            "agus": "E", "cova": "E", "daniel mena": "E", "feli": "E", "gabi": "E", "gaspi": "E",
+            "gaspi novia": "E", "jhonny": "E", "leito": "E", "leito novio": "E", "luchi": "E"
+        };
+
+        // Array para el autocompletar, conservando el formato visual de la lista original
+        const autocompleteNames = [
+            "ABUELA DORA", "BRUNO", "ETTY", "NICO BAIONI", "NOVIA BRUNO", "RODRI", "TOBI", "VALEN/FRAN",
+            "DELFI", "GRISELDA", "HOLGA", "MAMA", "MARITA", "MIGUE", "PAULI", "PICHI", "DANI", "MELI",
+            "CAMILA", "CAMILA NOVIO", "CHIARA", "CHIARA NOVIO", "DANIEL", "GINA", "NACHO",
+            "CAMI", "NICO", "VANI",
+            "FLOR", "KAREN", "MACA", "MICA", "SABRI", "CECI", "CECI FER", "FER", "FRANCO", "JUAN", 
+            "MAGGI", "MISKI", "RIDI", "VICKY", "CARLI", "LAUTI", "FEDE",
+            "AGUS", "COVA", "DANIEL MENA", "FELI", "GABI", "GASPI", "GASPI NOVIA", "JHONNY", "LEITO", "LEITO NOVIO", "LUCHI"
+        ];
+
+        /* ----------------------------------------------------------------
+           SINTETIZADOR DE AUDIO SEGURO Y PREVENCIÓN DE ERRORES DE IFRAME
+        ----------------------------------------------------------------- */
+        let audioCtx = null;
+        let droneOsc, droneGain;
+        let holdOsc, holdGain;
+
+        function initAudio() {
+            try {
+                if (audioCtx) return;
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+                
+                audioCtx = new AudioContextClass();
+                
+                // Humo acústico de fondo (Zumbido místico)
+                droneOsc = audioCtx.createOscillator();
+                droneGain = audioCtx.createGain();
+                droneOsc.type = 'sine';
+                droneOsc.frequency.setValueAtTime(55, audioCtx.currentTime); 
+                droneGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                droneOsc.connect(droneGain);
+                droneGain.connect(audioCtx.destination);
+                droneOsc.start();
+
+                // Oscilador para engranajes mecánicos
+                holdOsc = audioCtx.createOscillator();
+                holdGain = audioCtx.createGain();
+                holdOsc.type = 'triangle';
+                holdOsc.frequency.setValueAtTime(90, audioCtx.currentTime);
+                holdGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                holdOsc.connect(holdGain);
+                holdGain.connect(audioCtx.destination);
+                holdOsc.start();
+            } catch (error) {
+                console.warn("La API de Audio de la web no está permitida o falló en iniciar de forma segura:", error);
+            }
+        }
+
+        function playKeyTick() {
+            try {
+                if (!audioCtx || audioCtx.state === 'suspended') return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } catch (e) {}
+        }
+
+        // Simulación rítmica de engranaje mecánico
+        let clickTimer = null;
+        let clickDelay = 150; 
+        function playGearClick() {
+            if (!activeHold) return;
+            try {
+                if (audioCtx && audioCtx.state !== 'suspended') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    const freq = 110 + (currentEnergy * 2.8);
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(15, audioCtx.currentTime + 0.04);
+                    
+                    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.04);
+                }
+            } catch(e) {}
+
+            clickDelay = Math.max(18, 140 - (currentEnergy * 1.25));
+            clickTimer = setTimeout(playGearClick, clickDelay);
+        }
+
+        function setDroneVolume(volume) {
+            try {
+                if (droneGain && audioCtx && audioCtx.state !== 'suspended') {
+                    droneGain.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.4);
+                }
+            } catch(e) {}
+        }
+
+        // Actualizar el zumbido de carga
+        function updateHoldSound(progress) {
+            try {
+                if (holdGain && holdOsc && audioCtx && audioCtx.state !== 'suspended') {
+                    holdGain.gain.setTargetAtTime(progress * 0.08, audioCtx.currentTime, 0.15);
+                    holdOsc.frequency.setTargetAtTime(90 + (progress * 300), audioCtx.currentTime, 0.15);
+                }
+            } catch(e) {}
+        }
+
+        function playExplosionSound() {
+            try {
+                if (clickTimer) clearTimeout(clickTimer);
+                if (!audioCtx || audioCtx.state === 'suspended') return;
+                
+                setDroneVolume(0);
+                updateHoldSound(0);
+
+                // Acorde de campana de cristal
+                const chord = [146.83, 185.00, 220.00, 293.66, 440.00]; 
+                chord.forEach(freq => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 4.5);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 4.5);
+                });
+            } catch(e) {}
+        }
+
+        /* ----------------------------------------------------------------
+           LÓGICA GENERAL DE INTERACCIONES Y PANTALLAS
+        ----------------------------------------------------------------- */
+        const nameInput = document.getElementById('guest-name');
+        const btnStart = document.getElementById('btn-start');
+        const tarjeta = document.getElementById('tarjeta');
+        const ambientLight = document.getElementById('ambient-light');
+        const errorMessage = document.getElementById('error-message');
+        const autocompleteList = document.getElementById('autocomplete-list');
+        let currentName = "";
+        let assignedClan = null;
+        let isFlipped = false; // Detiene el Parallax del mouse al dar vuelta la carta
+
+        nameInput.addEventListener('input', (e) => {
+            initAudio();
+            playKeyTick();
+            errorMessage.style.opacity = '0';
+            handleAutocomplete(e.target.value);
+        });
+
+        // Cerrar la lista de autocompletar si se hace click fuera del input
+        document.addEventListener('click', (e) => {
+            if (e.target !== nameInput && e.target !== autocompleteList) {
+                autocompleteList.classList.add('hidden');
+            }
+        });
+
+        /* --- MOTOR DE AUTOCOMPLETAR PREMIUM --- */
+        function handleAutocomplete(query) {
+            const cleanQuery = removeAccents(query);
+            if (cleanQuery.length < 1) {
+                autocompleteList.classList.add('hidden');
+                return;
+            }
+
+            // Filtrar nombres de la lista
+            const matches = autocompleteNames.filter(name => {
+                return removeAccents(name).includes(cleanQuery);
+            });
+
+            if (matches.length === 0) {
+                autocompleteList.classList.add('hidden');
+                return;
+            }
+
+            // Renderizar las sugerencias con estilos Tarot Premium
+            autocompleteList.innerHTML = '';
+            matches.forEach(match => {
+                const item = document.createElement('div');
+                item.className = 'px-4 py-2.5 text-tarot-cream/90 font-cinzel text-xs tracking-wider cursor-pointer border-b border-tarot-gold/10 hover:bg-tarot-gold/10 transition-all duration-250 select-none';
+                item.innerText = match;
+                
+                // Evento al seleccionar una sugerencia
+                item.addEventListener('click', () => {
+                    nameInput.value = match;
+                    autocompleteList.classList.add('hidden');
+                    errorMessage.style.opacity = '0';
+                });
+                autocompleteList.appendChild(item);
+            });
+
+            autocompleteList.classList.remove('hidden');
+        }
+
+        // Limpieza de strings
+        function removeAccents(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        btnStart.addEventListener('click', () => {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+
+            const rawValue = nameInput.value;
+            if (rawValue.trim() === "") {
+                errorMessage.innerText = "Por favor, ingresa tu nombre para continuar.";
+                errorMessage.style.opacity = '1';
+                return;
+            }
+
+            currentName = rawValue;
+            document.getElementById('display-name').innerText = rawNameCapitalized(rawValue);
+
+            const normName = removeAccents(rawValue);
+
+            // Búsqueda en base de datos real
+            let matchedTeamId = null;
+            for (const key in guestDatabase) {
+                if (normName === key || normName.includes(key) || key.includes(normName)) {
+                    matchedTeamId = guestDatabase[key];
+                    break;
+                }
+            }
+
+            // Fallback determinista para sorpresas
+            if (!matchedTeamId) {
+                let code = 0;
+                for (let i = 0; i < normName.length; i++) {
+                    code = normName.charCodeAt(i) + ((code << 5) - code);
+                }
+                const teamKeys = Object.keys(teamsConfig);
+                matchedTeamId = teamKeys[Math.abs(code) % teamKeys.length];
+            }
+
+            assignedClan = teamsConfig[matchedTeamId];
+            assignedClan.id = matchedTeamId;
+
+            // Transición de Stage
+            document.getElementById('stage-input').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('stage-input').classList.add('hidden');
+                document.getElementById('stage-channel').classList.remove('hidden');
+                document.getElementById('stage-channel').classList.add('active');
+            }, 500);
+            
+            setDroneVolume(0.06); 
+        });
+
+        function rawNameCapitalized(str) {
+            return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        }
+
+        /* --- EFECTO PARALLAX 3D SENSORIAL EN LA TARJETA --- */
+        let constraint = 25;
+        function transformCard(x, y) {
+            if (isFlipped) return; // Detener Parallax por completo si la carta ya giró
+            let box = tarjeta.getBoundingClientRect();
+            let calcX = -(y - box.y - (box.height / 2)) / constraint;
+            let calcY = (x - box.x - (box.width / 2)) / constraint;
+            tarjeta.style.transform = `rotateX(${calcX}deg) rotateY(${calcY}deg)`;
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            transformCard(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('deviceorientation', (e) => {
+            if (!e.alpha || isFlipped) return;
+            const calcX = e.beta / 4;
+            const calcY = e.gamma / 4;
+            tarjeta.style.transform = `rotateX(${calcX}deg) rotateY(${calcY}deg)`;
+        });
+
+        /* --- SISTEMA DE CONTROL DE PRESIÓN UNIFICADO TÁCTIL --- */
+        const crystalInteraction = document.getElementById('crystal-interaction');
+        const crystalBall = document.getElementById('crystal-ball');
+        const progressCircle = document.getElementById('progress-circle');
+        const mist = document.getElementById('mist');
+        const holdText = document.getElementById('hold-text');
+        const percentageCounter = document.getElementById('percentage-counter');
+        
+        const gearExt = document.getElementById('gear-ext');
+        const gearInt = document.getElementById('gear-int');
+
+        let chargeTimer = null;
+        let currentEnergy = 0; 
+        let activeHold = false;
+
+        crystalInteraction.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        function triggerHoldStart(e) {
+            if (e && e.cancelable) e.preventDefault();
+            if (activeHold || !assignedClan) return;
+            activeHold = true;
+            
+            // Ocultar texto principal de ayuda y mostrar contador de porcentaje
+            holdText.style.opacity = '0';
+            percentageCounter.classList.remove('hidden');
+
+            // Asegurar inicio del sintetizador en interacciones táctiles
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+
+            playGearClick();
+
+            if (chargeTimer) clearInterval(chargeTimer);
+
+            chargeTimer = setInterval(() => {
+                currentEnergy += 2.2; // Carga precisa de 1.4 segundos totales
+
+                if (currentEnergy > 100) currentEnergy = 100;
+
+                const factor = currentEnergy / 100;
+                const scale = 1 + (factor * 0.05);
+                
+                // Actualizar contador numérico minimalista
+                percentageCounter.innerText = `${Math.floor(currentEnergy)}%`;
+
+                // Animaciones físicas del dial
+                crystalBall.style.transform = `scale(${scale})`;
+                crystalBall.style.boxShadow = `inset 0 0 ${20 + (factor * 40)}px rgba(171, 115, 80, 0.4), 0 0 ${25 + (factor * 50)}px ${assignedClan.color}`;
+                mist.style.opacity = 0.4 + (factor * 0.6);
+                
+                // Rotaciones inversas de los engranajes mecánicos
+                gearExt.style.transform = `rotate(${currentEnergy * 3.6}deg)`;
+                gearInt.style.transform = `rotate(${-currentEnergy * 5.4}deg)`;
+
+                // Progreso dinámico radial SVG
+                const offset = 289 - (factor * 289);
+                progressCircle.style.strokeDashoffset = offset;
+                progressCircle.style.stroke = assignedClan.color;
+
+                updateHoldSound(factor);
+
+                if (currentEnergy >= 100) {
+                    clearInterval(chargeTimer);
+                    chargeTimer = null;
+                    executeSecretReveal();
+                }
+            }, 30);
+        }
+
+        function triggerHoldEnd(e) {
+            if (e && e.cancelable) e.preventDefault();
+            if (!activeHold) return;
+            activeHold = false;
+            
+            if (chargeTimer) {
+                clearInterval(chargeTimer);
+                chargeTimer = null;
+            }
+            if (clickTimer) clearTimeout(clickTimer);
+
+            if (currentEnergy < 100) {
+                // Reseteo instantáneo y limpio si el usuario retira el contacto antes de completarse
+                currentEnergy = 0;
+                crystalBall.style.transform = 'scale(1)';
+                crystalBall.style.boxShadow = 'inset 0 0 25px rgba(171, 115, 80, 0.25), 0 15px 30px rgba(0,0,0,0.35)';
+                progressCircle.style.strokeDashoffset = 289;
+                gearExt.style.transform = 'rotate(0deg)';
+                gearInt.style.transform = 'rotate(0deg)';
+                holdText.style.opacity = '1';
+                percentageCounter.classList.add('hidden');
+                updateHoldSound(0);
+            }
+        }
+
+        // Pointer Events de última generación con soporte multitoque bloqueado
+        crystalInteraction.addEventListener('pointerdown', triggerHoldStart);
+        window.addEventListener('pointerup', triggerHoldEnd);
+        window.addEventListener('pointercancel', triggerHoldEnd);
+        window.addEventListener('pointerleave', triggerHoldEnd);
+
+        /* --- REVELACIÓN MÁGICA CON CARD FLIP 3D --- */
+        function executeSecretReveal() {
+            if (clickTimer) clearTimeout(clickTimer);
+            playExplosionSound();
+
+            const glow = document.getElementById('reveal-glow');
+            glow.style.background = `radial-gradient(circle, #fff 15%, ${assignedClan.color} 85%)`;
+            glow.style.animation = 'glowBlast 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+
+            setTimeout(() => {
+                // Inyectar escudo botánico-ilusionista
+                document.getElementById('clan-emblem-box').innerHTML = svgLogos[assignedClan.id];
+
+                // Modificar la interfaz al bando del invitado
+                document.getElementById('clan-title').innerText = assignedClan.name;
+                document.getElementById('clan-title').style.color = assignedClan.color;
+                document.getElementById('clan-desc').innerText = assignedClan.desc;
+                document.getElementById('clan-desc').style.color = assignedClan.color;
+                document.getElementById('clan-lore').innerText = `"${assignedClan.lore}"`;
+
+                // Setear líderes
+                document.getElementById('lider-name').innerText = assignedClan.capitan;
+                document.getElementById('lider-sub').innerText = assignedClan.sub ? assignedClan.sub : "";
+
+                // Gira la tarjeta física en el espacio tridimensional (Card Flip 3D) desactivando el Parallax
+                isFlipped = true;
+                tarjeta.classList.add('card-flipped');
+
+                // Cambiar el ambiente de fondo al color del bando asignado
+                ambientLight.style.background = `radial-gradient(circle at 50% 50%, ${assignedClan.color}15 0%, transparent 75%)`;
+            }, 700);
+        }
+
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `
+            @keyframes glowBlast {
+                0% { opacity: 0; transform: scale(0.9); }
+                25% { opacity: 0.98; }
+                100% { opacity: 0; transform: scale(1.05); }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
+        /* ----------------------------------------------------------------
+           SISTEMA DE PARTÍCULAS / LUCIÉRNAGAS
+        ----------------------------------------------------------------- */
+        function spawnSparkle() {
+            const container = document.getElementById('particles-container');
+            const sparkle = document.createElement('div');
+            sparkle.classList.add('luciernaga');
+            
+            const size = Math.random() * 3 + 1;
+            sparkle.style.width = `${size}px`;
+            sparkle.style.height = `${size}px`;
+            sparkle.style.left = `${Math.random() * 100}vw`;
+            sparkle.style.animationDuration = `${Math.random() * 12 + 6}s`;
+            
+            container.appendChild(sparkle);
+            setTimeout(() => { sparkle.remove(); }, 18000);
+        }
+
+        for(let i = 0; i < 6; i++) {
+            setTimeout(spawnSparkle, Math.random() * 5000);
+        }
+        setInterval(spawnSparkle, 1100);
+    </script>
+</body>
+</html>
