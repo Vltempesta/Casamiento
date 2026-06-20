@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Vani & Fede · La Convocatoria</title>
+  <meta name="description" content="Segundo comunicado de Vani & Fede. Ingresá al bosque, confirmá asistencia y descubrí tu fuerza." />
+  <meta property="og:title" content="Vani & Fede · La Convocatoria" />
+  <meta property="og:description" content="Segundo comunicado: ingresá al bosque y descubrí tu destino." />
+  <meta property="og:image" content="preview-whatsapp.jpg" />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#10170f" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="scene" aria-hidden="true">
+    <div class="moon"></div>
+    <div class="mist mist-a"></div>
+    <div class="mist mist-b"></div>
+    <div class="stars"></div>
+    <div class="forest-line"></div>
+  </div>
+
+  <main id="app" class="app-shell">
+    <section id="loginScreen" class="login-screen">
+      <div class="seal" aria-label="Vani y Fede">V&F</div>
+      <p class="eyebrow">Segundo comunicado · acceso reservado</p>
+      <h1>La Convocatoria</h1>
+      <p class="subtitle">El bosque abrió un archivo con tu nombre. Ingresá para confirmar asistencia, descubrir tu fuerza y prepararte para la batalla.</p>
+
+      <form id="loginForm" class="login-card" autocomplete="on">
+        <div class="form-head">
+          <div>
+            <strong>Identificación del invitado</strong>
+            <small>Podés entrar con nombre, apellido, alias o mail.</small>
+          </div>
+          <span id="connectionBadge" class="status-pill idle">Sheets sin configurar</span>
+        </div>
+        <label for="guestName">Nombre y apellido</label>
+        <div class="input-row">
+          <input id="guestName" name="guestName" type="text" placeholder="Ej: Nico Tempesta" autocomplete="name" list="guestSuggestions" required />
+          <button type="submit">Entrar</button>
+        </div>
+        <datalist id="guestSuggestions"></datalist>
+        <div id="loginMessage" class="form-message" role="status"></div>
+      </form>
+    </section>
+
+    <section id="mainScreen" class="main-screen hidden">
+      <header class="topbar">
+        <div class="topbar-main">
+          <p class="eyebrow">Vani & Fede · 24/10/2026</p>
+          <h2 id="welcomeTitle">Hola</h2>
+          <p id="welcomeSub" class="topbar-sub">Archivo personal activado.</p>
+        </div>
+        <div class="topbar-actions">
+          <span id="syncBadge" class="status-pill idle">Modo local</span>
+          <button id="syncButton" class="ghost-button" type="button">Sincronizar</button>
+          <button id="shareButton" class="ghost-button" type="button">Compartir</button>
+          <button id="logoutButton" class="ghost-button" type="button">Salir</button>
+        </div>
+      </header>
+
+      <nav class="nav-tabs" aria-label="Secciones principales">
+        <button data-route="inicio" class="active">Inicio</button>
+        <button data-route="info">Info terrenal</button>
+        <button data-route="asistencia">Asistencia</button>
+        <button data-route="ficha">Ficha secreta</button>
+        <button data-route="equipo">Mi equipo</button>
+        <button data-route="torneo">Torneo</button>
+        <button data-route="juegos">Juegos</button>
+        <button data-route="ranking">Ranking</button>
+        <button data-route="invitados">Invitados</button>
+        <button data-route="admin">Admin</button>
+      </nav>
+
+      <section id="view" class="view" aria-live="polite"></section>
+    </section>
+  </main>
+
+  <div id="toastHost" class="toast-host" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
