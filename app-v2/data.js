@@ -1,4 +1,4 @@
-const WEDDING_APP_DATA = {
+window.WEDDING_APP_DATA = {
   appVersion: "Real v2.0 · Google Sheets",
   couple: {
     bride: "Vani",
