@@ -14,7 +14,7 @@
   escrituras accidentales de bots o URLs viejas.
 */
 window.WEDDING_APP_CONFIG = {
-  GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxMJq8MGKxjO2CxyZEOk_Yoaq_VYlIFoWROlBRJa7bBNcHfJKxeOVyI0YOzihWt7044/exec",
+  GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzMaRPpjXXNk2IFlLdA9lmORZSdEmIdILP8P7ZAoTK93fuBpxDf31D7fGAj9fimxGUI/exec",
   PUBLIC_WRITE_TOKEN: "VF-2026-BOSQUE",
   LOCAL_ADMIN_PASSWORD: "vaniyfede2026",
   ENABLE_REMOTE_SYNC: true,
