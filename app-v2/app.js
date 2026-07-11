@@ -472,9 +472,49 @@
 
   function renderRSVP() {
     const saved = state.rsvps[currentGuest.id] || {};
+    const hasSaved = Boolean(saved && saved.updatedAt);
+    const editing = Boolean(state.rsvpEditMode || !hasSaved);
+
+    if (hasSaved && !editing) {
+      return `
+        ${rsvpViewStyles()}
+        ${sectionHeader("confirmación", "Asistencia registrada", "Gracias por confirmar. Estos son los datos que quedaron guardados. Podés editarlos cuando quieras.")}
+        <section class="section-card rsvp-thank-card">
+          <div class="rsvp-thank">
+            <div>
+              <div class="rsvp-okmark">✓</div>
+              <p class="eyebrow">registro confirmado</p>
+              <h3>Muchas gracias, ${escapeHTML(saved.firstName || currentGuest.firstName)}.</h3>
+              <p class="rsvp-lead">Tu respuesta ya quedó guardada para la organización del casamiento. Si algo cambia, podés editarla y volver a enviarla.</p>
+
+              <div class="rsvp-summary">
+                ${summaryLine("Nombre", `${saved.firstName || currentGuest.firstName} ${saved.lastName || currentGuest.lastName}`)}
+                ${summaryLine("Mail", saved.email || "Sin cargar")}
+                ${summaryLine("Teléfono", saved.phone || "Sin cargar")}
+                ${summaryLine("Asistencia", attendanceLabel(saved.attendance))}
+                ${summaryLine("Traslado / combi", transportLabel(saved.transport))}
+                ${summaryLine("Restricciones", saved.diet || "Sin restricciones cargadas")}
+              </div>
+            </div>
+
+            <aside class="rsvp-side">
+              <h4>Comentario para los novios</h4>
+              <p>${escapeHTML(saved.comment || "Sin comentario cargado")}</p>
+              <small>Última edición: ${formatDateLabel(saved.updatedAt)}</small>
+              <div class="rsvp-actions">
+                <button id="editRsvp" type="button">Editar mi respuesta</button>
+                <button id="syncRsvp" type="button" class="ghost-button">Sincronizar datos</button>
+              </div>
+            </aside>
+          </div>
+        </section>`;
+    }
+
     return `
-      ${sectionHeader("confirmación", "Confirmar asistencia", `Fecha sugerida para responder: ${CONFIG.RSVP_DEADLINE_LABEL || "a definir"}. Tus datos se guardan en Google Sheets cuando la conexión está activa.`)}
-      <form id="rsvpForm" class="section-card form-card">
+      ${rsvpViewStyles()}
+      ${sectionHeader("confirmación", hasSaved ? "Editar asistencia" : "Confirmar asistencia", hasSaved ? "Modificá lo que necesites y volvé a enviar la confirmación." : `Fecha sugerida para responder: ${CONFIG.RSVP_DEADLINE_LABEL || "a definir"}.`)}
+      <form id="rsvpForm" class="section-card form-card rsvp-edit-card">
+        ${hasSaved ? `<div class="warning-ribbon">Estás editando una respuesta ya registrada. Al guardar, se enviará una nueva actualización.</div>` : ""}
         <div class="form-grid">
           ${field("firstName", "Nombre", saved.firstName || currentGuest.firstName, "text", true)}
           ${field("lastName", "Apellido", saved.lastName || currentGuest.lastName, "text", true)}
@@ -504,10 +544,56 @@
           <textarea name="comment" placeholder="Algo que necesitemos saber...">${escapeHTML(saved.comment || "")}</textarea>
         </label>
         <div class="form-actions">
-          <button type="submit">Guardar asistencia</button>
-          <span class="form-note">${saved.updatedAt ? `Última edición: ${formatDateLabel(saved.updatedAt)}` : "Todavía no registrado."}</span>
+          <button type="submit">${hasSaved ? "Guardar asistencia" : "Guardar asistencia"}</button>
+          ${hasSaved ? `<button id="cancelRsvpEdit" type="button" class="ghost-button">Cancelar edición</button>` : ""}
+          <span class="form-note">${hasSaved ? `Última edición: ${formatDateLabel(saved.updatedAt)}` : "Todavía no registrado."}</span>
         </div>
       </form>`;
+  }
+
+  function rsvpViewStyles() {
+    return `
+      <style>
+        .rsvp-thank-card{padding:28px;background:linear-gradient(135deg,#243120cc,#0c130dcc);box-shadow:0 20px 70px #0006}
+        .rsvp-thank{display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:stretch}
+        .rsvp-okmark{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;background:#bdf0b61a;border:1px solid #bdf0b666;color:#bdf0b6;font-size:42px;font-weight:900;margin-bottom:14px}
+        .rsvp-thank h3{font:900 clamp(32px,4vw,44px) Georgia,serif;margin:0 0 10px;color:var(--cream)}
+        .rsvp-lead{color:var(--muted);font-size:17px;line-height:1.5;font-weight:800;max-width:720px}
+        .rsvp-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:24px}
+        .rsvp-item{border:1px solid var(--line);border-radius:18px;padding:16px;background:#07100aaa}
+        .rsvp-label{display:block;color:var(--gold);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+        .rsvp-value{font-size:17px;font-weight:900;color:var(--cream);word-break:break-word}
+        .rsvp-side{border:1px solid var(--line);border-radius:24px;padding:22px;background:#050b08cc;display:flex;flex-direction:column;min-height:100%}
+        .rsvp-side h4{font:900 26px Georgia,serif;margin:0 0 12px;color:var(--cream)}
+        .rsvp-side p{color:var(--muted);line-height:1.5;font-weight:800;white-space:pre-wrap}
+        .rsvp-side small{font-size:13px;color:#9d998c;margin-top:auto;font-weight:800}
+        .rsvp-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+        .rsvp-actions button:first-child,.rsvp-edit-card .form-actions button[type="submit"]{background:linear-gradient(135deg,#efd27f,#c89d45);color:#1c1406;border:none}
+        .rsvp-edit-card{background:linear-gradient(135deg,#243120cc,#0c130dcc)}
+        @media(max-width:850px){.rsvp-thank{grid-template-columns:1fr}.rsvp-summary{grid-template-columns:1fr}}
+      </style>`;
+  }
+
+  function summaryLine(label, value) {
+    return `<div class="rsvp-item"><span class="rsvp-label">${escapeHTML(label)}</span><div class="rsvp-value">${escapeHTML(value)}</div></div>`;
+  }
+
+  function attendanceLabel(value) {
+    const labels = {
+      "si": "Sí, voy",
+      "no": "No puedo asistir",
+      "a-confirmar": "A confirmar"
+    };
+    return labels[value] || value || "Sin cargar";
+  }
+
+  function transportLabel(value) {
+    const labels = {
+      "auto": "Voy en auto",
+      "combi": "Necesito info de combi",
+      "duermo": "Duermo en la estancia"
+    };
+    return labels[value] || value || "A definir";
   }
 
   function field(name, label, value = "", type = "text", required = false) {
@@ -703,15 +789,31 @@
     $$('[data-go]').forEach(button => button.addEventListener("click", () => navigate(button.dataset.go)));
 
     if (route === "asistencia") {
+      $("#editRsvp")?.addEventListener("click", () => {
+        state.rsvpEditMode = true;
+        saveState();
+        renderCurrentRoute();
+      });
+
+      $("#cancelRsvpEdit")?.addEventListener("click", () => {
+        state.rsvpEditMode = false;
+        saveState();
+        renderCurrentRoute();
+      });
+
+      $("#syncRsvp")?.addEventListener("click", () => syncFromSheets(true));
+
       $("#rsvpForm")?.addEventListener("submit", async event => {
         event.preventDefault();
         const values = Object.fromEntries(new FormData(event.currentTarget).entries());
         const payload = { ...values, guestId: currentGuest.id, teamId: currentGuest.team, updatedAt: new Date().toISOString() };
         state.rsvps[currentGuest.id] = payload;
+        state.rsvpEditMode = false;
         saveState();
+        toast("Asistencia guardada. Muchas gracias.");
+        await postToSheets("saveRsvp", payload);
+        await syncFromSheets(false);
         renderCurrentRoute();
-        toast("Asistencia guardada. El bosque tomó nota.");
-        postToSheets("saveRsvp", payload);
       });
     }
 
