@@ -164,19 +164,15 @@
       ...payload
     };
     try {
-      await fetch(CONFIG.GOOGLE_APPS_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        cache: "no-store",
-        keepalive: true,
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(envelope)
-      });
-      return true;
+      const response = await jsonp(action, { payload: JSON.stringify(envelope) });
+      setRemoteStatus("online", "Sheets conectado · guardado");
+      return response?.ok !== false;
     } catch (error) {
       console.warn("Fallo escritura Sheets", error);
       state.lastRemoteError = error.message;
       saveState();
+      setRemoteStatus("error", "Sheets no guardó");
+      toast("No se guardó en Google Sheets. Quedó guardado localmente.");
       return false;
     }
   }
