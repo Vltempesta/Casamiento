@@ -424,46 +424,112 @@
   function renderInfo() {
     const locationOpen = isUnlocked("location");
     const menuOpen = isUnlocked("menu");
+    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
+
     return `
-      ${sectionHeader("info terrenal", "Todo lo que sí o sí tienen que saber", "Horario, código de vestimenta, punto de encuentro, cronograma y menú con desbloqueos progresivos.")}
-      <section class="grid two">
-        <article class="section-card major">
-          <span class="card-icon">📜</span>
-          <h4>Día y horario</h4>
-          <p><strong>Sábado 24 de octubre de 2026</strong></p>
-          <p>Fiesta de ${escapeHTML(DATA.couple.partyTime)} · Ceremonia ${escapeHTML(DATA.couple.ceremonyTime)}</p>
-          <p>${escapeHTML(DATA.info.arrivalRecommendation)}</p>
-        </article>
+      ${infoStyles()}
+      ${sectionHeader("info terrenal", "Todo lo que necesitás saber", "La información útil para llegar al bosque sin perderte en el intento. El destino final sigue siendo secreto.")}
+
+      <section class="info-hero section-card">
+        <div>
+          <p class="eyebrow">24 · 10 · 2026</p>
+          <h3>De 18:00 a 03:00 hs</h3>
+          <p>Una noche larga, misteriosa y con regreso organizado. Vos solo ocupate de venir con ganas de celebrar.</p>
+          <div class="badge-row">
+            <span class="badge">📅 Sábado 24 de octubre</span>
+            <span class="badge muted">🕕 18:00 a 03:00</span>
+            <span class="badge muted">📍 Lugar secreto</span>
+          </div>
+        </div>
+        <a class="info-calendar-button" href="${calendarUrl}" target="_blank" rel="noopener">📅 AGENDALO!</a>
+      </section>
+
+      <section class="grid two info-main-grid">
         <article class="section-card major ${locationOpen ? "" : "locked-panel"}">
           <span class="card-icon">${locationOpen ? "📍" : "🔒"}</span>
-          <h4>${locationOpen ? DATA.couple.placeName : DATA.couple.placeSecretLabel}</h4>
-          <p>${locationOpen ? `${DATA.couple.placeArea}. Dirección exacta y mapa listos para compartir.` : DATA.unlocks.location.teaser}</p>
-          <small>${locationOpen ? "Archivo abierto" : `Se libera: ${formatDateLabel(DATA.unlocks.location.unlockAt)}`}</small>
+          <h4>${locationOpen ? DATA.couple.placeName : "Lugar secreto"}</h4>
+          <p>${locationOpen ? `${DATA.couple.placeArea}. Dirección exacta y mapa listos para compartir.` : "El destino final será revelado más adelante. Por ahora solo necesitás saber que el bosque queda lejos, pero el viaje está contemplado."}</p>
+          <small>${locationOpen ? "Archivo abierto" : "El mapa se abrirá más cerca de la fecha."}</small>
+        </article>
+
+        <article class="section-card major micro-card">
+          <span class="card-icon">🚌</span>
+          <h4>Micro misterioso</h4>
+          <p><strong>Relax, no te preocupes por cómo ir ni cómo volver.</strong></p>
+          <p>Vamos a poner una combi / micro que saldrá desde el <strong>Obelisco</strong> y llevará a los invitados hasta el lugar secreto.</p>
+          <div class="micro-steps">
+            <span>Subís en el Obelisco</span>
+            <span>→</span>
+            <span>Bajás en el bosque</span>
+          </div>
+          <p>Regreso previsto: <strong>03:00 hs</strong>.</p>
+          <small>Si querés recibir información de la combi, marcá “Necesito info de combi” al confirmar asistencia.</small>
         </article>
       </section>
 
-      <section class="grid three">
-        <article class="section-card"><span class="card-icon">🖤</span><h4>Código de vestimenta</h4><p>${escapeHTML(DATA.info.dressCode)}</p></article>
-        <article class="section-card"><span class="card-icon">🚐</span><h4>Punto de encuentro</h4><p>${escapeHTML(DATA.info.meetingPoint)}</p></article>
-        <article class="section-card"><span class="card-icon">☎️</span><h4>Contacto emergencia</h4><p>${escapeHTML(DATA.info.emergencyContact)}</p></article>
+      <section class="section-card dress-card">
+        <div class="card-title-row">
+          <div>
+            <span class="card-icon">🖤</span>
+            <h4>Código de vestimenta</h4>
+          </div>
+          <span class="badge">Elegante festivo de estancia</span>
+        </div>
+        <p class="dress-lead">Venite arreglado/a, cómodo/a y listo/a para una noche larga de fiesta.</p>
+        <div class="grid two compact">
+          <div class="menu-line">
+            <strong>Para ellas</strong>
+            <p>Vestidos, monos, conjuntos o looks elegantes. Importante: habrá sectores con pasto. Mejor taco ancho, plataforma, botas elegantes o calzado cómodo para jardín.</p>
+          </div>
+          <div class="menu-line">
+            <strong>Para ellos</strong>
+            <p>Traje, saco, camisa o look elegante de fiesta. Corbata opcional.</p>
+          </div>
+        </div>
+        <div class="warning-ribbon">Evitá tacos aguja o tacos muy finos. Queremos que estés divino/a, pero también que puedas bailar, caminar y sobrevivir al bosque.</div>
+        <p class="form-note">Evitar blanco total.</p>
+      </section>
+
+      <section class="grid two">
+        <article class="section-card">
+          <span class="card-icon">🌿</span>
+          <h4>Consejo del bosque</h4>
+          <p>Puede refrescar de noche. Traé un abrigo liviano y elegí calzado cómodo.</p>
+          <p>Y si venís en el micro misterioso, dejate llevar.</p>
+        </article>
+
+        <article class="section-card ${menuOpen ? "" : "locked-panel"}">
+          <div class="card-title-row"><h4>🍽️ Menú</h4><span class="badge">${menuOpen ? "Disponible" : "Bloqueado"}</span></div>
+          ${menuOpen ? `
+            <div class="grid two compact">
+              ${Object.entries(DATA.info.menu).map(([key, value]) => `<div class="menu-line"><strong>${menuLabel(key)}</strong><p>${escapeHTML(value)}</p></div>`).join("")}
+            </div>` : `<p>Se revelará más adelante.</p><p>Si tenés restricciones alimentarias, alergias o preferencias importantes, cargalas en <strong>Confirmar asistencia</strong>.</p>`}
+        </article>
       </section>
 
       <section class="section-card">
-        <div class="card-title-row"><h4>Cronograma</h4><span class="badge muted">sujeto a hechizos de último momento</span></div>
-        <div class="timeline">${DATA.info.timeline.map(item => `
-          <div class="timeline-item">
-            <time>${escapeHTML(item.time)}</time>
-            <div><strong>${escapeHTML(item.title)}</strong><p>${escapeHTML(item.detail)}</p></div>
-          </div>`).join("")}</div>
-      </section>
-
-      <section class="section-card ${menuOpen ? "" : "locked-panel"}">
-        <div class="card-title-row"><h4>Menú de la noche</h4><span class="badge">${menuOpen ? "Disponible" : "Bloqueado"}</span></div>
-        ${menuOpen ? `
-          <div class="grid two compact">
-            ${Object.entries(DATA.info.menu).map(([key, value]) => `<div class="menu-line"><strong>${menuLabel(key)}</strong><p>${escapeHTML(value)}</p></div>`).join("")}
-          </div>` : `<p>${escapeHTML(DATA.unlocks.menu.teaser)}</p><small>Se libera: ${formatDateLabel(DATA.unlocks.menu.unlockAt)}</small>`}
+        <div class="card-title-row"><h4>Preguntas rápidas</h4><span class="badge muted">FAQ</span></div>
+        <div class="faq-grid">
+          <div><strong>¿Dónde es?</strong><p>Todavía es secreto. El destino final se revelará más adelante.</p></div>
+          <div><strong>¿Hay combi?</strong><p>Sí. Saldrá desde el Obelisco y volverá al finalizar la fiesta.</p></div>
+          <div><strong>¿A qué hora es?</strong><p>El evento es de 18:00 a 03:00 hs.</p></div>
+          <div><strong>¿Qué calzado conviene?</strong><p>Algo elegante, pero cómodo para caminar sobre pasto.</p></div>
+        </div>
       </section>`;
+  }
+
+  function infoStyles() {
+    return `<style>
+      .info-hero{display:flex;align-items:center;justify-content:space-between;gap:22px;background:linear-gradient(135deg,rgba(216,185,106,.14),rgba(24,39,25,.82));border-color:rgba(216,185,106,.38)}
+      .info-hero h3{font-size:38px;margin:4px 0 10px;line-height:1}
+      .info-hero p{max-width:720px}
+      .info-calendar-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;border-radius:999px;padding:15px 22px;font-weight:900;background:linear-gradient(135deg,#f0cd75,#cda34d);color:#1b1304;white-space:nowrap;border:1px solid rgba(255,255,255,.12)}
+      .info-main-grid{margin-top:16px}.micro-card{border-color:rgba(216,185,106,.36)}
+      .micro-steps{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0;padding:12px 14px;border-radius:18px;background:rgba(4,9,5,.34);border:1px solid rgba(247,238,217,.14);font-weight:900;color:#f7eed9}
+      .dress-card{margin-top:16px}.dress-card .card-title-row{align-items:flex-start}.dress-lead{font-weight:800;color:rgba(247,238,217,.82)}
+      .faq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.faq-grid div{border:1px solid rgba(247,238,217,.12);border-radius:18px;padding:14px;background:rgba(4,9,5,.22)}.faq-grid p{margin:7px 0 0;color:rgba(247,238,217,.66);font-weight:750;line-height:1.45}
+      @media(max-width:760px){.info-hero{flex-direction:column;align-items:flex-start}.info-calendar-button{width:100%}.faq-grid{grid-template-columns:1fr}}
+    </style>`;
   }
 
   function menuLabel(key) {
