@@ -1,5 +1,5 @@
 window.WEDDING_APP_DATA = {
-  "appVersion": "Real v2.1 · Lista completa",
+  "appVersion": "Real v2.4 · Roles + puntos equilibrados",
   "couple": {
     "bride": "Vani",
     "groom": "Fede",
@@ -210,7 +210,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "perro",
         "leyenda"
-      ]
+      ],
+      "roleVisible": "Mascota",
+      "displayRelation": "Mascota"
     },
     {
       "id": "morena",
@@ -224,7 +226,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "tiziana",
@@ -238,7 +242,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "malena-arcolia",
@@ -252,7 +258,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "cristina-blanco",
@@ -266,7 +274,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Abuela",
+      "displayRelation": "Abuela"
     },
     {
       "id": "alesia-campolo",
@@ -280,7 +290,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "camila-campolo",
@@ -294,7 +306,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "luciana-campolo",
@@ -308,7 +322,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "nacho-campolo",
@@ -322,7 +338,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "cecilia-de-la-portilla",
@@ -336,7 +354,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "naza-de-la-portilla",
@@ -350,7 +370,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "mati-fernandez-abeijon",
@@ -364,7 +386,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "juani-grosso",
@@ -378,7 +402,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "chiara-mobilia",
@@ -392,7 +418,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "daniel-mobilia",
@@ -406,7 +434,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Tío",
+      "displayRelation": "Tío"
     },
     {
       "id": "gina-mobilia",
@@ -420,7 +450,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "patricia-santi",
@@ -435,7 +467,9 @@ window.WEDDING_APP_DATA = {
         "bosque",
         "familia-paterna-fede",
         "capitan"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "sergio-santi",
@@ -449,7 +483,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Papá",
+      "displayRelation": "Papá"
     },
     {
       "id": "bianca-scarna",
@@ -463,7 +499,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "bosque",
         "familia-paterna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "ezequiel",
@@ -477,7 +515,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "nati",
@@ -491,7 +531,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "camila-aguero",
@@ -505,7 +547,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Cuñada",
+      "displayRelation": "Cuñada"
     },
     {
       "id": "agustin-carra",
@@ -519,7 +563,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "matias-carra",
@@ -533,7 +579,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "camila-caruso",
@@ -547,7 +595,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "estela-garrote",
@@ -561,7 +611,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "micaela-llopis",
@@ -575,7 +627,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "nahuel-llopis",
@@ -589,7 +643,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "ines-mari",
@@ -603,7 +659,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "juan-mari",
@@ -617,7 +675,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tío",
+      "displayRelation": "Tío"
     },
     {
       "id": "liliana-mari",
@@ -631,7 +691,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "patricia-mari",
@@ -645,7 +707,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "marcela-medina",
@@ -659,7 +723,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "maxi-pereyra",
@@ -673,7 +739,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "dario-tempesta",
@@ -688,7 +756,9 @@ window.WEDDING_APP_DATA = {
         "fuego",
         "familia-vani",
         "capitan"
-      ]
+      ],
+      "roleVisible": "Papá",
+      "displayRelation": "Papá"
     },
     {
       "id": "nicolas-tempesta",
@@ -702,7 +772,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Hermano",
+      "displayRelation": "Hermano"
     },
     {
       "id": "anahi-trenti",
@@ -716,7 +788,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Mamá",
+      "displayRelation": "Mamá"
     },
     {
       "id": "daniel-trenti",
@@ -730,7 +804,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tío",
+      "displayRelation": "Tío"
     },
     {
       "id": "deborah-trenti",
@@ -744,7 +820,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "enzo-trenti",
@@ -758,7 +836,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "sergio-trenti",
@@ -772,7 +852,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tío",
+      "displayRelation": "Tío"
     },
     {
       "id": "florinda-varela",
@@ -786,7 +868,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "haydee-varela",
@@ -800,7 +884,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "fuego",
         "familia-vani"
-      ]
+      ],
+      "roleVisible": "Abuela",
+      "displayRelation": "Abuela"
     },
     {
       "id": "rodrigo-acosta",
@@ -814,7 +900,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "nicolas-baioni",
@@ -828,7 +916,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Tío",
+      "displayRelation": "Tío"
     },
     {
       "id": "isidora-barreto",
@@ -842,7 +932,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Abuela",
+      "displayRelation": "Abuela"
     },
     {
       "id": "olga-barreto",
@@ -856,7 +948,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "bruno-garcia",
@@ -870,7 +964,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "maria-julia-garcia",
@@ -884,7 +980,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "paula-garcia",
@@ -898,7 +996,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "tobias-garcia",
@@ -912,7 +1012,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "ale-garcia-barreto",
@@ -926,7 +1028,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Mamá",
+      "displayRelation": "Mamá"
     },
     {
       "id": "etty-gimenez",
@@ -940,7 +1044,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "delfina-gomez",
@@ -954,7 +1060,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "miguel-gomez",
@@ -968,7 +1076,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Tío",
+      "displayRelation": "Tío"
     },
     {
       "id": "araceli-herrera",
@@ -982,7 +1092,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
     },
     {
       "id": "griselda-martinez",
@@ -996,7 +1108,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Tía",
+      "displayRelation": "Tía"
     },
     {
       "id": "pichi-paladino",
@@ -1010,7 +1124,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Tío",
+      "displayRelation": "Tío"
     },
     {
       "id": "melina-santi",
@@ -1025,7 +1141,9 @@ window.WEDDING_APP_DATA = {
         "luz",
         "familia-materna-fede",
         "capitan"
-      ]
+      ],
+      "roleVisible": "Hermana",
+      "displayRelation": "Hermana"
     },
     {
       "id": "daniel-viera",
@@ -1039,7 +1157,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "luz",
         "familia-materna-fede"
-      ]
+      ],
+      "roleVisible": "Cuñado",
+      "displayRelation": "Cuñado"
     },
     {
       "id": "maggie",
@@ -1053,7 +1173,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "nicolas-arbizu",
@@ -1067,7 +1189,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "karen-burch",
@@ -1081,7 +1205,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "cecilia-campos-covelo",
@@ -1095,7 +1221,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "micaela-cardillo",
@@ -1109,7 +1237,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "macarena-cereghetti",
@@ -1123,7 +1253,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "fernando-di-ciaccio",
@@ -1137,7 +1269,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "sabrina-echave",
@@ -1151,7 +1285,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "fernando-gamarra",
@@ -1165,7 +1301,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "lauti-gonzalez",
@@ -1179,7 +1317,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "fede-miszkiewicz",
@@ -1193,7 +1333,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "juan-pesce",
@@ -1207,7 +1349,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "franco-repetti",
@@ -1221,7 +1365,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "florencia-romano",
@@ -1235,7 +1381,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "vicky-salguero",
@@ -1249,7 +1397,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "carla-tempesta",
@@ -1264,7 +1414,9 @@ window.WEDDING_APP_DATA = {
         "noche",
         "amigos-vani-y-fede",
         "capitan"
-      ]
+      ],
+      "roleVisible": "Hermana",
+      "displayRelation": "Hermana"
     },
     {
       "id": "rodrigo-vivas",
@@ -1278,7 +1430,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "noche",
         "amigos-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "david",
@@ -1292,7 +1446,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "francisco",
@@ -1306,7 +1462,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "ido",
@@ -1320,7 +1478,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "pablo",
@@ -1334,7 +1494,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "piero",
@@ -1348,7 +1510,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "ignacio-cardaci",
@@ -1362,7 +1526,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "anahi-cueva",
@@ -1377,7 +1543,9 @@ window.WEDDING_APP_DATA = {
         "agua",
         "facultad-vani",
         "capitan"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "julieta-dominguez",
@@ -1391,7 +1559,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "jorge-ferrero",
@@ -1405,7 +1575,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "flor-filippelli",
@@ -1419,7 +1591,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "micaela-garbi",
@@ -1433,7 +1607,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "daiana-garcia",
@@ -1447,7 +1623,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "daniela-michelena",
@@ -1461,7 +1639,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "maria-peral",
@@ -1475,7 +1655,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "belen-priori",
@@ -1489,7 +1671,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "lia-ruiz",
@@ -1503,7 +1687,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "gianni-tilotti",
@@ -1517,7 +1703,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "mayra-veltri",
@@ -1531,7 +1719,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "salome-vogel",
@@ -1545,7 +1735,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "agua",
         "facultad-vani"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "lucia-benitez",
@@ -1559,7 +1751,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "nicolas-boscato",
@@ -1573,7 +1767,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "nicolas-casal",
@@ -1587,7 +1783,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "santiago-castellano",
@@ -1601,7 +1799,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "sofia-di-croce",
@@ -1615,7 +1815,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "gaspar-garramuno",
@@ -1629,7 +1831,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "andres-gismano",
@@ -1643,7 +1847,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "martin-jaremczuk",
@@ -1657,7 +1863,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "gus-juarez",
@@ -1671,7 +1879,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "matias-karmelic",
@@ -1685,7 +1895,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "leandro-kovalevski",
@@ -1699,7 +1911,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "seba-kraselnik",
@@ -1713,7 +1927,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "agustina-lucero",
@@ -1727,7 +1943,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "gabriel-maceroni",
@@ -1741,7 +1959,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "daniel-masolini",
@@ -1755,7 +1975,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "daniel-mena",
@@ -1769,7 +1991,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "mari-mendoza-roa",
@@ -1783,7 +2007,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "ariel-nayir",
@@ -1797,7 +2023,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "jonathan-nunez",
@@ -1812,7 +2040,9 @@ window.WEDDING_APP_DATA = {
         "viento",
         "trabajo-vani-y-fede",
         "capitan"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "damian-perozzi",
@@ -1826,7 +2056,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     },
     {
       "id": "leonela-petrizzo",
@@ -1840,7 +2072,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     },
     {
       "id": "felipe-rey",
@@ -1854,7 +2088,9 @@ window.WEDDING_APP_DATA = {
       "tags": [
         "viento",
         "trabajo-vani-y-fede"
-      ]
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     }
   ],
   "games": [
