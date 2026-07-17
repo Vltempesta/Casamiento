@@ -156,6 +156,8 @@
         guest.alias,
         guest.email,
         guest.relation,
+        guest.roleVisible,
+        guest.displayRelation,
         getTeam(guest.team).name
       ].join(" "));
       return haystack === wanted || haystack.includes(wanted) || wanted.includes(haystack);
@@ -613,7 +615,7 @@
     const saved = state.rsvps[currentGuest.id] || {};
     const hasSaved = Boolean(saved && saved.updatedAt);
     const editing = Boolean(state.rsvpEditMode || !hasSaved);
-    const deadlineLabel = "15 de septiembre de 2026";
+    const deadlineLabel = "31 de agosto de 2026";
     const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
     const savedTransport = saved.transport === "auto" ? "particular" : saved.transport;
 
@@ -818,7 +820,7 @@
             <div>
               <div class="rsvp-okmark">✓</div>
               <h4 class="rsvp-thank-title">Muchas gracias, ${escapeHTML(currentGuest.firstName)}.</h4>
-              <p class="rsvp-thank-lead">Tu ficha secreta quedó guardada. Esta acción suma <strong>+15 puntos</strong> para el equipo ${escapeHTML(getTeam(currentGuest.team).name)} y no vuelve a sumar aunque la edites.</p>
+              <p class="rsvp-thank-lead">Tu ficha secreta quedó guardada. Esta acción ya suma puntos para el equipo ${escapeHTML(getTeam(currentGuest.team).name)} y no vuelve a sumar aunque la edites.</p>
 
               <div class="rsvp-summary-grid">
                 ${summaryLine("Color preferido", saved.favoriteColor || "Sin cargar")}
@@ -853,7 +855,7 @@
     return `
       ${sectionHeader("ficha secreta", hasSaved ? "Editar ficha secreta" : "Material clasificado para juegos", "Estas respuestas pueden convertirse en trivia, bingo, desafíos, playlist, premios o confesiones anónimas.")}
       <form id="profileForm" class="section-card form-card">
-        <div class="warning-ribbon">Tus respuestas podrán ser usadas en tu contra durante la noche. Completar esta ficha suma +15 puntos una sola vez para tu equipo.</div>
+        <div class="warning-ribbon">Tus respuestas podrán ser usadas en tu contra durante la noche. Completar esta ficha suma puntos una sola vez para tu equipo.</div>
         <div class="form-grid">
           ${field("favoriteColor", "Color preferido", saved.favoriteColor || "")}
           ${field("songYes", "Canción que quiero que pasen", saved.songYes || "")}
@@ -907,7 +909,9 @@
   function guestPill(guest) {
     const team = getTeam(guest.team);
     const captain = isGuestCaptain(guest);
-    return `<div class="guest-pill ${captain ? "captain-pill" : ""}"><span>${captain ? "👑" : team.emoji}</span><div><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(guest.alias)} · ${escapeHTML(guest.role)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}</div></div>`;
+    const visibleRole = guest.roleVisible || guest.displayRelation || guest.relation || guest.role || "invitado";
+    const aliasText = guest.alias ? `${guest.alias} · ${visibleRole}` : visibleRole;
+    return `<div class="guest-pill ${captain ? "captain-pill" : ""}"><span>${captain ? "👑" : team.emoji}</span><div><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}</div></div>`;
   }
 
   function renderPointsHub() {
@@ -1021,7 +1025,7 @@
     return `
       ${sectionHeader("ranking", "La tabla de fuerzas", "Suma desafíos digitales, juegos físicos, bonus y penalizaciones cargadas desde el panel admin.")}
       <section class="ranking-list">${ranking.map(rankRow).join("")}</section>
-      <section class="section-card"><h4>Últimos movimientos</h4>${allPointEntries().length ? `<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Juego</th><th>Equipo</th><th>Puntos</th><th>Comentario</th></tr></thead><tbody>${allPointEntries().slice(-12).reverse().map(entry => `<tr><td>${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>${Number(entry.points || 0)}</td><td>${escapeHTML(entry.comment || "")}</td></tr>`).join("")}</tbody></table></div>` : `<p>Todavía no hay puntos cargados.</p>`}</section>`;
+      <section class="section-card"><h4>Últimos movimientos</h4>${allPointEntries().length ? `<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Acción</th><th>Equipo</th><th>Movimiento</th><th>Comentario</th></tr></thead><tbody>${allPointEntries().slice(-12).reverse().map(entry => `<tr><td>${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>Sumó puntos</td><td>${escapeHTML(entry.comment || "El equipo sumó puntos.")}</td></tr>`).join("")}</tbody></table></div>` : `<p>Todavía no hay movimientos cargados.</p>`}</section>`;
   }
 
   function rankRow(row, index) {
@@ -1042,6 +1046,7 @@
   function gameName(id) {
     if (id === "auto-rsvp") return "Confirmación de asistencia";
     if (id === "auto-profile") return "Ficha secreta completa";
+    if (id === "discrecional-fede-vani") return "Puntos a discreción";
     return DATA.games.find(game => game.id === id)?.title || id || "Juego";
   }
 
@@ -1082,12 +1087,13 @@
       </section>
       <section class="grid two">
         <form id="scoreForm" class="section-card form-card">
-          <h4>Cargar puntos</h4>
-          <label>Juego<select name="gameId" required>${DATA.games.map(game => option(game.id, game.title, "")).join("")}</select></label>
+          <h4>Sumar puntos a discreción</h4>
+          <p class="form-note">Para uso de Fede y Vani durante la previa y la noche de la boda. Estos puntos se cargan por equipo, no por persona.</p>
+          <input type="hidden" name="gameId" value="discrecional-fede-vani">
           <label>Equipo<select name="teamId" required>${Object.values(DATA.teams).map(team => option(team.id, `${team.emoji} ${team.name}`, "")).join("")}</select></label>
-          <label>Puntos<input name="points" type="number" step="1" placeholder="Ej: 50 o -10" required></label>
-          <label>Comentario<textarea name="comment" placeholder="Ej: ganó kermesse, bonus capitán, penalización..."></textarea></label>
-          <button type="submit">Guardar puntos</button>
+          <label>Puntos<input name="points" type="number" step="1" placeholder="Ej: 50, 100 o -20" required></label>
+          <label>Motivo / comentario<textarea name="comment" placeholder="Ej: ganó juego físico, bonus por actitud, penalización, decisión de Fede y Vani..."></textarea></label>
+          <button type="submit">Sumar puntos</button>
         </form>
         <article class="section-card">
           <h4>Candados</h4>
@@ -1132,7 +1138,7 @@
         state.rsvps[currentGuest.id] = payload;
         state.rsvpEditMode = false;
         saveState();
-        toast("Asistencia guardada. Sumaste +10 puntos para tu equipo.");
+        toast("Asistencia guardada. Sumaste puntos para tu equipo.");
         renderCurrentRoute();
         postToSheets("saveRsvp", payload);
       });
@@ -1159,7 +1165,7 @@
         state.profileEditMode = false;
         saveState();
         renderCurrentRoute();
-        toast("Ficha secreta guardada. Sumaste +15 puntos para tu equipo.");
+        toast("Ficha secreta guardada. Sumaste puntos para tu equipo.");
         postToSheets("saveProfile", payload);
       });
     }
@@ -1204,6 +1210,7 @@
         ...values,
         points: Number(values.points || 0),
         adminPassword: state.adminPassword,
+        adminName: "Fede y Vani",
         timestamp: new Date().toISOString()
       };
       state.scoreEntries.push(payload);
