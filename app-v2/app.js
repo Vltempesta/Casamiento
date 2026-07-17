@@ -10,6 +10,11 @@
     error: "Sheets no responde"
   };
 
+  // Puntos enteros por persona, equilibrados por cantidad de jugadores activos por equipo.
+  // Fede, Vani y registros no jugadores/mascota quedan fuera del cálculo competitivo.
+  const RSVP_POINTS_BY_TEAM = { bosque: 13, fuego: 10, luz: 14, noche: 14, agua: 13, viento: 11 };
+  const PROFILE_POINTS_BY_TEAM = { bosque: 20, fuego: 15, luz: 21, noche: 21, agua: 19, viento: 16 };
+
   let currentGuest = null;
   let currentRoute = "inicio";
   let remoteStatus = "idle";
@@ -83,6 +88,60 @@
 
   function getGuestById(id) {
     return DATA.guests.find(guest => guest.id === id);
+  }
+
+
+  function isGuestCaptain(guest) {
+    const role = normalize(guest?.role || "");
+    const tags = Array.isArray(guest?.tags) ? guest.tags.map(normalize) : [];
+    return role.includes("capitan") || tags.includes("capitan");
+  }
+
+  function isCompetitionGuest(guest) {
+    if (!guest) return false;
+    const id = normalize(guest.id || "");
+    const fullName = normalize(`${guest.firstName || ""} ${guest.lastName || ""}`);
+    const role = normalize(guest.role || "");
+    return !(
+      id === "fede-santi" ||
+      id === "vani-tempesta" ||
+      id === "simba" ||
+      fullName === "fede santi" ||
+      fullName === "vani tempesta" ||
+      role.includes("novio") ||
+      role.includes("novia") ||
+      role.includes("mascota")
+    );
+  }
+
+  function sortGuestsForDisplay(a, b) {
+    const captainDiff = Number(isGuestCaptain(b)) - Number(isGuestCaptain(a));
+    if (captainDiff) return captainDiff;
+    return `${a.lastName || ""} ${a.firstName || ""}`.localeCompare(`${b.lastName || ""} ${b.firstName || ""}`, "es");
+  }
+
+  function teamCompetitionMembers(teamId) {
+    return DATA.guests.filter(guest => guest.team === teamId && isCompetitionGuest(guest));
+  }
+
+  function teamSizeForPoints(teamId) {
+    return teamCompetitionMembers(teamId).length || 1;
+  }
+
+  function rsvpPointsForTeam(teamId) {
+    return RSVP_POINTS_BY_TEAM[teamId] ?? 10;
+  }
+
+  function profilePointsForTeam(teamId) {
+    return PROFILE_POINTS_BY_TEAM[teamId] ?? 15;
+  }
+
+  function completedRsvpMembers(teamId) {
+    return teamCompetitionMembers(teamId).filter(guest => hasCompletedRsvp(state.rsvps[guest.id]));
+  }
+
+  function completedProfileMembers(teamId) {
+    return teamCompetitionMembers(teamId).filter(guest => hasCompletedProfile(state.profiles[guest.id]));
   }
 
   function findGuest(query) {
@@ -678,34 +737,36 @@
 
   function automaticPointEntries() {
     const entries = [];
-    Object.entries(state.rsvps || {}).forEach(([guestId, row]) => {
-      if (!hasCompletedRsvp(row)) return;
-      const guest = getGuestById(guestId);
-      const teamId = row.teamId || guest?.team;
-      if (!teamId) return;
-      entries.push({
-        timestamp: row.updatedAt,
-        gameId: "auto-rsvp",
-        teamId,
-        points: 10,
-        comment: `Confirmación de asistencia · ${row.firstName || guest?.firstName || guestId}`,
-        automatic: true
+
+    Object.values(DATA.teams).forEach(team => {
+      const rsvpPoints = rsvpPointsForTeam(team.id);
+      const profilePoints = profilePointsForTeam(team.id);
+
+      completedRsvpMembers(team.id).forEach(guest => {
+        const row = state.rsvps[guest.id] || {};
+        entries.push({
+          timestamp: row.updatedAt,
+          gameId: "auto-rsvp",
+          teamId: team.id,
+          points: rsvpPoints,
+          comment: `Confirmación de asistencia · ${guest.firstName || guest.id}`,
+          automatic: true
+        });
+      });
+
+      completedProfileMembers(team.id).forEach(guest => {
+        const row = state.profiles[guest.id] || {};
+        entries.push({
+          timestamp: row.updatedAt,
+          gameId: "auto-profile",
+          teamId: team.id,
+          points: profilePoints,
+          comment: `Ficha secreta completa · ${guest.firstName || guest.id}`,
+          automatic: true
+        });
       });
     });
-    Object.entries(state.profiles || {}).forEach(([guestId, row]) => {
-      if (!hasCompletedProfile(row)) return;
-      const guest = getGuestById(guestId);
-      const teamId = row.teamId || guest?.team;
-      if (!teamId) return;
-      entries.push({
-        timestamp: row.updatedAt,
-        gameId: "auto-profile",
-        teamId,
-        points: 15,
-        comment: `Ficha secreta completa · ${guest?.firstName || guestId}`,
-        automatic: true
-      });
-    });
+
     return entries;
   }
 
@@ -819,30 +880,52 @@
 
   function renderTeam() {
     const team = getTeam(currentGuest.team);
-    const members = DATA.guests.filter(guest => guest.team === team.id);
+    const members = DATA.guests.filter(guest => guest.team === team.id).sort(sortGuestsForDisplay);
+    const activePlayers = teamCompetitionMembers(team.id).length;
+    const confirmed = completedRsvpMembers(team.id).length;
+    const profiles = completedProfileMembers(team.id).length;
     return `
+      ${captainGuestStyles()}
       ${sectionHeader("mi fuerza", `Equipo ${team.name}`, `${team.group}. Capitán: ${team.captain}.`)}
       <section class="team-hero section-card" style="--local-accent:${team.accent}">
         <div class="team-symbol">${team.emoji}</div>
-        <div><h3>${team.name}</h3><p>${escapeHTML(team.motto)}</p><div class="badge-row"><span class="badge">${escapeHTML(team.colorName)}</span><span class="badge muted">${escapeHTML(team.trait)}</span></div></div>
+        <div><h3>${team.name}</h3><p>${escapeHTML(team.motto)}</p><div class="badge-row"><span class="badge">${escapeHTML(team.colorName)}</span><span class="badge muted">${escapeHTML(team.trait)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span></div></div>
       </section>
       <section class="grid two">
-        <article class="section-card"><h4>Formación</h4><div class="guest-list">${members.map(guestPill).join("")}</div></article>
-        <article class="section-card"><h4>Estrategia</h4><p>${escapeHTML(team.strategy)}</p><hr><p><strong>Rol del capitán:</strong> activar al equipo, responder consignas, decidir comodines y cargar mística.</p></article>
+        <article class="section-card"><h4>Formación</h4><p class="form-note">Capitán primero. Fede y Vani no cuentan para los puntos competitivos.</p><div class="guest-list">${members.map(guestPill).join("")}</div></article>
+        <article class="section-card"><h4>Estado del equipo</h4><p><strong>Asistencia:</strong> ${confirmed} de ${activePlayers} jugadores activos.</p><p><strong>Ficha secreta:</strong> ${profiles} de ${activePlayers} jugadores activos.</p><hr><p><strong>Estrategia:</strong> ${escapeHTML(team.strategy)}</p><p><strong>Rol del capitán:</strong> activar al equipo, responder consignas, decidir comodines y cargar mística.</p></article>
       </section>`;
+  }
+
+  function captainGuestStyles() {
+    return `<style>
+      .guest-pill.captain-pill{border-color:rgba(216,185,106,.70);background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.72));box-shadow:0 0 0 1px rgba(216,185,106,.10) inset}
+      .captain-label{display:inline-flex;align-items:center;gap:6px;margin-top:5px;padding:4px 8px;border-radius:999px;background:rgba(216,185,106,.14);color:#f2d482;font-weight:950;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+    </style>`;
   }
 
   function guestPill(guest) {
     const team = getTeam(guest.team);
-    return `<div class="guest-pill"><span>${team.emoji}</span><div><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(guest.alias)} · ${escapeHTML(guest.role)}</small></div></div>`;
+    const captain = isGuestCaptain(guest);
+    return `<div class="guest-pill ${captain ? "captain-pill" : ""}"><span>${captain ? "👑" : team.emoji}</span><div><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(guest.alias)} · ${escapeHTML(guest.role)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}</div></div>`;
   }
 
   function renderPointsHub() {
     const team = getTeam(currentGuest.team);
+    const activePlayers = teamSizeForPoints(team.id);
+    const rsvpPoints = rsvpPointsForTeam(team.id);
+    const profilePoints = profilePointsForTeam(team.id);
     const rsvp = state.rsvps[currentGuest.id];
     const profile = state.profiles[currentGuest.id];
-    const rsvpDone = hasCompletedRsvp(rsvp);
-    const profileDone = hasCompletedProfile(profile);
+    const currentGuestCanScore = isCompetitionGuest(currentGuest);
+    const rsvpDone = currentGuestCanScore && hasCompletedRsvp(rsvp);
+    const profileDone = currentGuestCanScore && hasCompletedProfile(profile);
+    const rsvpDoneCount = completedRsvpMembers(team.id).length;
+    const profileDoneCount = completedProfileMembers(team.id).length;
+    const rsvpCurrentPoints = rsvpDoneCount * rsvpPoints;
+    const profileCurrentPoints = profileDoneCount * profilePoints;
+    const rsvpMaxPoints = activePlayers * rsvpPoints;
+    const profileMaxPoints = activePlayers * profilePoints;
     const rank = calculateRanking();
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
 
@@ -854,37 +937,37 @@
         <div>
           <p class="eyebrow">Equipo ${escapeHTML(team.name)}</p>
           <h3>Tu aporte suma para toda la fuerza.</h3>
-          <p>Vas a competir contra otros 5 equipos desde ahora mismo hasta que finalice la fiesta. Cada acción puede sumar puntos, desbloquear ventajas o mover el ranking.</p>
-          <div class="badge-row"><span class="badge">${team.emoji} ${team.name}</span><span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div>
+          <p>Vas a competir contra otros 5 equipos desde ahora mismo hasta que finalice la fiesta. Cada acción suma distinto según tu equipo para mantener la competencia equilibrada.</p>
+          <div class="badge-row"><span class="badge">${team.emoji} ${team.name}</span><span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div>
         </div>
         <div class="points-medal"><span>🏆</span><strong>${myPoints}</strong><small>puntos actuales</small></div>
       </section>
 
       <section class="grid three points-rules">
-        <article class="section-card"><span class="card-icon">👤</span><h4>Acciones individuales</h4><p>Completá asistencia, ficha secreta o consignas personales. Tu aporte suma para todo el equipo.</p></article>
-        <article class="section-card"><span class="card-icon">👥</span><h4>Acciones de equipo</h4><p>Algunas consignas requieren coordinación con tu capitán o con varios integrantes.</p></article>
-        <article class="section-card"><span class="card-icon">🎉</span><h4>Juegos de la fiesta</h4><p>El día del casamiento habrá puntos físicos, bonus, penalizaciones y sorpresas.</p></article>
+        <article class="section-card"><span class="card-icon">⚖️</span><h4>Puntos equilibrados</h4><p>Cada equipo tiene una cantidad distinta de integrantes, por eso cada jugador suma puntos enteros personalizados para su fuerza.</p></article>
+        <article class="section-card"><span class="card-icon">👥</span><h4>Jugadores activos</h4><p>Fede y Vani no cuentan para el cálculo competitivo. El puntaje se calcula sobre los invitados jugadores de cada equipo.</p></article>
+        <article class="section-card"><span class="card-icon">🎉</span><h4>Hasta el final</h4><p>Los puntos se acumulan desde ahora y siguen durante la fiesta con juegos físicos, bonus y sorpresas.</p></article>
       </section>
 
       <section class="section-card">
         <div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
-        ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", rsvpDone ? "Ya sumaste estos puntos para tu equipo. Podés editar tu respuesta, pero no suma dos veces." : "Cada integrante que confirma suma para su equipo. Además ayuda a organizar traslado y comida.", "+10", rsvpDone, "asistencia")}
-        ${pointsAction("🕯️", "Completar ficha secreta", profileDone ? "Ya sumaste estos puntos para tu equipo. Podés editar tu ficha, pero no suma dos veces." : "Sirve para preparar juegos, trivias, playlist y desafíos personalizados.", "+15", profileDone, "ficha")}
-        ${pointsAction("🎵", "Proponer canción de equipo", "Próximamente cada equipo podrá proponer un tema que represente a su fuerza.", "+20", false, "ficha")}
-        ${pointsAction("📸", "Foto creativa del equipo", "Cuando se habilite, cada equipo podrá mandar una foto o composición temática.", "+30", false, "equipo")}
+        ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", currentGuestCanScore ? (rsvpDone ? `Ya sumaste +${rsvpPoints} puntos para ${team.name}. Podés editar tu respuesta, pero no suma dos veces.` : `Al completar esta acción sumás +${rsvpPoints} puntos para ${team.name}. También elegís traslado y cargás restricciones alimenticias.`) : "Los novios no suman puntos, pero pueden revisar el estado del equipo.", `+${rsvpPoints}`, rsvpDone, "asistencia", `${rsvpDoneCount} de ${activePlayers} confirmaron · ${rsvpCurrentPoints}/${rsvpMaxPoints} pts`)}
+        ${pointsAction("🕯️", "Completar ficha secreta", currentGuestCanScore ? (profileDone ? `Ya sumaste +${profilePoints} puntos para ${team.name}. Podés editar tu ficha, pero no suma dos veces.` : `Al completar esta acción sumás +${profilePoints} puntos para ${team.name}. Sirve para preparar juegos, trivias, playlist y desafíos personalizados.`) : "Los novios no suman puntos, pero pueden revisar el estado del equipo.", `+${profilePoints}`, profileDone, "ficha", `${profileDoneCount} de ${activePlayers} completaron ficha · ${profileCurrentPoints}/${profileMaxPoints} pts`)}
+        ${pointsAction("🎵", "Proponer canción de equipo", "Próximamente cada equipo podrá proponer un tema que represente a su fuerza.", "+100", false, "equipo", "Consigna de equipo · Próximamente")}
+        ${pointsAction("📸", "Foto creativa del equipo", "Cuando se habilite, cada equipo podrá mandar una foto o composición temática.", "+150", false, "equipo", "Consigna de equipo · Próximamente")}
       </section>
 
-      <section class="section-card points-note"><span class="card-icon">⚔️</span><h4>Esto no es solo previa</h4><p>Los puntos se acumulan desde ahora y siguen durante la fiesta. El ranking final se define cuando termine la verdadera batalla.</p></section>
+      <section class="section-card points-note"><span class="card-icon">⚔️</span><h4>Importante</h4><p>Editar una respuesta no vuelve a sumar puntos. Los puntos de asistencia y ficha se calculan una sola vez por jugador activo.</p></section>
     `;
   }
 
-  function pointsAction(icon, title, text, points, done, route) {
-    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${done ? `<small class="points-done-note">✅ Ya sumaste estos puntos</small>` : ""}</div></div><div class="points-right"><b>${escapeHTML(points)}</b><button type="button" data-go="${escapeHTML(route)}">${done ? "Ver / editar" : "Hacer"}</button></div></article>`;
+  function pointsAction(icon, title, text, points, done, route, progressText = "") {
+    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${progressText ? `<small class="points-progress">${escapeHTML(progressText)}</small>` : ""}${done ? `<small class="points-done-note">✅ Ya sumaste estos puntos</small>` : ""}</div></div><div class="points-right"><b>${escapeHTML(points)}</b><button type="button" data-go="${escapeHTML(route)}">${done ? "Ver / editar" : "Hacer"}</button></div></article>`;
   }
 
   function pointsHubStyles() {
     return `<style>
-      .points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84));border-color:rgba(216,185,106,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(247,238,217,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,9,5,.34);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:#f0cd75;line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-rules{margin-top:16px}.points-action{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(247,238,217,.14);border-radius:22px;padding:18px;background:rgba(4,9,5,.26);margin-top:12px}.points-action.done{border-color:rgba(189,240,182,.28);background:rgba(189,240,182,.07)}.points-done-note{display:inline-block;margin-top:8px;color:#bdf0b6;font-weight:900}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right b{font-family:Georgia,serif;font-size:32px;color:#f0cd75;white-space:nowrap}.points-right button{white-space:nowrap}.points-note{margin-top:16px;border-color:rgba(216,185,106,.40);background:rgba(216,185,106,.10)}
+      .points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84));border-color:rgba(216,185,106,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(247,238,217,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,9,5,.34);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:#f0cd75;line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-rules{margin-top:16px}.points-action{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(247,238,217,.14);border-radius:22px;padding:18px;background:rgba(4,9,5,.26);margin-top:12px}.points-action.done{border-color:rgba(189,240,182,.28);background:rgba(189,240,182,.07)}.points-done-note,.points-progress{display:inline-block;margin-top:8px;font-weight:900}.points-done-note{color:#bdf0b6}.points-progress{color:#f0cd75}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right b{font-family:Georgia,serif;font-size:32px;color:#f0cd75;white-space:nowrap}.points-right button{white-space:nowrap}.points-note{margin-top:16px;border-color:rgba(216,185,106,.40);background:rgba(216,185,106,.10)}
       @media(max-width:850px){.points-hero{grid-template-columns:1fr}.points-medal{width:100%;height:auto;padding:22px}.points-action{grid-template-columns:1fr}.points-right{justify-content:space-between}}
     </style>`;
   }
@@ -964,9 +1047,10 @@
 
   function renderGuests() {
     const open = isUnlocked("guestMap");
-    const grouped = Object.values(DATA.teams).map(team => ({ team, guests: DATA.guests.filter(guest => guest.team === team.id) }));
+    const grouped = Object.values(DATA.teams).map(team => ({ team, guests: DATA.guests.filter(guest => guest.team === team.id).sort(sortGuestsForDisplay) }));
     return `
-      ${sectionHeader("organigrama", "Mapa de invitados", "Un quién-es-quién de la noche, con alias, equipos y personajes clave.")}
+      ${captainGuestStyles()}
+      ${sectionHeader("organigrama", "Mapa de invitados", "Un quién-es-quién de la noche, con alias, equipos y personajes clave. Los capitanes aparecen primeros en cada fuerza.")}
       ${open ? "" : lockedNotice("guestMap")}
       <section class="guest-map">${grouped.map(group => `
         <article class="section-card team-column" style="--local-accent:${group.team.accent}">
