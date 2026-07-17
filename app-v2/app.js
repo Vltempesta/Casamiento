@@ -258,6 +258,7 @@
   function boot() {
     setRemoteStatus(isConfigured() ? "connecting" : "idle");
     fillGuestSuggestions();
+    configureNavigation();
     bindShellEvents();
     if (state.currentGuestId) {
       const guest = getGuestById(state.currentGuestId);
@@ -269,6 +270,16 @@
   function fillGuestSuggestions() {
     const datalist = $("#guestSuggestions");
     datalist.innerHTML = DATA.guests.map(guest => `<option value="${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}"></option>`).join("");
+  }
+
+  function configureNavigation() {
+    const torneoButton = $('.nav-tabs button[data-route="torneo"]');
+    if (torneoButton) {
+      torneoButton.dataset.route = "puntos";
+      torneoButton.textContent = "Sumá puntos!";
+    }
+    const juegosButton = $('.nav-tabs button[data-route="juegos"]');
+    if (juegosButton) juegosButton.remove();
   }
 
   function bindShellEvents() {
@@ -324,7 +335,7 @@
     $("#mainScreen").classList.remove("hidden");
     $("#welcomeTitle").textContent = `Hola, ${guest.firstName}.`;
     $("#welcomeSub").textContent = `Tu fuerza es ${team.name}. Capitán: ${team.captain}.`;
-    navigate(currentRoute || "inicio");
+    navigate("inicio");
     if (showWelcome) toast(`Acceso concedido · ${team.emoji} Equipo ${team.name}.`);
   }
 
@@ -341,8 +352,7 @@
       asistencia: renderRSVP,
       ficha: renderProfile,
       equipo: renderTeam,
-      torneo: renderTournament,
-      juegos: renderGames,
+      puntos: renderPointsHub,
       ranking: renderRanking,
       invitados: renderGuests,
       admin: renderAdmin
@@ -377,44 +387,72 @@
     const submittedGames = Object.keys(state.gameSubmissions || {}).filter(key => key.startsWith(`${currentGuest.id}::`)).length;
     const rank = calculateRanking();
     const myRank = rank.findIndex(row => row.id === team.id) + 1;
+    const myPoints = rank.find(row => row.id === team.id)?.total || 0;
+
+    const rsvpCallout = rsvp ? `
+      <div class="home-ok-callout">
+        <div>
+          <strong>✅ Asistencia registrada</strong>
+          <p>Ya tenemos tu confirmación, traslado y restricciones. Podés editar tu respuesta desde Asistencia.</p>
+        </div>
+        <button class="ghost-button" type="button" data-go="asistencia">Ver / editar</button>
+      </div>` : `
+      <div class="home-rsvp-callout">
+        <span class="callout-icon">✉️</span>
+        <div>
+          <strong>Confirmá tu asistencia</strong>
+          <p>Es lo primero que necesitamos que completes. Respondé antes del <b>31/08</b>. En el formulario también vas a elegir traslado y cargar restricciones alimenticias.</p>
+        </div>
+        <button type="button" data-go="asistencia">Confirmar ahora</button>
+      </div>`;
+
     return `
+      ${homeStyles()}
       <section class="hero-card" style="--local-accent:${team.accent}">
         <div class="hero-copy">
           <p class="eyebrow">Archivo personal</p>
-          <h3>Tu destino fue revelado.</h3>
-          <p>Has sido convocado por la fuerza de <strong>${team.name}</strong>. Desde este panel confirmás asistencia, completás tu ficha secreta, participás del torneo previo y llegás listo a la verdadera batalla.</p>
+          <h3>${rsvp ? "Tu destino fue revelado." : "Primero confirmá. Después, sumá puntos."}</h3>
+          <p>${rsvp ? `Has sido convocado por la fuerza de <strong>${team.name}</strong>. Tu asistencia ya quedó registrada; ahora podés completar tu ficha secreta y sumar puntos para tu equipo.` : `Ya sos parte del equipo <strong>${team.name}</strong>. Mientras esperamos que todos confirmen asistencia antes del <strong>31/08</strong>, ya podés empezar a jugar y sumar puntos para tu fuerza.`}</p>
           <div class="badge-row">
             <span class="badge">${team.emoji} Equipo ${team.name}</span>
             <span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span>
             <span class="badge muted">${escapeHTML(DATA.couple.dateLabel)}</span>
           </div>
+          ${rsvpCallout}
         </div>
         <div class="team-medallion">
           <span class="emoji">${team.emoji}</span>
           <strong>${team.name}</strong>
-          <small>${escapeHTML(team.motto)}</small>
-          <div class="score-chip">Puesto actual: ${myRank || "—"}</div>
+          <small>${escapeHTML(rsvp ? team.motto : "Competís contra otros 5 equipos desde ahora hasta que termine la fiesta.")}</small>
+          <div class="score-chip">${rsvp ? `Puesto actual: ${myRank || "—"}` : "⏳ Asistencia pendiente"}</div>
         </div>
       </section>
 
       <section class="stats-grid">
         ${statCard("Asistencia", rsvp ? "Registrada" : "Pendiente", rsvp ? "✅" : "✉️")}
         ${statCard("Ficha secreta", profile ? "Cargada" : "Pendiente", profile ? "✅" : "🕯️")}
-        ${statCard("Juegos enviados", String(submittedGames), "🎲")}
-        ${statCard("Puntos del equipo", String(rank.find(r => r.id === team.id)?.total || 0), "🏆")}
+        ${statCard("Acciones enviadas", String(submittedGames), "🎲")}
+        ${statCard("Puntos del equipo", String(myPoints), "🏆")}
       </section>
 
-      ${sectionHeader("próximos pasos", "Lo importante primero", "Completá los datos básicos. El resto se va abriendo por fecha, por equipo o por decisión de los novios.")}
+      ${sectionHeader("próximos pasos", rsvp ? "Ahora sí, al archivo secreto" : "Lo importante primero", rsvp ? "La asistencia ya quedó registrada. El foco pasa a la ficha secreta y a sumar puntos para tu equipo." : "La asistencia sigue siendo prioridad, pero la competencia ya empezó.")}
       <section class="grid four">
-        ${actionCard("asistencia", rsvp ? "Asistencia confirmada" : "Confirmar asistencia", rsvp ? "Podés editarla cuando quieras." : "Nombre, mail, comida y restricciones.", rsvp ? "✅" : "✉️", Boolean(rsvp))}
+        ${actionCard("asistencia", rsvp ? "Asistencia confirmada" : "Confirmar asistencia", rsvp ? "Podés editarla cuando quieras." : "Traslado y restricciones antes del 31/08.", rsvp ? "✅" : "✉️", Boolean(rsvp))}
+        ${actionCard("puntos", "Sumá puntos!", "Hub de juegos, reglas y acciones para tu equipo.", "🏆")}
         ${actionCard("ficha", profile ? "Ficha cargada" : "Completar ficha secreta", profile ? "Tus respuestas ya alimentan los juegos." : "Canciones, secretos, gustos y desafíos.", profile ? "✅" : "🕯️", Boolean(profile))}
         ${actionCard("equipo", `Ver ${team.name}`, "Integrantes, capitán, lema y estrategia.", team.emoji)}
-        ${actionCard("ranking", "Ranking general", "Puntos previos, físicos, bonus y penalizaciones.", "🏆")}
       </section>
-
-      ${sectionHeader("candados", "Estado de archivos", "La página puede ir revelando información sin volver a mandar otro link.")}
-      <section class="grid three">${Object.keys(DATA.unlocks).map(unlockCard).join("")}</section>
     `;
+  }
+
+  function homeStyles() {
+    return `<style>
+      .home-rsvp-callout{margin-top:24px;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;border:1px solid rgba(216,185,106,.60);border-radius:24px;padding:20px;background:linear-gradient(135deg,rgba(216,185,106,.20),rgba(24,39,25,.78));box-shadow:0 18px 50px rgba(216,185,106,.10)}
+      .home-rsvp-callout .callout-icon{font-size:34px}.home-rsvp-callout strong{display:block;font-family:Georgia,serif;font-size:28px;color:var(--cream);margin-bottom:5px}.home-rsvp-callout p{margin:0;color:rgba(247,238,217,.78);font-weight:800;line-height:1.45}.home-rsvp-callout button{white-space:nowrap}
+      .home-ok-callout{margin-top:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid rgba(189,240,182,.28);border-radius:24px;padding:18px 20px;background:rgba(189,240,182,.08)}
+      .home-ok-callout strong{display:block;font-family:Georgia,serif;font-size:24px;color:var(--cream);margin-bottom:4px}.home-ok-callout p{margin:0;color:var(--muted);font-weight:800;line-height:1.45}
+      @media(max-width:850px){.home-rsvp-callout{grid-template-columns:1fr}.home-ok-callout{flex-direction:column;align-items:flex-start}}
+    </style>`;
   }
 
   function statCard(label, value, icon) {
@@ -457,65 +495,36 @@
           <h4>Micro misterioso</h4>
           <p><strong>Relax, no te preocupes por cómo ir ni cómo volver.</strong></p>
           <p>Vamos a poner una combi / micro que saldrá desde el <strong>Obelisco</strong> y llevará a los invitados hasta el lugar secreto.</p>
-          <div class="micro-steps">
-            <span>Subís en el Obelisco</span>
-            <span>→</span>
-            <span>Bajás en el bosque</span>
-          </div>
+          <div class="micro-steps"><span>Subís en el Obelisco</span><span>→</span><span>Bajás en el bosque</span></div>
           <p>Regreso previsto: <strong>03:00 hs</strong>.</p>
           <small>Si querés recibir información de la combi, marcá “Necesito info de combi” al confirmar asistencia.</small>
         </article>
       </section>
 
+      <section class="section-card info-battle-card">
+        <span class="card-icon">🏆</span>
+        <h4>La batalla ya empezó</h4>
+        <p>Vas a competir contra otros 5 equipos desde ahora mismo hasta que finalice la fiesta. En la sección <strong>Sumá puntos!</strong> vas a ver juegos, reglas y formas de sumar para tu equipo.</p>
+        <button type="button" data-go="puntos">Ver cómo sumar puntos</button>
+      </section>
+
       <section class="section-card dress-card">
-        <div class="card-title-row">
-          <div>
-            <span class="card-icon">🖤</span>
-            <h4>Código de vestimenta</h4>
-          </div>
-          <span class="badge">Elegante festivo de estancia</span>
-        </div>
+        <div class="card-title-row"><div><span class="card-icon">🖤</span><h4>Código de vestimenta</h4></div><span class="badge">Elegante festivo de estancia</span></div>
         <p class="dress-lead">Venite arreglado/a, cómodo/a y listo/a para una noche larga de fiesta.</p>
         <div class="grid two compact">
-          <div class="menu-line">
-            <strong>Para ellas</strong>
-            <p>Vestidos, monos, conjuntos o looks elegantes. Importante: habrá sectores con pasto. Mejor taco ancho, plataforma, botas elegantes o calzado cómodo para jardín.</p>
-          </div>
-          <div class="menu-line">
-            <strong>Para ellos</strong>
-            <p>Traje, saco, camisa o look elegante de fiesta. Corbata opcional.</p>
-          </div>
+          <div class="menu-line"><strong>Para ellas</strong><p>Vestidos, monos, conjuntos o looks elegantes. Importante: habrá sectores con pasto. Mejor taco ancho, plataforma, botas elegantes o calzado cómodo para jardín.</p></div>
+          <div class="menu-line"><strong>Para ellos</strong><p>Traje, saco, camisa o look elegante de fiesta. Corbata opcional.</p></div>
         </div>
         <div class="warning-ribbon">Evitá tacos aguja o tacos muy finos. Queremos que estés divino/a, pero también que puedas bailar, caminar y sobrevivir al bosque.</div>
         <p class="form-note">Evitar blanco total.</p>
       </section>
 
       <section class="grid two">
-        <article class="section-card">
-          <span class="card-icon">🌿</span>
-          <h4>Consejo del bosque</h4>
-          <p>Puede refrescar de noche. Traé un abrigo liviano y elegí calzado cómodo.</p>
-          <p>Y si venís en el micro misterioso, dejate llevar.</p>
-        </article>
-
-        <article class="section-card ${menuOpen ? "" : "locked-panel"}">
-          <div class="card-title-row"><h4>🍽️ Menú</h4><span class="badge">${menuOpen ? "Disponible" : "Bloqueado"}</span></div>
-          ${menuOpen ? `
-            <div class="grid two compact">
-              ${Object.entries(DATA.info.menu).map(([key, value]) => `<div class="menu-line"><strong>${menuLabel(key)}</strong><p>${escapeHTML(value)}</p></div>`).join("")}
-            </div>` : `<p>Se revelará más adelante.</p><p>Si tenés restricciones alimentarias, alergias o preferencias importantes, cargalas en <strong>Confirmar asistencia</strong>.</p>`}
-        </article>
+        <article class="section-card"><span class="card-icon">🌿</span><h4>Consejo del bosque</h4><p>Puede refrescar de noche. Traé un abrigo liviano y elegí calzado cómodo.</p><p>Y si venís en el micro misterioso, dejate llevar.</p></article>
+        <article class="section-card ${menuOpen ? "" : "locked-panel"}"><div class="card-title-row"><h4>🍽️ Menú</h4><span class="badge">${menuOpen ? "Disponible" : "Bloqueado"}</span></div>${menuOpen ? `<div class="grid two compact">${Object.entries(DATA.info.menu).map(([key, value]) => `<div class="menu-line"><strong>${menuLabel(key)}</strong><p>${escapeHTML(value)}</p></div>`).join("")}</div>` : `<p>Se revelará más adelante.</p><p>Si tenés restricciones alimentarias, alergias o preferencias importantes, cargalas en <strong>Confirmar asistencia</strong>.</p>`}</article>
       </section>
 
-      <section class="section-card">
-        <div class="card-title-row"><h4>Preguntas rápidas</h4><span class="badge muted">FAQ</span></div>
-        <div class="faq-grid">
-          <div><strong>¿Dónde es?</strong><p>Todavía es secreto. El destino final se revelará más adelante.</p></div>
-          <div><strong>¿Hay combi?</strong><p>Sí. Saldrá desde el Obelisco y volverá al finalizar la fiesta.</p></div>
-          <div><strong>¿A qué hora es?</strong><p>El evento es de 18:00 a 03:00 hs.</p></div>
-          <div><strong>¿Qué calzado conviene?</strong><p>Algo elegante, pero cómodo para caminar sobre pasto.</p></div>
-        </div>
-      </section>`;
+      <section class="section-card"><div class="card-title-row"><h4>Preguntas rápidas</h4><span class="badge muted">FAQ</span></div><div class="faq-grid"><div><strong>¿Dónde es?</strong><p>Todavía es secreto. El destino final se revelará más adelante.</p></div><div><strong>¿Hay combi?</strong><p>Sí. Saldrá desde el Obelisco y volverá al finalizar la fiesta.</p></div><div><strong>¿A qué hora es?</strong><p>El evento es de 18:00 a 03:00 hs.</p></div><div><strong>¿Qué calzado conviene?</strong><p>Algo elegante, pero cómodo para caminar sobre pasto.</p></div></div></section>`;
   }
 
   function infoStyles() {
@@ -528,6 +537,7 @@
       .micro-steps{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0;padding:12px 14px;border-radius:18px;background:rgba(4,9,5,.34);border:1px solid rgba(247,238,217,.14);font-weight:900;color:#f7eed9}
       .dress-card{margin-top:16px}.dress-card .card-title-row{align-items:flex-start}.dress-lead{font-weight:800;color:rgba(247,238,217,.82)}
       .faq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.faq-grid div{border:1px solid rgba(247,238,217,.12);border-radius:18px;padding:14px;background:rgba(4,9,5,.22)}.faq-grid p{margin:7px 0 0;color:rgba(247,238,217,.66);font-weight:750;line-height:1.45}
+      .info-battle-card{margin-top:16px;border-color:rgba(216,185,106,.46);background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84))}.info-battle-card button{margin-top:14px}
       @media(max-width:760px){.info-hero{flex-direction:column;align-items:flex-start}.info-calendar-button{width:100%}.faq-grid{grid-template-columns:1fr}}
     </style>`;
   }
@@ -731,6 +741,56 @@
     return `<div class="guest-pill"><span>${team.emoji}</span><div><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(guest.alias)} · ${escapeHTML(guest.role)}</small></div></div>`;
   }
 
+  function renderPointsHub() {
+    const team = getTeam(currentGuest.team);
+    const rsvp = state.rsvps[currentGuest.id];
+    const profile = state.profiles[currentGuest.id];
+    const rank = calculateRanking();
+    const myPoints = rank.find(row => row.id === team.id)?.total || 0;
+
+    return `
+      ${pointsHubStyles()}
+      ${sectionHeader("sumá puntos!", "La competencia empieza ahora", "Mientras esperamos que todos confirmen asistencia, cada equipo puede empezar a sumar puntos. Algunas consignas son individuales, otras son de equipo y otras se activarán más adelante.")}
+
+      <section class="points-hero section-card" style="--local-accent:${team.accent}">
+        <div>
+          <p class="eyebrow">Equipo ${escapeHTML(team.name)}</p>
+          <h3>Tu aporte suma para toda la fuerza.</h3>
+          <p>Vas a competir contra otros 5 equipos desde ahora mismo hasta que finalice la fiesta. Cada acción puede sumar puntos, desbloquear ventajas o mover el ranking.</p>
+          <div class="badge-row"><span class="badge">${team.emoji} ${team.name}</span><span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div>
+        </div>
+        <div class="points-medal"><span>🏆</span><strong>${myPoints}</strong><small>puntos actuales</small></div>
+      </section>
+
+      <section class="grid three points-rules">
+        <article class="section-card"><span class="card-icon">👤</span><h4>Acciones individuales</h4><p>Completá asistencia, ficha secreta o consignas personales. Tu aporte suma para todo el equipo.</p></article>
+        <article class="section-card"><span class="card-icon">👥</span><h4>Acciones de equipo</h4><p>Algunas consignas requieren coordinación con tu capitán o con varios integrantes.</p></article>
+        <article class="section-card"><span class="card-icon">🎉</span><h4>Juegos de la fiesta</h4><p>El día del casamiento habrá puntos físicos, bonus, penalizaciones y sorpresas.</p></article>
+      </section>
+
+      <section class="section-card">
+        <div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
+        ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", "Cada integrante que confirma suma para su equipo. Además ayuda a organizar traslado y comida.", "+10", rsvp, "asistencia")}
+        ${pointsAction("🕯️", "Completar ficha secreta", "Sirve para preparar juegos, trivias, playlist y desafíos personalizados.", "+15", profile, "ficha")}
+        ${pointsAction("🎵", "Proponer canción de equipo", "Próximamente cada equipo podrá proponer un tema que represente a su fuerza.", "+20", false, "ficha")}
+        ${pointsAction("📸", "Foto creativa del equipo", "Cuando se habilite, cada equipo podrá mandar una foto o composición temática.", "+30", false, "equipo")}
+      </section>
+
+      <section class="section-card points-note"><span class="card-icon">⚔️</span><h4>Esto no es solo previa</h4><p>Los puntos se acumulan desde ahora y siguen durante la fiesta. El ranking final se define cuando termine la verdadera batalla.</p></section>
+    `;
+  }
+
+  function pointsAction(icon, title, text, points, done, route) {
+    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p></div></div><div class="points-right"><b>${escapeHTML(points)}</b><button type="button" data-go="${escapeHTML(route)}">${done ? "Ver" : "Hacer"}</button></div></article>`;
+  }
+
+  function pointsHubStyles() {
+    return `<style>
+      .points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84));border-color:rgba(216,185,106,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(247,238,217,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,9,5,.34);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:#f0cd75;line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-rules{margin-top:16px}.points-action{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(247,238,217,.14);border-radius:22px;padding:18px;background:rgba(4,9,5,.26);margin-top:12px}.points-action.done{border-color:rgba(189,240,182,.28);background:rgba(189,240,182,.07)}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right b{font-family:Georgia,serif;font-size:32px;color:#f0cd75;white-space:nowrap}.points-right button{white-space:nowrap}.points-note{margin-top:16px;border-color:rgba(216,185,106,.40);background:rgba(216,185,106,.10)}
+      @media(max-width:850px){.points-hero{grid-template-columns:1fr}.points-medal{width:100%;height:auto;padding:22px}.points-action{grid-template-columns:1fr}.points-right{justify-content:space-between}}
+    </style>`;
+  }
+
   function renderTournament() {
     const open = isUnlocked("tournament");
     const ranking = calculateRanking();
@@ -907,7 +967,7 @@
       });
     }
 
-    if (route === "juegos" || route === "torneo") {
+    if (route === "puntos") {
       $$(".game-submit").forEach(form => form.addEventListener("submit", event => {
         event.preventDefault();
         const gameId = event.currentTarget.dataset.gameId;
