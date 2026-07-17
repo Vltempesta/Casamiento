@@ -18,6 +18,8 @@
     currentGuestId: null,
     adminUnlocked: false,
     adminPassword: "",
+    rsvpEditMode: false,
+    profileEditMode: false,
     rsvps: {},
     profiles: {},
     gameSubmissions: {},
@@ -384,6 +386,8 @@
     const team = getTeam(currentGuest.team);
     const rsvp = state.rsvps[currentGuest.id];
     const profile = state.profiles[currentGuest.id];
+    const rsvpDone = hasCompletedRsvp(rsvp);
+    const profileDone = hasCompletedProfile(profile);
     const submittedGames = Object.keys(state.gameSubmissions || {}).filter(key => key.startsWith(`${currentGuest.id}::`)).length;
     const rank = calculateRanking();
     const myRank = rank.findIndex(row => row.id === team.id) + 1;
@@ -662,6 +666,53 @@
     return `<div class="summary-item ${wide ? "wide" : ""}"><strong>${escapeHTML(label)}</strong><p>${escapeHTML(value || "Sin cargar")}</p></div>`;
   }
 
+
+
+  function hasCompletedRsvp(row) {
+    return Boolean(row && row.updatedAt && row.attendance);
+  }
+
+  function hasCompletedProfile(row) {
+    return Boolean(row && row.updatedAt);
+  }
+
+  function automaticPointEntries() {
+    const entries = [];
+    Object.entries(state.rsvps || {}).forEach(([guestId, row]) => {
+      if (!hasCompletedRsvp(row)) return;
+      const guest = getGuestById(guestId);
+      const teamId = row.teamId || guest?.team;
+      if (!teamId) return;
+      entries.push({
+        timestamp: row.updatedAt,
+        gameId: "auto-rsvp",
+        teamId,
+        points: 10,
+        comment: `Confirmación de asistencia · ${row.firstName || guest?.firstName || guestId}`,
+        automatic: true
+      });
+    });
+    Object.entries(state.profiles || {}).forEach(([guestId, row]) => {
+      if (!hasCompletedProfile(row)) return;
+      const guest = getGuestById(guestId);
+      const teamId = row.teamId || guest?.team;
+      if (!teamId) return;
+      entries.push({
+        timestamp: row.updatedAt,
+        gameId: "auto-profile",
+        teamId,
+        points: 15,
+        comment: `Ficha secreta completa · ${guest?.firstName || guestId}`,
+        automatic: true
+      });
+    });
+    return entries;
+  }
+
+  function allPointEntries() {
+    return [...automaticPointEntries(), ...(state.scoreEntries || [])];
+  }
+
   function attendanceLabel(value) {
     const labels = { "si": "Sí, voy", "no": "No puedo asistir", "a-confirmar": "A confirmar" };
     return labels[value] || value || "Sin cargar";
@@ -694,10 +745,54 @@
 
   function renderProfile() {
     const saved = state.profiles[currentGuest.id] || {};
+    const hasSaved = hasCompletedProfile(saved);
+    const editing = Boolean(state.profileEditMode || !hasSaved);
+
+    if (hasSaved && !editing) {
+      return `
+        ${rsvpStyles()}
+        ${sectionHeader("ficha secreta", "Ficha secreta registrada", "Tus respuestas ya forman parte del archivo del bosque. Podés editarlas cuando quieras.")}
+        <section class="section-card form-card rsvp-thank-card">
+          <div class="rsvp-thank-grid">
+            <div>
+              <div class="rsvp-okmark">✓</div>
+              <h4 class="rsvp-thank-title">Muchas gracias, ${escapeHTML(currentGuest.firstName)}.</h4>
+              <p class="rsvp-thank-lead">Tu ficha secreta quedó guardada. Esta acción suma <strong>+15 puntos</strong> para el equipo ${escapeHTML(getTeam(currentGuest.team).name)} y no vuelve a sumar aunque la edites.</p>
+
+              <div class="rsvp-summary-grid">
+                ${summaryLine("Color preferido", saved.favoriteColor || "Sin cargar")}
+                ${summaryLine("Canción que quiero", saved.songYes || "Sin cargar")}
+                ${summaryLine("Canción que NO quiero", saved.songNo || "Sin cargar")}
+                ${summaryLine("Comida preferida", saved.favoriteFood || "Sin cargar")}
+                ${summaryLine("Postre preferido", saved.favoriteDessert || "Sin cargar")}
+                ${summaryLine("Competitividad", saved.competitive ? `${saved.competitive}/10` : "Sin cargar")}
+                ${summaryLine("Deseo para los novios", saved.wish || "Sin cargar", true)}
+                ${summaryLine("Desafío para los novios", saved.challenge || "Sin cargar", true)}
+                ${summaryLine("Secreto", saved.secret || "Sin cargar", true)}
+                ${summaryLine("Habilidad", saved.skill || "Sin cargar")}
+                ${summaryLine("Debilidad", saved.weakness || "Sin cargar")}
+              </div>
+
+              <div class="rsvp-actions-row">
+                <button id="editProfile" type="button">Editar mi ficha</button>
+              </div>
+
+              <p class="form-note">Última edición: ${formatDateLabel(saved.updatedAt)}</p>
+            </div>
+
+            <aside class="rsvp-side-note">
+              <h4>Tu aporte ya sumó</h4>
+              <p>Completar la ficha secreta suma una sola vez para tu equipo. Podés editar tus respuestas más adelante, pero no duplica puntos.</p>
+              <p>Estas respuestas pueden usarse en trivias, playlist, bingo, secretos y desafíos durante la previa o la fiesta.</p>
+            </aside>
+          </div>
+        </section>`;
+    }
+
     return `
-      ${sectionHeader("ficha secreta", "Material clasificado para juegos", "Estas respuestas pueden convertirse en trivia, bingo, desafíos, playlist, premios o confesiones anónimas.")}
+      ${sectionHeader("ficha secreta", hasSaved ? "Editar ficha secreta" : "Material clasificado para juegos", "Estas respuestas pueden convertirse en trivia, bingo, desafíos, playlist, premios o confesiones anónimas.")}
       <form id="profileForm" class="section-card form-card">
-        <div class="warning-ribbon">Tus respuestas podrán ser usadas en tu contra durante la noche.</div>
+        <div class="warning-ribbon">Tus respuestas podrán ser usadas en tu contra durante la noche. Completar esta ficha suma +15 puntos una sola vez para tu equipo.</div>
         <div class="form-grid">
           ${field("favoriteColor", "Color preferido", saved.favoriteColor || "")}
           ${field("songYes", "Canción que quiero que pasen", saved.songYes || "")}
@@ -717,9 +812,10 @@
           ${field("skill", "Habilidad que aporto a mi equipo", saved.skill || "")}
           ${field("weakness", "Debilidad que oculto", saved.weakness || "")}
         </div>
-        <div class="form-actions"><button type="submit">Guardar ficha secreta</button><span class="form-note">${saved.updatedAt ? `Última edición: ${formatDateLabel(saved.updatedAt)}` : "Pendiente de carga."}</span></div>
+        <div class="form-actions"><button type="submit">${hasSaved ? "Guardar cambios" : "Guardar ficha secreta"}</button>${hasSaved ? `<button id="cancelProfileEdit" type="button" class="ghost-button">Cancelar edición</button>` : ""}<span class="form-note">${saved.updatedAt ? `Última edición: ${formatDateLabel(saved.updatedAt)}` : "Pendiente de carga."}</span></div>
       </form>`;
   }
+
 
   function renderTeam() {
     const team = getTeam(currentGuest.team);
@@ -745,6 +841,8 @@
     const team = getTeam(currentGuest.team);
     const rsvp = state.rsvps[currentGuest.id];
     const profile = state.profiles[currentGuest.id];
+    const rsvpDone = hasCompletedRsvp(rsvp);
+    const profileDone = hasCompletedProfile(profile);
     const rank = calculateRanking();
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
 
@@ -770,8 +868,8 @@
 
       <section class="section-card">
         <div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
-        ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", "Cada integrante que confirma suma para su equipo. Además ayuda a organizar traslado y comida.", "+10", rsvp, "asistencia")}
-        ${pointsAction("🕯️", "Completar ficha secreta", "Sirve para preparar juegos, trivias, playlist y desafíos personalizados.", "+15", profile, "ficha")}
+        ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", rsvpDone ? "Ya sumaste estos puntos para tu equipo. Podés editar tu respuesta, pero no suma dos veces." : "Cada integrante que confirma suma para su equipo. Además ayuda a organizar traslado y comida.", "+10", rsvpDone, "asistencia")}
+        ${pointsAction("🕯️", "Completar ficha secreta", profileDone ? "Ya sumaste estos puntos para tu equipo. Podés editar tu ficha, pero no suma dos veces." : "Sirve para preparar juegos, trivias, playlist y desafíos personalizados.", "+15", profileDone, "ficha")}
         ${pointsAction("🎵", "Proponer canción de equipo", "Próximamente cada equipo podrá proponer un tema que represente a su fuerza.", "+20", false, "ficha")}
         ${pointsAction("📸", "Foto creativa del equipo", "Cuando se habilite, cada equipo podrá mandar una foto o composición temática.", "+30", false, "equipo")}
       </section>
@@ -781,12 +879,12 @@
   }
 
   function pointsAction(icon, title, text, points, done, route) {
-    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p></div></div><div class="points-right"><b>${escapeHTML(points)}</b><button type="button" data-go="${escapeHTML(route)}">${done ? "Ver" : "Hacer"}</button></div></article>`;
+    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${done ? `<small class="points-done-note">✅ Ya sumaste estos puntos</small>` : ""}</div></div><div class="points-right"><b>${escapeHTML(points)}</b><button type="button" data-go="${escapeHTML(route)}">${done ? "Ver / editar" : "Hacer"}</button></div></article>`;
   }
 
   function pointsHubStyles() {
     return `<style>
-      .points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84));border-color:rgba(216,185,106,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(247,238,217,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,9,5,.34);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:#f0cd75;line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-rules{margin-top:16px}.points-action{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(247,238,217,.14);border-radius:22px;padding:18px;background:rgba(4,9,5,.26);margin-top:12px}.points-action.done{border-color:rgba(189,240,182,.28);background:rgba(189,240,182,.07)}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right b{font-family:Georgia,serif;font-size:32px;color:#f0cd75;white-space:nowrap}.points-right button{white-space:nowrap}.points-note{margin-top:16px;border-color:rgba(216,185,106,.40);background:rgba(216,185,106,.10)}
+      .points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84));border-color:rgba(216,185,106,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(247,238,217,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,9,5,.34);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:#f0cd75;line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-rules{margin-top:16px}.points-action{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(247,238,217,.14);border-radius:22px;padding:18px;background:rgba(4,9,5,.26);margin-top:12px}.points-action.done{border-color:rgba(189,240,182,.28);background:rgba(189,240,182,.07)}.points-done-note{display:inline-block;margin-top:8px;color:#bdf0b6;font-weight:900}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right b{font-family:Georgia,serif;font-size:32px;color:#f0cd75;white-space:nowrap}.points-right button{white-space:nowrap}.points-note{margin-top:16px;border-color:rgba(216,185,106,.40);background:rgba(216,185,106,.10)}
       @media(max-width:850px){.points-hero{grid-template-columns:1fr}.points-medal{width:100%;height:auto;padding:22px}.points-action{grid-template-columns:1fr}.points-right{justify-content:space-between}}
     </style>`;
   }
@@ -840,7 +938,7 @@
     return `
       ${sectionHeader("ranking", "La tabla de fuerzas", "Suma desafíos digitales, juegos físicos, bonus y penalizaciones cargadas desde el panel admin.")}
       <section class="ranking-list">${ranking.map(rankRow).join("")}</section>
-      <section class="section-card"><h4>Últimos movimientos</h4>${state.scoreEntries.length ? `<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Juego</th><th>Equipo</th><th>Puntos</th><th>Comentario</th></tr></thead><tbody>${state.scoreEntries.slice(-12).reverse().map(entry => `<tr><td>${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>${Number(entry.points || 0)}</td><td>${escapeHTML(entry.comment || "")}</td></tr>`).join("")}</tbody></table></div>` : `<p>Todavía no hay puntos cargados.</p>`}</section>`;
+      <section class="section-card"><h4>Últimos movimientos</h4>${allPointEntries().length ? `<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Juego</th><th>Equipo</th><th>Puntos</th><th>Comentario</th></tr></thead><tbody>${allPointEntries().slice(-12).reverse().map(entry => `<tr><td>${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>${Number(entry.points || 0)}</td><td>${escapeHTML(entry.comment || "")}</td></tr>`).join("")}</tbody></table></div>` : `<p>Todavía no hay puntos cargados.</p>`}</section>`;
   }
 
   function rankRow(row, index) {
@@ -851,7 +949,7 @@
 
   function calculateRanking() {
     const totals = Object.keys(DATA.teams).map(id => ({ id, total: 0 }));
-    for (const entry of state.scoreEntries || []) {
+    for (const entry of allPointEntries()) {
       const row = totals.find(item => item.id === entry.teamId);
       if (row) row.total += Number(entry.points || 0);
     }
@@ -859,6 +957,8 @@
   }
 
   function gameName(id) {
+    if (id === "auto-rsvp") return "Confirmación de asistencia";
+    if (id === "auto-profile") return "Ficha secreta completa";
     return DATA.games.find(game => game.id === id)?.title || id || "Juego";
   }
 
@@ -893,7 +993,7 @@
       <section class="stats-grid">
         ${statCard("RSVP", String(rsvpCount), "✉️")}
         ${statCard("Fichas", String(profileCount), "🕯️")}
-        ${statCard("Puntajes", String(state.scoreEntries.length), "🏆")}
+        ${statCard("Puntajes", String(allPointEntries().length), "🏆")}
         ${statCard("Sheets", isConfigured() ? "Activo" : "Pendiente", isConfigured() ? "✅" : "⚠️")}
       </section>
       <section class="grid two">
@@ -948,21 +1048,34 @@
         state.rsvps[currentGuest.id] = payload;
         state.rsvpEditMode = false;
         saveState();
-        toast("Asistencia guardada. Muchas gracias.");
+        toast("Asistencia guardada. Sumaste +10 puntos para tu equipo.");
         renderCurrentRoute();
         postToSheets("saveRsvp", payload);
       });
     }
 
     if (route === "ficha") {
+      $("#editProfile")?.addEventListener("click", () => {
+        state.profileEditMode = true;
+        saveState();
+        renderCurrentRoute();
+      });
+
+      $("#cancelProfileEdit")?.addEventListener("click", () => {
+        state.profileEditMode = false;
+        saveState();
+        renderCurrentRoute();
+      });
+
       $("#profileForm")?.addEventListener("submit", async event => {
         event.preventDefault();
         const values = Object.fromEntries(new FormData(event.currentTarget).entries());
         const payload = { ...values, guestId: currentGuest.id, teamId: currentGuest.team, updatedAt: new Date().toISOString() };
         state.profiles[currentGuest.id] = payload;
+        state.profileEditMode = false;
         saveState();
         renderCurrentRoute();
-        toast("Ficha secreta guardada.");
+        toast("Ficha secreta guardada. Sumaste +15 puntos para tu equipo.");
         postToSheets("saveProfile", payload);
       });
     }
