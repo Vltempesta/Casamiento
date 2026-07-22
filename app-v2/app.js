@@ -336,11 +336,15 @@
   }
 
   function configureNavigation() {
+    const fichaButton = $('.nav-tabs button[data-route="ficha"]');
+    if (fichaButton) fichaButton.remove();
+
     const torneoButton = $('.nav-tabs button[data-route="torneo"]');
     if (torneoButton) {
       torneoButton.dataset.route = "puntos";
       torneoButton.textContent = "Sumá puntos!";
     }
+
     const juegosButton = $('.nav-tabs button[data-route="juegos"]');
     if (juegosButton) juegosButton.remove();
   }
@@ -403,6 +407,8 @@
   }
 
   function navigate(route) {
+    if (route === "ficha" || route === "juegos") route = "inicio";
+    if (route === "torneo") route = "puntos";
     currentRoute = route;
     $$(".nav-tabs button").forEach(button => button.classList.toggle("active", button.dataset.route === route));
     renderCurrentRoute();
@@ -413,7 +419,6 @@
       inicio: renderHome,
       info: renderInfo,
       asistencia: renderRSVP,
-      ficha: renderProfile,
       equipo: renderTeam,
       puntos: renderPointsHub,
       ranking: renderRanking,
@@ -446,15 +451,13 @@
   function renderHome() {
     const team = getTeam(currentGuest.team);
     const rsvp = state.rsvps[currentGuest.id];
-    const profile = state.profiles[currentGuest.id];
     const rsvpDone = hasCompletedRsvp(rsvp);
-    const profileDone = hasCompletedProfile(profile);
     const submittedGames = Object.keys(state.gameSubmissions || {}).filter(key => key.startsWith(`${currentGuest.id}::`)).length;
     const rank = calculateRanking();
     const myRank = rank.findIndex(row => row.id === team.id) + 1;
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
 
-    const rsvpCallout = rsvp ? `
+    const rsvpCallout = rsvpDone ? `
       <div class="home-ok-callout">
         <div>
           <strong>✅ Asistencia registrada</strong>
@@ -476,8 +479,8 @@
       <section class="hero-card" style="--local-accent:${team.accent}">
         <div class="hero-copy">
           <p class="eyebrow">Archivo personal</p>
-          <h3>${rsvp ? "Tu destino fue revelado." : "Primero confirmá. Después, sumá puntos."}</h3>
-          <p>${rsvp ? `Has sido convocado por la fuerza de <strong>${team.name}</strong>. Tu asistencia ya quedó registrada; ahora podés completar tu ficha secreta y sumar puntos para tu equipo.` : `Ya sos parte del equipo <strong>${team.name}</strong>. Mientras esperamos que todos confirmen asistencia antes del <strong>31/08</strong>, ya podés empezar a jugar y sumar puntos para tu fuerza.`}</p>
+          <h3>${rsvpDone ? "Tu destino fue revelado." : "Primero confirmá. Después, sumá puntos."}</h3>
+          <p>${rsvpDone ? `Has sido convocado por la fuerza de <strong>${team.name}</strong>. Tu asistencia ya quedó registrada; ahora podés ver cómo sumar puntos y preparar a tu equipo para la batalla.` : `Ya sos parte del equipo <strong>${team.name}</strong>. Mientras esperamos que todos confirmen asistencia antes del <strong>31/08</strong>, ya podés empezar a jugar y sumar puntos para tu fuerza.`}</p>
           <div class="badge-row">
             <span class="badge">${team.emoji} Equipo ${team.name}</span>
             <span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span>
@@ -488,24 +491,24 @@
         <div class="team-medallion">
           <span class="emoji">${team.emoji}</span>
           <strong>${team.name}</strong>
-          <small>${escapeHTML(rsvp ? team.motto : "Competís contra otros 5 equipos desde ahora hasta que termine la fiesta.")}</small>
-          <div class="score-chip">${rsvp ? `Puesto actual: ${myRank || "—"}` : "⏳ Asistencia pendiente"}</div>
+          <small>${escapeHTML(rsvpDone ? team.motto : "Competís contra otros 5 equipos desde ahora hasta que termine la fiesta.")}</small>
+          <div class="score-chip">${rsvpDone ? `Puesto actual: ${myRank || "—"}` : "⏳ Asistencia pendiente"}</div>
         </div>
       </section>
 
       <section class="stats-grid">
-        ${statCard("Asistencia", rsvp ? "Registrada" : "Pendiente", rsvp ? "✅" : "✉️")}
-        ${statCard("Ficha secreta", profile ? "Cargada" : "Pendiente", profile ? "✅" : "🕯️")}
+        ${statCard("Asistencia", rsvpDone ? "Registrada" : "Pendiente", rsvpDone ? "✅" : "✉️")}
         ${statCard("Acciones enviadas", String(submittedGames), "🎲")}
         ${statCard("Puntos del equipo", String(myPoints), "🏆")}
+        ${statCard("Equipo", team.name, team.emoji)}
       </section>
 
-      ${sectionHeader("próximos pasos", rsvp ? "Ahora sí, al archivo secreto" : "Lo importante primero", rsvp ? "La asistencia ya quedó registrada. El foco pasa a la ficha secreta y a sumar puntos para tu equipo." : "La asistencia sigue siendo prioridad, pero la competencia ya empezó.")}
+      ${sectionHeader("próximos pasos", rsvpDone ? "Ahora sí, a sumar puntos" : "Lo importante primero", rsvpDone ? "La asistencia ya quedó registrada. El foco pasa a sumar puntos y coordinar con tu equipo." : "La asistencia sigue siendo prioridad, pero la competencia ya empezó.")}
       <section class="grid four">
-        ${actionCard("asistencia", rsvp ? "Asistencia confirmada" : "Confirmar asistencia", rsvp ? "Podés editarla cuando quieras." : "Traslado y restricciones antes del 31/08.", rsvp ? "✅" : "✉️", Boolean(rsvp))}
+        ${actionCard("asistencia", rsvpDone ? "Asistencia confirmada" : "Confirmar asistencia", rsvpDone ? "Podés editarla cuando quieras." : "Traslado y restricciones antes del 31/08.", rsvpDone ? "✅" : "✉️", Boolean(rsvpDone))}
         ${actionCard("puntos", "Sumá puntos!", "Hub de juegos, reglas y acciones para tu equipo.", "🏆")}
-        ${actionCard("ficha", profile ? "Ficha cargada" : "Completar ficha secreta", profile ? "Tus respuestas ya alimentan los juegos." : "Canciones, secretos, gustos y desafíos.", profile ? "✅" : "🕯️", Boolean(profile))}
         ${actionCard("equipo", `Ver ${team.name}`, "Integrantes, capitán, lema y estrategia.", team.emoji)}
+        ${actionCard("ranking", "Ranking general", "La tabla de fuerzas y últimos movimientos.", "🏆")}
       </section>
     `;
   }
@@ -742,7 +745,6 @@
 
     Object.values(DATA.teams).forEach(team => {
       const rsvpPoints = rsvpPointsForTeam(team.id);
-      const profilePoints = profilePointsForTeam(team.id);
 
       completedRsvpMembers(team.id).forEach(guest => {
         const row = state.rsvps[guest.id] || {};
@@ -755,25 +757,43 @@
           automatic: true
         });
       });
-
-      completedProfileMembers(team.id).forEach(guest => {
-        const row = state.profiles[guest.id] || {};
-        entries.push({
-          timestamp: row.updatedAt,
-          gameId: "auto-profile",
-          teamId: team.id,
-          points: profilePoints,
-          comment: `Ficha secreta completa · ${guest.firstName || guest.id}`,
-          automatic: true
-        });
-      });
     });
 
     return entries;
   }
 
+  function entryTime(entry) {
+    return new Date(entry?.timestamp || entry?.submittedAt || entry?.updatedAt || 0).getTime() || 0;
+  }
+
+  function isResetMarker(entry) {
+    return [
+      "reset-discretionary-clear-marker",
+      "reset-total-clear-marker",
+      "reset-discrecional-fede-vani",
+      "reset-total-fede-vani"
+    ].includes(entry?.gameId);
+  }
+
+  function latestResetAt(gameIds) {
+    const ids = Array.isArray(gameIds) ? gameIds : [gameIds];
+    return Math.max(0, ...(state.scoreEntries || [])
+      .filter(entry => ids.includes(entry.gameId))
+      .map(entryTime));
+  }
+
   function allPointEntries() {
-    return [...automaticPointEntries(), ...(state.scoreEntries || [])];
+    const totalResetAt = latestResetAt(["reset-total-clear-marker", "reset-total-fede-vani"]);
+    const discretionaryResetAt = latestResetAt(["reset-discretionary-clear-marker", "reset-discrecional-fede-vani"]);
+
+    return [...automaticPointEntries(), ...(state.scoreEntries || [])]
+      .filter(entry => {
+        const time = entryTime(entry);
+        if (isResetMarker(entry)) return false;
+        if (totalResetAt && time <= totalResetAt) return false;
+        if (entry.gameId === "discrecional-fede-vani" && discretionaryResetAt && time <= discretionaryResetAt) return false;
+        return true;
+      });
   }
 
   function attendanceLabel(value) {
@@ -885,7 +905,6 @@
     const members = DATA.guests.filter(guest => guest.team === team.id).sort(sortGuestsForDisplay);
     const activePlayers = teamCompetitionMembers(team.id).length;
     const confirmed = completedRsvpMembers(team.id).length;
-    const profiles = completedProfileMembers(team.id).length;
     return `
       ${captainGuestStyles()}
       ${sectionHeader("mi fuerza", `Equipo ${team.name}`, `${team.group}. Capitán: ${team.captain}.`)}
@@ -895,7 +914,7 @@
       </section>
       <section class="grid two">
         <article class="section-card"><h4>Formación</h4><p class="form-note">Capitán primero. Fede y Vani no cuentan para los puntos competitivos.</p><div class="guest-list">${members.map(guestPill).join("")}</div></article>
-        <article class="section-card"><h4>Estado del equipo</h4><p><strong>Asistencia:</strong> ${confirmed} de ${activePlayers} jugadores activos.</p><p><strong>Ficha secreta:</strong> ${profiles} de ${activePlayers} jugadores activos.</p><hr><p><strong>Estrategia:</strong> ${escapeHTML(team.strategy)}</p><p><strong>Rol del capitán:</strong> activar al equipo, responder consignas, decidir comodines y cargar mística.</p></article>
+        <article class="section-card"><h4>Estado del equipo</h4><p><strong>Asistencia:</strong> ${confirmed} de ${activePlayers} jugadores activos.</p><p><strong>Puntos:</strong> el equipo suma desde asistencia, desafíos y juegos físicos cargados por Admin.</p><hr><p><strong>Estrategia:</strong> ${escapeHTML(team.strategy)}</p><p><strong>Rol del capitán:</strong> activar al equipo, responder consignas, decidir comodines y cargar mística.</p></article>
       </section>`;
   }
 
@@ -918,18 +937,12 @@
     const team = getTeam(currentGuest.team);
     const activePlayers = teamSizeForPoints(team.id);
     const rsvpPoints = rsvpPointsForTeam(team.id);
-    const profilePoints = profilePointsForTeam(team.id);
     const rsvp = state.rsvps[currentGuest.id];
-    const profile = state.profiles[currentGuest.id];
     const currentGuestCanScore = isCompetitionGuest(currentGuest);
     const rsvpDone = currentGuestCanScore && hasCompletedRsvp(rsvp);
-    const profileDone = currentGuestCanScore && hasCompletedProfile(profile);
     const rsvpDoneCount = completedRsvpMembers(team.id).length;
-    const profileDoneCount = completedProfileMembers(team.id).length;
     const rsvpCurrentPoints = rsvpDoneCount * rsvpPoints;
-    const profileCurrentPoints = profileDoneCount * profilePoints;
     const rsvpMaxPoints = activePlayers * rsvpPoints;
-    const profileMaxPoints = activePlayers * profilePoints;
     const rank = calculateRanking();
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
 
@@ -955,23 +968,23 @@
 
       <section class="section-card">
         <div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
-        ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", currentGuestCanScore ? (rsvpDone ? `Ya sumaste +${rsvpPoints} puntos para ${team.name}. Podés editar tu respuesta, pero no suma dos veces.` : `Al completar esta acción sumás +${rsvpPoints} puntos para ${team.name}. También elegís traslado y cargás restricciones alimenticias.`) : "Los novios no suman puntos, pero pueden revisar el estado del equipo.", `+${rsvpPoints}`, rsvpDone, "asistencia", `${rsvpDoneCount} de ${activePlayers} confirmaron · ${rsvpCurrentPoints}/${rsvpMaxPoints} pts`)}
-        ${pointsAction("🕯️", "Completar ficha secreta", currentGuestCanScore ? (profileDone ? `Ya sumaste +${profilePoints} puntos para ${team.name}. Podés editar tu ficha, pero no suma dos veces.` : `Al completar esta acción sumás +${profilePoints} puntos para ${team.name}. Sirve para preparar juegos, trivias, playlist y desafíos personalizados.`) : "Los novios no suman puntos, pero pueden revisar el estado del equipo.", `+${profilePoints}`, profileDone, "ficha", `${profileDoneCount} de ${activePlayers} completaron ficha · ${profileCurrentPoints}/${profileMaxPoints} pts`)}
-        ${pointsAction("🎵", "Proponer canción de equipo", "Próximamente cada equipo podrá proponer un tema que represente a su fuerza.", "+100", false, "equipo", "Consigna de equipo · Próximamente")}
-        ${pointsAction("📸", "Foto creativa del equipo", "Cuando se habilite, cada equipo podrá mandar una foto o composición temática.", "+150", false, "equipo", "Consigna de equipo · Próximamente")}
+        ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", currentGuestCanScore ? (rsvpDone ? `Ya sumaste puntos para ${team.name}. Podés editar tu respuesta, pero no suma dos veces.` : `Al completar esta acción sumás puntos para ${team.name}. También elegís traslado y cargás restricciones alimenticias.`) : "Los novios no suman puntos, pero pueden revisar el estado del equipo.", "Suma puntos", rsvpDone, "asistencia", `${rsvpDoneCount} de ${activePlayers} confirmaron`)}
+        ${pointsAction("🎵", "Proponer canción de equipo", "Próximamente cada equipo podrá proponer un tema que represente a su fuerza.", "Próximamente", false, "equipo", "Consigna de equipo")}
+        ${pointsAction("📸", "Foto creativa del equipo", "Cuando se habilite, cada equipo podrá mandar una foto o composición temática.", "Próximamente", false, "equipo", "Consigna de equipo")}
+        ${pointsAction("⚔️", "Desafío sorpresa", "Se habilitarán consignas nuevas hasta el día de la fiesta.", "Próximamente", false, "equipo", "Candado activo")}
       </section>
 
-      <section class="section-card points-note"><span class="card-icon">⚔️</span><h4>Importante</h4><p>Editar una respuesta no vuelve a sumar puntos. Los puntos de asistencia y ficha se calculan una sola vez por jugador activo.</p></section>
+      <section class="section-card points-note"><span class="card-icon">⚔️</span><h4>Importante</h4><p>Editar una respuesta no vuelve a sumar puntos. Los puntos de asistencia se calculan una sola vez por jugador activo.</p></section>
     `;
   }
 
   function pointsAction(icon, title, text, points, done, route, progressText = "") {
-    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${progressText ? `<small class="points-progress">${escapeHTML(progressText)}</small>` : ""}${done ? `<small class="points-done-note">✅ Ya sumaste estos puntos</small>` : ""}</div></div><div class="points-right"><b>${escapeHTML(points)}</b><button type="button" data-go="${escapeHTML(route)}">${done ? "Ver / editar" : "Hacer"}</button></div></article>`;
+    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${progressText ? `<small class="points-progress">${escapeHTML(progressText)}</small>` : ""}${done ? `<small class="points-done-note">✅ Ya sumaste estos puntos</small>` : ""}</div></div><div class="points-right"><b>${escapeHTML(points)}</b><button type="button" data-go="${escapeHTML(route === "equipo" ? "equipo" : route)}">${done ? "Ver / editar" : route === "asistencia" ? "Hacer" : "Ver"}</button></div></article>`;
   }
 
   function pointsHubStyles() {
     return `<style>
-      .points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84));border-color:rgba(216,185,106,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(247,238,217,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,9,5,.34);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:#f0cd75;line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-rules{margin-top:16px}.points-action{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(247,238,217,.14);border-radius:22px;padding:18px;background:rgba(4,9,5,.26);margin-top:12px}.points-action.done{border-color:rgba(189,240,182,.28);background:rgba(189,240,182,.07)}.points-done-note,.points-progress{display:inline-block;margin-top:8px;font-weight:900}.points-done-note{color:#bdf0b6}.points-progress{color:#f0cd75}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right b{font-family:Georgia,serif;font-size:32px;color:#f0cd75;white-space:nowrap}.points-right button{white-space:nowrap}.points-note{margin-top:16px;border-color:rgba(216,185,106,.40);background:rgba(216,185,106,.10)}
+      .points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84));border-color:rgba(216,185,106,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(247,238,217,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,9,5,.34);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:#f0cd75;line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-rules{margin-top:16px}.points-action{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(247,238,217,.14);border-radius:22px;padding:18px;background:rgba(4,9,5,.26);margin-top:12px}.points-action.done{border-color:rgba(189,240,182,.28);background:rgba(189,240,182,.07)}.points-done-note,.points-progress{display:inline-block;margin-top:8px;font-weight:900}.points-done-note{color:#bdf0b6}.points-progress{color:#f0cd75}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right b{font-family:Georgia,serif;font-size:24px;color:#f0cd75;white-space:nowrap}.points-right button{white-space:nowrap}.points-note{margin-top:16px;border-color:rgba(216,185,106,.40);background:rgba(216,185,106,.10)}
       @media(max-width:850px){.points-hero{grid-template-columns:1fr}.points-medal{width:100%;height:auto;padding:22px}.points-action{grid-template-columns:1fr}.points-right{justify-content:space-between}}
     </style>`;
   }
@@ -1045,8 +1058,9 @@
 
   function gameName(id) {
     if (id === "auto-rsvp") return "Confirmación de asistencia";
-    if (id === "auto-profile") return "Ficha secreta completa";
     if (id === "discrecional-fede-vani") return "Puntos a discreción";
+    if (["reset-discretionary-clear-marker", "reset-discrecional-fede-vani"].includes(id)) return "Limpieza de puntos discrecionales";
+    if (["reset-total-clear-marker", "reset-total-fede-vani"].includes(id)) return "Limpieza general de puntos";
     return DATA.games.find(game => game.id === id)?.title || id || "Juego";
   }
 
@@ -1063,6 +1077,35 @@
           <small>${escapeHTML(group.team.group)}</small>
           <div class="guest-list">${group.guests.map(guestPill).join("")}</div>
         </article>`).join("")}</section>`;
+  }
+
+  function scoreEntriesForGames(gameIds) {
+    const ids = Array.isArray(gameIds) ? gameIds : [gameIds];
+    const totals = Object.keys(DATA.teams).map(id => ({ id, total: 0 }));
+    for (const entry of state.scoreEntries || []) {
+      if (!ids.includes(entry.gameId)) continue;
+      const row = totals.find(item => item.id === entry.teamId);
+      if (row) row.total += Number(entry.points || 0);
+    }
+    return totals;
+  }
+
+  function currentRankingTotals() {
+    const totals = Object.keys(DATA.teams).map(id => ({ id, total: 0 }));
+    for (const entry of allPointEntries()) {
+      const row = totals.find(item => item.id === entry.teamId);
+      if (row) row.total += Number(entry.points || 0);
+    }
+    return totals;
+  }
+
+  function resetButtonStyles() {
+    return `<style>
+      .admin-reset-panel{border-color:rgba(255,180,168,.32);background:linear-gradient(135deg,rgba(255,180,168,.08),rgba(24,39,25,.82))}
+      .admin-reset-panel h4{margin-bottom:8px}.admin-reset-panel p{color:var(--muted);font-weight:800;line-height:1.45}
+      .admin-reset-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}.admin-reset-actions .danger-button{border-color:rgba(255,180,168,.38)}
+      .reset-note{margin-top:12px;color:rgba(247,238,217,.62);font-size:13px;font-weight:800}
+    </style>`;
   }
 
   function renderAdmin() {
@@ -1099,6 +1142,16 @@
           <h4>Candados</h4>
           <div class="unlock-list">${Object.entries(DATA.unlocks).map(([key, unlock]) => `<label class="toggle-row"><span><strong>${escapeHTML(unlock.title)}</strong><small>${escapeHTML(unlock.teaser)}</small></span><input type="checkbox" data-unlock-key="${key}" ${isUnlocked(key) ? "checked" : ""}></label>`).join("")}</div>
         </article>
+      </section>
+      ${resetButtonStyles()}
+      <section class="section-card admin-reset-panel">
+        <h4>Reseteo de puntos</h4>
+        <p>Estos botones son para Fede y Vani. Limpian el ranking y también ocultan los movimientos anteriores de “Últimos movimientos”. No borran RSVP ni datos de invitados.</p>
+        <div class="admin-reset-actions">
+          <button id="resetDiscretionaryPoints" type="button" class="danger-button">Resetear puntos discrecionales</button>
+          <button id="resetAllPoints" type="button" class="danger-button">Resetear todos los puntos</button>
+        </div>
+        <p class="reset-note">La limpieza se guarda como marcador técnico oculto, para que al sincronizar no vuelvan a aparecer movimientos viejos.</p>
       </section>
       <section class="section-card">
         <h4>Google Sheets y exportación</h4>
@@ -1138,7 +1191,7 @@
         state.rsvps[currentGuest.id] = payload;
         state.rsvpEditMode = false;
         saveState();
-        toast("Asistencia guardada. Sumaste puntos para tu equipo.");
+        toast("Asistencia guardada. Tu equipo sumó puntos.");
         renderCurrentRoute();
         postToSheets("saveRsvp", payload);
       });
@@ -1218,6 +1271,51 @@
       saveState();
       toast("Puntos cargados.");
       postToSheets("saveScore", payload);
+      renderCurrentRoute();
+    });
+
+    $("#resetDiscretionaryPoints")?.addEventListener("click", async () => {
+      if (!confirm("¿Resetear solo los puntos discrecionales cargados por Fede y Vani? También se limpiarán esos movimientos de la vista pública. RSVP y datos de invitados no se modifican.")) return;
+      const timestamp = new Date().toISOString();
+      const hasDiscretionary = allPointEntries().some(entry => entry.gameId === "discrecional-fede-vani");
+      if (!hasDiscretionary) { toast("No hay puntos discrecionales para resetear."); return; }
+      const payload = {
+        gameId: "reset-discretionary-clear-marker",
+        teamId: "admin",
+        points: 0,
+        comment: "Limpieza de puntos discrecionales por Fede y Vani",
+        adminPassword: state.adminPassword,
+        adminName: "Fede y Vani",
+        timestamp
+      };
+      state.scoreEntries.push(payload);
+      state.scoreEntries = dedupeScores(state.scoreEntries);
+      saveState();
+      toast("Puntos discrecionales y movimientos anteriores limpiados.");
+      await postToSheets("saveScore", payload);
+      await syncFromSheets(false);
+      renderCurrentRoute();
+    });
+
+    $("#resetAllPoints")?.addEventListener("click", async () => {
+      if (!confirm("¿Resetear TODOS los puntos actuales del ranking? También se limpiarán los movimientos anteriores de la vista pública. No borra RSVP ni datos de invitados.")) return;
+      const timestamp = new Date().toISOString();
+      if (!allPointEntries().length) { toast("El ranking ya está en cero."); return; }
+      const payload = {
+        gameId: "reset-total-clear-marker",
+        teamId: "admin",
+        points: 0,
+        comment: "Limpieza general de puntos por Fede y Vani",
+        adminPassword: state.adminPassword,
+        adminName: "Fede y Vani",
+        timestamp
+      };
+      state.scoreEntries.push(payload);
+      state.scoreEntries = dedupeScores(state.scoreEntries);
+      saveState();
+      toast("Todos los puntos y movimientos anteriores fueron limpiados.");
+      await postToSheets("saveScore", payload);
+      await syncFromSheets(false);
       renderCurrentRoute();
     });
 

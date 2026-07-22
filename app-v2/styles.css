@@ -608,3 +608,221 @@ td { color: var(--muted); }
   .rank-emoji { grid-column: 1; grid-row: 2; }
   .rank-points { grid-column: 2; }
 }
+
+
+/* =========================================================
+   Vani & Fede · Rediseño v7
+   Paleta inspirada en las referencias: pergamino, azul tinta,
+   bordó/terracota, verde salvia y dorado antiguo.
+   ========================================================= */
+:root {
+  --bg: #071420;
+  --ink: #f6ead2;
+  --muted: rgba(246, 234, 210, .74);
+  --muted-2: rgba(246, 234, 210, .56);
+  --line: rgba(246, 234, 210, .18);
+  --line-strong: rgba(194, 142, 80, .44);
+  --gold: #c99b4f;
+  --gold-deep: #8f6534;
+  --green: #294332;
+  --sage: #6f8a72;
+  --navy: #102f49;
+  --terracotta: #b75a38;
+  --parchment: #f2e6ce;
+  --panel: rgba(9, 24, 28, .78);
+  --panel-soft: rgba(242, 230, 206, .08);
+  --glass: rgba(242, 230, 206, .105);
+  --danger: #b75a38;
+  --ok: #7fa878;
+  --team-accent: #c99b4f;
+  --shadow: 0 32px 110px rgba(0, 0, 0, .46);
+}
+
+body {
+  background:
+    radial-gradient(circle at 86% 8%, rgba(201, 155, 79, .22), transparent 22rem),
+    radial-gradient(circle at 12% 26%, rgba(111, 138, 114, .20), transparent 24rem),
+    linear-gradient(135deg, #061014 0%, #0b1b1e 44%, #071420 100%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 5% 90%, rgba(183, 90, 56, .12), transparent 18rem),
+    radial-gradient(circle at 95% 82%, rgba(16, 47, 73, .16), transparent 18rem);
+  z-index: -1;
+}
+
+.login-screen::before,
+.main-screen::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(242,230,206,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242,230,206,.035) 1px, transparent 1px);
+  background-size: 66px 66px;
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+  z-index: -1;
+}
+
+.seal {
+  background: radial-gradient(circle at 35% 30%, #25465f, #102f49 58%, #081826);
+  border-color: rgba(201,155,79,.55);
+  color: var(--gold);
+  box-shadow: 0 0 0 10px rgba(201,155,79,.08), 0 22px 60px rgba(0,0,0,.45);
+}
+
+.login-card,
+.topbar,
+.hero-card,
+.section-card,
+.action-card,
+.stat-card,
+.rank-item,
+.game-card,
+.mini-card {
+  border-color: rgba(242,230,206,.20);
+  background:
+    linear-gradient(135deg, rgba(242,230,206,.07), rgba(6, 15, 18, .72)),
+    rgba(12, 27, 27, .72);
+  box-shadow: 0 24px 75px rgba(0,0,0,.32);
+}
+
+.login-card,
+.topbar {
+  background:
+    linear-gradient(135deg, rgba(242,230,206,.11), rgba(7,20,32,.76)),
+    rgba(5, 12, 14, .84);
+}
+
+.hero-card {
+  background:
+    radial-gradient(circle at 88% 18%, rgba(201,155,79,.18), transparent 18rem),
+    linear-gradient(135deg, rgba(41,67,50,.76), rgba(7,20,32,.82));
+  border-color: rgba(201,155,79,.34);
+}
+
+.eyebrow,
+.card-title-row .badge,
+.badge {
+  letter-spacing: .18em;
+}
+
+.eyebrow,
+.nav-tabs button.active,
+.badge:not(.muted),
+.points-right b,
+.rank-pos,
+.rank-points strong {
+  color: #d7ad5d;
+}
+
+.nav-tabs button {
+  border-color: rgba(242,230,206,.18);
+  background: rgba(242,230,206,.075);
+}
+.nav-tabs button.active {
+  background: rgba(201,155,79,.18);
+  border-color: rgba(201,155,79,.62);
+  box-shadow: inset 0 0 0 1px rgba(201,155,79,.16);
+}
+
+button,
+.input-row button,
+.form-actions button,
+.points-right button,
+.button-row button:not(.ghost-button):not(.danger-button) {
+  background: linear-gradient(135deg, #e1bd69, #c39144);
+  color: #14120a;
+  border-color: rgba(255,255,255,.12);
+}
+
+.ghost-button {
+  background: rgba(242,230,206,.08);
+  border-color: rgba(242,230,206,.20);
+}
+
+input,
+select,
+textarea {
+  background: rgba(5, 12, 13, .72);
+  border-color: rgba(242,230,206,.18);
+  color: var(--ink);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(201,155,79,.68);
+  box-shadow: 0 0 0 4px rgba(201,155,79,.16);
+}
+
+.choice-pill span {
+  border-color: rgba(242,230,206,.20);
+  background: rgba(242,230,206,.06);
+}
+.choice-pill input:checked + span {
+  background: rgba(201,155,79,.20);
+  border-color: rgba(201,155,79,.70);
+  color: var(--ink);
+}
+
+.status-pill.online,
+.status-pill.ok,
+.points-action.done,
+.home-ok-callout {
+  border-color: rgba(127,168,120,.34) !important;
+  background: rgba(127,168,120,.10) !important;
+  color: #c8f1bd !important;
+}
+
+.status-pill.error,
+.danger-button {
+  border-color: rgba(183,90,56,.44) !important;
+}
+
+.guest-pill.captain-pill {
+  border-color: rgba(201,155,79,.78) !important;
+  background:
+    linear-gradient(135deg, rgba(201,155,79,.18), rgba(16,47,73,.16)),
+    rgba(242,230,206,.07) !important;
+}
+.captain-label {
+  background: rgba(201,155,79,.16) !important;
+  color: #f0cd75 !important;
+}
+
+.team-medallion,
+.points-medal {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(242,230,206,.12), transparent 70%),
+    rgba(6, 15, 18, .38) !important;
+  border-color: rgba(242,230,206,.20) !important;
+}
+
+.table-wrap table th {
+  color: #d7ad5d;
+}
+.table-wrap table tr:hover td {
+  background: rgba(242,230,206,.045);
+}
+
+/* pequeñas flores/bordado visual en bordes principales */
+.hero-card::before,
+.login-card::before,
+.topbar::before {
+  content: "✦";
+  position: absolute;
+  color: rgba(183,90,56,.55);
+  font-size: 18px;
+}
+.hero-card,
+.login-card,
+.topbar { position: relative; overflow: hidden; }
+.hero-card::before { right: 22px; top: 18px; }
+.login-card::before { right: 18px; top: 16px; }
+.topbar::before { right: 18px; top: 14px; }
