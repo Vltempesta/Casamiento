@@ -403,7 +403,7 @@
     $("#welcomeTitle").textContent = `Hola, ${guest.firstName}.`;
     $("#welcomeSub").textContent = `Tu fuerza es ${team.name}. Capitán: ${team.captain}.`;
     navigate("inicio");
-    if (showWelcome) toast(`Acceso concedido · ${team.emoji} Equipo ${team.name}.`);
+    if (showWelcome) toast(`Acceso concedido · Equipo ${team.name}.`);
   }
 
   function navigate(route) {
@@ -437,6 +437,25 @@
         <h3>${escapeHTML(title)}</h3>
         <p>${escapeHTML(text)}</p>
       </div>`;
+  }
+
+
+  function teamLogo(team, className = "") {
+    if (!team) return "";
+    const cls = className ? ` ${className}` : "";
+    const logos = {
+      bosque: '<svg viewBox="0 0 100 100" role="img" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="#fbf8f0" stroke="#ccb082" stroke-width="3"/><circle cx="50" cy="50" r="35" fill="none" stroke="#6a7f63" stroke-width="2" stroke-dasharray="3 6"/><path d="M26 66h48" stroke="#6a7f63" stroke-width="2.5" stroke-linecap="round" opacity=".55"/><path d="M34 67 45 50 56 67Z" fill="#5d755b"/><path d="M38 56 45 44 52 56Z" fill="#5d755b"/><path d="M52 67 63 49 74 67Z" fill="#5d755b"/><path d="M57 55 63 45 69 55Z" fill="#5d755b"/><path d="M21 60l2-1m6-8 2-1m40 2 2 1m4 8 2 1" stroke="#6a7f63" stroke-width="2" stroke-linecap="round" opacity=".8"/></svg>',
+      fuego: '<svg viewBox="0 0 100 100" role="img" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="#fbf8f0" stroke="#ccb082" stroke-width="3"/><circle cx="50" cy="50" r="35" fill="none" stroke="#b54a4d" stroke-width="2" stroke-dasharray="3 6"/><path d="M50 23c3 9-2 13 7 21 7 7 10 13 10 22 0 11-8 20-19 20-12 0-21-9-21-21 0-9 5-16 13-24 6-6 10-10 10-18Z" fill="#b54a4d"/><path d="M50 47c2 4 6 7 6 13 0 6-4 11-10 11s-10-5-10-11c0-5 3-8 7-12 3-2 5-4 7-8Z" fill="#fbf8f0" opacity=".95"/></svg>',
+      luz: '<svg viewBox="0 0 100 100" role="img" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="#fbf8f0" stroke="#ccb082" stroke-width="3"/><circle cx="50" cy="50" r="35" fill="none" stroke="#cfb07a" stroke-width="2" stroke-dasharray="3 6"/><circle cx="50" cy="50" r="12" fill="#cfb07a"/><g stroke="#cfb07a" stroke-width="2.4" stroke-linecap="round"><path d="M50 18v12"/><path d="M50 70v12"/><path d="M18 50h12"/><path d="M70 50h12"/><path d="M27 27l9 9"/><path d="M64 64l9 9"/><path d="M27 73l9-9"/><path d="M64 36l9-9"/><path d="M36 21l4 11"/><path d="M60 68l4 11"/><path d="M21 36l11 4"/><path d="M68 60l11 4"/><path d="M21 64l11-4"/><path d="M68 40l11-4"/><path d="M36 79l4-11"/><path d="M60 32l4-11"/></g></svg>',
+      noche: '<svg viewBox="0 0 100 100" role="img" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="#fbf8f0" stroke="#ccb082" stroke-width="3"/><circle cx="50" cy="50" r="35" fill="none" stroke="#7b53b9" stroke-width="2" stroke-dasharray="3 6"/><circle cx="50" cy="50" r="24" fill="#7b53b9"/><path d="M58 32c-7 2-12 9-12 17 0 7 4 13 10 16-2 1-5 2-8 2-10 0-18-8-18-18 0-11 9-20 20-20 3 0 6 1 8 3Z" fill="#fbf8f0" opacity=".95"/><path d="M32 67c7-7 13-10 18-10 6 0 12 3 18 10" fill="none" stroke="#dcc796" stroke-width="3" stroke-linecap="round"/><path d="M36 45l2 4 4 .5-3 2.5.8 4-3.8-2-3.6 2 .8-4-3.2-2.5 4-.5zM64 40l1.6 3.2 3.5.5-2.6 2.3.6 3.4-3.1-1.6-3 1.6.5-3.4-2.5-2.3 3.4-.5z" fill="#fbf8f0"/></svg>',
+      agua: '<svg viewBox="0 0 100 100" role="img" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="#fbf8f0" stroke="#ccb082" stroke-width="3"/><circle cx="50" cy="50" r="35" fill="none" stroke="#2d5c8d" stroke-width="2" stroke-dasharray="3 6"/><path d="M50 23c-8 12-16 20-16 32 0 11 7 20 16 20 10 0 17-9 17-20 0-12-8-20-17-32Z" fill="#2d5c8d"/><path d="M40 58c3-3 6-4 10-4 4 0 8 2 12 5M37 66c4-4 9-6 14-6 5 0 10 2 15 6" fill="none" stroke="#fbf8f0" stroke-width="3" stroke-linecap="round"/></svg>',
+      viento: '<svg viewBox="0 0 100 100" role="img" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="#fbf8f0" stroke="#ccb082" stroke-width="3"/><circle cx="50" cy="50" r="35" fill="none" stroke="#aab0ba" stroke-width="2" stroke-dasharray="3 6"/><path d="M50 27c10 0 18 8 18 18 0 4-1 8-4 11M50 73c-10 0-18-8-18-18 0-4 1-8 4-11M27 50c0-10 8-18 18-18 4 0 8 1 11 4M73 50c0 10-8 18-18 18-4 0-8-1-11-4" fill="none" stroke="#aab0ba" stroke-width="5" stroke-linecap="round" opacity=".9"/><path d="M50 18v16M50 66v16M18 50h16M66 50h16" stroke="#cfb07a" stroke-width="2.4" stroke-linecap="round"/><circle cx="50" cy="50" r="5" fill="#cfb07a"/></svg>'
+    };
+    return `<span class="team-logo${cls}" aria-label="${escapeHTML(team.name)}">${logos[team.id] || ""}</span>`;
+  }
+
+  function teamBadge(team, text = `Equipo ${team.name}`) {
+    return `<span class="badge badge-team">${teamLogo(team, "badge-team-logo")}<span>${escapeHTML(text)}</span></span>`;
   }
 
   function actionCard(route, title, detail, icon, done = false) {
@@ -482,14 +501,14 @@
           <h3>${rsvpDone ? "Tu destino fue revelado." : "Primero confirmá. Después, sumá puntos."}</h3>
           <p>${rsvpDone ? `Has sido convocado por la fuerza de <strong>${team.name}</strong>. Tu asistencia ya quedó registrada; ahora podés ver cómo sumar puntos y preparar a tu equipo para la batalla.` : `Ya sos parte del equipo <strong>${team.name}</strong>. Mientras esperamos que todos confirmen asistencia antes del <strong>31/08</strong>, ya podés empezar a jugar y sumar puntos para tu fuerza.`}</p>
           <div class="badge-row">
-            <span class="badge">${team.emoji} Equipo ${team.name}</span>
+            ${teamBadge(team)}
             <span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span>
             <span class="badge muted">${escapeHTML(DATA.couple.dateLabel)}</span>
           </div>
           ${rsvpCallout}
         </div>
         <div class="team-medallion">
-          <span class="emoji">${team.emoji}</span>
+          ${teamLogo(team, "team-medallion-logo")}
           <strong>${team.name}</strong>
           <small>${escapeHTML(rsvpDone ? team.motto : "Competís contra otros 5 equipos desde ahora hasta que termine la fiesta.")}</small>
           <div class="score-chip">${rsvpDone ? `Puesto actual: ${myRank || "—"}` : "⏳ Asistencia pendiente"}</div>
@@ -500,14 +519,14 @@
         ${statCard("Asistencia", rsvpDone ? "Registrada" : "Pendiente", rsvpDone ? "✅" : "✉️")}
         ${statCard("Acciones enviadas", String(submittedGames), "🎲")}
         ${statCard("Puntos del equipo", String(myPoints), "🏆")}
-        ${statCard("Equipo", team.name, team.emoji)}
+        ${statCard("Equipo", team.name, teamLogo(team, "stat-team-logo"))}
       </section>
 
       ${sectionHeader("próximos pasos", rsvpDone ? "Ahora sí, a sumar puntos" : "Lo importante primero", rsvpDone ? "La asistencia ya quedó registrada. El foco pasa a sumar puntos y coordinar con tu equipo." : "La asistencia sigue siendo prioridad, pero la competencia ya empezó.")}
       <section class="grid four">
         ${actionCard("asistencia", rsvpDone ? "Asistencia confirmada" : "Confirmar asistencia", rsvpDone ? "Podés editarla cuando quieras." : "Traslado y restricciones antes del 31/08.", rsvpDone ? "✅" : "✉️", Boolean(rsvpDone))}
         ${actionCard("puntos", "Sumá puntos!", "Hub de juegos, reglas y acciones para tu equipo.", "🏆")}
-        ${actionCard("equipo", `Ver ${team.name}`, "Integrantes, capitán, lema y estrategia.", team.emoji)}
+        ${actionCard("equipo", `Ver ${team.name}`, "Integrantes, capitán, lema y estrategia.", teamLogo(team, "action-team-logo"))}
         ${actionCard("ranking", "Ranking general", "La tabla de fuerzas y últimos movimientos.", "🏆")}
       </section>
     `;
@@ -909,7 +928,7 @@
       ${captainGuestStyles()}
       ${sectionHeader("mi fuerza", `Equipo ${team.name}`, `${team.group}. Capitán: ${team.captain}.`)}
       <section class="team-hero section-card" style="--local-accent:${team.accent}">
-        <div class="team-symbol">${team.emoji}</div>
+        <div class="team-symbol">${teamLogo(team, "team-symbol-logo")}</div>
         <div><h3>${team.name}</h3><p>${escapeHTML(team.motto)}</p><div class="badge-row"><span class="badge">${escapeHTML(team.colorName)}</span><span class="badge muted">${escapeHTML(team.trait)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span></div></div>
       </section>
       <section class="grid two">
@@ -930,7 +949,7 @@
     const captain = isGuestCaptain(guest);
     const visibleRole = guest.roleVisible || guest.displayRelation || guest.relation || guest.role || "invitado";
     const aliasText = guest.alias ? `${guest.alias} · ${visibleRole}` : visibleRole;
-    return `<div class="guest-pill ${captain ? "captain-pill" : ""}"><span>${captain ? "👑" : team.emoji}</span><div><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}</div></div>`;
+    return `<div class="guest-pill ${captain ? "captain-pill" : ""}"><span>${captain ? "👑" : teamLogo(team, "guest-pill-logo")}</span><div><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}</div></div>`;
   }
 
   function renderPointsHub() {
@@ -955,7 +974,7 @@
           <p class="eyebrow">Equipo ${escapeHTML(team.name)}</p>
           <h3>Tu aporte suma para toda la fuerza.</h3>
           <p>Vas a competir contra otros 5 equipos desde ahora mismo hasta que finalice la fiesta. Cada acción suma distinto según tu equipo para mantener la competencia equilibrada.</p>
-          <div class="badge-row"><span class="badge">${team.emoji} ${team.name}</span><span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div>
+          <div class="badge-row">${teamBadge(team, team.name)}<span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div>
         </div>
         <div class="points-medal"><span>🏆</span><strong>${myPoints}</strong><small>puntos actuales</small></div>
       </section>
@@ -1044,7 +1063,7 @@
   function rankRow(row, index) {
     const team = getTeam(row.id);
     const pos = index + 1;
-    return `<article class="rank-item" style="--local-accent:${team.accent}"><span class="rank-pos">${pos}</span><span class="rank-emoji">${team.emoji}</span><div><strong>${team.name}</strong><small>${team.group}</small></div><div class="rank-points"><strong>${row.total}</strong><small>puntos</small></div></article>`;
+    return `<article class="rank-item" style="--local-accent:${team.accent}"><span class="rank-pos">${pos}</span><span class="rank-emoji">${teamLogo(team, "rank-team-logo")}</span><div><strong>${team.name}</strong><small>${team.group}</small></div><div class="rank-points"><strong>${row.total}</strong><small>puntos</small></div></article>`;
   }
 
   function calculateRanking() {
@@ -1073,7 +1092,7 @@
       ${open ? "" : lockedNotice("guestMap")}
       <section class="guest-map">${grouped.map(group => `
         <article class="section-card team-column" style="--local-accent:${group.team.accent}">
-          <h4>${group.team.emoji} ${group.team.name}</h4>
+          <h4 class="team-heading">${teamLogo(group.team, "team-heading-logo")}<span>${group.team.name}</span></h4>
           <small>${escapeHTML(group.team.group)}</small>
           <div class="guest-list">${group.guests.map(guestPill).join("")}</div>
         </article>`).join("")}</section>`;
@@ -1133,7 +1152,7 @@
           <h4>Sumar puntos a discreción</h4>
           <p class="form-note">Para uso de Fede y Vani durante la previa y la noche de la boda. Estos puntos se cargan por equipo, no por persona.</p>
           <input type="hidden" name="gameId" value="discrecional-fede-vani">
-          <label>Equipo<select name="teamId" required>${Object.values(DATA.teams).map(team => option(team.id, `${team.emoji} ${team.name}`, "")).join("")}</select></label>
+          <label>Equipo<select name="teamId" required>${Object.values(DATA.teams).map(team => option(team.id, team.name, "")).join("")}</select></label>
           <label>Puntos<input name="points" type="number" step="1" placeholder="Ej: 50, 100 o -20" required></label>
           <label>Motivo / comentario<textarea name="comment" placeholder="Ej: ganó juego físico, bonus por actitud, penalización, decisión de Fede y Vani..."></textarea></label>
           <button type="submit">Sumar puntos</button>
