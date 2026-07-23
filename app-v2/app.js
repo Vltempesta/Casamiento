@@ -443,7 +443,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=22000`;
+    const src = `assets/team-logos/${team.id}.png?v=24000`;
     return `<span class="team-logo${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
