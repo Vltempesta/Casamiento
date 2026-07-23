@@ -549,3 +549,16 @@ th { color: var(--gold-deep); font-size: 12px; text-transform: uppercase; letter
   .team-symbol-logo { width: 96px; height: 96px; }
   .rank-item { grid-template-columns: 42px 48px 1fr; }
 }
+
+
+/* v12 logos realmente centrados */
+.team-logo{
+  overflow:hidden !important;
+  background:transparent !important;
+  border-radius:50% !important;
+}
+.team-logo img{
+  object-fit:contain !important;
+  object-position:center center !important;
+  transform:none !important;
+}
