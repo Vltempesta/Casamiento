@@ -415,3 +415,137 @@ th { color: var(--gold-deep); font-size: 12px; text-transform: uppercase; letter
   .rank-points { grid-column: 3; text-align: left; }
   .toast-host { left: 12px; right: 12px; bottom: 12px; }
 }
+
+
+/* ===== v10 ajustes visuales ===== */
+:root {
+  --garland-corner: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20120%20120%27%3E%0A%3Cg%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%0A%20%20%3Cpath%20d%3D%27M14%2042%20C28%2028%2040%2018%2060%2014%27%20stroke%3D%27%23d4ae6b%27%20stroke-width%3D%274%27/%3E%0A%20%20%3Cpath%20d%3D%27M22%2054%20C36%2038%2050%2030%2072%2024%27%20stroke%3D%27%23e4bf82%27%20stroke-width%3D%272.6%27/%3E%0A%20%20%3Cpath%20d%3D%27M34%2026%20C30%2018%2024%2014%2016%2012%27%20stroke%3D%27%23d4ae6b%27%20stroke-width%3D%273%27/%3E%0A%20%20%3Cpath%20d%3D%27M48%2022%20C48%2012%2054%208%2064%2010%27%20stroke%3D%27%23d4ae6b%27%20stroke-width%3D%273%27/%3E%0A%20%20%3Cpath%20d%3D%27M28%2040%20C24%2032%2018%2028%2010%2028%27%20stroke%3D%27%23476885%27%20stroke-width%3D%273%27/%3E%0A%20%20%3Cpath%20d%3D%27M40%2034%20C34%2030%2030%2024%2028%2018%27%20stroke%3D%27%2368806a%27%20stroke-width%3D%273%27/%3E%0A%20%20%3Cpath%20d%3D%27M54%2030%20C48%2024%2044%2018%2042%2010%27%20stroke%3D%27%23cb7b61%27%20stroke-width%3D%273%27/%3E%0A%20%20%3Ccircle%20cx%3D%2718%27%20cy%3D%2758%27%20r%3D%275%27%20fill%3D%27%23cb7b61%27%20stroke%3D%27none%27/%3E%0A%20%20%3Ccircle%20cx%3D%2734%27%20cy%3D%2748%27%20r%3D%274.5%27%20fill%3D%27%23e2b261%27%20stroke%3D%27none%27/%3E%0A%20%20%3Ccircle%20cx%3D%2752%27%20cy%3D%2740%27%20r%3D%274.5%27%20fill%3D%27%23314a72%27%20stroke%3D%27none%27/%3E%0A%20%20%3Cpath%20d%3D%27M22%2042%20C18%2036%2014%2034%208%2034%27%20stroke%3D%27%2368806a%27%20stroke-width%3D%275%27/%3E%0A%20%20%3Cpath%20d%3D%27M34%2034%20C28%2030%2024%2024%2022%2018%27%20stroke%3D%27%2368806a%27%20stroke-width%3D%275%27/%3E%0A%20%20%3Cpath%20d%3D%27M46%2030%20C40%2024%2038%2018%2038%2010%27%20stroke%3D%27%23e2b261%27%20stroke-width%3D%275%27/%3E%0A%3C/g%3E%3C/svg%3E");
+}
+
+.login-screen,
+.main-screen { position: relative; }
+
+.login-screen::before,
+.login-screen::after,
+.main-screen::before,
+.main-screen::after {
+  content: "";
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  background-image: var(--garland-corner);
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: .95;
+  pointer-events: none;
+  z-index: 0;
+}
+.login-screen::before { top: 14px; left: 12px; }
+.login-screen::after { top: 14px; right: 12px; transform: scaleX(-1); }
+.main-screen::before { top: 6px; left: 6px; }
+.main-screen::after { top: 6px; right: 6px; transform: scaleX(-1); }
+
+.login-card, .topbar, .hero-card, .team-hero {
+  background-image: var(--garland-corner), var(--garland-corner), linear-gradient(180deg, rgba(255,253,248,.92), rgba(239,228,209,.90));
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: 68px 68px, 68px 68px, auto;
+  background-position: 18px 16px, calc(100% - 18px) 16px, 0 0;
+}
+.login-card, .topbar { background-position: 18px 16px, calc(100% - 18px) 16px, 0 0; }
+.topbar { position: sticky; }
+.topbar::before, .topbar::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  width: 62px;
+  height: 62px;
+  background-image: var(--garland-corner);
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: .85;
+  pointer-events: none;
+}
+.topbar::before { left: 16px; }
+.topbar::after { right: 16px; transform: scaleX(-1); }
+
+.login-card > *, .topbar > *, .hero-card > *, .team-hero > * { position: relative; z-index: 1; }
+
+.team-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  overflow: visible;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+}
+.team-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  filter: drop-shadow(0 6px 16px rgba(76, 51, 22, .10));
+}
+.badge-team { gap: 8px; padding-left: 8px; }
+.badge-team-logo { width: 24px; height: 24px; }
+.team-medallion-logo { width: 124px; height: 124px; }
+.team-symbol-logo { width: 118px; height: 118px; }
+.stat-team-logo { width: 36px; height: 36px; }
+.action-team-logo { width: 42px; height: 42px; }
+.guest-pill-logo { width: 34px; height: 34px; }
+.rank-team-logo { width: 50px; height: 50px; }
+.team-heading-logo { width: 42px; height: 42px; }
+.guest-pill > span { width: 40px; height: 40px; display:flex; align-items:center; justify-content:center; }
+.rank-emoji { display:flex; align-items:center; justify-content:center; width:60px; height:60px; }
+.rank-item { grid-template-columns: 48px 60px 1fr auto; gap: 14px; }
+.ranking-list.small .rank-item { grid-template-columns: 38px 48px 1fr auto; }
+
+.team-medallion {
+  min-height: 280px;
+  padding: 26px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 999px 999px 30px 30px;
+}
+.team-symbol {
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.44);
+  border: 1px solid rgba(201,170,114,.38);
+  box-shadow: 0 16px 28px rgba(76,51,22,.08);
+}
+.team-heading { align-items: center; gap: 14px; }
+
+.home-rsvp-callout {
+  margin-top: 26px;
+  grid-template-columns: 58px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 24px 26px;
+}
+.home-rsvp-callout .callout-icon { font-size: 34px; display:flex; align-items:center; justify-content:center; }
+.home-rsvp-callout strong { font-size: 28px; line-height: 1.05; }
+.home-rsvp-callout p { max-width: 560px; }
+
+/* Ocultar estado de sheets fuera de admin */
+#connectionBadge, #syncBadge, #syncButton { display: none !important; }
+
+@media (max-width: 920px) {
+  .team-medallion { min-height: 230px; }
+  .login-screen::before, .login-screen::after, .main-screen::before, .main-screen::after { width: 66px; height: 66px; }
+}
+@media (max-width: 640px) {
+  .login-card, .topbar, .hero-card, .team-hero { background-size: 46px 46px, 46px 46px, auto; }
+  .home-rsvp-callout { grid-template-columns: 1fr; }
+  .home-rsvp-callout button { width: 100%; }
+  .team-medallion-logo { width: 104px; height: 104px; }
+  .team-symbol-logo { width: 96px; height: 96px; }
+  .rank-item { grid-template-columns: 42px 48px 1fr; }
+}
