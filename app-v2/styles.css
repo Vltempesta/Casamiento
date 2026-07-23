@@ -551,14 +551,75 @@ th { color: var(--gold-deep); font-size: 12px; text-transform: uppercase; letter
 }
 
 
-/* v12 logos realmente centrados */
+/* v13 logos corregidos: recorte cerrado y centrado */
 .team-logo{
   overflow:hidden !important;
   background:transparent !important;
   border-radius:50% !important;
 }
 .team-logo img{
-  object-fit:contain !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
   object-position:center center !important;
   transform:none !important;
+}
+.team-medallion-logo{width:132px !important;height:132px !important;}
+.team-symbol-logo{width:124px !important;height:124px !important;}
+.rank-team-logo{width:54px !important;height:54px !important;}
+.badge-team-logo{width:26px !important;height:26px !important;}
+.stat-team-logo{width:38px !important;height:38px !important;}
+.action-team-logo{width:44px !important;height:44px !important;}
+.guest-pill-logo{width:34px !important;height:34px !important;}
+
+
+/* ===== v14 símbolos limpios y centrados ===== */
+#connectionBadge, #syncBadge, #syncButton { display: none !important; }
+
+.team-logo {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  background: linear-gradient(180deg, rgba(255,253,248,.98), rgba(245,237,222,.98)) !important;
+  border: 2px solid rgba(201,170,114,.42) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.72), 0 8px 20px rgba(76,51,22,.08) !important;
+}
+
+.team-logo img {
+  display: block !important;
+  width: 72% !important;
+  height: 72% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  filter: drop-shadow(0 4px 10px rgba(76, 51, 22, .06)) !important;
+}
+
+.badge-team-logo img { width: 70% !important; height: 70% !important; }
+.team-medallion-logo img { width: 74% !important; height: 74% !important; }
+.team-symbol-logo img { width: 74% !important; height: 74% !important; }
+.stat-team-logo img { width: 72% !important; height: 72% !important; }
+.action-team-logo img { width: 72% !important; height: 72% !important; }
+.guest-pill-logo img { width: 70% !important; height: 70% !important; }
+.rank-team-logo img { width: 72% !important; height: 72% !important; }
+.team-heading-logo img { width: 72% !important; height: 72% !important; }
+
+.team-medallion-logo { width: 130px !important; height: 130px !important; }
+.team-symbol-logo { width: 118px !important; height: 118px !important; }
+.rank-team-logo { width: 50px !important; height: 50px !important; }
+.badge-team-logo { width: 26px !important; height: 26px !important; }
+.stat-team-logo { width: 38px !important; height: 38px !important; }
+.action-team-logo { width: 44px !important; height: 44px !important; }
+.guest-pill-logo { width: 34px !important; height: 34px !important; }
+.team-heading-logo { width: 40px !important; height: 40px !important; }
+
+.home-rsvp-callout .callout-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-medallion {
+  gap: 12px;
 }
