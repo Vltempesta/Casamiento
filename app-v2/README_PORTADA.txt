@@ -103,3 +103,18 @@ v32403:
 - URL del evento: https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires
 - Reemplazar index.html, styles.css y app.js.
 - Abrir con ?v=32403.
+
+
+v32404:
+- Cuenta regresiva en Inicio hasta el 24/10/2026 a las 18:00, en días, horas y minutos.
+- Bienvenida del equipo más compacta.
+- Aviso pequeño con check cuando la asistencia ya fue registrada.
+- Botón de Inicio siempre visible en la barra superior.
+- Menú: “Tu casamiento” pasó a “Casamiento”.
+- “Mi equipo” pasó al grupo Comunidad.
+- Se eliminaron las sombras de los textos del menú.
+- Los equipos del Ranking ahora son clickeables y abren la ficha del equipo seleccionado.
+- Confirmación de asistencia rediseñada en tema claro.
+- Botones “Agendalo” corregidos con fondo bordó y texto claro.
+- Reemplazar index.html, styles.css y app.js.
+- Abrir con ?v=32404.

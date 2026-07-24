@@ -18,6 +18,8 @@
   let currentGuest = null;
   let currentRoute = "inicio";
   let remoteStatus = "idle";
+  let countdownTimer = null;
+  let selectedTeamViewId = null;
   let selectedGuestId = null;
   let suggestionMatches = [];
   let activeSuggestionIndex = -1;
@@ -586,10 +588,18 @@
       $("#guestName").focus();
     });
 
+    $("#homeButton")?.addEventListener("click", () => {
+      selectedTeamViewId = null;
+      navigate("inicio");
+      closeMenu();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
     $("#syncButton").addEventListener("click", () => syncFromSheets(true));
 
     $$(".nav-tabs button[data-route]").forEach(button => {
       button.addEventListener("click", () => {
+        if (button.dataset.route === "equipo") selectedTeamViewId = currentGuest?.team || null;
         navigate(button.dataset.route);
         closeMenu();
       });
@@ -679,11 +689,55 @@
       pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
       bus: '<rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 7h8"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/>',
       dress: '<path d="M10 3h4l1 4-2 2 4 11H7l4-11-2-2 1-4Z"/><path d="M9 7h6"/>',
-      calendarPlus: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/>'
+      calendarPlus: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/>',
+      checkCircle: '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.6 2.6L16.5 9"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
     return `<svg class="ui-icon${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+  }
+
+
+  function countdownValues() {
+    const target = new Date("2026-10-24T18:00:00-03:00").getTime();
+    const remaining = Math.max(0, target - Date.now());
+    const totalMinutes = Math.floor(remaining / 60000);
+    return {
+      finished: remaining <= 0,
+      days: Math.floor(totalMinutes / 1440),
+      hours: Math.floor((totalMinutes % 1440) / 60),
+      minutes: totalMinutes % 60
+    };
+  }
+
+  function updateHomeCountdown() {
+    const container = $("#homeCountdown");
+    if (!container) return;
+
+    const values = countdownValues();
+    const days = $("#countdownDays");
+    const hours = $("#countdownHours");
+    const minutes = $("#countdownMinutes");
+    const label = $("#countdownLabel");
+
+    if (values.finished) {
+      label.textContent = "¡Hoy celebramos!";
+      days.textContent = "0";
+      hours.textContent = "0";
+      minutes.textContent = "0";
+      return;
+    }
+
+    label.textContent = "Faltan";
+    days.textContent = String(values.days);
+    hours.textContent = String(values.hours).padStart(2, "0");
+    minutes.textContent = String(values.minutes).padStart(2, "0");
+  }
+
+  function startHomeCountdown() {
+    if (countdownTimer) window.clearInterval(countdownTimer);
+    updateHomeCountdown();
+    countdownTimer = window.setInterval(updateHomeCountdown, 30000);
   }
 
   function renderHome() {
@@ -759,18 +813,36 @@
     return `
       ${homeStyles()}
 
+      <section id="homeCountdown" class="home-countdown" aria-label="Cuenta regresiva para el casamiento">
+        <span id="countdownLabel" class="home-countdown-label">Faltan</span>
+        <div class="home-countdown-values">
+          <span><strong id="countdownDays">—</strong><small>días</small></span>
+          <i aria-hidden="true">:</i>
+          <span><strong id="countdownHours">—</strong><small>horas</small></span>
+          <i aria-hidden="true">:</i>
+          <span><strong id="countdownMinutes">—</strong><small>min</small></span>
+        </div>
+        <small class="home-countdown-date">24 · 10 · 2026 · 18:00</small>
+      </section>
+
       <section class="home-welcome" style="--local-accent:${team.accent}">
         <div class="home-welcome-logo">${teamLogo(team, "home-team-logo")}</div>
         <div class="home-welcome-copy">
           <p class="home-kicker">Tu espacio personal</p>
           <h3>Bienvenido al equipo ${escapeHTML(team.name)}</h3>
-          <p>Acá vas a encontrar todo lo necesario para el gran día y las próximas sorpresas.</p>
+          <p>Todo para el gran día, en un solo lugar.</p>
           <div class="home-meta">
             <span>Capitanía: <strong>${escapeHTML(team.captain)}</strong></span>
             <span>24 · 10 · 2026</span>
           </div>
         </div>
       </section>
+
+      ${rsvpDone ? `
+        <button class="home-rsvp-confirmed" type="button" data-go="asistencia">
+          ${uiIcon("checkCircle")}
+          <span>${rsvp.attendance === "si" ? "Asistencia confirmada" : "Respuesta de asistencia registrada"}</span>
+        </button>` : ""}
 
       <section class="home-primary-action home-primary-action--${primaryAction.tone}">
         <span class="home-primary-icon">${uiIcon(primaryAction.icon)}</span>
@@ -856,7 +928,14 @@
       .home-team-score{display:grid;grid-template-columns:repeat(2,72px);text-align:center}.home-team-score span{display:grid;gap:2px}.home-team-score span+span{border-left:1px solid var(--line)}.home-team-score b{color:var(--ink);font-family:var(--font-title);font-size:22px}.home-team-score small{color:var(--muted-2);font-size:9px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}.home-team-actions{display:flex;gap:8px}.home-team-actions button{min-height:46px;white-space:nowrap}
       @media(max-width:900px){.home-team-card{grid-template-columns:minmax(0,1fr) auto}.home-team-actions{grid-column:1/-1}.home-team-actions button{flex:1}.home-primary-action{grid-template-columns:52px 1fr}.home-primary-action button{grid-column:1/-1;width:100%}}
       @media(max-width:680px){.home-welcome{grid-template-columns:84px 1fr;gap:16px;padding:22px 18px}.home-team-logo{width:82px;height:82px}.home-welcome h3{font-size:29px}.home-welcome-copy>p:not(.home-kicker){font-size:15px}.home-meta{display:grid;gap:3px;margin-top:11px}.home-meta span+span::before{display:none}.home-primary-action{grid-template-columns:44px 1fr;gap:13px;padding:18px 16px}.home-primary-icon{width:44px;height:44px}.home-primary-copy h3{font-size:21px}.home-primary-copy p{font-size:14px}.home-section-heading{align-items:center}.home-calendar-link{padding:9px 12px}.home-essential-card{grid-template-columns:1fr}.home-essential-row{padding:17px 16px}.home-essential-row:nth-child(n){border-right:0}.home-essential-row:not(:last-child){border-bottom:1px solid var(--line)}.home-details-content{grid-template-columns:1fr}.home-team-card{grid-template-columns:1fr;padding:18px}.home-team-score{grid-template-columns:repeat(2,1fr);padding:13px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.home-team-actions{grid-column:auto}.home-team-actions button{width:100%}}
-      @media(max-width:430px){.home-welcome{grid-template-columns:1fr;text-align:center}.home-welcome-logo{margin-bottom:-4px}.home-team-logo{width:88px;height:88px}.home-meta{justify-items:center}.home-section-heading h3{font-size:30px}.home-calendar-link span{display:none}.home-team-identity{justify-content:center;text-align:left}.home-team-actions{display:grid}.home-primary-action button,.home-team-actions button{min-height:50px}}
+      @media(max-width:430px){.home-welcome{grid-template-columns:1fr;text-align:center}.home-welcome-logo{margin-bottom:-4px}.home-team-logo{width:72px;height:72px}.home-meta{justify-items:center}.home-section-heading h3{font-size:30px}.home-calendar-link span{display:inline}.home-team-identity{justify-content:center;text-align:left}.home-team-actions{display:grid}.home-primary-action button,.home-team-actions button{min-height:50px}}
+
+      .home-countdown{min-height:64px;display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px;padding:10px 18px;border:1px solid rgba(122,49,64,.18);border-radius:18px;background:rgba(255,253,248,.72);box-shadow:0 6px 18px rgba(76,51,22,.04)}
+      .home-countdown-label{color:#7a3140;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.home-countdown-values{display:flex;align-items:center;gap:9px}.home-countdown-values>span{display:grid;justify-items:center;min-width:44px}.home-countdown-values strong{color:var(--ink);font-family:var(--font-title);font-size:21px;line-height:1}.home-countdown-values small{margin-top:3px;color:var(--muted-2);font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.home-countdown-values i{color:rgba(122,49,64,.44);font-style:normal;font-weight:900}.home-countdown-date{color:var(--muted-2);font-size:10px;font-weight:750}
+      .home-welcome{grid-template-columns:86px minmax(0,1fr);gap:18px;padding:18px 22px;border-radius:21px}.home-team-logo{width:76px;height:76px}.home-welcome h3{margin:4px 0 5px;font-size:clamp(24px,3vw,31px)}.home-welcome-copy>p:not(.home-kicker){font-size:14px;line-height:1.42}.home-meta{margin-top:10px}
+      .home-rsvp-confirmed{width:max-content;max-width:100%;min-height:38px;display:inline-flex;align-items:center;gap:8px;margin:10px 0 0;padding:8px 13px;border:1px solid rgba(74,125,79,.28);border-radius:999px;background:rgba(74,125,79,.09);color:#426f47;font-size:13px;font-weight:850;box-shadow:none}.home-rsvp-confirmed .ui-icon{width:18px;height:18px}
+      @media(max-width:680px){.home-countdown{gap:10px;padding:9px 12px}.home-countdown-date{display:none}.home-welcome{grid-template-columns:70px minmax(0,1fr);gap:14px;padding:16px}.home-team-logo{width:64px;height:64px}.home-welcome h3{font-size:23px}.home-welcome-copy>p:not(.home-kicker){font-size:13px}.home-meta{font-size:12px}.home-rsvp-confirmed{display:flex;width:100%;justify-content:center}}
+      @media(max-width:430px){.home-countdown{justify-content:space-between}.home-countdown-values{gap:6px}.home-countdown-values>span{min-width:38px}.home-countdown-values strong{font-size:19px}.home-welcome{grid-template-columns:64px minmax(0,1fr);text-align:left}.home-welcome-logo{margin:0}.home-team-logo{width:58px;height:58px}.home-meta{justify-items:start}}
     </style>`;
   }
 
@@ -1051,11 +1130,19 @@
 
   function rsvpStyles() {
     return `<style>
-      .calendar-strip{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid var(--line);border-radius:24px;padding:18px 22px;margin:0 0 20px;background:linear-gradient(135deg,#2a341dcc,#0c130dcc)}
-      .calendar-strip strong{display:block;color:#f3d37c;font-weight:1000;letter-spacing:.08em}.calendar-strip p{margin:4px 0 0;color:var(--muted);font-weight:800}.calendar-strip a,.rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:999px;border:1px solid rgba(255,242,201,.2);padding:13px 18px;background:linear-gradient(135deg,#efd27f,#c89d45);color:#1c1406;font-weight:1000;white-space:nowrap}
-      .choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--cream);font-weight:900;margin:0 0 10px}.choice-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;border:1px solid rgba(255,242,201,.16);background:#07100ae0;color:var(--cream);font-weight:1000;text-align:center;padding:14px 12px;transition:.18s ease}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:linear-gradient(135deg,#efd27f,#c89d45);color:#1c1406;border-color:transparent;box-shadow:0 0 0 3px rgba(231,194,103,.18)}
-      .rsvp-thank-card{padding:28px}.rsvp-thank-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:24px;align-items:stretch}.rsvp-okmark{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;background:#bdf0b61a;border:1px solid #bdf0b666;color:#bdf0b6;font-size:40px;font-weight:1000;margin-bottom:16px}.rsvp-thank-title{font-family:Georgia,serif;font-size:clamp(30px,4vw,42px);line-height:1;margin:0 0 10px;color:var(--cream)}.rsvp-thank-lead{color:var(--muted);font-weight:800;font-size:17px;line-height:1.45;max-width:760px}.rsvp-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:24px}.rsvp-summary-grid .wide{grid-column:1/-1}.summary-item{border:1px solid rgba(255,242,201,.14);border-radius:18px;padding:16px;background:#07100aaa}.summary-item strong{display:block;color:#f3d37c;font-size:12px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px}.summary-item p{margin:0;color:var(--cream);font-weight:1000;word-break:break-word}.rsvp-side-note{border:1px solid rgba(255,242,201,.16);border-radius:24px;padding:22px;background:#050b08cc}.rsvp-side-note h4{font-family:Georgia,serif;font-size:26px;margin:0 0 12px}.rsvp-side-note p{color:var(--muted);font-weight:800;line-height:1.5}.rsvp-actions-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
-      @media(max-width:850px){.calendar-strip{align-items:flex-start;flex-direction:column}.calendar-strip a{width:100%}.choice-group{grid-template-columns:1fr}.rsvp-thank-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}}
+      .calendar-strip{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid rgba(122,49,64,.18);border-radius:22px;padding:18px 20px;margin:0 0 20px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.78));box-shadow:0 8px 22px rgba(76,51,22,.05)}
+      .calendar-strip strong{display:block;color:#7a3140;font-weight:950;letter-spacing:.05em}.calendar-strip p{margin:4px 0 0;color:var(--muted);font-weight:650}
+      .calendar-strip a,.rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;min-height:46px;text-decoration:none;border-radius:999px;border:1px solid #6f2f3f;padding:12px 18px;background:#743344;color:#fffaf0!important;font-weight:900;white-space:nowrap;box-shadow:0 7px 16px rgba(116,51,68,.14)}
+      .calendar-strip a:hover,.rsvp-calendar-link:hover{background:#652c3b;color:#fff!important}
+      .choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--ink);font-weight:900;margin:0 0 10px}
+      .choice-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-weight:900;text-align:center;padding:14px 12px;transition:.18s ease}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.12)}
+      .rsvp-thank-card{padding:28px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.84))}.rsvp-thank-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:24px;align-items:stretch}
+      .rsvp-okmark{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:34px;font-weight:1000;margin-bottom:16px}
+      .rsvp-thank-title{font-family:var(--font-title);font-size:clamp(28px,4vw,40px);line-height:1.05;margin:0 0 10px;color:var(--ink)}.rsvp-thank-lead{color:var(--muted);font-weight:650;font-size:16px;line-height:1.5;max-width:760px}
+      .rsvp-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px}.rsvp-summary-grid .wide{grid-column:1/-1}.summary-item{border:1px solid rgba(132,104,68,.16);border-radius:16px;padding:15px;background:rgba(255,255,255,.48)}.summary-item strong{display:block;color:#7a3140;font-size:11px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px}.summary-item p{margin:0;color:var(--ink);font-weight:750;word-break:break-word}
+      .rsvp-side-note{border:1px solid rgba(132,104,68,.17);border-radius:21px;padding:21px;background:rgba(255,255,255,.38)}.rsvp-side-note h4{font-family:var(--font-title);color:var(--ink);font-size:23px;margin:0 0 10px}.rsvp-side-note p{color:var(--muted);font-weight:650;line-height:1.5}
+      .rsvp-actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.rsvp-actions-row .ghost-button{background:rgba(255,255,255,.56);color:var(--ink);border-color:rgba(132,104,68,.22)}
+      @media(max-width:850px){.calendar-strip{align-items:flex-start;flex-direction:column}.calendar-strip a{width:100%}.choice-group{grid-template-columns:1fr}.rsvp-thank-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link{width:100%}.rsvp-actions-row>button{width:100%}}
     </style>`;
   }
 
@@ -1238,7 +1325,8 @@
 
 
   function renderTeam() {
-    const team = getTeam(currentGuest.team);
+    const selectedTeamId = selectedTeamViewId || currentGuest.team;
+    const team = getTeam(selectedTeamId);
     const members = DATA.guests.filter(guest => guest.team === team.id).sort(sortGuestsForDisplay);
     const activePlayers = teamCompetitionMembers(team.id).length;
     const confirmed = completedRsvpMembers(team.id).length;
@@ -1381,7 +1469,8 @@
   function rankRow(row, index) {
     const team = getTeam(row.id);
     const pos = index + 1;
-    return `<article class="rank-item" style="--local-accent:${team.accent}"><span class="rank-pos">${pos}</span><span class="rank-emoji">${teamLogo(team, "rank-team-logo")}</span><div><strong>${team.name}</strong><small>${team.group}</small></div><div class="rank-points"><strong>${row.total}</strong><small>puntos</small></div></article>`;
+    const ownTeam = currentGuest?.team === team.id;
+    return `<button type="button" class="rank-item rank-item-button ${ownTeam ? "is-my-team" : ""}" data-team-open="${team.id}" style="--local-accent:${team.accent}" aria-label="Abrir equipo ${escapeHTML(team.name)}"><span class="rank-pos">${pos}</span><span class="rank-emoji">${teamLogo(team, "rank-team-logo")}</span><div><strong>${escapeHTML(team.name)}</strong><small>${escapeHTML(team.group)}${ownTeam ? " · Tu equipo" : ""}</small></div><div class="rank-points"><strong>${row.total}</strong><small>puntos</small></div></button>`;
   }
 
   function calculateRanking() {
@@ -1504,7 +1593,22 @@
   }
 
   function bindViewEvents(route) {
-    $$('[data-go]').forEach(button => button.addEventListener("click", () => navigate(button.dataset.go)));
+    if (countdownTimer) {
+      window.clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+    if (route === "inicio") startHomeCountdown();
+
+    $$('[data-team-open]').forEach(button => button.addEventListener("click", () => {
+      selectedTeamViewId = button.dataset.teamOpen;
+      navigate("equipo");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }));
+
+    $$('[data-go]').forEach(button => button.addEventListener("click", () => {
+      if (button.dataset.go === "equipo") selectedTeamViewId = currentGuest?.team || null;
+      navigate(button.dataset.go);
+    }));
     $$('[data-scroll]').forEach(button => button.addEventListener("click", () => {
       const target = document.getElementById(button.dataset.scroll);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
