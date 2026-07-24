@@ -1070,3 +1070,143 @@ th { color: var(--gold-deep); font-size: 12px; text-transform: uppercase; letter
     height: 58px !important;
   }
 }
+
+
+/* ===== v18 · logos exactos de las cartas aprobadas ===== */
+
+/* La imagen ya trae el aro, textura y color. No dibujar aro extra por CSS. */
+.team-logo{
+  position:relative !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:50% !important;
+  overflow:hidden !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:0 8px 18px rgba(123,96,56,.10) !important;
+}
+.team-logo::before,
+.team-logo::after{
+  display:none !important;
+  content:none !important;
+}
+.team-logo img{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  transform:none !important;
+  filter:none !important;
+}
+
+/* tamaños: más grandes y con presencia */
+.badge-team-logo{
+  width:36px !important;
+  height:36px !important;
+}
+.badge-team{
+  min-height:46px !important;
+  padding-left:8px !important;
+  padding-right:14px !important;
+}
+
+.team-medallion-logo{
+  width:190px !important;
+  height:190px !important;
+  margin:0 auto 14px !important;
+}
+.team-medallion{
+  min-height:350px !important;
+  padding-top:34px !important;
+  justify-content:flex-start !important;
+}
+
+.team-symbol{
+  width:184px !important;
+  height:184px !important;
+}
+.team-symbol-logo{
+  width:170px !important;
+  height:170px !important;
+}
+
+.stat-team-logo{
+  width:58px !important;
+  height:58px !important;
+}
+.action-team-logo{
+  width:64px !important;
+  height:64px !important;
+}
+.team-heading-logo{
+  width:70px !important;
+  height:70px !important;
+}
+
+.rank-team-logo{
+  width:82px !important;
+  height:82px !important;
+}
+.rank-item{
+  grid-template-columns:58px 94px 1fr auto !important;
+  min-height:106px !important;
+  gap:16px !important;
+}
+.rank-item .rank-emoji{
+  width:94px !important;
+  height:94px !important;
+}
+.ranking-list.small .rank-item{
+  grid-template-columns:44px 78px 1fr auto !important;
+  min-height:92px !important;
+}
+.ranking-list.small .rank-team-logo{
+  width:70px !important;
+  height:70px !important;
+}
+
+.guest-pill{
+  grid-template-columns:72px 1fr !important;
+  min-height:82px !important;
+  gap:14px !important;
+}
+.guest-pill > span{
+  width:64px !important;
+  height:64px !important;
+}
+.guest-pill-logo{
+  width:60px !important;
+  height:60px !important;
+}
+.captain-pill > span{
+  font-size:28px !important;
+}
+
+/* cards completas disponibles por si luego querés mostrarlas */
+.team-card-img{
+  display:block;
+  width:100%;
+  max-width:340px;
+  border-radius:22px;
+  box-shadow:0 20px 42px rgba(123,96,56,.18);
+}
+
+@media (max-width:900px){
+  .team-medallion-logo{width:160px !important;height:160px !important;}
+  .team-medallion{min-height:300px !important;}
+  .team-symbol{width:150px !important;height:150px !important;}
+  .team-symbol-logo{width:138px !important;height:138px !important;}
+  .rank-item{grid-template-columns:48px 78px 1fr auto !important;}
+  .rank-team-logo{width:70px !important;height:70px !important;}
+}
+
+@media (max-width:640px){
+  .team-medallion-logo{width:140px !important;height:140px !important;}
+  .team-medallion{min-height:250px !important;}
+  .rank-item{grid-template-columns:42px 66px 1fr !important;}
+  .rank-team-logo{width:60px !important;height:60px !important;}
+  .guest-pill{grid-template-columns:62px 1fr !important;}
+  .guest-pill-logo{width:54px !important;height:54px !important;}
+}
