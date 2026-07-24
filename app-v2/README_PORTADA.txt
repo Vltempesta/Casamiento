@@ -34,3 +34,12 @@ v32301 — CORRECCIÓN:
 - Reemplazar index.html y styles.css.
 - Confirmar que exista assets/backgrounds/portada-bordado-minimalista.png.
 - Abrir con ?v=32301.
+
+
+v32302:
+- Fondo específico vertical para celulares.
+- Más nitidez, contraste y visibilidad de los bordados.
+- Menor capa beige sobre el fondo.
+- Caja blanca subida 14 px en móvil.
+- Archivo nuevo: assets/backgrounds/portada-bordado-mobile.png
+- Abrir con ?v=32302.

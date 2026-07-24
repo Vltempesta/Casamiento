@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32301 · Fondo bordado minimalista en portada ===== */
+/* ===== v32302 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32301');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32302');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32301 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32302 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32301');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32302');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2057,5 +2057,55 @@ body::before { opacity: .22; }
       rgba(247, 240, 229, .58),
       rgba(245, 237, 220, .68)
     );
+  }
+}
+
+
+/* ===== v32302 · Fondo móvil nítido y tarjeta más alta ===== */
+#loginScreen.login-screen::before {
+  opacity: .64;
+  filter: saturate(1.06) contrast(1.05);
+}
+
+#loginScreen.login-screen::after {
+  background: linear-gradient(
+    180deg,
+    rgba(247, 240, 229, .31),
+    rgba(245, 237, 220, .44)
+  );
+}
+
+@media (max-width: 700px) {
+  #loginScreen.login-screen::before {
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32302');
+    background-size: cover;
+    background-position: center top;
+    opacity: .66;
+    filter: saturate(1.10) contrast(1.08);
+    transform: none;
+  }
+
+  #loginScreen.login-screen::after {
+    background: linear-gradient(
+      180deg,
+      rgba(247, 240, 229, .35),
+      rgba(245, 237, 220, .49)
+    );
+  }
+
+  #loginScreen .login-brand {
+    margin-bottom: 8px;
+  }
+
+  #loginScreen .login-card {
+    transform: translateY(-14px);
+    background: rgba(255, 252, 246, .82);
+    box-shadow: 0 14px 34px rgba(65, 44, 22, .11);
+  }
+}
+
+@media (max-width: 390px) {
+  #loginScreen .login-card {
+    transform: translateY(-10px);
   }
 }
