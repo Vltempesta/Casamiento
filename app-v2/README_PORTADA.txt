@@ -78,3 +78,16 @@ v32401 — MENÚ HAMBURGUESA:
 - El menú incluye Inicio, Asistencia, Mi equipo, Sumá puntos, Ranking, Invitados, Admin y Salir.
 - Reemplazar index.html, styles.css y app.js.
 - Abrir con ?v=32401.
+
+
+v32402 — INICIO UX:
+- Encabezado compacto con botón “Menú” visible.
+- Inicio dinámico según asistencia y cercanía del casamiento.
+- Una sola acción prioritaria por vez.
+- Info terrenal integrada como lista simple y accesible.
+- Detalles secundarios dentro de un desplegable.
+- Estado del equipo compacto, sin tarjetas repetidas.
+- Menú agrupado por Tu casamiento, El juego, Comunidad y Gestión.
+- Navegación por teclado, cierre con Escape y foco contenido en el menú.
+- Reemplazar index.html, styles.css y app.js.
+- Abrir con ?v=32402.

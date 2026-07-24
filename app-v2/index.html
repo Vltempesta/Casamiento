@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=32401" />
+  <link rel="stylesheet" href="styles.css?v=32402" />
 </head>
 <body>
   <div class="scene" aria-hidden="true">
@@ -28,7 +28,7 @@
     <section id="loginScreen" class="login-screen">
       <div class="login-frame">
         <header class="login-brand">
-          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32401" alt="Sello de Vani y Fede" width="105" height="113" />
+          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32402" alt="Sello de Vani y Fede" width="105" height="113" />
 
           <h1 class="couple-wordmark couple-wordmark--elegant" aria-label="Vani y Fede">
             <span>VANI</span>
@@ -97,6 +97,7 @@
             <span class="menu-toggle-lines" aria-hidden="true">
               <i></i><i></i><i></i>
             </span>
+            <span class="menu-toggle-label">Menú</span>
           </button>
         </div>
       </header>
@@ -113,16 +114,31 @@
         </div>
 
         <nav class="nav-tabs" aria-label="Secciones principales">
-          <button data-route="inicio" class="active">Inicio</button>
-          <button data-route="asistencia">Asistencia</button>
-          <button data-route="equipo">Mi equipo</button>
-          <button data-route="puntos">Sumá puntos</button>
-          <button data-route="ranking">Ranking</button>
-          <button data-route="invitados">Invitados</button>
-          <button data-route="admin">Admin</button>
+          <div class="menu-group">
+            <p>Tu casamiento</p>
+            <button data-route="inicio" class="active"><span aria-hidden="true">⌂</span>Inicio</button>
+            <button data-route="asistencia"><span aria-hidden="true">✓</span>Asistencia</button>
+            <button data-route="equipo"><span aria-hidden="true">◉</span>Mi equipo</button>
+          </div>
+
+          <div class="menu-group">
+            <p>El juego</p>
+            <button data-route="puntos"><span aria-hidden="true">★</span>Sumá puntos</button>
+            <button data-route="ranking"><span aria-hidden="true">↗</span>Ranking</button>
+          </div>
+
+          <div class="menu-group">
+            <p>Comunidad</p>
+            <button data-route="invitados"><span aria-hidden="true">♙</span>Invitados</button>
+          </div>
+
+          <div class="menu-group menu-group-admin">
+            <p>Gestión</p>
+            <button data-route="admin"><span aria-hidden="true">⚙</span>Administración</button>
+          </div>
         </nav>
 
-        <button id="logoutButton" class="menu-logout" type="button">Salir de mi cuenta</button>
+        <button id="logoutButton" class="menu-logout" type="button"><span aria-hidden="true">↪</span>Salir de mi cuenta</button>
       </aside>
 
       <section id="view" class="view" aria-live="polite"></section>
@@ -131,8 +147,8 @@
 
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
-  <script src="config.js?v=32401"></script>
-  <script src="data.js?v=32401"></script>
-  <script src="app.js?v=32401"></script>
+  <script src="config.js?v=32402"></script>
+  <script src="data.js?v=32402"></script>
+  <script src="app.js?v=32402"></script>
 </body>
 </html>

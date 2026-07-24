@@ -507,8 +507,29 @@
     $("#menuBackdrop")?.addEventListener("click", closeMenu);
 
     document.addEventListener("keydown", event => {
-      if (event.key === "Escape" && $("#mainMenu")?.classList.contains("open")) {
+      const menu = $("#mainMenu");
+      if (!menu?.classList.contains("open")) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
         closeMenu();
+        return;
+      }
+
+      if (event.key === "Tab") {
+        const focusable = $$("button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])", menu)
+          .filter(element => element.offsetParent !== null);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     });
 
@@ -583,8 +604,8 @@
     document.documentElement.style.setProperty("--team-accent", team.accent || "#c8a75d");
     $("#loginScreen").classList.add("hidden");
     $("#mainScreen").classList.remove("hidden");
-    $("#welcomeTitle").textContent = `Hola, ${guest.firstName}.`;
-    $("#welcomeSub").textContent = `Equipo ${team.name} · Capitán: ${team.captain}`;
+    $("#welcomeTitle").textContent = `Hola, ${guest.firstName}`;
+    $("#welcomeSub").textContent = `Equipo ${team.name}`;
     navigate("inicio");
     if (showWelcome) toast(`Acceso concedido · Equipo ${team.name}.`);
   }
@@ -593,7 +614,12 @@
     if (route === "ficha" || route === "juegos" || route === "info") route = "inicio";
     if (route === "torneo") route = "puntos";
     currentRoute = route;
-    $$(".nav-tabs button[data-route]").forEach(button => button.classList.toggle("active", button.dataset.route === route));
+    $$(".nav-tabs button[data-route]").forEach(button => {
+      const active = button.dataset.route === route;
+      button.classList.toggle("active", active);
+      if (active) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
     renderCurrentRoute();
   }
 
@@ -651,110 +677,168 @@
     const rank = calculateRanking();
     const myRank = rank.findIndex(row => row.id === team.id) + 1;
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
+    const rankingStarted = rank.some(row => Number(row.total || 0) !== 0);
+    const visibleRank = rankingStarted ? myRank : "—";
     const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
+    const deadline = CONFIG.RSVP_DEADLINE_LABEL || "31 de agosto de 2026";
 
-    const rsvpStrip = rsvpDone ? `
-      <section class="home-rsvp-strip is-done">
-        <span class="home-rsvp-icon">✓</span>
-        <div>
-          <small>Asistencia</small>
-          <strong>Registrada</strong>
-          <p>Traslado y restricciones guardados.</p>
-        </div>
-        <button class="ghost-button" type="button" data-go="asistencia">Ver / editar</button>
-      </section>` : `
-      <section class="home-rsvp-strip is-pending">
-        <span class="home-rsvp-icon">✉️</span>
-        <div>
-          <small>Paso principal</small>
-          <strong>Confirmá tu asistencia</strong>
-          <p>Antes del 31/08 · traslado y restricciones.</p>
-        </div>
-        <button type="button" data-go="asistencia">Confirmar ahora</button>
-      </section>`;
+    const now = new Date();
+    const eventDate = new Date(DATA.couple.eventDate);
+    const dayMs = 24 * 60 * 60 * 1000;
+    const daysToEvent = Math.ceil((eventDate.getTime() - now.getTime()) / dayMs);
+    const eventDay = now.getFullYear() === eventDate.getFullYear()
+      && now.getMonth() === eventDate.getMonth()
+      && now.getDate() === eventDate.getDate();
+    const nearEvent = !eventDay && daysToEvent > 0 && daysToEvent <= 30;
+
+    let primaryAction;
+    if (!rsvpDone) {
+      primaryAction = {
+        tone: "pending",
+        icon: "✉",
+        kicker: "Tu próximo paso",
+        title: "Confirmá tu asistencia",
+        text: `Respondé antes del ${deadline}. Ahí también podés indicar traslado y restricciones alimentarias.`,
+        button: "Confirmar asistencia",
+        attr: 'data-go="asistencia"'
+      };
+    } else if (eventDay) {
+      primaryAction = {
+        tone: "today",
+        icon: "✦",
+        kicker: "Hoy es el gran día",
+        title: "Todo listo para celebrar",
+        text: "Revisá horarios, traslado y novedades importantes antes de salir.",
+        button: "Ver datos clave",
+        attr: 'data-scroll="homeEssential"'
+      };
+    } else if (nearEvent) {
+      primaryAction = {
+        tone: "soon",
+        icon: "⌛",
+        kicker: "Falta poco",
+        title: `${daysToEvent} ${daysToEvent === 1 ? "día" : "días"} para el casamiento`,
+        text: "Revisá horario, traslado, vestimenta y la información disponible del lugar.",
+        button: "Ver datos clave",
+        attr: 'data-scroll="homeEssential"'
+      };
+    } else {
+      primaryAction = {
+        tone: "play",
+        icon: "★",
+        kicker: "Tu próximo desafío",
+        title: "Tu equipo ya está jugando",
+        text: `Descubrí las acciones disponibles y ayudá a ${team.name} a sumar puntos.`,
+        button: "Ver cómo sumar puntos",
+        attr: 'data-go="puntos"'
+      };
+    }
+
+    const secondTeamAction = rsvpDone && !nearEvent && !eventDay
+      ? { route: "ranking", label: "Ver ranking" }
+      : { route: "puntos", label: "Sumá puntos" };
 
     return `
       ${homeStyles()}
 
-      <section class="home-intro" style="--local-accent:${team.accent}">
-        <div class="home-intro-copy">
-          <p class="eyebrow">Tu espacio</p>
-          <h3>${rsvpDone ? "Ya estás listo para lo que viene." : "Todo empieza acá."}</h3>
-          <p>${rsvpDone
-            ? `Tu asistencia quedó registrada. Ahora podés jugar y seguir las novedades de <strong>${team.name}</strong>.`
-            : `Confirmá tu asistencia y empezá a descubrir lo que preparamos para <strong>${team.name}</strong>.`}</p>
-          <div class="home-intro-badges">
-            ${teamBadge(team)}
-            <span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span>
+      <section class="home-welcome" style="--local-accent:${team.accent}">
+        <div class="home-welcome-logo">${teamLogo(team, "home-team-logo")}</div>
+        <div class="home-welcome-copy">
+          <p class="home-kicker">Tu espacio personal</p>
+          <h3>Bienvenido al equipo ${escapeHTML(team.name)}</h3>
+          <p>Acá vas a encontrar todo lo necesario para el gran día y las próximas sorpresas.</p>
+          <div class="home-meta">
+            <span>Capitanía: <strong>${escapeHTML(team.captain)}</strong></span>
+            <span>24 · 10 · 2026</span>
           </div>
         </div>
-
-        <aside class="home-team-summary">
-          ${teamLogo(team, "home-team-logo")}
-          <div class="home-team-name"><small>Equipo</small><strong>${escapeHTML(team.name)}</strong></div>
-          <div class="home-team-numbers">
-            <span><b>${myPoints}</b><small>Puntos</small></span>
-            <span><b>${myRank || "—"}</b><small>Puesto</small></span>
-          </div>
-        </aside>
       </section>
 
-      ${rsvpStrip}
-
-      <section class="home-essential">
-        <div class="home-section-title">
-          <p class="eyebrow">Info terrenal</p>
-          <h3>Lo esencial del gran día</h3>
+      <section class="home-primary-action home-primary-action--${primaryAction.tone}">
+        <span class="home-primary-icon" aria-hidden="true">${primaryAction.icon}</span>
+        <div class="home-primary-copy">
+          <small>${escapeHTML(primaryAction.kicker)}</small>
+          <h3>${escapeHTML(primaryAction.title)}</h3>
+          <p>${escapeHTML(primaryAction.text)}</p>
         </div>
+        <button type="button" ${primaryAction.attr}>${escapeHTML(primaryAction.button)}</button>
+      </section>
 
-        <div class="home-date-banner">
+      <section id="homeEssential" class="home-essential" aria-labelledby="homeEssentialTitle">
+        <div class="home-section-heading">
           <div>
-            <small>Sábado</small>
-            <strong>24 · 10 · 2026</strong>
-            <span>18:00 a 03:00</span>
+            <p class="home-kicker">Información práctica</p>
+            <h3 id="homeEssentialTitle">Lo esencial</h3>
           </div>
-          <a href="${calendarUrl}" target="_blank" rel="noopener">📅 Agendalo</a>
+          <a class="home-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener"><span aria-hidden="true">＋</span> Agendalo</a>
         </div>
 
-        <div class="home-info-grid">
-          <article>
-            <span>📍</span>
-            <div><small>Ubicación</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Lugar secreto"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div>
+        <div class="home-essential-card">
+          <article class="home-essential-row">
+            <span class="home-essential-icon" aria-hidden="true">▣</span>
+            <div><small>Fecha y horario</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div>
           </article>
-          <article>
-            <span>🚌</span>
-            <div><small>Traslado</small><strong>Micro desde el Obelisco</strong><p>Regreso previsto: 03:00.</p></div>
+          <article class="home-essential-row">
+            <span class="home-essential-icon" aria-hidden="true">⌖</span>
+            <div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div>
           </article>
-          <article>
-            <span>👗</span>
+          <article class="home-essential-row">
+            <span class="home-essential-icon" aria-hidden="true">⇄</span>
+            <div><small>Traslado</small><strong>Combi desde el Obelisco</strong><p>Habrá ida y regreso previsto a las 03:00.</p></div>
+          </article>
+          <article class="home-essential-row">
+            <span class="home-essential-icon" aria-hidden="true">◇</span>
             <div><small>Vestimenta</small><strong>Elegante festivo</strong><p>Habrá pasto: elegí calzado cómodo.</p></div>
           </article>
         </div>
 
-        <details class="home-more-info">
-          <summary>Más información útil</summary>
-          <div class="home-more-grid">
-            <div><strong>🌿 Consejo</strong><p>Abrigo liviano y evitar tacos finos.</p></div>
-            <div><strong>🍽️ Menú</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Se revelará más adelante. Cargá restricciones en Asistencia."}</p></div>
+        <details class="home-details">
+          <summary><span>Ver todos los detalles</span><i aria-hidden="true">⌄</i></summary>
+          <div class="home-details-content">
+            <article><strong>Ubicación</strong><p>${locationOpen ? `${escapeHTML(DATA.couple.placeName)}, ${escapeHTML(DATA.couple.placeArea)}.` : "La dirección exacta y el mapa se habilitarán más adelante."}</p></article>
+            <article><strong>Traslado</strong><p>Al confirmar asistencia podés pedir información de la combi desde el Obelisco.</p></article>
+            <article><strong>Para estar cómodo</strong><p>Puede refrescar de noche. Recomendamos abrigo liviano y evitar tacos finos.</p></article>
+            <article><strong>Menú</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Se revelará más adelante. Cargá cualquier restricción en Asistencia."}</p></article>
           </div>
         </details>
+      </section>
+
+      <section class="home-team-card" style="--local-accent:${team.accent}">
+        <div class="home-team-identity">
+          ${teamLogo(team, "home-team-card-logo")}
+          <div><small>Tu equipo</small><h3>${escapeHTML(team.name)}</h3><p>${rankingStarted ? "La competencia está en marcha." : "Los primeros movimientos aparecerán acá."}</p></div>
+        </div>
+        <div class="home-team-score" aria-label="Estado del equipo">
+          <span><b>${myPoints}</b><small>Puntos</small></span>
+          <span><b>${visibleRank}</b><small>Puesto</small></span>
+        </div>
+        <div class="home-team-actions">
+          <button class="ghost-button" type="button" data-go="equipo">Ver mi equipo</button>
+          <button type="button" data-go="${secondTeamAction.route}">${secondTeamAction.label}</button>
+        </div>
       </section>
     `;
   }
 
   function homeStyles() {
     return `<style>
-      .home-intro{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:28px;align-items:center;padding:clamp(26px,4vw,44px);border:1px solid var(--line);border-radius:28px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.82));box-shadow:var(--shadow);position:relative;overflow:hidden}
-      .home-intro::after{content:"";position:absolute;width:340px;height:340px;right:-150px;top:-160px;border-radius:50%;background:color-mix(in srgb,var(--local-accent) 12%,transparent);pointer-events:none}
-      .home-intro-copy,.home-team-summary{position:relative;z-index:1}.home-intro h3{margin:8px 0 12px;font-size:clamp(34px,5vw,58px);letter-spacing:-.045em}.home-intro-copy>p:not(.eyebrow){max-width:650px;margin:0;font-size:16px}.home-intro-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-      .home-team-summary{display:grid;justify-items:center;gap:8px;text-align:center;padding:20px;border:1px solid color-mix(in srgb,var(--local-accent) 28%,var(--line));border-radius:24px;background:rgba(255,255,255,.44)}.home-team-logo{width:108px;height:108px}.home-team-name small{display:block;text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:900;color:var(--muted-2)}.home-team-name strong{display:block;margin-top:2px;font-family:var(--font-title);font-size:27px}.home-team-numbers{width:100%;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);margin-top:7px;padding-top:13px}.home-team-numbers span{display:grid;gap:2px}.home-team-numbers span+span{border-left:1px solid var(--line)}.home-team-numbers b{font-family:var(--font-title);font-size:22px}.home-team-numbers small{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--muted-2)}
-      .home-rsvp-strip{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;margin-top:14px;padding:18px 20px;border:1px solid var(--line);border-radius:22px;background:rgba(255,253,248,.78);box-shadow:0 10px 25px rgba(76,51,22,.07)}.home-rsvp-strip.is-pending{border-color:rgba(183,137,69,.45)}.home-rsvp-strip.is-done{border-color:rgba(94,140,94,.34)}.home-rsvp-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:rgba(201,170,114,.15);font-size:22px}.home-rsvp-strip small{display:block;color:var(--gold-deep);font-weight:900;text-transform:uppercase;letter-spacing:.12em;font-size:10px}.home-rsvp-strip strong{display:block;margin-top:2px;font-family:var(--font-title);font-size:21px}.home-rsvp-strip p{margin:3px 0 0;font-size:13px;line-height:1.35}.home-rsvp-strip button{white-space:nowrap}
-      .home-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}.home-shortcuts button{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;min-height:90px;padding:16px;text-align:left;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.76);color:var(--ink);box-shadow:none}.home-shortcuts button>span,.home-shortcut-logo{grid-row:1/3;width:40px;height:40px;display:grid;place-items:center;font-size:24px}.home-shortcuts strong{font-family:var(--font-title);font-size:17px}.home-shortcuts small{font-size:12px;color:var(--muted-2);font-weight:700}
-      .home-essential{margin-top:28px}.home-section-title{margin-bottom:14px}.home-section-title h3{margin-top:6px;font-size:clamp(28px,4vw,42px);letter-spacing:-.035em}.home-date-banner{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 22px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,rgba(255,253,248,.90),rgba(239,228,209,.75))}.home-date-banner>div{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 16px}.home-date-banner small{font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:var(--gold-deep)}.home-date-banner strong{font-family:var(--font-title);font-size:25px;color:#7a3140}.home-date-banner span{font-weight:800;color:var(--muted)}.home-date-banner a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:999px;padding:12px 17px;background:var(--ink);color:#fff;font-weight:900;white-space:nowrap}
-      .home-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}.home-info-grid article{display:grid;grid-template-columns:38px 1fr;gap:11px;align-items:start;padding:17px;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.72)}.home-info-grid article>span{font-size:23px}.home-info-grid small{display:block;color:var(--gold-deep);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em}.home-info-grid strong{display:block;margin-top:4px;font-family:var(--font-title);font-size:16px;line-height:1.2}.home-info-grid p{margin:5px 0 0;font-size:12px;line-height:1.4}
-      .home-more-info{margin-top:12px;border:1px solid var(--line);border-radius:18px;background:rgba(255,253,248,.54);overflow:hidden}.home-more-info summary{padding:15px 18px;cursor:pointer;font-weight:900;color:var(--ink)}.home-more-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 17px}.home-more-grid>div{padding:13px;border-radius:14px;background:rgba(255,255,255,.43)}.home-more-grid p{margin:5px 0 0;font-size:13px;line-height:1.4}
-      @media(max-width:850px){.home-intro{grid-template-columns:1fr}.home-team-summary{grid-template-columns:auto 1fr;justify-items:start;text-align:left}.home-team-logo{grid-row:1/3;width:86px;height:86px}.home-team-numbers{grid-column:2;margin-top:0}.home-rsvp-strip{grid-template-columns:auto 1fr}.home-rsvp-strip button{grid-column:1/-1;width:100%}.home-shortcuts,.home-info-grid{grid-template-columns:1fr}.home-date-banner{align-items:flex-start;flex-direction:column}.home-date-banner a{width:100%}}
-      @media(max-width:520px){.home-intro{padding:24px 20px}.home-intro h3{font-size:36px}.home-team-summary{padding:16px}.home-rsvp-strip{padding:16px}.home-shortcuts button{min-height:78px}.home-more-grid{grid-template-columns:1fr}.home-date-banner>div{display:grid;gap:4px}.home-date-banner strong{font-size:23px}}
+      .home-kicker{margin:0;color:var(--gold-deep);font-size:11px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
+      .home-welcome{display:grid;grid-template-columns:132px minmax(0,1fr);gap:26px;align-items:center;padding:30px;border:1px solid var(--line);border-radius:26px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.76));box-shadow:0 12px 32px rgba(76,51,22,.08);position:relative;overflow:hidden}
+      .home-welcome::after{content:"";position:absolute;width:280px;height:280px;right:-130px;top:-140px;border-radius:50%;background:color-mix(in srgb,var(--local-accent) 11%,transparent);pointer-events:none}.home-welcome>*{position:relative;z-index:1}
+      .home-welcome-logo{display:grid;place-items:center}.home-team-logo{width:118px;height:118px}.home-welcome h3{margin:6px 0 9px;font-size:clamp(30px,4vw,44px);letter-spacing:-.035em}.home-welcome-copy>p:not(.home-kicker){max-width:650px;margin:0;font-size:16px;line-height:1.55;font-weight:580}
+      .home-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:15px;color:var(--muted);font-size:13px;font-weight:700}.home-meta span+span{position:relative}.home-meta span+span::before{content:"·";position:absolute;left:-11px}
+      .home-primary-action{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:18px;align-items:center;margin-top:14px;padding:21px 22px;border:1px solid rgba(183,137,69,.34);border-radius:22px;background:rgba(255,253,248,.84);box-shadow:0 9px 25px rgba(76,51,22,.06)}
+      .home-primary-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:50%;background:rgba(201,170,114,.16);color:var(--ink);font-size:24px;font-weight:900}.home-primary-copy small{color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.home-primary-copy h3{margin:3px 0 4px;font-size:23px;letter-spacing:-.02em}.home-primary-copy p{margin:0;max-width:690px;font-size:14px;line-height:1.48}.home-primary-action button{min-height:48px;white-space:nowrap}
+      .home-primary-action--today{border-color:rgba(122,49,64,.36)}.home-primary-action--today .home-primary-icon{background:rgba(122,49,64,.11);color:#7a3140}.home-primary-action--play{border-color:color-mix(in srgb,var(--team-accent) 35%,var(--line))}
+      .home-essential{margin-top:32px;scroll-margin-top:90px}.home-section-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:13px}.home-section-heading h3{margin:5px 0 0;font-size:clamp(28px,3.5vw,38px);letter-spacing:-.03em}.home-calendar-link{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 15px;border:1px solid var(--line);border-radius:999px;background:rgba(255,253,248,.70);color:var(--ink);font-size:13px;font-weight:850;text-decoration:none}
+      .home-essential-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);border-radius:22px;background:rgba(255,253,248,.78);overflow:hidden;box-shadow:0 8px 24px rgba(76,51,22,.05)}.home-essential-row{display:grid;grid-template-columns:44px 1fr;gap:13px;align-items:start;padding:20px}.home-essential-row:nth-child(odd){border-right:1px solid var(--line)}.home-essential-row:nth-child(-n+2){border-bottom:1px solid var(--line)}
+      .home-essential-icon{width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(201,170,114,.30);border-radius:13px;background:rgba(201,170,114,.10);color:var(--ink);font-size:20px;font-weight:850}.home-essential-row small{display:block;color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.home-essential-row strong{display:block;margin-top:4px;color:var(--ink);font-family:var(--font-title);font-size:17px;line-height:1.25}.home-essential-row p{margin:4px 0 0;font-size:13px;line-height:1.42}
+      .home-details{margin-top:10px;border:1px solid var(--line);border-radius:17px;background:rgba(255,253,248,.58);overflow:hidden}.home-details summary{min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 17px;cursor:pointer;color:var(--ink);font-size:14px;font-weight:850;list-style:none}.home-details summary::-webkit-details-marker{display:none}.home-details summary i{font-style:normal;font-size:19px;transition:transform .18s ease}.home-details[open] summary i{transform:rotate(180deg)}.home-details-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 15px 15px}.home-details-content article{padding:14px;border-radius:14px;background:rgba(255,255,255,.46)}.home-details-content strong{color:var(--ink);font-size:14px}.home-details-content p{margin:5px 0 0;font-size:13px;line-height:1.45}
+      .home-team-card{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:22px;align-items:center;margin-top:30px;padding:22px;border:1px solid color-mix(in srgb,var(--local-accent) 25%,var(--line));border-radius:23px;background:linear-gradient(135deg,rgba(255,253,248,.88),rgba(239,228,209,.72))}.home-team-identity{display:flex;align-items:center;gap:15px;min-width:0}.home-team-card-logo{width:68px;height:68px;flex:0 0 auto}.home-team-identity small{display:block;color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}.home-team-identity h3{margin:3px 0 2px;font-size:25px}.home-team-identity p{margin:0;font-size:12px;line-height:1.35}
+      .home-team-score{display:grid;grid-template-columns:repeat(2,72px);text-align:center}.home-team-score span{display:grid;gap:2px}.home-team-score span+span{border-left:1px solid var(--line)}.home-team-score b{color:var(--ink);font-family:var(--font-title);font-size:22px}.home-team-score small{color:var(--muted-2);font-size:9px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}.home-team-actions{display:flex;gap:8px}.home-team-actions button{min-height:46px;white-space:nowrap}
+      @media(max-width:900px){.home-team-card{grid-template-columns:minmax(0,1fr) auto}.home-team-actions{grid-column:1/-1}.home-team-actions button{flex:1}.home-primary-action{grid-template-columns:52px 1fr}.home-primary-action button{grid-column:1/-1;width:100%}}
+      @media(max-width:680px){.home-welcome{grid-template-columns:84px 1fr;gap:16px;padding:22px 18px}.home-team-logo{width:82px;height:82px}.home-welcome h3{font-size:29px}.home-welcome-copy>p:not(.home-kicker){font-size:15px}.home-meta{display:grid;gap:3px;margin-top:11px}.home-meta span+span::before{display:none}.home-primary-action{grid-template-columns:44px 1fr;gap:13px;padding:18px 16px}.home-primary-icon{width:44px;height:44px}.home-primary-copy h3{font-size:21px}.home-primary-copy p{font-size:14px}.home-section-heading{align-items:center}.home-calendar-link{padding:9px 12px}.home-essential-card{grid-template-columns:1fr}.home-essential-row{padding:17px 16px}.home-essential-row:nth-child(n){border-right:0}.home-essential-row:not(:last-child){border-bottom:1px solid var(--line)}.home-details-content{grid-template-columns:1fr}.home-team-card{grid-template-columns:1fr;padding:18px}.home-team-score{grid-template-columns:repeat(2,1fr);padding:13px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.home-team-actions{grid-column:auto}.home-team-actions button{width:100%}}
+      @media(max-width:430px){.home-welcome{grid-template-columns:1fr;text-align:center}.home-welcome-logo{margin-bottom:-4px}.home-team-logo{width:88px;height:88px}.home-meta{justify-items:center}.home-section-heading h3{font-size:30px}.home-calendar-link span{display:none}.home-team-identity{justify-content:center;text-align:left}.home-team-actions{display:grid}.home-primary-action button,.home-team-actions button{min-height:50px}}
     </style>`;
   }
 
@@ -1403,6 +1487,10 @@
 
   function bindViewEvents(route) {
     $$('[data-go]').forEach(button => button.addEventListener("click", () => navigate(button.dataset.go)));
+    $$('[data-scroll]').forEach(button => button.addEventListener("click", () => {
+      const target = document.getElementById(button.dataset.scroll);
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
 
     if (route === "asistencia") {
       $("#editRsvp")?.addEventListener("click", () => {
