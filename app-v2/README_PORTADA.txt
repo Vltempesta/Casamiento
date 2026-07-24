@@ -50,3 +50,11 @@ v32303:
 - La fecha 24 - 10 - 2026 pasó a bordó.
 - Archivo nuevo: assets/branding/vani-fede-wordmark.png
 - Abrir con ?v=32303.
+
+
+v32304:
+- Se eliminó el wordmark raster pixelado.
+- “VANI & FEDE” vuelve a ser texto HTML de alta definición.
+- Tipografía elegante inspirada en la invitación.
+- Mantiene la fecha en bordó.
+- Abrir con ?v=32304.
