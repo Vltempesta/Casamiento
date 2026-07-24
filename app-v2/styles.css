@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32300 · Fondo bordado minimalista en portada ===== */
+/* ===== v32301 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32300');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32301');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2004,5 +2004,58 @@ body::before { opacity: .22; }
   .login-screen .login-card {
     background: rgba(255, 252, 246, .86);
     backdrop-filter: blur(3px);
+  }
+}
+
+
+/* ===== v32301 · Corrección definitiva de visibilidad del fondo =====
+   Las reglas anteriores ocultaban ::before y ::after con display:none
+   y conservaban dimensiones de 90px. */
+#loginScreen.login-screen::before,
+#loginScreen.login-screen::after {
+  display: block;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+}
+
+#loginScreen.login-screen::before {
+  inset: 0;
+  z-index: 0;
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32301');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  opacity: .54;
+  transform: none;
+}
+
+#loginScreen.login-screen::after {
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(247, 240, 229, .43),
+    rgba(245, 237, 220, .58)
+  );
+  transform: none;
+}
+
+#loginScreen .login-frame {
+  z-index: 2;
+}
+
+@media (max-width: 700px) {
+  #loginScreen.login-screen::before {
+    background-position: center center;
+    opacity: .40;
+  }
+
+  #loginScreen.login-screen::after {
+    background: linear-gradient(
+      180deg,
+      rgba(247, 240, 229, .58),
+      rgba(245, 237, 220, .68)
+    );
   }
 }

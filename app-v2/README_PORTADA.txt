@@ -27,3 +27,10 @@ v32300:
 - El fondo no afecta las demás secciones de la app.
 - Archivo nuevo requerido: assets/backgrounds/portada-bordado-minimalista.png
 - Abrir la web con ?v=32300 para evitar caché.
+
+
+v32301 — CORRECCIÓN:
+- Se corrigió una regla antigua que mantenía ocultos los pseudo-elementos usados para mostrar el fondo.
+- Reemplazar index.html y styles.css.
+- Confirmar que exista assets/backgrounds/portada-bordado-minimalista.png.
+- Abrir con ?v=32301.
