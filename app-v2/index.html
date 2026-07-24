@@ -4,16 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Vani & Fede · La Convocatoria</title>
-  <meta name="description" content="Segundo comunicado de Vani & Fede. Ingresá al bosque, confirmá asistencia y descubrí tu fuerza." />
+  <meta name="description" content="Segundo comunicado de Vani & Fede. Encontrá tu invitación, confirmá asistencia y descubrí tu fuerza." />
   <meta property="og:title" content="Vani & Fede · La Convocatoria" />
-  <meta property="og:description" content="Segundo comunicado: ingresá al bosque y descubrí tu destino." />
+  <meta property="og:description" content="Segundo comunicado: encontrá tu invitación y abrí tu acceso personal." />
   <meta property="og:image" content="preview-whatsapp.jpg" />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#f5eddc" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=31000" />
+  <link rel="stylesheet" href="styles.css?v=32000" />
 </head>
 <body>
   <div class="scene" aria-hidden="true">
@@ -26,27 +26,54 @@
 
   <main id="app" class="app-shell">
     <section id="loginScreen" class="login-screen">
-      <div class="seal" aria-label="Vani y Fede">V&amp;F</div>
-      <p class="eyebrow">Segundo comunicado · acceso reservado</p>
-      <h1>La Convocatoria</h1>
-      <p class="subtitle">El bosque abrió un archivo con tu nombre. Ingresá para confirmar asistencia, descubrir tu fuerza y prepararte para la batalla.</p>
+      <div class="login-frame">
+        <header class="login-brand">
+          <div class="seal" aria-label="Vani y Fede">V&amp;F</div>
+          <p class="eyebrow">Segundo comunicado · acceso reservado</p>
+          <h1 class="login-title"><span>La</span><strong>Convocatoria</strong></h1>
+          <p class="login-date" aria-label="24 de octubre de 2026">24 · 10 · 2026</p>
+          <div class="botanical-divider" aria-hidden="true"><span></span><i>✦</i><span></span></div>
+          <p class="subtitle">Tu nombre ya forma parte de la historia. Entrá para confirmar tu asistencia, descubrir tu fuerza y prepararte para lo que viene.</p>
+        </header>
 
-      <form id="loginForm" class="login-card" autocomplete="on">
-        <div class="form-head">
-          <div>
-            <strong>Identificación del invitado</strong>
-            <small>Podés entrar con nombre, apellido, alias o mail.</small>
+        <form id="loginForm" class="login-card" autocomplete="off" novalidate>
+          <div class="form-head">
+            <div>
+              <span class="form-kicker">Acceso personal</span>
+              <strong>Encontrá tu invitación</strong>
+              <small>Escribí tu nombre, apellido o alias.</small>
+            </div>
+            <span id="connectionBadge" class="status-pill idle">Sheets sin configurar</span>
           </div>
-          <span id="connectionBadge" class="status-pill idle">Sheets sin configurar</span>
-        </div>
-        <label for="guestName">Nombre y apellido</label>
-        <div class="input-row">
-          <input id="guestName" name="guestName" type="text" placeholder="Ej: Nico Tempesta" autocomplete="name" list="guestSuggestions" required />
-          <button type="submit">Entrar</button>
-        </div>
-        <datalist id="guestSuggestions"></datalist>
-        <div id="loginMessage" class="form-message" role="status"></div>
-      </form>
+
+          <label class="sr-only" for="guestName">Nombre, apellido o alias</label>
+          <div class="input-row">
+            <div class="guest-search">
+              <span class="search-icon" aria-hidden="true">⌕</span>
+              <input
+                id="guestName"
+                name="guestName"
+                type="text"
+                placeholder="Buscá tu nombre…"
+                autocomplete="off"
+                autocapitalize="words"
+                spellcheck="false"
+                aria-autocomplete="list"
+                aria-controls="guestSuggestionPanel"
+                aria-expanded="false"
+                required
+              />
+              <div id="guestSuggestionPanel" class="guest-suggestions hidden" role="listbox" aria-label="Invitados encontrados"></div>
+            </div>
+            <button id="loginButton" type="submit"><span>Abrir mi acceso</span><b aria-hidden="true">→</b></button>
+          </div>
+
+          <p class="login-privacy"><span aria-hidden="true">◇</span> Tu equipo seguirá oculto hasta que abras el acceso.</p>
+          <div id="loginMessage" class="form-message" role="status" aria-live="polite"></div>
+        </form>
+
+        <p class="login-footnote">Acceso exclusivo para invitados de Vani &amp; Fede</p>
+      </div>
     </section>
 
     <section id="mainScreen" class="main-screen hidden">
@@ -83,8 +110,8 @@
 
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
-  <script src="config.js?v=31000"></script>
-  <script src="data.js?v=31000"></script>
-  <script src="app.js?v=31000"></script>
+  <script src="config.js?v=32000"></script>
+  <script src="data.js?v=32000"></script>
+  <script src="app.js?v=32000"></script>
 </body>
 </html>

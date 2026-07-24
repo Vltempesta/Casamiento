@@ -18,6 +18,9 @@
   let currentGuest = null;
   let currentRoute = "inicio";
   let remoteStatus = "idle";
+  let selectedGuestId = null;
+  let suggestionMatches = [];
+  let activeSuggestionIndex = -1;
 
   const defaultState = {
     currentGuestId: null,
@@ -144,24 +147,42 @@
     return teamCompetitionMembers(teamId).filter(guest => hasCompletedProfile(state.profiles[guest.id]));
   }
 
+  function guestFullName(guest) {
+    return `${guest?.firstName || ""} ${guest?.lastName || ""}`.replace(/\s+/g, " ").trim();
+  }
+
   function findGuest(query) {
     const wanted = normalize(query);
     if (!wanted) return null;
-    return DATA.guests.find(guest => {
-      const haystack = normalize([
+
+    const exactMatches = DATA.guests.filter(guest => {
+      const keys = [
         guest.id,
+        guestFullName(guest),
         guest.firstName,
         guest.lastName,
-        `${guest.firstName} ${guest.lastName}`,
         guest.alias,
-        guest.email,
-        guest.relation,
-        guest.roleVisible,
-        guest.displayRelation,
-        getTeam(guest.team).name
-      ].join(" "));
-      return haystack === wanted || haystack.includes(wanted) || wanted.includes(haystack);
+        guest.email
+      ].map(normalize).filter(Boolean);
+      return keys.includes(wanted);
     });
+
+    return exactMatches.length === 1 ? exactMatches[0] : null;
+  }
+
+  function guestSuggestionsFor(query) {
+    const wanted = normalize(query);
+    if (wanted.length < 2) return [];
+
+    return DATA.guests
+      .filter(guest => {
+        const firstName = normalize(guest.firstName);
+        const lastName = normalize(guest.lastName);
+        const fullName = normalize(guestFullName(guest));
+        return firstName.startsWith(wanted) || lastName.startsWith(wanted) || fullName.startsWith(wanted);
+      })
+      .sort((a, b) => guestFullName(a).localeCompare(guestFullName(b), "es"))
+      .slice(0, 7);
   }
 
   function isConfigured() {
@@ -331,8 +352,107 @@
   }
 
   function fillGuestSuggestions() {
-    const datalist = $("#guestSuggestions");
-    datalist.innerHTML = DATA.guests.map(guest => `<option value="${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}"></option>`).join("");
+    const input = $("#guestName");
+    const panel = $("#guestSuggestionPanel");
+    if (!input || !panel) return;
+
+    function closeSuggestions() {
+      suggestionMatches = [];
+      activeSuggestionIndex = -1;
+      panel.innerHTML = "";
+      panel.classList.add("hidden");
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+    }
+
+    function selectSuggestion(guest) {
+      selectedGuestId = guest.id;
+      input.value = guestFullName(guest);
+      input.removeAttribute("aria-invalid");
+      $("#loginMessage").textContent = "";
+      closeSuggestions();
+      input.focus();
+    }
+
+    function updateActiveSuggestion() {
+      const options = $$(".guest-suggestion", panel);
+      options.forEach((option, index) => option.classList.toggle("active", index === activeSuggestionIndex));
+      if (activeSuggestionIndex >= 0 && options[activeSuggestionIndex]) {
+        const active = options[activeSuggestionIndex];
+        input.setAttribute("aria-activedescendant", active.id);
+        active.scrollIntoView({ block: "nearest" });
+      } else {
+        input.removeAttribute("aria-activedescendant");
+      }
+    }
+
+    function renderSuggestions() {
+      suggestionMatches = guestSuggestionsFor(input.value);
+      activeSuggestionIndex = -1;
+
+      if (!suggestionMatches.length) {
+        closeSuggestions();
+        return;
+      }
+
+      panel.innerHTML = suggestionMatches.map((guest, index) => {
+        const fullName = guestFullName(guest);
+        const alias = normalize(guest.alias) && normalize(guest.alias) !== normalize(guest.firstName)
+          ? `También figura como “${escapeHTML(guest.alias)}”`
+          : "Invitación personal";
+        const initial = escapeHTML((guest.firstName || guest.lastName || "V").charAt(0).toUpperCase());
+        return `
+          <button id="guest-option-${index}" class="guest-suggestion" type="button" role="option" data-guest-id="${escapeHTML(guest.id)}" aria-selected="false">
+            <span class="guest-suggestion-mark" aria-hidden="true">${initial}</span>
+            <span><strong>${escapeHTML(fullName)}</strong><small>${alias}</small></span>
+          </button>`;
+      }).join("");
+
+      panel.classList.remove("hidden");
+      input.setAttribute("aria-expanded", "true");
+    }
+
+    input.addEventListener("input", () => {
+      selectedGuestId = null;
+      input.removeAttribute("aria-invalid");
+      $("#loginMessage").textContent = "";
+      renderSuggestions();
+    });
+
+    input.addEventListener("focus", () => {
+      if (!selectedGuestId) renderSuggestions();
+    });
+
+    input.addEventListener("keydown", event => {
+      if (panel.classList.contains("hidden")) return;
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        activeSuggestionIndex = Math.min(activeSuggestionIndex + 1, suggestionMatches.length - 1);
+        updateActiveSuggestion();
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        activeSuggestionIndex = Math.max(activeSuggestionIndex - 1, 0);
+        updateActiveSuggestion();
+      } else if (event.key === "Enter" && activeSuggestionIndex >= 0) {
+        event.preventDefault();
+        selectSuggestion(suggestionMatches[activeSuggestionIndex]);
+      } else if (event.key === "Escape") {
+        closeSuggestions();
+      }
+    });
+
+    panel.addEventListener("pointerdown", event => {
+      const option = event.target.closest("[data-guest-id]");
+      if (!option) return;
+      event.preventDefault();
+      const guest = getGuestById(option.dataset.guestId);
+      if (guest) selectSuggestion(guest);
+    });
+
+    document.addEventListener("pointerdown", event => {
+      if (!event.target.closest(".guest-search")) closeSuggestions();
+    });
   }
 
   function configureNavigation() {
@@ -352,15 +472,39 @@
   function bindShellEvents() {
     $("#loginForm").addEventListener("submit", event => {
       event.preventDefault();
-      const guest = findGuest($("#guestName").value);
+      const input = $("#guestName");
+      const button = $("#loginButton");
+      const buttonLabel = $("span", button);
       const message = $("#loginMessage");
-      if (!guest) {
-        message.textContent = "No encontré ese nombre. Probá con nombre completo, alias o revisá que esté en data.js.";
+      const guest = (selectedGuestId && getGuestById(selectedGuestId)) || findGuest(input.value);
+
+      if (!normalize(input.value)) {
+        input.setAttribute("aria-invalid", "true");
+        message.textContent = "Escribí tu nombre para encontrar la invitación.";
+        input.focus();
         return;
       }
+
+      if (!guest) {
+        input.setAttribute("aria-invalid", "true");
+        message.textContent = suggestionMatches.length
+          ? "Elegí tu nombre de la lista para abrir el acceso correcto."
+          : "No encontramos ese nombre. Probá escribiendo solamente tu nombre o apellido.";
+        input.focus();
+        return;
+      }
+
+      input.removeAttribute("aria-invalid");
       message.textContent = "";
-      enterApp(guest, true);
-      postToSheets("logEvent", { eventName: "login", guestId: guest.id, teamId: guest.team });
+      button.disabled = true;
+      buttonLabel.textContent = "Abriendo…";
+
+      window.setTimeout(() => {
+        enterApp(guest, true);
+        postToSheets("logEvent", { eventName: "login", guestId: guest.id, teamId: guest.team });
+        button.disabled = false;
+        buttonLabel.textContent = "Abrir mi acceso";
+      }, 180);
     });
 
     $("#logoutButton").addEventListener("click", () => {
@@ -369,6 +513,12 @@
       saveState();
       $("#mainScreen").classList.add("hidden");
       $("#loginScreen").classList.remove("hidden");
+      selectedGuestId = null;
+      suggestionMatches = [];
+      activeSuggestionIndex = -1;
+      $("#guestName").value = "";
+      $("#guestName").removeAttribute("aria-invalid");
+      $("#loginMessage").textContent = "";
       $("#guestName").focus();
     });
 
