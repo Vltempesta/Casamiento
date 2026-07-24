@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32304 · Fondo bordado minimalista en portada ===== */
+/* ===== v32400 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32304');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32400');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32304 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32400 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32304');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32400');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32304 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32400 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32304');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32400');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32304 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32400 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32304 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32400 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2195,5 +2195,97 @@ body::before { opacity: .22; }
 @media (max-width: 390px) {
   #loginScreen .couple-wordmark--elegant {
     font-size: 42px;
+  }
+}
+
+
+/* ===== v32400 · Inicio minimalista ===== */
+#mainScreen.main-screen::before,
+#mainScreen.main-screen::after,
+#mainScreen .topbar::before,
+#mainScreen .topbar::after {
+  display: none !important;
+}
+
+#mainScreen .topbar {
+  min-height: auto;
+  padding: 14px 18px;
+  border-radius: 22px;
+  background-image: none !important;
+  background: rgba(255,253,248,.88);
+  box-shadow: 0 10px 28px rgba(76,51,22,.08);
+}
+
+#mainScreen .topbar .eyebrow {
+  display: none;
+}
+
+#mainScreen .topbar h2 {
+  margin: 0;
+  font-size: clamp(22px, 2.5vw, 31px);
+  letter-spacing: -.025em;
+}
+
+#mainScreen .topbar-sub {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+#mainScreen .topbar-actions {
+  flex-wrap: nowrap;
+}
+
+#mainScreen #logoutButton {
+  padding: 10px 16px;
+}
+
+#mainScreen .nav-tabs {
+  gap: 7px;
+  padding-bottom: 2px;
+}
+
+#mainScreen .nav-tabs button {
+  padding: 10px 15px;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  #mainScreen .topbar {
+    position: sticky;
+    top: 6px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  #mainScreen .topbar-main {
+    min-width: 0;
+  }
+
+  #mainScreen .topbar h2 {
+    font-size: 21px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #mainScreen .topbar-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+  }
+
+  #mainScreen .topbar-actions {
+    width: auto;
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
+  #mainScreen #logoutButton {
+    padding: 9px 13px;
+    font-size: 12px;
   }
 }

@@ -58,3 +58,14 @@ v32304:
 - Tipografía elegante inspirada en la invitación.
 - Mantiene la fecha en bordó.
 - Abrir con ?v=32304.
+
+
+v32400 · INICIO MINIMALISTA
+- Se eliminó el botón Compartir.
+- Se eliminó Info terrenal de la navegación.
+- La información terrenal pasó al final de Inicio.
+- Se quitaron estadísticas y tarjetas duplicadas.
+- Nuevo Inicio: equipo, asistencia, accesos rápidos e información esencial.
+- Encabezado superior más compacto en escritorio y celular.
+- Asistencia mantiene su sección completa sin cambios.
+- Abrir con ?v=32400.

@@ -456,6 +456,9 @@
   }
 
   function configureNavigation() {
+    const infoButton = $('.nav-tabs button[data-route="info"]');
+    if (infoButton) infoButton.remove();
+
     const fichaButton = $('.nav-tabs button[data-route="ficha"]');
     if (fichaButton) fichaButton.remove();
 
@@ -522,19 +525,6 @@
       $("#guestName").focus();
     });
 
-    $("#shareButton").addEventListener("click", async () => {
-      const text = DATA.couple.whatsappDescription;
-      try {
-        if (navigator.share) await navigator.share({ title: DATA.couple.title, text, url: location.href });
-        else {
-          await navigator.clipboard.writeText(`${text} ${location.href}`);
-          toast("Link copiado para compartir.");
-        }
-      } catch (_) {
-        toast("No se pudo compartir desde este navegador.");
-      }
-    });
-
     $("#syncButton").addEventListener("click", () => syncFromSheets(true));
 
     $$(".nav-tabs button").forEach(button => {
@@ -551,13 +541,13 @@
     $("#loginScreen").classList.add("hidden");
     $("#mainScreen").classList.remove("hidden");
     $("#welcomeTitle").textContent = `Hola, ${guest.firstName}.`;
-    $("#welcomeSub").textContent = `Tu fuerza es ${team.name}. Capitán: ${team.captain}.`;
+    $("#welcomeSub").textContent = `Equipo ${team.name} · Capitán: ${team.captain}`;
     navigate("inicio");
     if (showWelcome) toast(`Acceso concedido · Equipo ${team.name}.`);
   }
 
   function navigate(route) {
-    if (route === "ficha" || route === "juegos") route = "inicio";
+    if (route === "ficha" || route === "juegos" || route === "info") route = "inicio";
     if (route === "torneo") route = "puntos";
     currentRoute = route;
     $$(".nav-tabs button").forEach(button => button.classList.toggle("active", button.dataset.route === route));
@@ -567,7 +557,6 @@
   function renderCurrentRoute() {
     const routes = {
       inicio: renderHome,
-      info: renderInfo,
       asistencia: renderRSVP,
       equipo: renderTeam,
       puntos: renderPointsHub,
@@ -614,74 +603,121 @@
     const team = getTeam(currentGuest.team);
     const rsvp = state.rsvps[currentGuest.id];
     const rsvpDone = hasCompletedRsvp(rsvp);
-    const submittedGames = Object.keys(state.gameSubmissions || {}).filter(key => key.startsWith(`${currentGuest.id}::`)).length;
+    const locationOpen = isUnlocked("location");
+    const menuOpen = isUnlocked("menu");
     const rank = calculateRanking();
     const myRank = rank.findIndex(row => row.id === team.id) + 1;
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
+    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
 
-    const rsvpCallout = rsvpDone ? `
-      <div class="home-ok-callout">
+    const rsvpStrip = rsvpDone ? `
+      <section class="home-rsvp-strip is-done">
+        <span class="home-rsvp-icon">✓</span>
         <div>
-          <strong>✅ Asistencia registrada</strong>
-          <p>Ya tenemos tu confirmación, traslado y restricciones. Podés editar tu respuesta desde Asistencia.</p>
+          <small>Asistencia</small>
+          <strong>Registrada</strong>
+          <p>Traslado y restricciones guardados.</p>
         </div>
         <button class="ghost-button" type="button" data-go="asistencia">Ver / editar</button>
-      </div>` : `
-      <div class="home-rsvp-callout">
-        <span class="callout-icon">✉️</span>
+      </section>` : `
+      <section class="home-rsvp-strip is-pending">
+        <span class="home-rsvp-icon">✉️</span>
         <div>
+          <small>Paso principal</small>
           <strong>Confirmá tu asistencia</strong>
-          <p>Es lo primero que necesitamos que completes. Respondé antes del <b>31/08</b>. En el formulario también vas a elegir traslado y cargar restricciones alimenticias.</p>
+          <p>Antes del 31/08 · traslado y restricciones.</p>
         </div>
         <button type="button" data-go="asistencia">Confirmar ahora</button>
-      </div>`;
+      </section>`;
 
     return `
       ${homeStyles()}
-      <section class="hero-card" style="--local-accent:${team.accent}">
-        <div class="hero-copy">
-          <p class="eyebrow">Archivo personal</p>
-          <h3>${rsvpDone ? "Tu destino fue revelado." : "Primero confirmá. Después, sumá puntos."}</h3>
-          <p>${rsvpDone ? `Has sido convocado por la fuerza de <strong>${team.name}</strong>. Tu asistencia ya quedó registrada; ahora podés ver cómo sumar puntos y preparar a tu equipo para la batalla.` : `Ya sos parte del equipo <strong>${team.name}</strong>. Mientras esperamos que todos confirmen asistencia antes del <strong>31/08</strong>, ya podés empezar a jugar y sumar puntos para tu fuerza.`}</p>
-          <div class="badge-row">
+
+      <section class="home-intro" style="--local-accent:${team.accent}">
+        <div class="home-intro-copy">
+          <p class="eyebrow">Tu espacio</p>
+          <h3>${rsvpDone ? "Ya estás listo para lo que viene." : "Todo empieza acá."}</h3>
+          <p>${rsvpDone
+            ? `Tu asistencia quedó registrada. Ahora podés jugar y seguir las novedades de <strong>${team.name}</strong>.`
+            : `Confirmá tu asistencia y empezá a descubrir lo que preparamos para <strong>${team.name}</strong>.`}</p>
+          <div class="home-intro-badges">
             ${teamBadge(team)}
             <span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span>
-            <span class="badge muted">${escapeHTML(DATA.couple.dateLabel)}</span>
           </div>
-          ${rsvpCallout}
         </div>
-        <div class="team-medallion">
-          ${teamLogo(team, "team-medallion-logo")}
-          <strong>${team.name}</strong>
-          <small>${escapeHTML(rsvpDone ? team.motto : "Competís contra otros 5 equipos desde ahora hasta que termine la fiesta.")}</small>
-          <div class="score-chip">${rsvpDone ? `Puesto actual: ${myRank || "—"}` : "⏳ Asistencia pendiente"}</div>
-        </div>
+
+        <aside class="home-team-summary">
+          ${teamLogo(team, "home-team-logo")}
+          <div class="home-team-name"><small>Equipo</small><strong>${escapeHTML(team.name)}</strong></div>
+          <div class="home-team-numbers">
+            <span><b>${myPoints}</b><small>Puntos</small></span>
+            <span><b>${myRank || "—"}</b><small>Puesto</small></span>
+          </div>
+        </aside>
       </section>
 
-      <section class="stats-grid">
-        ${statCard("Asistencia", rsvpDone ? "Registrada" : "Pendiente", rsvpDone ? "✅" : "✉️")}
-        ${statCard("Acciones enviadas", String(submittedGames), "🎲")}
-        ${statCard("Puntos del equipo", String(myPoints), "🏆")}
-        ${statCard("Equipo", team.name, teamLogo(team, "stat-team-logo"))}
+      ${rsvpStrip}
+
+      <section class="home-shortcuts" aria-label="Accesos rápidos">
+        <button type="button" data-go="puntos"><span>🏆</span><strong>Sumá puntos</strong><small>Juegos y desafíos</small></button>
+        <button type="button" data-go="ranking"><span>📊</span><strong>Ranking</strong><small>Cómo va la competencia</small></button>
+        <button type="button" data-go="equipo">${teamLogo(team, "home-shortcut-logo")}<strong>Mi equipo</strong><small>Integrantes y capitán</small></button>
       </section>
 
-      ${sectionHeader("próximos pasos", rsvpDone ? "Ahora sí, a sumar puntos" : "Lo importante primero", rsvpDone ? "La asistencia ya quedó registrada. El foco pasa a sumar puntos y coordinar con tu equipo." : "La asistencia sigue siendo prioridad, pero la competencia ya empezó.")}
-      <section class="grid four">
-        ${actionCard("asistencia", rsvpDone ? "Asistencia confirmada" : "Confirmar asistencia", rsvpDone ? "Podés editarla cuando quieras." : "Traslado y restricciones antes del 31/08.", rsvpDone ? "✅" : "✉️", Boolean(rsvpDone))}
-        ${actionCard("puntos", "Sumá puntos!", "Hub de juegos, reglas y acciones para tu equipo.", "🏆")}
-        ${actionCard("equipo", `Ver ${team.name}`, "Integrantes, capitán, lema y estrategia.", teamLogo(team, "action-team-logo"))}
-        ${actionCard("ranking", "Ranking general", "La tabla de fuerzas y últimos movimientos.", "🏆")}
+      <section class="home-essential">
+        <div class="home-section-title">
+          <p class="eyebrow">Info terrenal</p>
+          <h3>Lo esencial del gran día</h3>
+        </div>
+
+        <div class="home-date-banner">
+          <div>
+            <small>Sábado</small>
+            <strong>24 · 10 · 2026</strong>
+            <span>18:00 a 03:00</span>
+          </div>
+          <a href="${calendarUrl}" target="_blank" rel="noopener">📅 Agendalo</a>
+        </div>
+
+        <div class="home-info-grid">
+          <article>
+            <span>📍</span>
+            <div><small>Ubicación</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Lugar secreto"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div>
+          </article>
+          <article>
+            <span>🚌</span>
+            <div><small>Traslado</small><strong>Micro desde el Obelisco</strong><p>Regreso previsto: 03:00.</p></div>
+          </article>
+          <article>
+            <span>👗</span>
+            <div><small>Vestimenta</small><strong>Elegante festivo</strong><p>Habrá pasto: elegí calzado cómodo.</p></div>
+          </article>
+        </div>
+
+        <details class="home-more-info">
+          <summary>Más información útil</summary>
+          <div class="home-more-grid">
+            <div><strong>🌿 Consejo</strong><p>Abrigo liviano y evitar tacos finos.</p></div>
+            <div><strong>🍽️ Menú</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Se revelará más adelante. Cargá restricciones en Asistencia."}</p></div>
+          </div>
+        </details>
       </section>
     `;
   }
 
   function homeStyles() {
     return `<style>
-      .home-rsvp-callout{margin-top:24px;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;border:1px solid rgba(216,185,106,.60);border-radius:24px;padding:20px;background:linear-gradient(135deg,rgba(216,185,106,.20),rgba(24,39,25,.78));box-shadow:0 18px 50px rgba(216,185,106,.10)}
-      .home-rsvp-callout .callout-icon{font-size:34px}.home-rsvp-callout strong{display:block;font-family:Georgia,serif;font-size:28px;color:var(--cream);margin-bottom:5px}.home-rsvp-callout p{margin:0;color:rgba(247,238,217,.78);font-weight:800;line-height:1.45}.home-rsvp-callout button{white-space:nowrap}
-      .home-ok-callout{margin-top:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid rgba(189,240,182,.28);border-radius:24px;padding:18px 20px;background:rgba(189,240,182,.08)}
-      .home-ok-callout strong{display:block;font-family:Georgia,serif;font-size:24px;color:var(--cream);margin-bottom:4px}.home-ok-callout p{margin:0;color:var(--muted);font-weight:800;line-height:1.45}
-      @media(max-width:850px){.home-rsvp-callout{grid-template-columns:1fr}.home-ok-callout{flex-direction:column;align-items:flex-start}}
+      .home-intro{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:28px;align-items:center;padding:clamp(26px,4vw,44px);border:1px solid var(--line);border-radius:28px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.82));box-shadow:var(--shadow);position:relative;overflow:hidden}
+      .home-intro::after{content:"";position:absolute;width:340px;height:340px;right:-150px;top:-160px;border-radius:50%;background:color-mix(in srgb,var(--local-accent) 12%,transparent);pointer-events:none}
+      .home-intro-copy,.home-team-summary{position:relative;z-index:1}.home-intro h3{margin:8px 0 12px;font-size:clamp(34px,5vw,58px);letter-spacing:-.045em}.home-intro-copy>p:not(.eyebrow){max-width:650px;margin:0;font-size:16px}.home-intro-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+      .home-team-summary{display:grid;justify-items:center;gap:8px;text-align:center;padding:20px;border:1px solid color-mix(in srgb,var(--local-accent) 28%,var(--line));border-radius:24px;background:rgba(255,255,255,.44)}.home-team-logo{width:108px;height:108px}.home-team-name small{display:block;text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:900;color:var(--muted-2)}.home-team-name strong{display:block;margin-top:2px;font-family:var(--font-title);font-size:27px}.home-team-numbers{width:100%;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);margin-top:7px;padding-top:13px}.home-team-numbers span{display:grid;gap:2px}.home-team-numbers span+span{border-left:1px solid var(--line)}.home-team-numbers b{font-family:var(--font-title);font-size:22px}.home-team-numbers small{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--muted-2)}
+      .home-rsvp-strip{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;margin-top:14px;padding:18px 20px;border:1px solid var(--line);border-radius:22px;background:rgba(255,253,248,.78);box-shadow:0 10px 25px rgba(76,51,22,.07)}.home-rsvp-strip.is-pending{border-color:rgba(183,137,69,.45)}.home-rsvp-strip.is-done{border-color:rgba(94,140,94,.34)}.home-rsvp-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:rgba(201,170,114,.15);font-size:22px}.home-rsvp-strip small{display:block;color:var(--gold-deep);font-weight:900;text-transform:uppercase;letter-spacing:.12em;font-size:10px}.home-rsvp-strip strong{display:block;margin-top:2px;font-family:var(--font-title);font-size:21px}.home-rsvp-strip p{margin:3px 0 0;font-size:13px;line-height:1.35}.home-rsvp-strip button{white-space:nowrap}
+      .home-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}.home-shortcuts button{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;min-height:90px;padding:16px;text-align:left;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.76);color:var(--ink);box-shadow:none}.home-shortcuts button>span,.home-shortcut-logo{grid-row:1/3;width:40px;height:40px;display:grid;place-items:center;font-size:24px}.home-shortcuts strong{font-family:var(--font-title);font-size:17px}.home-shortcuts small{font-size:12px;color:var(--muted-2);font-weight:700}
+      .home-essential{margin-top:28px}.home-section-title{margin-bottom:14px}.home-section-title h3{margin-top:6px;font-size:clamp(28px,4vw,42px);letter-spacing:-.035em}.home-date-banner{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 22px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,rgba(255,253,248,.90),rgba(239,228,209,.75))}.home-date-banner>div{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 16px}.home-date-banner small{font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:var(--gold-deep)}.home-date-banner strong{font-family:var(--font-title);font-size:25px;color:#7a3140}.home-date-banner span{font-weight:800;color:var(--muted)}.home-date-banner a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:999px;padding:12px 17px;background:var(--ink);color:#fff;font-weight:900;white-space:nowrap}
+      .home-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}.home-info-grid article{display:grid;grid-template-columns:38px 1fr;gap:11px;align-items:start;padding:17px;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.72)}.home-info-grid article>span{font-size:23px}.home-info-grid small{display:block;color:var(--gold-deep);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em}.home-info-grid strong{display:block;margin-top:4px;font-family:var(--font-title);font-size:16px;line-height:1.2}.home-info-grid p{margin:5px 0 0;font-size:12px;line-height:1.4}
+      .home-more-info{margin-top:12px;border:1px solid var(--line);border-radius:18px;background:rgba(255,253,248,.54);overflow:hidden}.home-more-info summary{padding:15px 18px;cursor:pointer;font-weight:900;color:var(--ink)}.home-more-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 17px}.home-more-grid>div{padding:13px;border-radius:14px;background:rgba(255,255,255,.43)}.home-more-grid p{margin:5px 0 0;font-size:13px;line-height:1.4}
+      @media(max-width:850px){.home-intro{grid-template-columns:1fr}.home-team-summary{grid-template-columns:auto 1fr;justify-items:start;text-align:left}.home-team-logo{grid-row:1/3;width:86px;height:86px}.home-team-numbers{grid-column:2;margin-top:0}.home-rsvp-strip{grid-template-columns:auto 1fr}.home-rsvp-strip button{grid-column:1/-1;width:100%}.home-shortcuts,.home-info-grid{grid-template-columns:1fr}.home-date-banner{align-items:flex-start;flex-direction:column}.home-date-banner a{width:100%}}
+      @media(max-width:520px){.home-intro{padding:24px 20px}.home-intro h3{font-size:36px}.home-team-summary{padding:16px}.home-rsvp-strip{padding:16px}.home-shortcuts button{min-height:78px}.home-more-grid{grid-template-columns:1fr}.home-date-banner>div{display:grid;gap:4px}.home-date-banner strong{font-size:23px}}
     </style>`;
   }
 
