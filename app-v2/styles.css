@@ -886,3 +886,187 @@ th { color: var(--gold-deep); font-size: 12px; text-transform: uppercase; letter
     height: 44px !important;
   }
 }
+
+
+/* ===== v17 · logos extra grandes ===== */
+
+.team-logo img{
+  width: 96% !important;
+  height: 96% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+
+/* Chip Equipo */
+.badge-team-logo{
+  width: 40px !important;
+  height: 40px !important;
+}
+.badge-team-logo img{
+  width: 94% !important;
+  height: 94% !important;
+}
+.badge-team{
+  min-height: 48px !important;
+  padding-left: 8px !important;
+  padding-right: 14px !important;
+}
+
+/* Inicio: medallón grande */
+.team-medallion-logo{
+  width: 210px !important;
+  height: 210px !important;
+  margin: 0 auto 14px !important;
+}
+.team-medallion-logo img{
+  width: 94% !important;
+  height: 94% !important;
+}
+.team-medallion{
+  min-height: 360px !important;
+  padding-top: 32px !important;
+}
+
+/* Mi equipo */
+.team-symbol{
+  width: 190px !important;
+  height: 190px !important;
+}
+.team-symbol-logo{
+  width: 176px !important;
+  height: 176px !important;
+}
+.team-symbol-logo img{
+  width: 94% !important;
+  height: 94% !important;
+}
+
+/* Tarjetas y encabezados */
+.stat-team-logo{
+  width: 66px !important;
+  height: 66px !important;
+}
+.stat-team-logo img{
+  width: 94% !important;
+  height: 94% !important;
+}
+.action-team-logo{
+  width: 70px !important;
+  height: 70px !important;
+}
+.action-team-logo img{
+  width: 94% !important;
+  height: 94% !important;
+}
+.team-heading-logo{
+  width: 76px !important;
+  height: 76px !important;
+}
+.team-heading-logo img{
+  width: 94% !important;
+  height: 94% !important;
+}
+
+/* Ranking */
+.rank-team-logo{
+  width: 86px !important;
+  height: 86px !important;
+}
+.rank-team-logo img{
+  width: 94% !important;
+  height: 94% !important;
+}
+.rank-item{
+  grid-template-columns: 58px 98px 1fr auto !important;
+  min-height: 112px !important;
+}
+.rank-item .rank-emoji{
+  width: 98px !important;
+  height: 98px !important;
+}
+.ranking-list.small .rank-item{
+  grid-template-columns: 44px 82px 1fr auto !important;
+  min-height: 96px !important;
+}
+.ranking-list.small .rank-team-logo{
+  width: 74px !important;
+  height: 74px !important;
+}
+
+/* Invitados */
+.guest-pill{
+  grid-template-columns: 78px 1fr !important;
+  min-height: 86px !important;
+}
+.guest-pill > span{
+  width: 68px !important;
+  height: 68px !important;
+}
+.guest-pill-logo{
+  width: 64px !important;
+  height: 64px !important;
+}
+.guest-pill-logo img{
+  width: 94% !important;
+  height: 94% !important;
+}
+
+/* Ajuste de columnas para evitar que el logo pise texto */
+.team-heading{
+  gap: 16px !important;
+}
+.guest-pill{
+  gap: 14px !important;
+}
+.rank-item{
+  gap: 16px !important;
+}
+
+@media (max-width: 900px){
+  .team-medallion-logo{
+    width: 176px !important;
+    height: 176px !important;
+  }
+  .team-medallion{
+    min-height: 310px !important;
+  }
+  .team-symbol{
+    width: 160px !important;
+    height: 160px !important;
+  }
+  .team-symbol-logo{
+    width: 146px !important;
+    height: 146px !important;
+  }
+  .rank-item{
+    grid-template-columns: 48px 82px 1fr auto !important;
+  }
+  .rank-team-logo{
+    width: 74px !important;
+    height: 74px !important;
+  }
+}
+
+@media (max-width: 640px){
+  .team-medallion-logo{
+    width: 150px !important;
+    height: 150px !important;
+  }
+  .team-medallion{
+    min-height: 260px !important;
+  }
+  .rank-item{
+    grid-template-columns: 42px 72px 1fr !important;
+  }
+  .rank-team-logo{
+    width: 66px !important;
+    height: 66px !important;
+  }
+  .guest-pill{
+    grid-template-columns: 66px 1fr !important;
+  }
+  .guest-pill-logo{
+    width: 58px !important;
+    height: 58px !important;
+  }
+}
