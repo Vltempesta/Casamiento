@@ -20,3 +20,10 @@ No reemplazar:
 - data.js
 
 Luego de publicar, abrir la web agregando ?v=32200 al final de la URL.
+
+
+v32300:
+- Se agregó el fondo bordado minimalista solo en la portada.
+- El fondo no afecta las demás secciones de la app.
+- Archivo nuevo requerido: assets/backgrounds/portada-bordado-minimalista.png
+- Abrir la web con ?v=32300 para evitar caché.
