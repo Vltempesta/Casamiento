@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32402 · Fondo bordado minimalista en portada ===== */
+/* ===== v32403 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32402');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32403');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32402 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32403 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32402');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32403');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32402 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32403 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32402');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32403');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32402 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32403 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32402 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32403 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32402 · Inicio minimalista ===== */
+/* ===== v32403 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32402 · Navegación en menú hamburguesa ===== */
+/* ===== v32403 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32402 · UX universal 30–70 años ===== */
+/* ===== v32403 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2644,5 +2644,172 @@ body.menu-open {
     overflow: hidden;
     clip: rect(0,0,0,0);
     white-space: nowrap;
+  }
+}
+
+
+/* ===== v32403 · Iconografía, asistencia y Calendar ===== */
+.menu-item-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(201,170,114,.10);
+  color: var(--ink);
+  transition: background .16s ease, color .16s ease, transform .16s ease;
+}
+
+.menu-icon-svg,
+.ui-icon {
+  width: 21px;
+  height: 21px;
+  display: block;
+}
+
+#mainScreen .main-menu .nav-tabs .menu-group button {
+  grid-template-columns: 38px 1fr;
+  gap: 10px;
+  text-align: left;
+}
+
+#mainScreen .main-menu .nav-tabs .menu-group button > span:last-child {
+  min-width: 0;
+}
+
+#mainScreen .main-menu .nav-tabs .menu-group button:hover .menu-item-icon {
+  transform: translateY(-1px);
+  background: rgba(201,170,114,.18);
+}
+
+#mainScreen .main-menu .nav-tabs .menu-group button.active .menu-item-icon {
+  background: rgba(201,170,114,.24);
+  color: var(--ink);
+}
+
+#mainScreen .main-menu .nav-tabs .menu-group button.menu-assistance {
+  color: #743344;
+  font-weight: 850;
+}
+
+#mainScreen .main-menu .nav-tabs .menu-group button.menu-assistance .menu-item-icon {
+  color: #743344;
+  background: rgba(116,51,68,.10);
+}
+
+#mainScreen .main-menu .nav-tabs .menu-group button.menu-assistance.active {
+  border-color: rgba(116,51,68,.28);
+  background: rgba(116,51,68,.10);
+  color: #652c3b;
+}
+
+#mainScreen .main-menu .nav-tabs .menu-group button.menu-assistance.active .menu-item-icon {
+  background: rgba(116,51,68,.16);
+  color: #652c3b;
+}
+
+.menu-logout .menu-item-icon {
+  color: #8c463d;
+  background: rgba(185,87,77,.09);
+}
+
+.home-primary-icon .ui-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.home-calendar-link .ui-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.home-essential-icon .ui-icon {
+  width: 23px;
+  height: 23px;
+}
+
+.home-essential-icon {
+  color: #27415e;
+  background: linear-gradient(145deg, rgba(255,255,255,.68), rgba(201,170,114,.13));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.42);
+}
+
+.home-essential-row:nth-child(2) .home-essential-icon {
+  color: #7a3140;
+  background: rgba(122,49,64,.08);
+}
+
+.home-essential-row:nth-child(3) .home-essential-icon {
+  color: #486a63;
+  background: rgba(72,106,99,.09);
+}
+
+.home-essential-row:nth-child(4) .home-essential-icon {
+  color: #9a6e2f;
+  background: rgba(154,110,47,.10);
+}
+
+.team-attendance-card {
+  display: grid;
+  grid-template-columns: 54px minmax(0,1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.team-attendance-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: #743344;
+  background: rgba(116,51,68,.09);
+  border: 1px solid rgba(116,51,68,.16);
+}
+
+.team-attendance-icon .ui-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.team-attendance-card h4 {
+  margin: 2px 0 6px;
+}
+
+.team-attendance-card p {
+  margin: 0;
+  font-size: 15px;
+}
+
+.team-attendance-card small {
+  display: block;
+  margin-top: 9px;
+  line-height: 1.45;
+}
+
+.team-attendance-progress {
+  height: 8px;
+  margin-top: 13px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(132,104,68,.12);
+}
+
+.team-attendance-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #743344, #a45a6d);
+}
+
+@media (max-width: 520px) {
+  .team-attendance-card {
+    grid-template-columns: 46px minmax(0,1fr);
+    gap: 13px;
+  }
+
+  .team-attendance-icon {
+    width: 46px;
+    height: 46px;
   }
 }

@@ -91,3 +91,15 @@ v32402 — INICIO UX:
 - Navegación por teclado, cierre con Escape y foco contenido en el menú.
 - Reemplazar index.html, styles.css y app.js.
 - Abrir con ?v=32402.
+
+
+v32403:
+- Menú hamburguesa con iconos SVG consistentes y más elegantes.
+- “Mi equipo” ahora usa icono de grupo de personas.
+- “Asistencia” se destaca en bordó oscuro.
+- Se mejoraron los iconos de “Lo esencial”.
+- En Mi equipo se eliminó “Estado del equipo”; queda solamente el estado de asistencia.
+- “Agendalo” enlaza directamente al evento existente de Google Calendar.
+- URL del evento: https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires
+- Reemplazar index.html, styles.css y app.js.
+- Abrir con ?v=32403.

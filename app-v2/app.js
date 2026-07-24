@@ -668,6 +668,24 @@
       </button>`;
   }
 
+
+  function uiIcon(name, className = "") {
+    const icons = {
+      mail: '<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>',
+      sparkle: '<path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/>',
+      hourglass: '<path d="M6 3h12M6 21h12"/><path d="M8 3c0 4 1.4 5.7 4 7 2.6-1.3 4-3 4-7"/><path d="M8 21c0-4 1.4-5.7 4-7 2.6 1.3 4 3 4 7"/>',
+      star: '<path d="M12 3 14.6 8.3 20.5 9.2 16.2 13.3 17.2 19.2 12 16.4 6.8 19.2 7.8 13.3 3.5 9.2 9.4 8.3 12 3Z"/>',
+      calendar: '<path d="M8 3h8"/><path d="M9 2v3M15 2v3"/><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="M8 13h3M8 16h5"/>',
+      pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+      bus: '<rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 7h8"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/>',
+      dress: '<path d="M10 3h4l1 4-2 2 4 11H7l4-11-2-2 1-4Z"/><path d="M9 7h6"/>',
+      calendarPlus: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/>'
+    };
+    const path = icons[name] || icons.sparkle;
+    const cls = className ? ` ${className}` : "";
+    return `<svg class="ui-icon${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+  }
+
   function renderHome() {
     const team = getTeam(currentGuest.team);
     const rsvp = state.rsvps[currentGuest.id];
@@ -679,7 +697,7 @@
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
     const rankingStarted = rank.some(row => Number(row.total || 0) !== 0);
     const visibleRank = rankingStarted ? myRank : "—";
-    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
+    const calendarUrl = "https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires";
     const deadline = CONFIG.RSVP_DEADLINE_LABEL || "31 de agosto de 2026";
 
     const now = new Date();
@@ -695,7 +713,7 @@
     if (!rsvpDone) {
       primaryAction = {
         tone: "pending",
-        icon: "✉",
+        icon: "mail",
         kicker: "Tu próximo paso",
         title: "Confirmá tu asistencia",
         text: `Respondé antes del ${deadline}. Ahí también podés indicar traslado y restricciones alimentarias.`,
@@ -705,7 +723,7 @@
     } else if (eventDay) {
       primaryAction = {
         tone: "today",
-        icon: "✦",
+        icon: "sparkle",
         kicker: "Hoy es el gran día",
         title: "Todo listo para celebrar",
         text: "Revisá horarios, traslado y novedades importantes antes de salir.",
@@ -715,7 +733,7 @@
     } else if (nearEvent) {
       primaryAction = {
         tone: "soon",
-        icon: "⌛",
+        icon: "hourglass",
         kicker: "Falta poco",
         title: `${daysToEvent} ${daysToEvent === 1 ? "día" : "días"} para el casamiento`,
         text: "Revisá horario, traslado, vestimenta y la información disponible del lugar.",
@@ -725,7 +743,7 @@
     } else {
       primaryAction = {
         tone: "play",
-        icon: "★",
+        icon: "star",
         kicker: "Tu próximo desafío",
         title: "Tu equipo ya está jugando",
         text: `Descubrí las acciones disponibles y ayudá a ${team.name} a sumar puntos.`,
@@ -755,7 +773,7 @@
       </section>
 
       <section class="home-primary-action home-primary-action--${primaryAction.tone}">
-        <span class="home-primary-icon" aria-hidden="true">${primaryAction.icon}</span>
+        <span class="home-primary-icon">${uiIcon(primaryAction.icon)}</span>
         <div class="home-primary-copy">
           <small>${escapeHTML(primaryAction.kicker)}</small>
           <h3>${escapeHTML(primaryAction.title)}</h3>
@@ -770,24 +788,24 @@
             <p class="home-kicker">Información práctica</p>
             <h3 id="homeEssentialTitle">Lo esencial</h3>
           </div>
-          <a class="home-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener"><span aria-hidden="true">＋</span> Agendalo</a>
+          <a class="home-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
         </div>
 
         <div class="home-essential-card">
           <article class="home-essential-row">
-            <span class="home-essential-icon" aria-hidden="true">▣</span>
+            <span class="home-essential-icon">${uiIcon("calendar")}</span>
             <div><small>Fecha y horario</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div>
           </article>
           <article class="home-essential-row">
-            <span class="home-essential-icon" aria-hidden="true">⌖</span>
+            <span class="home-essential-icon">${uiIcon("pin")}</span>
             <div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div>
           </article>
           <article class="home-essential-row">
-            <span class="home-essential-icon" aria-hidden="true">⇄</span>
+            <span class="home-essential-icon">${uiIcon("bus")}</span>
             <div><small>Traslado</small><strong>Combi desde el Obelisco</strong><p>Habrá ida y regreso previsto a las 03:00.</p></div>
           </article>
           <article class="home-essential-row">
-            <span class="home-essential-icon" aria-hidden="true">◇</span>
+            <span class="home-essential-icon">${uiIcon("dress")}</span>
             <div><small>Vestimenta</small><strong>Elegante festivo</strong><p>Habrá pasto: elegí calzado cómodo.</p></div>
           </article>
         </div>
@@ -849,7 +867,7 @@
   function renderInfo() {
     const locationOpen = isUnlocked("location");
     const menuOpen = isUnlocked("menu");
-    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
+    const calendarUrl = "https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires";
 
     return `
       ${infoStyles()}
@@ -938,7 +956,7 @@
     const hasSaved = Boolean(saved && saved.updatedAt);
     const editing = Boolean(state.rsvpEditMode || !hasSaved);
     const deadlineLabel = "31 de agosto de 2026";
-    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
+    const calendarUrl = "https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires";
     const savedTransport = saved.transport === "auto" ? "particular" : saved.transport;
 
     if (hasSaved && !editing) {
@@ -1233,7 +1251,7 @@
       </section>
       <section class="grid two">
         <article class="section-card"><h4>Formación</h4><p class="form-note">Capitán primero. Fede y Vani no cuentan para los puntos competitivos.</p><div class="guest-list">${members.map(guestPill).join("")}</div></article>
-        <article class="section-card"><h4>Estado del equipo</h4><p><strong>Asistencia:</strong> ${confirmed} de ${activePlayers} jugadores activos.</p><p><strong>Puntos:</strong> el equipo suma desde asistencia, desafíos y juegos físicos cargados por Admin.</p><hr><p><strong>Estrategia:</strong> ${escapeHTML(team.strategy)}</p><p><strong>Rol del capitán:</strong> activar al equipo, responder consignas, decidir comodines y cargar mística.</p></article>
+        <article class="section-card team-attendance-card"><span class="team-attendance-icon">${uiIcon("calendar")}</span><div><h4>Asistencia</h4><p><strong>${confirmed} de ${activePlayers}</strong> integrantes ya confirmaron.</p><div class="team-attendance-progress" role="progressbar" aria-label="Asistencia confirmada del equipo" aria-valuemin="0" aria-valuemax="${activePlayers}" aria-valuenow="${confirmed}"><span style="width:${Math.min(100, Math.round((confirmed / Math.max(activePlayers, 1)) * 100))}%"></span></div><small>El estado se actualiza cuando cada integrante completa su confirmación.</small></div></article>
       </section>`;
   }
 
