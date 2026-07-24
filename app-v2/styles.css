@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32302 · Fondo bordado minimalista en portada ===== */
+/* ===== v32303 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32302');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32303');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32302 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32303 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32302');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32303');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32302 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32303 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32302');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32303');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2107,5 +2107,42 @@ body::before { opacity: .22; }
 @media (max-width: 390px) {
   #loginScreen .login-card {
     transform: translateY(-10px);
+  }
+}
+
+
+/* ===== v32303 · Wordmark oficial + fecha bordó ===== */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+#loginScreen .couple-wordmark-image {
+  display: block;
+  width: min(620px, 86vw);
+  height: auto;
+  margin: 0 auto;
+  filter: none;
+}
+
+#loginScreen .login-date {
+  color: #7a3140;
+}
+
+@media (max-width: 700px) {
+  #loginScreen .couple-wordmark-image {
+    width: min(330px, 84vw);
+  }
+
+  #loginScreen .login-date {
+    margin-top: 14px;
+    color: #7a3140;
   }
 }

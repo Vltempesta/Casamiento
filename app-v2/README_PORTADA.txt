@@ -43,3 +43,10 @@ v32302:
 - Caja blanca subida 14 px en móvil.
 - Archivo nuevo: assets/backgrounds/portada-bordado-mobile.png
 - Abrir con ?v=32302.
+
+
+v32303:
+- Se reemplazó el texto del título por la imagen del wordmark oficial “Vani & Fede”.
+- La fecha 24 - 10 - 2026 pasó a bordó.
+- Archivo nuevo: assets/branding/vani-fede-wordmark.png
+- Abrir con ?v=32303.
