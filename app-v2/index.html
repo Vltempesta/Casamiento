@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Vani & Fede · La Convocatoria</title>
-  <meta name="description" content="Ingresá a La Convocatoria de Vani & Fede y encontrá tu invitación personal." />
-  <meta property="og:title" content="Vani & Fede · La Convocatoria" />
-  <meta property="og:description" content="Encontrá tu invitación e ingresá a La Convocatoria de Vani & Fede." />
+  <title>Vani &amp; Fede · 24/10/2026</title>
+  <meta name="description" content="Ingresá a la web del casamiento de Vani & Fede." />
+  <meta property="og:title" content="Vani & Fede · 24/10/2026" />
+  <meta property="og:description" content="Todo lo que necesitás para el gran día… y algunas sorpresas." />
   <meta property="og:image" content="preview-whatsapp.jpg" />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#f5eddc" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=32100" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=32200" />
 </head>
 <body>
   <div class="scene" aria-hidden="true">
@@ -28,20 +28,24 @@
     <section id="loginScreen" class="login-screen">
       <div class="login-frame">
         <header class="login-brand">
-          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32100" alt="Sello de Vani y Fede" width="105" height="113" />
-          <h1 class="login-title"><span>La</span><strong>Convocatoria</strong></h1>
-          <p class="login-date" aria-label="24 de octubre de 2026">24 · 10 · 2026</p>
-          <p class="subtitle">Encontrá tu nombre para ingresar y descubrir qué preparamos para vos.</p>
+          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32200" alt="Sello de Vani y Fede" width="105" height="113" />
+
+          <h1 class="couple-wordmark">
+            <span>Vani</span>
+            <b aria-hidden="true">&amp;</b>
+            <span>Fede</span>
+          </h1>
+
+          <p class="login-date" aria-label="24 de octubre de 2026">24 - 10 - 2026</p>
+
+          <p class="subtitle">
+            <span class="subtitle-emoji" aria-hidden="true">✨</span>
+            Buscá tu nombre e ingresá. Adentro te espera todo lo que necesitás para el gran día… y algunas sorpresas.
+          </p>
         </header>
 
         <form id="loginForm" class="login-card" autocomplete="off" novalidate>
-          <div class="form-head">
-            <div>
-              <strong>Encontrá tu invitación</strong>
-              <small>Escribí tu nombre, apellido o alias.</small>
-            </div>
-            <span id="connectionBadge" class="status-pill idle">Sheets sin configurar</span>
-          </div>
+          <p class="login-helper">Escribí tu nombre, apellido o alias.</p>
 
           <label class="sr-only" for="guestName">Nombre, apellido o alias</label>
           <div class="input-row">
@@ -66,8 +70,8 @@
           </div>
 
           <div id="loginMessage" class="form-message" role="status" aria-live="polite"></div>
+          <span id="connectionBadge" class="status-pill idle">Sheets sin configurar</span>
         </form>
-
       </div>
     </section>
 
@@ -105,8 +109,8 @@
 
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
-  <script src="config.js?v=32100"></script>
-  <script src="data.js?v=32100"></script>
-  <script src="app.js?v=32100"></script>
+  <script src="config.js?v=32200"></script>
+  <script src="data.js?v=32200"></script>
+  <script src="app.js?v=32200"></script>
 </body>
 </html>
