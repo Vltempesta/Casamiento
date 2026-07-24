@@ -472,7 +472,46 @@
     if (juegosButton) juegosButton.remove();
   }
 
+
+  function setMenuOpen(open) {
+    const menu = $("#mainMenu");
+    const backdrop = $("#menuBackdrop");
+    const button = $("#menuButton");
+    if (!menu || !backdrop || !button) return;
+
+    menu.classList.toggle("open", open);
+    menu.setAttribute("aria-hidden", String(!open));
+    button.setAttribute("aria-expanded", String(open));
+    button.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+    backdrop.classList.toggle("hidden", !open);
+    document.body.classList.toggle("menu-open", open);
+
+    if (open) {
+      window.setTimeout(() => $("#menuCloseButton")?.focus(), 40);
+    } else if (document.activeElement?.closest?.("#mainMenu")) {
+      button.focus();
+    }
+  }
+
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   function bindShellEvents() {
+    $("#menuButton")?.addEventListener("click", () => {
+      const isOpen = $("#mainMenu")?.classList.contains("open");
+      setMenuOpen(!isOpen);
+    });
+
+    $("#menuCloseButton")?.addEventListener("click", closeMenu);
+    $("#menuBackdrop")?.addEventListener("click", closeMenu);
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && $("#mainMenu")?.classList.contains("open")) {
+        closeMenu();
+      }
+    });
+
     $("#loginForm").addEventListener("submit", event => {
       event.preventDefault();
       const input = $("#guestName");
@@ -511,6 +550,7 @@
     });
 
     $("#logoutButton").addEventListener("click", () => {
+      closeMenu();
       currentGuest = null;
       state.currentGuestId = null;
       saveState();
@@ -527,8 +567,11 @@
 
     $("#syncButton").addEventListener("click", () => syncFromSheets(true));
 
-    $$(".nav-tabs button").forEach(button => {
-      button.addEventListener("click", () => navigate(button.dataset.route));
+    $$(".nav-tabs button[data-route]").forEach(button => {
+      button.addEventListener("click", () => {
+        navigate(button.dataset.route);
+        closeMenu();
+      });
     });
   }
 
@@ -550,7 +593,7 @@
     if (route === "ficha" || route === "juegos" || route === "info") route = "inicio";
     if (route === "torneo") route = "puntos";
     currentRoute = route;
-    $$(".nav-tabs button").forEach(button => button.classList.toggle("active", button.dataset.route === route));
+    $$(".nav-tabs button[data-route]").forEach(button => button.classList.toggle("active", button.dataset.route === route));
     renderCurrentRoute();
   }
 
@@ -657,12 +700,6 @@
       </section>
 
       ${rsvpStrip}
-
-      <section class="home-shortcuts" aria-label="Accesos rápidos">
-        <button type="button" data-go="puntos"><span>🏆</span><strong>Sumá puntos</strong><small>Juegos y desafíos</small></button>
-        <button type="button" data-go="ranking"><span>📊</span><strong>Ranking</strong><small>Cómo va la competencia</small></button>
-        <button type="button" data-go="equipo">${teamLogo(team, "home-shortcut-logo")}<strong>Mi equipo</strong><small>Integrantes y capitán</small></button>
-      </section>
 
       <section class="home-essential">
         <div class="home-section-title">

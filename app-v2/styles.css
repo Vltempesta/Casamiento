@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32400 · Fondo bordado minimalista en portada ===== */
+/* ===== v32401 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32400');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32401');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32400 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32401 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32400');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32401');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32400 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32401 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32400');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32401');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32400 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32401 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32400 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32401 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32400 · Inicio minimalista ===== */
+/* ===== v32401 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2287,5 +2287,215 @@ body::before { opacity: .22; }
   #mainScreen #logoutButton {
     padding: 9px 13px;
     font-size: 12px;
+  }
+}
+
+
+/* ===== v32401 · Navegación en menú hamburguesa ===== */
+body.menu-open {
+  overflow: hidden;
+}
+
+#mainScreen .topbar {
+  z-index: 90;
+}
+
+#mainScreen .topbar-actions {
+  display: flex;
+  align-items: center;
+}
+
+#mainScreen .menu-toggle {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(132,104,68,.22);
+  border-radius: 50%;
+  background: rgba(255,255,255,.52);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+#mainScreen .menu-toggle:hover {
+  background: rgba(201,170,114,.13);
+}
+
+.menu-toggle-lines {
+  width: 20px;
+  display: grid;
+  gap: 4px;
+}
+
+.menu-toggle-lines i {
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 99px;
+  background: currentColor;
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+#menuButton[aria-expanded="true"] .menu-toggle-lines i:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+#menuButton[aria-expanded="true"] .menu-toggle-lines i:nth-child(2) {
+  opacity: 0;
+}
+
+#menuButton[aria-expanded="true"] .menu-toggle-lines i:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(24,31,43,.30);
+  backdrop-filter: blur(2px);
+  opacity: 1;
+  transition: opacity .2s ease;
+}
+
+.main-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 999;
+  width: min(360px, 90vw);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+  border-left: 1px solid rgba(132,104,68,.20);
+  background:
+    linear-gradient(180deg, rgba(255,253,248,.98), rgba(239,228,209,.98));
+  box-shadow: -22px 0 55px rgba(45,33,20,.18);
+  transform: translateX(104%);
+  visibility: hidden;
+  transition: transform .24s ease, visibility .24s;
+}
+
+.main-menu.open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.main-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 4px 2px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.main-menu-head small {
+  display: block;
+  color: var(--gold-deep);
+  font-family: var(--font-title);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+}
+
+.main-menu-head strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink);
+  font-family: var(--font-title);
+  font-size: 28px;
+}
+
+.menu-close {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(255,255,255,.48);
+  color: var(--ink);
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1;
+  box-shadow: none;
+}
+
+#mainScreen .main-menu .nav-tabs {
+  display: grid;
+  gap: 5px;
+  margin: 18px 0;
+  padding: 0;
+  overflow: visible;
+}
+
+#mainScreen .main-menu .nav-tabs button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 50px;
+  padding: 12px 15px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: rgba(33,52,77,.72);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 750;
+  text-align: left;
+  box-shadow: none;
+}
+
+#mainScreen .main-menu .nav-tabs button:hover {
+  background: rgba(255,255,255,.46);
+}
+
+#mainScreen .main-menu .nav-tabs button.active {
+  border-color: rgba(201,170,114,.38);
+  background: rgba(201,170,114,.15);
+  color: var(--ink);
+}
+
+.menu-logout {
+  width: 100%;
+  min-height: 48px;
+  margin-top: auto;
+  border: 1px solid rgba(185,87,77,.25);
+  border-radius: 14px;
+  background: rgba(255,255,255,.35);
+  color: #8c463d;
+  box-shadow: none;
+}
+
+.home-shortcuts {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  #mainScreen .menu-toggle {
+    width: 42px;
+    height: 42px;
+  }
+
+  .main-menu {
+    width: min(330px, 88vw);
+    padding: 18px 16px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .main-menu-head strong {
+    font-size: 25px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-menu,
+  .menu-toggle-lines i {
+    transition: none;
   }
 }

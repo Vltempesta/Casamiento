@@ -69,3 +69,12 @@ v32400 · INICIO MINIMALISTA
 - Encabezado superior más compacto en escritorio y celular.
 - Asistencia mantiene su sección completa sin cambios.
 - Abrir con ?v=32400.
+
+
+v32401 — MENÚ HAMBURGUESA:
+- Se eliminó la barra horizontal de navegación.
+- Las secciones pasan a un menú lateral tipo hamburguesa.
+- Se quitaron las tres tarjetas de “Accesos rápidos” del Inicio para evitar duplicaciones.
+- El menú incluye Inicio, Asistencia, Mi equipo, Sumá puntos, Ranking, Invitados, Admin y Salir.
+- Reemplazar index.html, styles.css y app.js.
+- Abrir con ?v=32401.
