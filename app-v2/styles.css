@@ -1596,3 +1596,189 @@ th { color: var(--gold-deep); font-size: 12px; text-transform: uppercase; letter
     transition: none !important;
   }
 }
+
+/* ===== v32100 · Portada minimalista ===== */
+body {
+  background:
+    radial-gradient(circle at 50% -10%, rgba(191, 147, 69, .11), transparent 32rem),
+    linear-gradient(180deg, #f8f3e9 0%, #eee0c7 100%);
+}
+body::before { opacity: .22; }
+
+.login-screen {
+  min-height: calc(100vh - 48px);
+  padding: 28px 0 36px;
+}
+.login-frame {
+  width: min(760px, 100%);
+  padding: 18px 0 10px;
+}
+.login-frame::before,
+.login-frame::after,
+.botanical-divider,
+.login-brand .eyebrow,
+.login-privacy,
+.login-footnote,
+.form-kicker {
+  display: none !important;
+}
+.login-brand {
+  gap: 0;
+  margin-bottom: 28px;
+}
+.seal-image {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 51%;
+  box-shadow: 0 10px 28px rgba(20, 38, 61, .16);
+}
+.login-title {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  color: var(--ink);
+  text-shadow: none;
+}
+.login-title span {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 600;
+  line-height: .92;
+  letter-spacing: -.03em;
+  text-transform: none;
+}
+.login-title strong {
+  font-family: var(--font-title);
+  font-size: clamp(48px, 8.2vw, 88px);
+  font-weight: 600;
+  line-height: .95;
+  letter-spacing: -.055em;
+  text-transform: uppercase;
+}
+.login-date {
+  margin: 17px 0 0;
+  color: var(--gold-deep);
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .32em;
+}
+.login-brand .subtitle {
+  max-width: 510px;
+  margin: 20px auto 0;
+  color: rgba(50, 47, 42, .67);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+.login-card {
+  width: min(620px, 100%);
+  margin: 0 auto;
+  padding: 22px;
+  border: 1px solid rgba(107, 88, 61, .18);
+  border-radius: 22px;
+  background: rgba(255, 253, 248, .72);
+  box-shadow: 0 18px 48px rgba(65, 44, 22, .09);
+  backdrop-filter: blur(12px);
+}
+.login-card::before { display: none !important; }
+.login-card .form-head {
+  margin: 0 0 16px;
+}
+.login-card .form-head strong {
+  margin: 0 0 5px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+.login-card .form-head small {
+  font-size: 13px;
+  font-weight: 500;
+}
+.login-screen .input-row {
+  gap: 10px;
+}
+.login-screen .guest-search input {
+  min-height: 54px;
+  margin: 0;
+  border: 1px solid rgba(39, 55, 76, .20);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .88);
+  padding: 14px 16px 14px 45px;
+  font-size: 15px;
+  box-shadow: none;
+}
+.login-screen .guest-search input:focus {
+  border-color: rgba(31, 51, 76, .55);
+  box-shadow: 0 0 0 4px rgba(31, 51, 76, .08);
+}
+.login-screen .search-icon {
+  left: 17px;
+  color: rgba(31, 51, 76, .55);
+}
+.login-screen #loginButton {
+  min-width: 118px;
+  min-height: 54px;
+  padding: 0 22px;
+  border-radius: 15px;
+  background: #20344f;
+  color: #fffaf0;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+.login-screen #loginButton:hover {
+  background: #172a43;
+  transform: translateY(-1px);
+}
+.login-screen #loginButton b { display: none !important; }
+.login-screen .form-message {
+  min-height: 20px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .login-screen {
+    min-height: calc(100svh - 30px);
+    padding: 18px 0 28px;
+  }
+  .login-frame { padding-top: 6px; }
+  .seal-image {
+    width: 82px;
+    height: 82px;
+    margin-bottom: 20px;
+  }
+  .login-title strong {
+    font-size: clamp(40px, 12vw, 52px);
+    letter-spacing: -.06em;
+  }
+  .login-title span { font-size: 27px; }
+  .login-date { margin-top: 14px; }
+  .login-brand .subtitle {
+    max-width: 340px;
+    margin-top: 17px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+  .login-brand { margin-bottom: 23px; }
+  .login-card {
+    padding: 18px;
+    border-radius: 19px;
+  }
+  .login-screen .input-row {
+    grid-template-columns: 1fr;
+  }
+  .login-screen #loginButton {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 14px;
+  }
+}

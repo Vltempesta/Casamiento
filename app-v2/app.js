@@ -488,7 +488,7 @@
       if (!guest) {
         input.setAttribute("aria-invalid", "true");
         message.textContent = suggestionMatches.length
-          ? "Elegí tu nombre de la lista para abrir el acceso correcto."
+          ? "Elegí tu nombre de la lista para ingresar correctamente."
           : "No encontramos ese nombre. Probá escribiendo solamente tu nombre o apellido.";
         input.focus();
         return;
@@ -497,13 +497,13 @@
       input.removeAttribute("aria-invalid");
       message.textContent = "";
       button.disabled = true;
-      buttonLabel.textContent = "Abriendo…";
+      buttonLabel.textContent = "Ingresando…";
 
       window.setTimeout(() => {
         enterApp(guest, true);
         postToSheets("logEvent", { eventName: "login", guestId: guest.id, teamId: guest.team });
         button.disabled = false;
-        buttonLabel.textContent = "Abrir mi acceso";
+        buttonLabel.textContent = "Ingresar";
       }, 180);
     });
 

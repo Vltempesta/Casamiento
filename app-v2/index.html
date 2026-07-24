@@ -4,16 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Vani & Fede · La Convocatoria</title>
-  <meta name="description" content="Segundo comunicado de Vani & Fede. Encontrá tu invitación, confirmá asistencia y descubrí tu fuerza." />
+  <meta name="description" content="Ingresá a La Convocatoria de Vani & Fede y encontrá tu invitación personal." />
   <meta property="og:title" content="Vani & Fede · La Convocatoria" />
-  <meta property="og:description" content="Segundo comunicado: encontrá tu invitación y abrí tu acceso personal." />
+  <meta property="og:description" content="Encontrá tu invitación e ingresá a La Convocatoria de Vani & Fede." />
   <meta property="og:image" content="preview-whatsapp.jpg" />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#f5eddc" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=32000" />
+  <link rel="stylesheet" href="styles.css?v=32100" />
 </head>
 <body>
   <div class="scene" aria-hidden="true">
@@ -28,18 +28,15 @@
     <section id="loginScreen" class="login-screen">
       <div class="login-frame">
         <header class="login-brand">
-          <div class="seal" aria-label="Vani y Fede">V&amp;F</div>
-          <p class="eyebrow">Segundo comunicado · acceso reservado</p>
+          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32100" alt="Sello de Vani y Fede" width="105" height="113" />
           <h1 class="login-title"><span>La</span><strong>Convocatoria</strong></h1>
           <p class="login-date" aria-label="24 de octubre de 2026">24 · 10 · 2026</p>
-          <div class="botanical-divider" aria-hidden="true"><span></span><i>✦</i><span></span></div>
-          <p class="subtitle">Tu nombre ya forma parte de la historia. Entrá para confirmar tu asistencia, descubrir tu fuerza y prepararte para lo que viene.</p>
+          <p class="subtitle">Encontrá tu nombre para ingresar y descubrir qué preparamos para vos.</p>
         </header>
 
         <form id="loginForm" class="login-card" autocomplete="off" novalidate>
           <div class="form-head">
             <div>
-              <span class="form-kicker">Acceso personal</span>
               <strong>Encontrá tu invitación</strong>
               <small>Escribí tu nombre, apellido o alias.</small>
             </div>
@@ -65,14 +62,12 @@
               />
               <div id="guestSuggestionPanel" class="guest-suggestions hidden" role="listbox" aria-label="Invitados encontrados"></div>
             </div>
-            <button id="loginButton" type="submit"><span>Abrir mi acceso</span><b aria-hidden="true">→</b></button>
+            <button id="loginButton" type="submit"><span>Ingresar</span></button>
           </div>
 
-          <p class="login-privacy"><span aria-hidden="true">◇</span> Tu equipo seguirá oculto hasta que abras el acceso.</p>
           <div id="loginMessage" class="form-message" role="status" aria-live="polite"></div>
         </form>
 
-        <p class="login-footnote">Acceso exclusivo para invitados de Vani &amp; Fede</p>
       </div>
     </section>
 
@@ -110,8 +105,8 @@
 
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
-  <script src="config.js?v=32000"></script>
-  <script src="data.js?v=32000"></script>
-  <script src="app.js?v=32000"></script>
+  <script src="config.js?v=32100"></script>
+  <script src="data.js?v=32100"></script>
+  <script src="app.js?v=32100"></script>
 </body>
 </html>
