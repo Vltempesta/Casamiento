@@ -727,3 +727,162 @@ th { color: var(--gold-deep); font-size: 12px; text-transform: uppercase; letter
   .team-medallion-logo{ width:116px !important; height:116px !important; }
   .team-symbol-logo{ width:102px !important; height:102px !important; }
 }
+
+
+/* ===== v16 · logos más grandes en toda la app ===== */
+
+.team-logo img{
+  width: 88% !important;
+  height: 88% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+
+.badge-team-logo{
+  width: 34px !important;
+  height: 34px !important;
+}
+.badge-team-logo img{
+  width: 84% !important;
+  height: 84% !important;
+}
+.badge-team{
+  padding-left: 8px !important;
+  min-height: 42px !important;
+}
+
+.team-medallion-logo{
+  width: 178px !important;
+  height: 178px !important;
+  margin: 0 auto 14px !important;
+}
+.team-medallion-logo img{
+  width: 84% !important;
+  height: 84% !important;
+}
+
+.team-medallion{
+  min-height: 330px !important;
+  padding-top: 34px !important;
+  justify-content: flex-start !important;
+}
+
+.team-symbol{
+  width: 166px !important;
+  height: 166px !important;
+}
+.team-symbol-logo{
+  width: 150px !important;
+  height: 150px !important;
+}
+.team-symbol-logo img{
+  width: 84% !important;
+  height: 84% !important;
+}
+
+.stat-team-logo{
+  width: 54px !important;
+  height: 54px !important;
+}
+.action-team-logo{
+  width: 60px !important;
+  height: 60px !important;
+}
+.team-heading-logo{
+  width: 64px !important;
+  height: 64px !important;
+}
+
+.rank-team-logo{
+  width: 72px !important;
+  height: 72px !important;
+}
+.rank-team-logo img{
+  width: 84% !important;
+  height: 84% !important;
+}
+.rank-item{
+  grid-template-columns: 54px 82px 1fr auto !important;
+  min-height: 96px !important;
+}
+.rank-item .rank-emoji{
+  width: 82px !important;
+  height: 82px !important;
+}
+.ranking-list.small .rank-item{
+  grid-template-columns: 42px 68px 1fr auto !important;
+}
+.ranking-list.small .rank-team-logo{
+  width: 60px !important;
+  height: 60px !important;
+}
+
+.guest-pill{
+  grid-template-columns: 62px 1fr !important;
+  min-height: 74px !important;
+}
+.guest-pill > span{
+  width: 54px !important;
+  height: 54px !important;
+}
+.guest-pill-logo{
+  width: 50px !important;
+  height: 50px !important;
+}
+.guest-pill-logo img{
+  width: 84% !important;
+  height: 84% !important;
+}
+
+.captain-pill > span{
+  font-size: 28px !important;
+}
+
+@media (max-width: 900px){
+  .team-medallion-logo{
+    width: 150px !important;
+    height: 150px !important;
+  }
+  .team-medallion{
+    min-height: 280px !important;
+  }
+  .team-symbol{
+    width: 138px !important;
+    height: 138px !important;
+  }
+  .team-symbol-logo{
+    width: 124px !important;
+    height: 124px !important;
+  }
+  .rank-item{
+    grid-template-columns: 46px 68px 1fr auto !important;
+  }
+  .rank-team-logo{
+    width: 60px !important;
+    height: 60px !important;
+  }
+}
+
+@media (max-width: 640px){
+  .team-medallion-logo{
+    width: 132px !important;
+    height: 132px !important;
+  }
+  .team-medallion{
+    min-height: 240px !important;
+  }
+  .rank-item{
+    grid-template-columns: 42px 58px 1fr !important;
+  }
+  .rank-team-logo{
+    width: 52px !important;
+    height: 52px !important;
+  }
+  .guest-pill{
+    grid-template-columns: 54px 1fr !important;
+  }
+  .guest-pill-logo{
+    width: 44px !important;
+    height: 44px !important;
+  }
+}
