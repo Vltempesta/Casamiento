@@ -690,7 +690,9 @@
       bus: '<rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 7h8"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/>',
       dress: '<path d="M10 3h4l1 4-2 2 4 11H7l4-11-2-2 1-4Z"/><path d="M9 7h6"/>',
       calendarPlus: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/>',
-      checkCircle: '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.6 2.6L16.5 9"/>'
+      checkCircle: '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.6 2.6L16.5 9"/>',
+      ranking: '<path d="M5 20V10h4v10"/><path d="M10 20V4h4v16"/><path d="M15 20v-7h4v7"/>',
+      play: '<path d="M8 5v14l11-7-11-7Z"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
@@ -1335,7 +1337,18 @@
       ${sectionHeader("mi fuerza", `Equipo ${team.name}`, `${team.group}. Capitán: ${team.captain}.`)}
       <section class="team-hero section-card" style="--local-accent:${team.accent}">
         <div class="team-symbol">${teamLogo(team, "team-symbol-logo")}</div>
-        <div><h3>${team.name}</h3><p>${escapeHTML(team.motto)}</p><div class="badge-row"><span class="badge">${escapeHTML(team.colorName)}</span><span class="badge muted">${escapeHTML(team.trait)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span></div></div>
+        <div>
+          <h3>${team.name}</h3>
+          <p>${escapeHTML(team.motto)}</p>
+          <div class="badge-row">
+            <span class="badge">${escapeHTML(team.colorName)}</span>
+            <span class="badge muted">${escapeHTML(team.trait)}</span>
+            <span class="badge muted">Jugadores activos: ${activePlayers}</span>
+          </div>
+          <div class="team-page-actions">
+            <button type="button" data-go="ranking">${uiIcon("ranking")}<span>Ver ranking</span></button>
+          </div>
+        </div>
       </section>
       <section class="grid two">
         <article class="section-card"><h4>Formación</h4><p class="form-note">Capitán primero. Fede y Vani no cuentan para los puntos competitivos.</p><div class="guest-list">${members.map(guestPill).join("")}</div></article>
@@ -1379,14 +1392,13 @@
         <div>
           <p class="eyebrow">Equipo ${escapeHTML(team.name)}</p>
           <h3>Tu aporte suma para toda la fuerza.</h3>
-          <p>Vas a competir contra otros 5 equipos desde ahora mismo hasta que finalice la fiesta. Cada acción suma distinto según tu equipo para mantener la competencia equilibrada.</p>
+          <p>Vas a competir contra otros 5 equipos desde ahora hasta que finalice la fiesta. Cada acción completada suma para tu equipo.</p>
           <div class="badge-row">${teamBadge(team, team.name)}<span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div>
         </div>
         <div class="points-medal"><span>🏆</span><strong>${myPoints}</strong><small>puntos actuales</small></div>
       </section>
 
-      <section class="grid three points-rules">
-        <article class="section-card"><span class="card-icon">⚖️</span><h4>Puntos equilibrados</h4><p>Cada equipo tiene una cantidad distinta de integrantes, por eso cada jugador suma puntos enteros personalizados para su fuerza.</p></article>
+      <section class="grid two points-rules">
         <article class="section-card"><span class="card-icon">👥</span><h4>Jugadores activos</h4><p>Fede y Vani no cuentan para el cálculo competitivo. El puntaje se calcula sobre los invitados jugadores de cada equipo.</p></article>
         <article class="section-card"><span class="card-icon">🎉</span><h4>Hasta el final</h4><p>Los puntos se acumulan desde ahora y siguen durante la fiesta con juegos físicos, bonus y sorpresas.</p></article>
       </section>
@@ -1395,7 +1407,7 @@
         <div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
         ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", currentGuestCanScore ? (rsvpDone ? `Ya sumaste puntos para ${team.name}. Podés editar tu respuesta, pero no suma dos veces.` : `Al completar esta acción sumás puntos para ${team.name}. También elegís traslado y cargás restricciones alimenticias.`) : "Los novios no suman puntos, pero pueden revisar el estado del equipo.", "Suma puntos", rsvpDone, "asistencia", `${rsvpDoneCount} de ${activePlayers} confirmaron`)}
         ${pointsAction("🎵", "Proponer canción de equipo", "Próximamente cada equipo podrá proponer un tema que represente a su fuerza.", "Próximamente", false, "equipo", "Consigna de equipo")}
-        ${pointsAction("📸", "Foto creativa del equipo", "Cuando se habilite, cada equipo podrá mandar una foto o composición temática.", "Próximamente", false, "equipo", "Consigna de equipo")}
+        ${pointsAction("❓", "Trivia Vani y Fede", "Próximamente: ¿Qué tanto sabés de los novios? Animate a contestar y sumar puntos para tu equipo.", "Próximamente", false, "", "Juego individual")}
         ${pointsAction("⚔️", "Desafío sorpresa", "Se habilitarán consignas nuevas hasta el día de la fiesta.", "Próximamente", false, "equipo", "Candado activo")}
       </section>
 
@@ -1404,7 +1416,10 @@
   }
 
   function pointsAction(icon, title, text, points, done, route, progressText = "") {
-    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${progressText ? `<small class="points-progress">${escapeHTML(progressText)}</small>` : ""}${done ? `<small class="points-done-note">✅ Ya sumaste estos puntos</small>` : ""}</div></div><div class="points-right"><b>${escapeHTML(points)}</b><button type="button" data-go="${escapeHTML(route === "equipo" ? "equipo" : route)}">${done ? "Ver / editar" : route === "asistencia" ? "Hacer" : "Ver"}</button></div></article>`;
+    const action = route
+      ? `<button type="button" data-go="${escapeHTML(route === "equipo" ? "equipo" : route)}">${done ? "Ver / editar" : route === "asistencia" ? "Hacer" : "Ver"}</button>`
+      : `<button type="button" disabled aria-disabled="true">Próximamente</button>`;
+    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${progressText ? `<small class="points-progress">${escapeHTML(progressText)}</small>` : ""}${done ? `<small class="points-done-note">✅ Ya sumaste estos puntos</small>` : ""}</div></div><div class="points-right"><b>${escapeHTML(points)}</b>${action}</div></article>`;
   }
 
   function pointsHubStyles() {
@@ -1462,6 +1477,13 @@
     const ranking = calculateRanking();
     return `
       ${sectionHeader("ranking", "La tabla de fuerzas", "Suma desafíos digitales, juegos físicos, bonus y penalizaciones cargadas desde el panel admin.")}
+      <section class="ranking-action-card section-card">
+        <div>
+          <strong>¿Querés ayudar a tu equipo?</strong>
+          <p>Revisá las acciones disponibles y sumá puntos.</p>
+        </div>
+        <button type="button" data-go="puntos">${uiIcon("play")}<span>Sumá puntos</span></button>
+      </section>
       <section class="ranking-list">${ranking.map(rankRow).join("")}</section>
       <section class="section-card"><h4>Últimos movimientos</h4>${allPointEntries().length ? `<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Acción</th><th>Equipo</th><th>Movimiento</th><th>Comentario</th></tr></thead><tbody>${allPointEntries().slice(-12).reverse().map(entry => `<tr><td>${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>Sumó puntos</td><td>${escapeHTML(entry.comment || "El equipo sumó puntos.")}</td></tr>`).join("")}</tbody></table></div>` : `<p>Todavía no hay movimientos cargados.</p>`}</section>`;
   }
@@ -1537,59 +1559,134 @@
   function renderAdmin() {
     if (!state.adminUnlocked) {
       return `
-        ${sectionHeader("admin", "Panel de control", "Carga puntos, abre candados, inicializa Google Sheets y exporta la información.")}
+        ${sectionHeader("admin", "Panel de control", "Revisá la asistencia y gestioná puntos de forma simple.")}
         <form id="adminLoginForm" class="section-card form-card narrow">
           <label>Clave admin<input name="password" type="password" placeholder="Clave"></label>
           <button type="submit">Entrar al panel</button>
-          <p class="form-note">La clave real para escribir puntos se valida también en Apps Script.</p>
         </form>`;
     }
-    const rsvpCount = Object.keys(state.rsvps).length;
-    const profileCount = Object.keys(state.profiles).length;
+
+    const invitedGuests = DATA.guests.filter(isCompetitionGuest);
+    const invitedCount = invitedGuests.length;
+    const attendingCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return hasCompletedRsvp(rsvp) && rsvp.attendance === "si";
+    }).length;
+    const declinedCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return hasCompletedRsvp(rsvp) && rsvp.attendance === "no";
+    }).length;
+    const answeredCount = invitedGuests.filter(guest => hasCompletedRsvp(state.rsvps[guest.id])).length;
+    const unansweredCount = Math.max(0, invitedCount - answeredCount);
+    const attendancePercent = invitedCount ? Math.round((attendingCount / invitedCount) * 100) : 0;
+
     return `
-      ${sectionHeader("admin", "Centro de mando", "Panel simple para operar la app desde el navegador durante la previa y la fiesta.")}
-      <section class="stats-grid">
-        ${statCard("RSVP", String(rsvpCount), "✉️")}
-        ${statCard("Fichas", String(profileCount), "🕯️")}
-        ${statCard("Puntajes", String(allPointEntries().length), "🏆")}
-        ${statCard("Sheets", isConfigured() ? "Activo" : "Pendiente", isConfigured() ? "✅" : "⚠️")}
-      </section>
-      <section class="grid two">
-        <form id="scoreForm" class="section-card form-card">
-          <h4>Sumar puntos a discreción</h4>
-          <p class="form-note">Para uso de Fede y Vani durante la previa y la noche de la boda. Estos puntos se cargan por equipo, no por persona.</p>
-          <input type="hidden" name="gameId" value="discrecional-fede-vani">
-          <label>Equipo<select name="teamId" required>${Object.values(DATA.teams).map(team => option(team.id, team.name, "")).join("")}</select></label>
-          <label>Puntos<input name="points" type="number" step="1" placeholder="Ej: 50, 100 o -20" required></label>
-          <label>Motivo / comentario<textarea name="comment" placeholder="Ej: ganó juego físico, bonus por actitud, penalización, decisión de Fede y Vani..."></textarea></label>
-          <button type="submit">Sumar puntos</button>
-        </form>
-        <article class="section-card">
-          <h4>Candados</h4>
-          <div class="unlock-list">${Object.entries(DATA.unlocks).map(([key, unlock]) => `<label class="toggle-row"><span><strong>${escapeHTML(unlock.title)}</strong><small>${escapeHTML(unlock.teaser)}</small></span><input type="checkbox" data-unlock-key="${key}" ${isUnlocked(key) ? "checked" : ""}></label>`).join("")}</div>
+      ${adminUxStyles()}
+      ${sectionHeader("admin", "Centro de mando", "Asistencia general y ajustes rápidos del ranking.")}
+
+      <section class="admin-attendance-summary">
+        <article>
+          <span>✓</span>
+          <div><small>Confirmaron asistencia</small><strong>${attendingCount}</strong><p>de ${invitedCount} invitados</p></div>
+        </article>
+        <article>
+          <span>%</span>
+          <div><small>Porcentaje confirmado</small><strong>${attendancePercent}%</strong><p>sobre el total invitado</p></div>
+        </article>
+        <article>
+          <span>−</span>
+          <div><small>No asistirán</small><strong>${declinedCount}</strong><p>respuestas registradas</p></div>
+        </article>
+        <article>
+          <span>?</span>
+          <div><small>Sin responder</small><strong>${unansweredCount}</strong><p>faltan completar RSVP</p></div>
         </article>
       </section>
+
+      <form id="scoreForm" class="section-card admin-score-card">
+        <div class="admin-score-heading">
+          <div>
+            <p class="eyebrow">Ajuste discrecional</p>
+            <h4>Sumar o restar puntos</h4>
+            <p>Elegí el equipo, el tipo de movimiento y la cantidad.</p>
+          </div>
+          <span id="adminScorePreview" class="admin-score-preview">Seleccioná un equipo</span>
+        </div>
+
+        <input type="hidden" name="gameId" value="discrecional-fede-vani">
+
+        <fieldset class="admin-score-fieldset">
+          <legend>1. Equipo</legend>
+          <div class="admin-team-picker">
+            ${Object.values(DATA.teams).map(team => `
+              <label class="admin-team-option" style="--local-accent:${team.accent}">
+                <input type="radio" name="teamId" value="${team.id}" required>
+                ${teamLogo(team, "admin-team-logo")}
+                <span>${escapeHTML(team.name)}</span>
+              </label>`).join("")}
+          </div>
+        </fieldset>
+
+        <fieldset class="admin-score-fieldset">
+          <legend>2. Movimiento</legend>
+          <div class="admin-sign-picker">
+            <label>
+              <input type="radio" name="scoreSign" value="1" checked>
+              <span>＋ Sumar</span>
+            </label>
+            <label>
+              <input type="radio" name="scoreSign" value="-1">
+              <span>− Restar</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="admin-score-fieldset">
+          <legend>3. Cantidad</legend>
+          <div class="admin-points-input">
+            <input name="points" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej: 50" required>
+            <span>puntos</span>
+          </div>
+          <div class="admin-preset-row" aria-label="Cantidades rápidas">
+            ${[10, 25, 50, 100].map(value => `<button type="button" data-score-preset="${value}">${value}</button>`).join("")}
+          </div>
+        </fieldset>
+
+        <label class="admin-comment-label">
+          Motivo <span>(opcional)</span>
+          <textarea name="comment" placeholder="Ej: ganó un juego, bonus por actitud o penalización..."></textarea>
+        </label>
+
+        <button id="scoreSubmit" type="submit" class="admin-score-submit" disabled>Seleccioná un equipo y una cantidad</button>
+      </form>
+
       ${resetButtonStyles()}
       <section class="section-card admin-reset-panel">
         <h4>Reseteo de puntos</h4>
-        <p>Estos botones son para Fede y Vani. Limpian el ranking y también ocultan los movimientos anteriores de “Últimos movimientos”. No borran RSVP ni datos de invitados.</p>
+        <p>Usalo únicamente cuando necesites volver atrás. No borra asistencias ni invitados.</p>
         <div class="admin-reset-actions">
-          <button id="resetDiscretionaryPoints" type="button" class="danger-button">Resetear puntos discrecionales</button>
-          <button id="resetAllPoints" type="button" class="danger-button">Resetear todos los puntos</button>
+          <button id="resetDiscretionaryPoints" type="button" class="danger-button">Resetear discrecionales</button>
+          <button id="resetAllPoints" type="button" class="danger-button">Resetear todo el ranking</button>
         </div>
-        <p class="reset-note">La limpieza se guarda como marcador técnico oculto, para que al sincronizar no vuelvan a aparecer movimientos viejos.</p>
-      </section>
-      <section class="section-card">
-        <h4>Google Sheets y exportación</h4>
-        <div class="button-row">
-          <button id="setupSheets" type="button">Inicializar hojas</button>
-          <button id="syncNow" type="button">Leer Sheets</button>
-          <button id="exportJson" type="button" class="ghost-button">Exportar JSON local</button>
-          <button id="exportCsv" type="button" class="ghost-button">Exportar RSVP CSV</button>
-          <button id="resetLocal" type="button" class="danger-button">Borrar datos locales</button>
-        </div>
-        <p class="form-note">${isConfigured() ? "La URL de Apps Script está cargada en config.js." : "Falta pegar la URL del Web App en config.js."}</p>
       </section>`;
+  }
+
+  function adminUxStyles() {
+    return `<style>
+      .admin-attendance-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+      .admin-attendance-summary article{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.78);box-shadow:0 8px 20px rgba(76,51,22,.05)}
+      .admin-attendance-summary article>span{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:rgba(122,49,64,.09);color:#743344;font-size:20px;font-weight:950}
+      .admin-attendance-summary small{display:block;color:var(--muted-2);font-weight:850}.admin-attendance-summary strong{display:block;margin-top:2px;color:var(--ink);font-family:var(--font-title);font-size:29px}.admin-attendance-summary p{margin:1px 0 0;font-size:12px;line-height:1.35}
+      .admin-score-card{display:grid;gap:22px;margin-top:16px;padding:26px}.admin-score-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.admin-score-heading h4{margin:5px 0 6px;font-size:28px}.admin-score-heading p{margin:0}.admin-score-preview{display:inline-flex;align-items:center;min-height:36px;padding:8px 12px;border-radius:999px;background:rgba(201,170,114,.13);color:var(--gold-deep);font-size:12px;font-weight:900;white-space:nowrap}
+      .admin-score-fieldset{margin:0;padding:0;border:0}.admin-score-fieldset legend{margin-bottom:11px;color:var(--ink);font-weight:900}.admin-team-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.admin-team-option{position:relative;display:grid;justify-items:center;gap:7px;min-height:104px;margin:0;padding:13px 8px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.40);color:var(--ink);font-size:12px;font-weight:900;cursor:pointer;text-align:center}.admin-team-option input{position:absolute;opacity:0;pointer-events:none}.admin-team-option:has(input:checked){border-color:color-mix(in srgb,var(--local-accent) 65%,var(--line));background:color-mix(in srgb,var(--local-accent) 13%,rgba(255,255,255,.56));box-shadow:0 0 0 3px color-mix(in srgb,var(--local-accent) 12%,transparent)}.admin-team-logo{width:48px;height:48px}
+      .admin-sign-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-sign-picker label{position:relative;margin:0}.admin-sign-picker input{position:absolute;opacity:0;pointer-events:none}.admin-sign-picker span{display:flex;align-items:center;justify-content:center;min-height:49px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.42);color:var(--ink);font-weight:900;cursor:pointer}.admin-sign-picker label:first-child:has(input:checked) span{border-color:rgba(74,125,79,.35);background:rgba(74,125,79,.10);color:#426f47}.admin-sign-picker label:last-child:has(input:checked) span{border-color:rgba(185,87,77,.34);background:rgba(185,87,77,.09);color:#93463c}
+      .admin-points-input{position:relative}.admin-points-input input{height:58px;margin:0;padding-right:80px;border-radius:15px;font-size:21px;font-weight:850}.admin-points-input>span{position:absolute;right:17px;top:50%;transform:translateY(-50%);color:var(--muted-2);font-size:13px;font-weight:850}.admin-preset-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}.admin-preset-row button{min-width:64px;padding:9px 13px;border:1px solid var(--line);background:rgba(255,255,255,.45);color:var(--ink);box-shadow:none}.admin-comment-label{margin:0}.admin-comment-label>span{color:var(--muted-2);font-weight:600}.admin-comment-label textarea{min-height:85px}
+      .admin-score-submit{width:100%;min-height:52px}.admin-score-submit.is-negative{background:linear-gradient(135deg,#c66b5d,#9d4138);color:#fff}.admin-score-submit:disabled{cursor:not-allowed;opacity:.48;transform:none}
+      .team-page-actions{display:flex;gap:9px;margin-top:17px}.team-page-actions button,.ranking-action-card button{display:inline-flex;align-items:center;gap:8px}.team-page-actions .ui-icon,.ranking-action-card .ui-icon{width:19px;height:19px}
+      .ranking-action-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px}.ranking-action-card strong{color:var(--ink);font-size:17px}.ranking-action-card p{margin:3px 0 0;font-size:13px}.ranking-action-card button{white-space:nowrap}
+      @media(max-width:900px){.admin-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-team-picker{grid-template-columns:repeat(3,minmax(0,1fr))}}
+      @media(max-width:560px){.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}}
+    </style>`;
   }
 
   function bindViewEvents(route) {
@@ -1701,20 +1798,70 @@
       renderCurrentRoute();
     });
 
-    $("#scoreForm")?.addEventListener("submit", event => {
+    const scoreForm = $("#scoreForm");
+    const updateScorePreview = () => {
+      if (!scoreForm) return;
+      const teamId = scoreForm.querySelector('input[name="teamId"]:checked')?.value || "";
+      const sign = Number(scoreForm.querySelector('input[name="scoreSign"]:checked')?.value || 1);
+      const amount = Math.abs(Number(scoreForm.elements.points?.value || 0));
+      const preview = $("#adminScorePreview");
+      const submit = $("#scoreSubmit");
+      const teamName = teamId ? getTeam(teamId).name : "";
+
+      if (!teamId || !amount) {
+        preview.textContent = teamId ? `${teamName} · falta cantidad` : "Seleccioná un equipo";
+        submit.textContent = "Seleccioná un equipo y una cantidad";
+        submit.disabled = true;
+        submit.classList.toggle("is-negative", sign < 0);
+        return;
+      }
+
+      const verb = sign < 0 ? "Restar" : "Sumar";
+      preview.textContent = `${verb} ${amount} a ${teamName}`;
+      submit.textContent = `${verb} ${amount} puntos a ${teamName}`;
+      submit.disabled = false;
+      submit.classList.toggle("is-negative", sign < 0);
+    };
+
+    $$("[data-score-preset]").forEach(button => button.addEventListener("click", () => {
+      if (!scoreForm) return;
+      scoreForm.elements.points.value = button.dataset.scorePreset;
+      updateScorePreview();
+    }));
+
+    scoreForm?.querySelectorAll('input[name="teamId"], input[name="scoreSign"], input[name="points"]').forEach(input => {
+      input.addEventListener("input", updateScorePreview);
+      input.addEventListener("change", updateScorePreview);
+    });
+    updateScorePreview();
+
+    scoreForm?.addEventListener("submit", event => {
       event.preventDefault();
       const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+      const sign = Number(values.scoreSign || 1);
+      const amount = Math.abs(Number(values.points || 0));
+      const teamId = values.teamId;
+
+      if (!teamId || !amount) {
+        toast("Elegí un equipo y una cantidad válida.");
+        return;
+      }
+
+      if (sign < 0 && !confirm(`¿Restar ${amount} puntos al equipo ${getTeam(teamId).name}?`)) return;
+
+      const { scoreSign, ...cleanValues } = values;
       const payload = {
-        ...values,
-        points: Number(values.points || 0),
+        ...cleanValues,
+        points: amount * sign,
         adminPassword: state.adminPassword,
         adminName: "Fede y Vani",
         timestamp: new Date().toISOString()
       };
+
       state.scoreEntries.push(payload);
       state.scoreEntries = dedupeScores(state.scoreEntries);
       saveState();
-      toast("Puntos cargados.");
+      toast(`${sign < 0 ? "Se restaron" : "Se sumaron"} ${amount} puntos a ${getTeam(teamId).name}.`);
       postToSheets("saveScore", payload);
       renderCurrentRoute();
     });

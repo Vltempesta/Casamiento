@@ -118,3 +118,15 @@ v32404:
 - Botones “Agendalo” corregidos con fondo bordó y texto claro.
 - Reemplazar index.html, styles.css y app.js.
 - Abrir con ?v=32404.
+
+
+v32405:
+- Admin simplificado: se eliminaron Google Sheets y exportación, Candados y Fichas.
+- Nuevo contador de asistencia con cantidad, porcentaje, no asistentes y pendientes.
+- Nuevo cargador UX para sumar/restar puntos: equipos visuales, selector sumar/restar, cantidades rápidas y resumen.
+- Mi equipo incorpora acceso directo al Ranking.
+- Ranking incorpora acceso directo a Sumá puntos.
+- Se quitó la tarjeta “Puntos equilibrados”.
+- “Foto creativa del equipo” fue reemplazada por “Trivia Vani y Fede”, próximamente.
+- Reemplazar index.html, styles.css y app.js.
+- Abrir con ?v=32405.
