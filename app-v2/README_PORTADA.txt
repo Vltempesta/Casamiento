@@ -141,3 +141,18 @@ v32406:
 - No borra invitados ni puntos discrecionales.
 - Reemplazar index.html, styles.css y app.js.
 - Abrir con ?v=32406.
+
+
+v32407:
+- Botón Agendalo corregido después de confirmar asistencia.
+- Se quitó Sincronizar datos de la vista del invitado.
+- Después de confirmar aparece “Tu próximo desafío” con acceso a Sumá puntos.
+- Admin muestra estado de Google Sheets y botón Sincronizar ahora.
+- Sumá puntos ya no muestra Jugadores activos ni el aviso final Importante.
+- Nueva sección Trivia Vani y Fede en el menú.
+- Incluye tres juegos: canciones, trivia de prueba y juego sorpresa.
+- Los tres juegos pueden bloquearse o liberarse desde Admin.
+- Ranking resalta al equipo que va ganando.
+- Se agregó aviso de premios especiales.
+- Reemplazar index.html, styles.css y app.js.
+- Abrir con ?v=32407.

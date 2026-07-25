@@ -687,6 +687,7 @@
       asistencia: renderRSVP,
       equipo: renderTeam,
       puntos: renderPointsHub,
+      trivia: renderTriviaHub,
       ranking: renderRanking,
       invitados: renderGuests,
       admin: renderAdmin
@@ -740,7 +741,12 @@
       calendarPlus: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/>',
       checkCircle: '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.6 2.6L16.5 9"/>',
       ranking: '<path d="M5 20V10h4v10"/><path d="M10 20V4h4v16"/><path d="M15 20v-7h4v7"/>',
-      play: '<path d="M8 5v14l11-7-11-7Z"/>'
+      play: '<path d="M8 5v14l11-7-11-7Z"/>',
+      music: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+      lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+      gift: '<path d="M4 10h16v10H4z"/><path d="M3 7h18v3H3zM12 7v13"/><path d="M12 7c-3.5 0-5-1.1-5-2.6C7 3.2 8 3 8.8 3 10.3 3 12 5.2 12 7ZM12 7c3.5 0 5-1.1 5-2.6C17 3.2 16 3 15.2 3 13.7 3 12 5.2 12 7Z"/>',
+      sync: '<path d="M20 7h-5V2"/><path d="M4 17h5v5"/><path d="M6.1 8A7 7 0 0 1 18.5 5.5L20 7"/><path d="M17.9 16A7 7 0 0 1 5.5 18.5L4 17"/>',
+      question: '<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2"/><path d="M12 17h.01"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
@@ -788,6 +794,57 @@
     if (countdownTimer) window.clearInterval(countdownTimer);
     updateHomeCountdown();
     countdownTimer = window.setInterval(updateHomeCountdown, 30000);
+  }
+
+
+  const TRIVIA_GAME_DEFAULTS = {
+    "trivia-music": true,
+    "trivia-couple": true,
+    "trivia-surprise": false
+  };
+
+  const SAMPLE_COUPLE_QUESTIONS = [
+    {
+      id: "met",
+      question: "¿Dónde se conocieron Vani y Fede?",
+      options: ["En el trabajo", "En la facultad", "En un viaje", "En una fiesta"],
+      answer: "En el trabajo"
+    },
+    {
+      id: "dog",
+      question: "¿Cómo se llama su perro?",
+      options: ["Simba", "Milo", "Rocco", "Toto"],
+      answer: "Simba"
+    },
+    {
+      id: "years",
+      question: "¿Cuántos años llevan juntos?",
+      options: ["7 años", "9 años", "11 años", "13 años"],
+      answer: "11 años"
+    },
+    {
+      id: "favorite",
+      question: "¿Qué actividad disfrutan especialmente juntos?",
+      options: ["Viajar", "Correr maratones", "Pescar", "Jugar al golf"],
+      answer: "Viajar"
+    },
+    {
+      id: "date",
+      question: "¿Cuál es la fecha del casamiento?",
+      options: ["24 de octubre de 2026", "17 de octubre de 2026", "24 de noviembre de 2026", "31 de octubre de 2026"],
+      answer: "24 de octubre de 2026"
+    }
+  ];
+
+  function isTriviaGameOpen(key) {
+    if (Object.prototype.hasOwnProperty.call(state.manualUnlocks || {}, key)) {
+      return state.manualUnlocks[key] === true || state.manualUnlocks[key] === "TRUE";
+    }
+    return Boolean(TRIVIA_GAME_DEFAULTS[key]);
+  }
+
+  function triviaSubmission(gameId) {
+    return state.gameSubmissions[`${currentGuest.id}::${gameId}`] || null;
   }
 
   function renderHome() {
@@ -1111,8 +1168,7 @@
 
               <div class="rsvp-actions-row">
                 <button id="editRsvp" type="button">Editar mi respuesta</button>
-                <a class="ghost-button rsvp-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">📅 AGENDALO!</a>
-                <button id="syncRsvp" type="button" class="ghost-button">Sincronizar datos</button>
+                <a class="rsvp-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
               </div>
 
               <p class="form-note">Última edición: ${formatDateLabel(saved.updatedAt)}</p>
@@ -1124,6 +1180,16 @@
               <p>Si cambian tus restricciones alimentarias, traslado o asistencia, actualizalo acá para poder organizar todo mejor.</p>
             </aside>
           </div>
+        </section>
+
+        <section class="rsvp-next-challenge section-card">
+          <div class="rsvp-next-icon">${uiIcon("star")}</div>
+          <div>
+            <p class="eyebrow">Tu próximo desafío</p>
+            <h4>Ayudá al equipo ${escapeHTML(getTeam(currentGuest.team).name)} a sumar puntos</h4>
+            <p>Ya registraste tu respuesta. Ahora podés descubrir los juegos y próximas misiones.</p>
+          </div>
+          <button type="button" data-go="puntos">Ir a Sumá puntos</button>
         </section>`;
     }
 
@@ -1191,8 +1257,12 @@
       .rsvp-thank-title{font-family:var(--font-title);font-size:clamp(28px,4vw,40px);line-height:1.05;margin:0 0 10px;color:var(--ink)}.rsvp-thank-lead{color:var(--muted);font-weight:650;font-size:16px;line-height:1.5;max-width:760px}
       .rsvp-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px}.rsvp-summary-grid .wide{grid-column:1/-1}.summary-item{border:1px solid rgba(132,104,68,.16);border-radius:16px;padding:15px;background:rgba(255,255,255,.48)}.summary-item strong{display:block;color:#7a3140;font-size:11px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px}.summary-item p{margin:0;color:var(--ink);font-weight:750;word-break:break-word}
       .rsvp-side-note{border:1px solid rgba(132,104,68,.17);border-radius:21px;padding:21px;background:rgba(255,255,255,.38)}.rsvp-side-note h4{font-family:var(--font-title);color:var(--ink);font-size:23px;margin:0 0 10px}.rsvp-side-note p{color:var(--muted);font-weight:650;line-height:1.5}
-      .rsvp-actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.rsvp-actions-row .ghost-button{background:rgba(255,255,255,.56);color:var(--ink);border-color:rgba(132,104,68,.22)}
-      @media(max-width:850px){.calendar-strip{align-items:flex-start;flex-direction:column}.calendar-strip a{width:100%}.choice-group{grid-template-columns:1fr}.rsvp-thank-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link{width:100%}.rsvp-actions-row>button{width:100%}}
+      .rsvp-actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+      .rsvp-actions-row .rsvp-calendar-link{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 18px!important;border:1px solid #6f2f3f!important;border-radius:999px;background:#743344!important;color:#fffaf0!important;text-decoration:none!important;font-weight:900!important;box-shadow:0 7px 16px rgba(116,51,68,.16)!important}
+      .rsvp-actions-row .rsvp-calendar-link:hover{background:#652c3b!important;color:#fff!important}.rsvp-calendar-link .ui-icon{width:18px;height:18px}
+      .rsvp-next-challenge{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:17px;align-items:center;margin-top:15px;padding:20px 22px;border-color:rgba(201,170,114,.42);background:linear-gradient(135deg,rgba(201,170,114,.13),rgba(255,253,248,.88))}
+      .rsvp-next-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:15px;background:rgba(201,170,114,.17);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:25px;height:25px}.rsvp-next-challenge h4{margin:4px 0 5px;font-size:21px}.rsvp-next-challenge p:not(.eyebrow){margin:0;font-size:14px}.rsvp-next-challenge button{white-space:nowrap}
+      @media(max-width:850px){.calendar-strip{align-items:flex-start;flex-direction:column}.calendar-strip a{width:100%}.choice-group{grid-template-columns:1fr}.rsvp-thank-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link{width:100%}.rsvp-actions-row>button{width:100%}.rsvp-next-challenge{grid-template-columns:46px minmax(0,1fr)}.rsvp-next-icon{width:44px;height:44px}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
     </style>`;
   }
 
@@ -1391,7 +1461,7 @@
           <div class="badge-row">
             <span class="badge">${escapeHTML(team.colorName)}</span>
             <span class="badge muted">${escapeHTML(team.trait)}</span>
-            <span class="badge muted">Jugadores activos: ${activePlayers}</span>
+            
           </div>
           <div class="team-page-actions">
             <button type="button" data-go="ranking">${uiIcon("ranking")}<span>Ver ranking</span></button>
@@ -1446,20 +1516,18 @@
         <div class="points-medal"><span>🏆</span><strong>${myPoints}</strong><small>puntos actuales</small></div>
       </section>
 
-      <section class="grid two points-rules">
-        <article class="section-card"><span class="card-icon">👥</span><h4>Jugadores activos</h4><p>Fede y Vani no cuentan para el cálculo competitivo. El puntaje se calcula sobre los invitados jugadores de cada equipo.</p></article>
+      <section class="grid one points-rules">
         <article class="section-card"><span class="card-icon">🎉</span><h4>Hasta el final</h4><p>Los puntos se acumulan desde ahora y siguen durante la fiesta con juegos físicos, bonus y sorpresas.</p></article>
       </section>
 
       <section class="section-card">
         <div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
         ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", currentGuestCanScore ? (rsvpDone ? `Ya sumaste puntos para ${team.name}. Podés editar tu respuesta, pero no suma dos veces.` : `Al completar esta acción sumás puntos para ${team.name}. También elegís traslado y cargás restricciones alimenticias.`) : "Los novios no suman puntos, pero pueden revisar el estado del equipo.", "Suma puntos", rsvpDone, "asistencia", `${rsvpDoneCount} de ${activePlayers} confirmaron`)}
-        ${pointsAction("🎵", "Proponer canción de equipo", "Próximamente cada equipo podrá proponer un tema que represente a su fuerza.", "Próximamente", false, "equipo", "Consigna de equipo")}
-        ${pointsAction("❓", "Trivia Vani y Fede", "Próximamente: ¿Qué tanto sabés de los novios? Animate a contestar y sumar puntos para tu equipo.", "Próximamente", false, "", "Juego individual")}
-        ${pointsAction("⚔️", "Desafío sorpresa", "Se habilitarán consignas nuevas hasta el día de la fiesta.", "Próximamente", false, "equipo", "Candado activo")}
+        ${pointsAction("🎵", "Elegir canciones", "Proponé una canción para la boda y otra para la entrada de tu equipo.", isTriviaGameOpen("trivia-music") ? "Disponible" : "Bloqueado", Boolean(triviaSubmission("music-selection")), "trivia", "Juego musical")}
+        ${pointsAction("❓", "Trivia Vani y Fede", "Respondé preguntas sobre los novios y poné a prueba cuánto sabés.", isTriviaGameOpen("trivia-couple") ? "Disponible" : "Bloqueado", Boolean(triviaSubmission("couple-trivia-test")), "trivia", "Modo de prueba")}
+        ${pointsAction("🎁", "Juego sorpresa", "La tercera misión se revelará más adelante.", isTriviaGameOpen("trivia-surprise") ? "Liberado" : "Bloqueado", false, "trivia", "Secreto")}
       </section>
 
-      <section class="section-card points-note"><span class="card-icon">⚔️</span><h4>Importante</h4><p>Editar una respuesta no vuelve a sumar puntos. Los puntos de asistencia se calculan una sola vez por jugador activo.</p></section>
     `;
   }
 
@@ -1521,10 +1589,158 @@
       </article>`;
   }
 
+
+  function renderTriviaHub() {
+    const team = getTeam(currentGuest.team);
+    const musicOpen = isTriviaGameOpen("trivia-music");
+    const coupleOpen = isTriviaGameOpen("trivia-couple");
+    const surpriseOpen = isTriviaGameOpen("trivia-surprise");
+    const musicSaved = triviaSubmission("music-selection");
+    const triviaSaved = triviaSubmission("couple-trivia-test");
+
+    return `
+      ${triviaHubStyles()}
+      ${sectionHeader("juegos", "Trivia Vani y Fede", "Tres misiones para conocerlos mejor, participar de la previa y ayudar a tu equipo.")}
+
+      <section class="trivia-prize-banner">
+        ${uiIcon("gift")}
+        <div><strong>Habrá premios especiales</strong><p>Participar, acertar y jugar en equipo puede tener recompensa.</p></div>
+      </section>
+
+      <section class="trivia-game-list">
+        ${renderMusicGame(musicOpen, musicSaved, team)}
+        ${renderCoupleTrivia(coupleOpen, triviaSaved)}
+        ${renderSurpriseGame(surpriseOpen)}
+      </section>`;
+  }
+
+  function renderMusicGame(open, saved, team) {
+    if (!open) {
+      return renderLockedTriviaCard("01", "La banda sonora", "Dos canciones tendrán una misión especial.", "trivia-music");
+    }
+
+    return `
+      <article class="trivia-game-card is-open">
+        <div class="trivia-game-number">01</div>
+        <div class="trivia-game-content">
+          <div class="trivia-game-heading">
+            <div><span class="trivia-status open">Disponible</span><h4>La banda sonora</h4></div>
+            ${uiIcon("music", "trivia-main-icon")}
+          </div>
+          <p>Elegí una canción que te gustaría escuchar en la boda y otra que represente la entrada del equipo ${escapeHTML(team.name)}.</p>
+          <div class="trivia-secret-note">No te vamos a contar todavía cómo se usarán. Elegí pensando en energía, identidad y ganas de entrar con todo.</div>
+
+          <form id="musicGameForm" class="trivia-form">
+            <label>Canción para la boda
+              <input name="weddingSong" type="text" value="${escapeHTML(saved?.weddingSong || "")}" placeholder="Tema y artista" required>
+            </label>
+            <label>Canción para la entrada del equipo
+              <input name="teamEntranceSong" type="text" value="${escapeHTML(saved?.teamEntranceSong || "")}" placeholder="Tema y artista" required>
+            </label>
+            <label>¿Por qué la elegirías? <span>(opcional)</span>
+              <textarea name="reason" placeholder="Contanos qué tiene de especial...">${escapeHTML(saved?.reason || "")}</textarea>
+            </label>
+            <div class="trivia-form-footer">
+              <button type="submit">${saved ? "Actualizar canciones" : "Enviar mis canciones"}</button>
+              ${saved ? `<span class="trivia-saved">${uiIcon("checkCircle")} Propuesta guardada</span>` : ""}
+            </div>
+          </form>
+        </div>
+      </article>`;
+  }
+
+  function renderCoupleTrivia(open, saved) {
+    if (!open) {
+      return renderLockedTriviaCard("02", "¿Cuánto sabés de los novios?", "Preguntas, recuerdos y algunas trampas.", "trivia-couple");
+    }
+
+    const result = saved?.score !== undefined
+      ? `<div class="trivia-result">${uiIcon("star")}<div><strong>${saved.score} de ${SAMPLE_COUPLE_QUESTIONS.length}</strong><span>respuestas correctas · modo de prueba</span></div></div>`
+      : "";
+
+    return `
+      <article class="trivia-game-card is-open trivia-quiz-card">
+        <div class="trivia-game-number">02</div>
+        <div class="trivia-game-content">
+          <div class="trivia-game-heading">
+            <div><span class="trivia-status open">Disponible · prueba</span><h4>¿Cuánto sabés de Vani y Fede?</h4></div>
+            ${uiIcon("question", "trivia-main-icon")}
+          </div>
+          <p>Respondé estas preguntas de prueba. Más adelante definiremos las preguntas oficiales y el sistema definitivo de puntos.</p>
+          ${result}
+          <form id="coupleTriviaForm" class="trivia-quiz-form">
+            ${SAMPLE_COUPLE_QUESTIONS.map((item, index) => `
+              <fieldset class="trivia-question">
+                <legend><span>${String(index + 1).padStart(2, "0")}</span>${escapeHTML(item.question)}</legend>
+                <div class="trivia-options">
+                  ${item.options.map(option => `
+                    <label>
+                      <input type="radio" name="${item.id}" value="${escapeHTML(option)}" ${saved?.answers?.[item.id] === option ? "checked" : ""} required>
+                      <span>${escapeHTML(option)}</span>
+                    </label>`).join("")}
+                </div>
+              </fieldset>`).join("")}
+            <button type="submit">${saved ? "Volver a probar" : "Enviar respuestas"}</button>
+          </form>
+        </div>
+      </article>`;
+  }
+
+  function renderSurpriseGame(open) {
+    if (!open) {
+      return renderLockedTriviaCard("03", "Juego sorpresa", "La tercera misión sigue bajo llave.", "trivia-surprise");
+    }
+
+    return `
+      <article class="trivia-game-card is-open surprise-open">
+        <div class="trivia-game-number">03</div>
+        <div class="trivia-game-content">
+          <div class="trivia-game-heading">
+            <div><span class="trivia-status open">Liberado</span><h4>Una nueva misión se acerca</h4></div>
+            ${uiIcon("gift", "trivia-main-icon")}
+          </div>
+          <p>El candado fue abierto. La consigna completa aparecerá acá cuando esté lista para jugar.</p>
+          <div class="trivia-secret-note">Por ahora, mantenete atento y no le cuentes nada a los otros equipos.</div>
+        </div>
+      </article>`;
+  }
+
+  function renderLockedTriviaCard(number, title, text, key) {
+    return `
+      <article class="trivia-game-card is-locked">
+        <div class="trivia-game-number">${number}</div>
+        <div class="trivia-game-content">
+          <div class="trivia-game-heading">
+            <div><span class="trivia-status locked">Bloqueado</span><h4>${escapeHTML(title)}</h4></div>
+            ${uiIcon("lock", "trivia-main-icon")}
+          </div>
+          <p>${escapeHTML(text)}</p>
+          <small>Se habilitará cuando Vani y Fede liberen este juego.</small>
+        </div>
+      </article>`;
+  }
+
+  function triviaHubStyles() {
+    return `<style>
+      .trivia-prize-banner{display:flex;align-items:center;gap:13px;padding:16px 19px;border:1px solid rgba(154,110,47,.23);border-radius:19px;background:linear-gradient(135deg,rgba(201,170,114,.16),rgba(255,253,248,.84));color:#8a6129}.trivia-prize-banner>.ui-icon{width:27px;height:27px}.trivia-prize-banner strong{display:block;color:var(--ink);font-size:16px}.trivia-prize-banner p{margin:2px 0 0;font-size:13px}
+      .trivia-game-list{display:grid;gap:15px}.trivia-game-card{position:relative;display:grid;grid-template-columns:66px minmax(0,1fr);gap:18px;padding:23px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,rgba(255,253,248,.90),rgba(239,228,209,.76));box-shadow:0 10px 25px rgba(76,51,22,.06);overflow:hidden}.trivia-game-card.is-locked{opacity:.76}.trivia-game-card.is-locked::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.18));pointer-events:none}
+      .trivia-game-number{width:54px;height:54px;display:grid;place-items:center;border:1px solid rgba(201,170,114,.28);border-radius:16px;background:rgba(201,170,114,.12);color:var(--gold-deep);font-family:var(--font-title);font-size:20px;font-weight:900}.trivia-game-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.trivia-game-heading h4{margin:6px 0 8px;font-size:clamp(23px,3vw,31px)}.trivia-main-icon{width:31px;height:31px;color:#743344}.trivia-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.trivia-status.open{background:rgba(74,125,79,.10);color:#426f47}.trivia-status.locked{background:rgba(132,104,68,.10);color:var(--muted)}
+      .trivia-game-content>p{margin:0 0 14px}.trivia-secret-note{margin:12px 0 16px;padding:12px 14px;border-left:3px solid #743344;border-radius:0 12px 12px 0;background:rgba(116,51,68,.055);color:var(--muted);font-size:13px;font-weight:700;line-height:1.45}
+      .trivia-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.trivia-form label:last-of-type,.trivia-form-footer{grid-column:1/-1}.trivia-form label>span{color:var(--muted-2);font-weight:600}.trivia-form textarea{min-height:85px}.trivia-form-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}.trivia-saved{display:inline-flex;align-items:center;gap:7px;color:#426f47;font-weight:850;font-size:13px}.trivia-saved .ui-icon{width:18px;height:18px}
+      .trivia-result{display:flex;align-items:center;gap:11px;margin:12px 0 18px;padding:13px 15px;border:1px solid rgba(74,125,79,.20);border-radius:15px;background:rgba(74,125,79,.08);color:#426f47}.trivia-result>.ui-icon{width:24px;height:24px}.trivia-result strong,.trivia-result span{display:block}.trivia-result strong{font-size:18px}.trivia-result span{font-size:12px}
+      .trivia-quiz-form{display:grid;gap:16px}.trivia-question{margin:0;padding:16px;border:1px solid rgba(132,104,68,.16);border-radius:17px;background:rgba(255,255,255,.35)}.trivia-question legend{display:flex;align-items:center;gap:10px;padding:0 7px;color:var(--ink);font-weight:900}.trivia-question legend>span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:rgba(201,170,114,.15);color:var(--gold-deep);font-size:11px}.trivia-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.trivia-options label{position:relative;margin:0}.trivia-options input{position:absolute;opacity:0;pointer-events:none}.trivia-options label>span{display:flex;align-items:center;min-height:46px;padding:10px 13px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.45);color:var(--ink);font-size:13px;font-weight:750;cursor:pointer}.trivia-options label:has(input:checked)>span{border-color:#743344;background:rgba(116,51,68,.09);color:#652c3b;box-shadow:0 0 0 2px rgba(116,51,68,.08)}
+      @media(max-width:650px){.trivia-game-card{grid-template-columns:48px minmax(0,1fr);gap:12px;padding:17px}.trivia-game-number{width:44px;height:44px;font-size:16px}.trivia-main-icon{width:26px;height:26px}.trivia-form{grid-template-columns:1fr}.trivia-form label:last-of-type,.trivia-form-footer{grid-column:auto}.trivia-form-footer{align-items:stretch;flex-direction:column}.trivia-form-footer button{width:100%}.trivia-options{grid-template-columns:1fr}}
+    </style>`;
+  }
+
   function renderRanking() {
     const ranking = calculateRanking();
     return `
       ${sectionHeader("ranking", "La tabla de fuerzas", "Suma desafíos digitales, juegos físicos, bonus y penalizaciones cargadas desde el panel admin.")}
+      <section class="ranking-prize-note">
+        ${uiIcon("gift")}
+        <div><strong>Habrá premios especiales</strong><p>El ranking importa, pero también habrá reconocimientos por creatividad, actitud y espíritu de equipo.</p></div>
+      </section>
       <section class="ranking-action-card section-card">
         <div>
           <strong>¿Querés ayudar a tu equipo?</strong>
@@ -1540,7 +1756,8 @@
     const team = getTeam(row.id);
     const pos = index + 1;
     const ownTeam = currentGuest?.team === team.id;
-    return `<button type="button" class="rank-item rank-item-button ${ownTeam ? "is-my-team" : ""}" data-team-open="${team.id}" style="--local-accent:${team.accent}" aria-label="Abrir equipo ${escapeHTML(team.name)}"><span class="rank-pos">${pos}</span><span class="rank-emoji">${teamLogo(team, "rank-team-logo")}</span><div><strong>${escapeHTML(team.name)}</strong><small>${escapeHTML(team.group)}${ownTeam ? " · Tu equipo" : ""}</small></div><div class="rank-points"><strong>${row.total}</strong><small>puntos</small></div></button>`;
+    const leading = index === 0 && Number(row.total || 0) > 0;
+    return `<button type="button" class="rank-item rank-item-button ${ownTeam ? "is-my-team" : ""} ${leading ? "is-leading" : ""}" data-team-open="${team.id}" style="--local-accent:${team.accent}" aria-label="Abrir equipo ${escapeHTML(team.name)}"><span class="rank-pos">${leading ? "♛" : pos}</span><span class="rank-emoji">${teamLogo(team, "rank-team-logo")}</span><div><strong>${escapeHTML(team.name)}${leading ? `<em class="leader-label">Va ganando</em>` : ""}</strong><small>${escapeHTML(team.group)}${ownTeam ? " · Tu equipo" : ""}</small></div><div class="rank-points"><strong>${row.total}</strong><small>puntos</small></div></button>`;
   }
 
   function calculateRanking() {
@@ -1630,7 +1847,17 @@
 
     return `
       ${adminUxStyles()}
-      ${sectionHeader("admin", "Centro de mando", "Asistencia general y ajustes rápidos del ranking.")}
+      ${sectionHeader("admin", "Centro de mando", "Asistencia general, juegos y ajustes rápidos del ranking.")}
+
+      <section class="admin-sync-card ${remoteStatus}">
+        <div class="admin-sync-indicator"><span></span></div>
+        <div>
+          <small>Google Sheets</small>
+          <strong>${remoteStatus === "online" ? "Sincronizado" : remoteStatus === "connecting" ? "Sincronizando…" : remoteStatus === "error" ? "Error de conexión" : isConfigured() ? "Pendiente de sincronización" : "No configurado"}</strong>
+          <p>${state.lastSyncAt ? `Última sincronización: ${formatDateLabel(state.lastSyncAt)}` : "Todavía no se registró una sincronización en este navegador."}</p>
+        </div>
+        <button id="syncNow" type="button">${uiIcon("sync")}<span>Sincronizar ahora</span></button>
+      </section>
 
       <section class="admin-attendance-summary">
         <article>
@@ -1649,6 +1876,27 @@
           <span>?</span>
           <div><small>Sin responder</small><strong>${unansweredCount}</strong><p>faltan completar RSVP</p></div>
         </article>
+      </section>
+
+      <section class="section-card admin-game-controls">
+        <div class="admin-game-controls-head">
+          <div><p class="eyebrow">Juegos</p><h4>Bloquear o liberar</h4><p>Los cambios se aplican a todos los invitados después de sincronizar.</p></div>
+        </div>
+        <div class="admin-game-toggle-list">
+          ${[
+            { key: "trivia-music", title: "La banda sonora", text: "Canción para la boda y entrada del equipo." },
+            { key: "trivia-couple", title: "Trivia Vani y Fede", text: "Preguntas de prueba sobre los novios." },
+            { key: "trivia-surprise", title: "Juego sorpresa", text: "Tercera misión secreta." }
+          ].map(game => {
+            const open = isTriviaGameOpen(game.key);
+            return `<label class="admin-game-toggle ${open ? "is-open" : ""}">
+              <span><strong>${escapeHTML(game.title)}</strong><small>${escapeHTML(game.text)}</small></span>
+              <input type="checkbox" data-unlock-key="${game.key}" ${open ? "checked" : ""}>
+              <i aria-hidden="true"></i>
+              <b>${open ? "Liberado" : "Bloqueado"}</b>
+            </label>`;
+          }).join("")}
+        </div>
       </section>
 
       <form id="scoreForm" class="section-card admin-score-card">
@@ -1735,6 +1983,8 @@
 
   function adminUxStyles() {
     return `<style>
+      .admin-sync-card{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:14px;align-items:center;padding:17px 19px;margin-bottom:15px;border:1px solid var(--line);border-radius:19px;background:rgba(255,253,248,.78)}.admin-sync-indicator{display:grid;place-items:center}.admin-sync-indicator span{width:11px;height:11px;border-radius:50%;background:#b68b45;box-shadow:0 0 0 5px rgba(182,139,69,.10)}.admin-sync-card.online .admin-sync-indicator span{background:#4f8655;box-shadow:0 0 0 5px rgba(79,134,85,.10)}.admin-sync-card.error .admin-sync-indicator span{background:#b9574d;box-shadow:0 0 0 5px rgba(185,87,77,.10)}.admin-sync-card.connecting .admin-sync-indicator span{animation:syncPulse 1s infinite}.admin-sync-card small,.admin-sync-card strong{display:block}.admin-sync-card small{color:var(--muted-2);font-weight:850}.admin-sync-card strong{margin-top:2px;color:var(--ink);font-size:16px}.admin-sync-card p{margin:2px 0 0;font-size:12px}.admin-sync-card button{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.admin-sync-card button .ui-icon{width:18px;height:18px}@keyframes syncPulse{50%{opacity:.35;transform:scale(.78)}}
+      .admin-game-controls{margin:15px 0;padding:22px}.admin-game-controls-head h4{margin:4px 0 6px;font-size:25px}.admin-game-controls-head p:not(.eyebrow){margin:0}.admin-game-toggle-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:17px}.admin-game-toggle{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;margin:0;padding:15px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.40);cursor:pointer}.admin-game-toggle>span strong,.admin-game-toggle>span small{display:block}.admin-game-toggle>span strong{color:var(--ink)}.admin-game-toggle>span small{margin-top:4px;line-height:1.35}.admin-game-toggle input{position:absolute;opacity:0;pointer-events:none}.admin-game-toggle i{grid-column:2;width:42px;height:24px;padding:3px;border-radius:999px;background:rgba(132,104,68,.20);transition:.18s}.admin-game-toggle i::after{content:"";display:block;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:.18s}.admin-game-toggle b{grid-column:1/-1;color:var(--muted-2);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.admin-game-toggle.is-open{border-color:rgba(74,125,79,.25);background:rgba(74,125,79,.06)}.admin-game-toggle.is-open i{background:#5d8e62}.admin-game-toggle.is-open i::after{transform:translateX(18px)}.admin-game-toggle.is-open b{color:#426f47}
       .admin-attendance-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
       .admin-attendance-summary article{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.78);box-shadow:0 8px 20px rgba(76,51,22,.05)}
       .admin-attendance-summary article>span{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:rgba(122,49,64,.09);color:#743344;font-size:20px;font-weight:950}
@@ -1748,7 +1998,7 @@
       .admin-test-reset-copy{display:grid;grid-template-columns:52px minmax(0,1fr);gap:15px;align-items:start}.admin-test-reset-icon{width:50px;height:50px;display:grid;place-items:center;border:1px solid rgba(122,49,64,.18);border-radius:15px;background:rgba(122,49,64,.08);color:#743344;font-size:25px;font-weight:900}.admin-test-reset-copy h4{margin:4px 0 6px;font-size:24px}.admin-test-reset-copy p:not(.eyebrow){margin:0;max-width:700px}.admin-test-reset-copy small{display:block;margin-top:7px;line-height:1.4}.admin-test-reset-button{min-height:48px;flex:0 0 auto;border:1px solid #743344;background:#743344;color:#fffaf0;box-shadow:0 8px 18px rgba(116,51,68,.13);white-space:nowrap}.admin-test-reset-button:hover{background:#652c3b}
       .team-page-actions{display:flex;gap:9px;margin-top:17px}.team-page-actions button,.ranking-action-card button{display:inline-flex;align-items:center;gap:8px}.team-page-actions .ui-icon,.ranking-action-card .ui-icon{width:19px;height:19px}
       .ranking-action-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px}.ranking-action-card strong{color:var(--ink);font-size:17px}.ranking-action-card p{margin:3px 0 0;font-size:13px}.ranking-action-card button{white-space:nowrap}
-      @media(max-width:900px){.admin-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-team-picker{grid-template-columns:repeat(3,minmax(0,1fr))}}
+      @media(max-width:900px){.admin-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-team-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-game-toggle-list{grid-template-columns:1fr}.admin-sync-card{grid-template-columns:18px minmax(0,1fr)}.admin-sync-card button{grid-column:1/-1;width:100%;justify-content:center}}
       @media(max-width:560px){.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}.admin-test-reset-panel{align-items:stretch;flex-direction:column}.admin-test-reset-copy{grid-template-columns:44px minmax(0,1fr)}.admin-test-reset-icon{width:42px;height:42px}.admin-test-reset-button{width:100%;white-space:normal}}
     </style>`;
   }
@@ -1787,8 +2037,6 @@
         saveState();
         renderCurrentRoute();
       });
-
-      $("#syncRsvp")?.addEventListener("click", () => syncFromSheets(true));
 
       $("#rsvpForm")?.addEventListener("submit", async event => {
         event.preventDefault();
@@ -1842,6 +2090,51 @@
         postToSheets("saveGameSubmission", payload);
         renderCurrentRoute();
       }));
+    }
+
+    if (route === "trivia") {
+      $("#musicGameForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+        const key = `${currentGuest.id}::music-selection`;
+        const payload = {
+          ...values,
+          gameId: "music-selection",
+          guestId: currentGuest.id,
+          teamId: currentGuest.team,
+          updatedAt: new Date().toISOString()
+        };
+        state.gameSubmissions[key] = payload;
+        saveState();
+        toast("Tus canciones quedaron guardadas.");
+        postToSheets("saveGameSubmission", payload);
+        renderCurrentRoute();
+      });
+
+      $("#coupleTriviaForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const answers = Object.fromEntries(new FormData(event.currentTarget).entries());
+        const score = SAMPLE_COUPLE_QUESTIONS.reduce(
+          (total, question) => total + (answers[question.id] === question.answer ? 1 : 0),
+          0
+        );
+        const key = `${currentGuest.id}::couple-trivia-test`;
+        const payload = {
+          answers,
+          score,
+          maxScore: SAMPLE_COUPLE_QUESTIONS.length,
+          gameId: "couple-trivia-test",
+          guestId: currentGuest.id,
+          teamId: currentGuest.team,
+          updatedAt: new Date().toISOString()
+        };
+        state.gameSubmissions[key] = payload;
+        saveState();
+        toast(`Trivia enviada: ${score} de ${SAMPLE_COUPLE_QUESTIONS.length} correctas.`);
+        postToSheets("saveGameSubmission", payload);
+        renderCurrentRoute();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
     }
 
     if (route === "admin") bindAdminEvents();

@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32406 · Fondo bordado minimalista en portada ===== */
+/* ===== v32407 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32406');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32407');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32406 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32407 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32406');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32407');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32406 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32407 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32406');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32407');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32406 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32407 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32406 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32407 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32406 · Inicio minimalista ===== */
+/* ===== v32407 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32406 · Navegación en menú hamburguesa ===== */
+/* ===== v32407 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32406 · UX universal 30–70 años ===== */
+/* ===== v32407 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32406 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32407 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32406 · Ajustes UX solicitados ===== */
+/* ===== v32407 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32406 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32407 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,9 +2917,56 @@ body.menu-open {
 }
 
 
-/* ===== v32406 · Reset seguro de datos de prueba ===== */
+/* ===== v32407 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
   transform: none;
+}
+
+
+/* ===== v32407 · Trivia, ranking y mejoras de UX ===== */
+.ranking-prize-note {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px 18px;
+  border: 1px solid rgba(154,110,47,.23);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(201,170,114,.14), rgba(255,253,248,.78));
+  color: #8a6129;
+}
+.ranking-prize-note > .ui-icon { width: 26px; height: 26px; flex: 0 0 auto; }
+.ranking-prize-note strong { display: block; color: var(--ink); }
+.ranking-prize-note p { margin: 2px 0 0; font-size: 13px; }
+
+.rank-item-button.is-leading {
+  border-color: rgba(183,137,69,.62);
+  background:
+    linear-gradient(135deg, rgba(229,200,123,.20), rgba(255,253,248,.83));
+  box-shadow: 0 10px 24px rgba(150,103,39,.10);
+}
+.rank-item-button.is-leading .rank-pos {
+  color: #9a6e2f;
+  font-size: 24px;
+}
+.leader-label {
+  display: inline-flex;
+  margin-left: 9px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(201,170,114,.18);
+  color: #8a6129;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+@media (max-width: 560px) {
+  .ranking-prize-note { align-items: flex-start; }
+  .leader-label { display: flex; width: max-content; margin: 5px 0 0; }
 }
