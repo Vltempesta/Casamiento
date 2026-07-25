@@ -18,6 +18,7 @@
   let currentGuest = null;
   let currentRoute = "inicio";
   let remoteStatus = "idle";
+  let silentSyncTimer = null;
   let countdownTimer = null;
   let selectedTeamViewId = null;
   let selectedGuestId = null;
@@ -239,9 +240,8 @@
     });
   }
 
-  async function postToSheets(action, payload) {
-    if (!isConfigured()) return false;
-    const envelope = {
+  function buildRemoteEnvelope(action, payload) {
+    return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
       appVersion: DATA.appVersion,
@@ -250,37 +250,67 @@
       submittedAt: new Date().toISOString(),
       ...payload
     };
+  }
+
+  async function writeToSheets(action, payload) {
+    if (!isConfigured()) return null;
+
+    const envelope = buildRemoteEnvelope(action, payload);
+
     try {
       const response = await jsonp(action, { payload: JSON.stringify(envelope) });
+      const details = response?.data?.details || {};
       setRemoteStatus("online", "Sheets conectado · guardado");
-      return response?.ok !== false;
+      state.lastRemoteError = "";
+      saveState();
+
+      return {
+        response,
+        details,
+        record: details.record || null
+      };
     } catch (error) {
       console.warn("Fallo escritura Sheets", error);
       state.lastRemoteError = error.message;
       saveState();
       setRemoteStatus("error", "Sheets no guardó");
-      toast("No se guardó en Google Sheets. Quedó guardado localmente.");
-      return false;
+      toast("No se pudo guardar en Google Sheets. Revisá la conexión y volvé a intentar.");
+      return null;
     }
   }
 
+  async function postToSheets(action, payload) {
+    return Boolean(await writeToSheets(action, payload));
+  }
+
+  function scheduleSilentSync(delay = 1800) {
+    if (!isConfigured()) return;
+    if (silentSyncTimer) window.clearTimeout(silentSyncTimer);
+
+    silentSyncTimer = window.setTimeout(() => {
+      silentSyncTimer = null;
+      syncFromSheets(false);
+    }, delay);
+  }
+
   async function saveAndVerifyRemote(action, payload, verifier) {
-    const saved = await postToSheets(action, payload);
-    if (!saved) return false;
+    const result = await writeToSheets(action, payload);
+    if (!result) return null;
 
-    const synced = await syncFromSheets(false);
-    if (!synced) {
-      toast("Se envió el dato, pero no pudimos verificarlo en Google Sheets.");
-      return false;
+    const savedRecord = result.record || {
+      ...payload,
+      timestamp: payload.timestamp || payload.updatedAt || new Date().toISOString(),
+      submittedAt: payload.submittedAt || new Date().toISOString()
+    };
+
+    if (typeof verifier === "function" && !verifier(savedRecord, result)) {
+      setRemoteStatus("error", "Sheets devolvió un dato inválido");
+      toast("Google Sheets respondió, pero la confirmación recibida no coincide.");
+      return null;
     }
 
-    if (typeof verifier === "function" && !verifier()) {
-      setRemoteStatus("error", "Sheets no verificó el dato");
-      toast("Google Sheets respondió, pero el dato no volvió en la sincronización.");
-      return false;
-    }
-
-    return true;
+    scheduleSilentSync();
+    return savedRecord;
   }
 
   function recordTimestamp(record) {
@@ -2152,20 +2182,18 @@
           submitButton.textContent = "Guardando en Google Sheets…";
         }
 
-        const verified = await saveAndVerifyRemote(
+        const savedRecord = await saveAndVerifyRemote(
           "saveRsvp",
           payload,
-          () => {
-            const remote = state.rsvps[currentGuest.id];
-            return Boolean(
-              remote &&
-              remote.attendance === payload.attendance &&
-              remote.updatedAt
-            );
-          }
+          record => Boolean(
+            record &&
+            record.guestId === payload.guestId &&
+            record.attendance === payload.attendance &&
+            record.updatedAt
+          )
         );
 
-        if (!verified) {
+        if (!savedRecord) {
           if (submitButton) {
             submitButton.disabled = false;
             submitButton.textContent = originalText;
@@ -2176,11 +2204,12 @@
 
         state.rsvps[currentGuest.id] = {
           ...(state.rsvps[currentGuest.id] || {}),
-          ...payload
+          ...payload,
+          ...savedRecord
         };
         state.rsvpEditMode = false;
         saveState();
-        toast("Asistencia guardada y verificada en Google Sheets.");
+        toast("Asistencia guardada en Google Sheets.");
         renderCurrentRoute();
       });
     }
@@ -2200,28 +2229,91 @@
 
       $("#profileForm")?.addEventListener("submit", async event => {
         event.preventDefault();
-        const values = Object.fromEntries(new FormData(event.currentTarget).entries());
-        const payload = { ...values, guestId: currentGuest.id, teamId: currentGuest.team, updatedAt: new Date().toISOString() };
-        state.profiles[currentGuest.id] = payload;
+        const form = event.currentTarget;
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton?.textContent || "Guardar";
+        const values = Object.fromEntries(new FormData(form).entries());
+        const payload = {
+          ...values,
+          guestId: currentGuest.id,
+          teamId: currentGuest.team,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Guardando…";
+        }
+
+        const savedRecord = await saveAndVerifyRemote(
+          "saveProfile",
+          payload,
+          record => record?.guestId === payload.guestId
+        );
+
+        if (!savedRecord) {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+          }
+          return;
+        }
+
+        state.profiles[currentGuest.id] = {
+          ...(state.profiles[currentGuest.id] || {}),
+          ...payload,
+          ...savedRecord
+        };
         state.profileEditMode = false;
         saveState();
+        toast("Formulario guardado en Google Sheets.");
         renderCurrentRoute();
-        toast("Ficha secreta guardada. Sumaste puntos para tu equipo.");
-        postToSheets("saveProfile", payload);
       });
     }
 
     if (route === "puntos") {
-      $$(".game-submit").forEach(form => form.addEventListener("submit", event => {
+      $$(".game-submit").forEach(form => form.addEventListener("submit", async event => {
         event.preventDefault();
-        const gameId = event.currentTarget.dataset.gameId;
-        const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+        const currentForm = event.currentTarget;
+        const submitButton = currentForm.querySelector('button[type="submit"]');
+        const originalText = submitButton?.textContent || "Enviar";
+        const gameId = currentForm.dataset.gameId;
+        const values = Object.fromEntries(new FormData(currentForm).entries());
         const key = `${currentGuest.id}::${gameId}`;
-        const payload = { ...values, gameId, guestId: currentGuest.id, teamId: currentGuest.team, updatedAt: new Date().toISOString() };
-        state.gameSubmissions[key] = payload;
+        const payload = {
+          ...values,
+          gameId,
+          guestId: currentGuest.id,
+          teamId: currentGuest.team,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Guardando…";
+        }
+
+        const savedRecord = await saveAndVerifyRemote(
+          "saveGameSubmission",
+          payload,
+          record => record?.guestId === payload.guestId && record?.gameId === payload.gameId
+        );
+
+        if (!savedRecord) {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+          }
+          return;
+        }
+
+        state.gameSubmissions[key] = {
+          ...(state.gameSubmissions[key] || {}),
+          ...payload,
+          ...savedRecord
+        };
         saveState();
-        toast("Respuesta enviada al archivo del juego.");
-        postToSheets("saveGameSubmission", payload);
+        toast("Respuesta guardada en Google Sheets.");
         renderCurrentRoute();
       }));
     }
@@ -2247,13 +2339,18 @@
           submitButton.textContent = "Guardando…";
         }
 
-        const verified = await saveAndVerifyRemote(
+        const savedRecord = await saveAndVerifyRemote(
           "saveGameSubmission",
           payload,
-          () => Boolean(state.gameSubmissions[key]?.updatedAt)
+          record => Boolean(
+            record &&
+            record.guestId === payload.guestId &&
+            record.gameId === payload.gameId &&
+            record.updatedAt
+          )
         );
 
-        if (!verified) {
+        if (!savedRecord) {
           if (submitButton) {
             submitButton.disabled = false;
             submitButton.textContent = originalText;
@@ -2264,11 +2361,12 @@
 
         state.gameSubmissions[key] = {
           ...(state.gameSubmissions[key] || {}),
-          ...payload
+          ...payload,
+          ...savedRecord
         };
         saveState();
         const earnedPoints = rsvpPointsForTeam(currentGuest.team);
-        toast(`Canciones guardadas en Sheets. El equipo sumó ${earnedPoints} puntos.`);
+        toast(`Canciones guardadas. El equipo sumó ${earnedPoints} puntos.`);
         renderCurrentRoute();
       });
 
@@ -2303,19 +2401,18 @@
           submitButton.textContent = "Guardando resultado…";
         }
 
-        const verified = await saveAndVerifyRemote(
+        const savedRecord = await saveAndVerifyRemote(
           "saveGameSubmission",
           payload,
-          () => {
-            const remote = state.gameSubmissions[key];
-            return Boolean(
-              remote &&
-              Number(remote.bestScore ?? remote.score ?? -1) === bestScore
-            );
-          }
+          record => Boolean(
+            record &&
+            record.guestId === payload.guestId &&
+            record.gameId === payload.gameId &&
+            Number(record.bestScore ?? record.score ?? -1) === bestScore
+          )
         );
 
-        if (!verified) {
+        if (!savedRecord) {
           if (submitButton) {
             submitButton.disabled = false;
             submitButton.textContent = originalText;
@@ -2326,15 +2423,16 @@
 
         state.gameSubmissions[key] = {
           ...(state.gameSubmissions[key] || {}),
-          ...payload
+          ...payload,
+          ...savedRecord
         };
         saveState();
 
         const improved = bestScore > previousBest;
         toast(
           improved
-            ? `¡Guardado en Sheets! ${bestScore}/5 correctas: ${bestScore * 20} puntos.`
-            : `Guardado en Sheets. Tu mejor marca sigue siendo ${bestScore}/5.`
+            ? `¡Resultado guardado! ${bestScore}/5 correctas: ${bestScore * 20} puntos.`
+            : `Guardado. Tu mejor marca sigue siendo ${bestScore}/5.`
         );
         renderCurrentRoute();
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2419,13 +2517,18 @@
         timestamp: new Date().toISOString()
       };
 
-      const saved = await postToSheets("saveScore", payload);
-      if (!saved) {
+      const result = await writeToSheets("saveScore", payload);
+      if (!result) {
         toast("El movimiento no quedó guardado en Google Sheets.");
         return;
       }
 
-      await syncFromSheets(false);
+      const savedRecord = result.record || payload;
+      state.scoreEntries.push(savedRecord);
+      state.scoreEntries = dedupeScores(state.scoreEntries);
+      saveState();
+      scheduleSilentSync();
+
       toast(`${sign < 0 ? "Se restaron" : "Se sumaron"} ${amount} puntos a ${getTeam(teamId).name}.`);
       renderCurrentRoute();
     });
@@ -2479,7 +2582,7 @@
       state.profileEditMode = false;
       saveState();
 
-      await syncFromSheets(false);
+      scheduleSilentSync();
       toast("Datos de prueba reseteados. Los testers ya pueden completar todo nuevamente.");
       renderCurrentRoute();
     });
@@ -2503,7 +2606,7 @@
       saveState();
       toast("Puntos discrecionales y movimientos anteriores limpiados.");
       await postToSheets("saveScore", payload);
-      await syncFromSheets(false);
+      scheduleSilentSync();
       renderCurrentRoute();
     });
 
@@ -2525,7 +2628,7 @@
       saveState();
       toast("Todos los puntos y movimientos anteriores fueron limpiados.");
       await postToSheets("saveScore", payload);
-      await syncFromSheets(false);
+      scheduleSilentSync();
       renderCurrentRoute();
     });
 
@@ -2551,8 +2654,8 @@
 
       state.manualUnlocks[key] = open;
       saveState();
-      await syncFromSheets(false);
-      toast(open ? "Juego liberado y sincronizado." : "Juego bloqueado y sincronizado.");
+      scheduleSilentSync();
+      toast(open ? "Juego liberado." : "Juego bloqueado.");
       renderCurrentRoute();
     }));
 

@@ -16,7 +16,7 @@
 
 const PUBLIC_WRITE_TOKEN = 'VF-2026-BOSQUE';
 const ADMIN_PASSWORD = 'vanifyfede2026';
-const BACKEND_VERSION = '32409';
+const BACKEND_VERSION = '32410';
 
 const SHEETS = {
   RSVP: 'RSVP',
@@ -103,7 +103,6 @@ function doGet(e) {
       verifyToken_(payload.token);
 
       result = withLock_(function () {
-        setupSheets_();
         const saved = handleWrite_(payload);
         return {
           ok: true,
@@ -136,7 +135,6 @@ function doPost(e) {
     verifyToken_(payload.token);
 
     const result = withLock_(function () {
-      setupSheets_();
       const saved = handleWrite_(payload);
       return {
         ok: true,
@@ -163,71 +161,101 @@ function doPost(e) {
 }
 
 function handleWrite_(payload) {
+  const writeTime = now_();
+
   switch (payload.action) {
-    case 'saveRsvp':
-      appendObject_(SHEETS.RSVP, HEADERS.RSVP, {
+    case 'saveRsvp': {
+      const record = {
         ...payload,
-        timestamp: payload.timestamp || now_(),
-        payloadJson: JSON.stringify(payload)
-      });
-      return { sheet: SHEETS.RSVP };
+        timestamp: payload.timestamp || writeTime,
+        updatedAt: payload.updatedAt || writeTime,
+        submittedAt: payload.submittedAt || writeTime
+      };
+      record.payloadJson = JSON.stringify(record);
+      appendObject_(SHEETS.RSVP, HEADERS.RSVP, record);
+      return { sheet: SHEETS.RSVP, record: responseRecord_(record) };
+    }
 
-    case 'saveProfile':
-      appendObject_(SHEETS.PROFILES, HEADERS.PROFILES, {
+    case 'saveProfile': {
+      const record = {
         ...payload,
-        timestamp: payload.timestamp || now_(),
-        payloadJson: JSON.stringify(payload)
-      });
-      return { sheet: SHEETS.PROFILES };
+        timestamp: payload.timestamp || writeTime,
+        updatedAt: payload.updatedAt || writeTime,
+        submittedAt: payload.submittedAt || writeTime
+      };
+      record.payloadJson = JSON.stringify(record);
+      appendObject_(SHEETS.PROFILES, HEADERS.PROFILES, record);
+      return { sheet: SHEETS.PROFILES, record: responseRecord_(record) };
+    }
 
-    case 'saveGameSubmission':
-      appendObject_(SHEETS.GAME_SUBMISSIONS, HEADERS.GAME_SUBMISSIONS, {
+    case 'saveGameSubmission': {
+      const record = {
         ...payload,
-        timestamp: payload.timestamp || now_(),
-        answersJson: payload.answers ? JSON.stringify(payload.answers) : '',
-        payloadJson: JSON.stringify(payload)
-      });
-      return { sheet: SHEETS.GAME_SUBMISSIONS };
+        timestamp: payload.timestamp || writeTime,
+        updatedAt: payload.updatedAt || writeTime,
+        submittedAt: payload.submittedAt || writeTime,
+        answersJson: payload.answers ? JSON.stringify(payload.answers) : ''
+      };
+      record.payloadJson = JSON.stringify(record);
+      appendObject_(SHEETS.GAME_SUBMISSIONS, HEADERS.GAME_SUBMISSIONS, record);
+      return { sheet: SHEETS.GAME_SUBMISSIONS, record: responseRecord_(record) };
+    }
 
-    case 'saveScore':
+    case 'saveScore': {
       verifyAdmin_(payload.adminPassword);
-      appendObject_(SHEETS.SCORES, HEADERS.SCORES, {
+      const record = {
         ...payload,
-        timestamp: payload.timestamp || now_(),
+        timestamp: payload.timestamp || writeTime,
+        submittedAt: payload.submittedAt || writeTime,
         points: Number(payload.points || 0),
-        adminName: payload.adminName || 'admin',
-        payloadJson: JSON.stringify(payload)
-      });
-      return { sheet: SHEETS.SCORES };
+        adminName: payload.adminName || 'admin'
+      };
+      record.payloadJson = JSON.stringify(record);
+      appendObject_(SHEETS.SCORES, HEADERS.SCORES, record);
+      return { sheet: SHEETS.SCORES, record: responseRecord_(record) };
+    }
 
-    case 'saveUnlock':
+    case 'saveUnlock': {
       verifyAdmin_(payload.adminPassword);
-      appendObject_(SHEETS.UNLOCKS, HEADERS.UNLOCKS, {
+      const record = {
         ...payload,
-        timestamp: payload.timestamp || now_(),
+        timestamp: payload.timestamp || writeTime,
+        submittedAt: payload.submittedAt || writeTime,
         open: payload.open === true || String(payload.open).toLowerCase() === 'true',
-        adminName: payload.adminName || 'admin',
-        payloadJson: JSON.stringify(payload)
-      });
-      return { sheet: SHEETS.UNLOCKS };
+        adminName: payload.adminName || 'admin'
+      };
+      record.payloadJson = JSON.stringify(record);
+      appendObject_(SHEETS.UNLOCKS, HEADERS.UNLOCKS, record);
+      return { sheet: SHEETS.UNLOCKS, record: responseRecord_(record) };
+    }
 
-    case 'logEvent':
-      appendObject_(SHEETS.EVENTS, HEADERS.EVENTS, {
-        timestamp: payload.timestamp || now_(),
+    case 'logEvent': {
+      const record = {
+        timestamp: payload.timestamp || writeTime,
         eventName: payload.eventName || 'event',
         guestId: payload.guestId || '',
         teamId: payload.teamId || '',
         payload: JSON.stringify(payload),
-        submittedAt: payload.submittedAt || '',
+        submittedAt: payload.submittedAt || writeTime,
         appVersion: payload.appVersion || '',
         pageUrl: payload.pageUrl || '',
         userAgent: payload.userAgent || ''
-      });
-      return { sheet: SHEETS.EVENTS };
+      };
+      appendObject_(SHEETS.EVENTS, HEADERS.EVENTS, record);
+      return { sheet: SHEETS.EVENTS, record: responseRecord_(record) };
+    }
 
     default:
       throw new Error('Acción no reconocida: ' + payload.action);
   }
+}
+
+function responseRecord_(record) {
+  const clean = { ...record };
+  delete clean.token;
+  delete clean.adminPassword;
+  delete clean.payloadJson;
+  return normalizeDates_(clean);
 }
 
 function setupSheets_() {

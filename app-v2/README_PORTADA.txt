@@ -181,3 +181,15 @@ v32409 — CORRECCIÓN CRÍTICA DE GOOGLE SHEETS:
 - Reemplazar index.html, styles.css y app.js.
 - Además, reemplazar Code.gs y crear una NUEVA VERSIÓN de la implementación Web App.
 - Abrir con ?v=32409.
+
+
+v32410 — OPTIMIZACIÓN DE VELOCIDAD:
+- Cada guardado usa una sola solicitud a Google Apps Script.
+- Apps Script devuelve en la misma respuesta el registro exacto que escribió.
+- La web deja de descargar todas las hojas antes de confirmar RSVP o juegos.
+- La sincronización completa ocurre luego, silenciosamente, sin bloquear al usuario.
+- Apps Script ya no inicializa todas las hojas antes de cada escritura.
+- Se mantiene la seguridad: la interfaz solo confirma después de que Sheets responde que guardó.
+- Actualizar Code.gs y crear una NUEVA VERSIÓN de la implementación Web App.
+- Reemplazar index.html, styles.css y app.js en GitHub.
+- Abrir con ?v=32410.
