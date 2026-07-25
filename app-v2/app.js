@@ -264,6 +264,25 @@
     }
   }
 
+  async function saveAndVerifyRemote(action, payload, verifier) {
+    const saved = await postToSheets(action, payload);
+    if (!saved) return false;
+
+    const synced = await syncFromSheets(false);
+    if (!synced) {
+      toast("Se envió el dato, pero no pudimos verificarlo en Google Sheets.");
+      return false;
+    }
+
+    if (typeof verifier === "function" && !verifier()) {
+      setRemoteStatus("error", "Sheets no verificó el dato");
+      toast("Google Sheets respondió, pero el dato no volvió en la sincronización.");
+      return false;
+    }
+
+    return true;
+  }
+
   function recordTimestamp(record) {
     const value = record?.updatedAt || record?.submittedAt || record?.timestamp || "";
     const parsed = Date.parse(value);
@@ -2117,14 +2136,52 @@
 
       $("#rsvpForm")?.addEventListener("submit", async event => {
         event.preventDefault();
-        const values = Object.fromEntries(new FormData(event.currentTarget).entries());
-        const payload = { ...values, guestId: currentGuest.id, teamId: currentGuest.team, updatedAt: new Date().toISOString() };
-        state.rsvps[currentGuest.id] = payload;
+        const form = event.currentTarget;
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton?.textContent || "Guardar asistencia";
+        const values = Object.fromEntries(new FormData(form).entries());
+        const payload = {
+          ...values,
+          guestId: currentGuest.id,
+          teamId: currentGuest.team,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Guardando en Google Sheets…";
+        }
+
+        const verified = await saveAndVerifyRemote(
+          "saveRsvp",
+          payload,
+          () => {
+            const remote = state.rsvps[currentGuest.id];
+            return Boolean(
+              remote &&
+              remote.attendance === payload.attendance &&
+              remote.updatedAt
+            );
+          }
+        );
+
+        if (!verified) {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+          }
+          toast("No quedó confirmada. Revisá la conexión y volvé a intentar.");
+          return;
+        }
+
+        state.rsvps[currentGuest.id] = {
+          ...(state.rsvps[currentGuest.id] || {}),
+          ...payload
+        };
         state.rsvpEditMode = false;
         saveState();
-        toast("Asistencia guardada. Tu equipo sumó puntos.");
+        toast("Asistencia guardada y verificada en Google Sheets.");
         renderCurrentRoute();
-        postToSheets("saveRsvp", payload);
       });
     }
 
@@ -2170,9 +2227,12 @@
     }
 
     if (route === "trivia") {
-      $("#musicGameForm")?.addEventListener("submit", event => {
+      $("#musicGameForm")?.addEventListener("submit", async event => {
         event.preventDefault();
-        const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+        const form = event.currentTarget;
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton?.textContent || "Enviar mis canciones";
+        const values = Object.fromEntries(new FormData(form).entries());
         const key = `${currentGuest.id}::music-selection`;
         const payload = {
           ...values,
@@ -2181,17 +2241,43 @@
           teamId: currentGuest.team,
           updatedAt: new Date().toISOString()
         };
-        state.gameSubmissions[key] = payload;
+
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Guardando…";
+        }
+
+        const verified = await saveAndVerifyRemote(
+          "saveGameSubmission",
+          payload,
+          () => Boolean(state.gameSubmissions[key]?.updatedAt)
+        );
+
+        if (!verified) {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+          }
+          toast("Las canciones no quedaron guardadas. Volvé a intentar.");
+          return;
+        }
+
+        state.gameSubmissions[key] = {
+          ...(state.gameSubmissions[key] || {}),
+          ...payload
+        };
         saveState();
         const earnedPoints = rsvpPointsForTeam(currentGuest.team);
-        toast(`Canciones guardadas. El equipo sumó ${earnedPoints} puntos.`);
-        postToSheets("saveGameSubmission", payload);
+        toast(`Canciones guardadas en Sheets. El equipo sumó ${earnedPoints} puntos.`);
         renderCurrentRoute();
       });
 
-      $("#coupleTriviaForm")?.addEventListener("submit", event => {
+      $("#coupleTriviaForm")?.addEventListener("submit", async event => {
         event.preventDefault();
-        const answers = Object.fromEntries(new FormData(event.currentTarget).entries());
+        const form = event.currentTarget;
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton?.textContent || "Enviar respuestas";
+        const answers = Object.fromEntries(new FormData(form).entries());
         const score = SAMPLE_COUPLE_QUESTIONS.reduce(
           (total, question) => total + (answers[question.id] === question.answer ? 1 : 0),
           0
@@ -2211,15 +2297,45 @@
           teamId: currentGuest.team,
           updatedAt: new Date().toISOString()
         };
-        state.gameSubmissions[key] = payload;
+
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Guardando resultado…";
+        }
+
+        const verified = await saveAndVerifyRemote(
+          "saveGameSubmission",
+          payload,
+          () => {
+            const remote = state.gameSubmissions[key];
+            return Boolean(
+              remote &&
+              Number(remote.bestScore ?? remote.score ?? -1) === bestScore
+            );
+          }
+        );
+
+        if (!verified) {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+          }
+          toast("El resultado no quedó guardado. Volvé a intentar.");
+          return;
+        }
+
+        state.gameSubmissions[key] = {
+          ...(state.gameSubmissions[key] || {}),
+          ...payload
+        };
         saveState();
+
         const improved = bestScore > previousBest;
         toast(
           improved
-            ? `¡Nuevo récord! ${bestScore}/5 correctas: ${bestScore * 20} puntos para tu equipo.`
-            : `Resultado: ${score}/5. Tu mejor marca sigue siendo ${bestScore}/5 (${bestScore * 20} puntos).`
+            ? `¡Guardado en Sheets! ${bestScore}/5 correctas: ${bestScore * 20} puntos.`
+            : `Guardado en Sheets. Tu mejor marca sigue siendo ${bestScore}/5.`
         );
-        postToSheets("saveGameSubmission", payload);
         renderCurrentRoute();
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
@@ -2280,7 +2396,7 @@
     });
     updateScorePreview();
 
-    scoreForm?.addEventListener("submit", event => {
+    scoreForm?.addEventListener("submit", async event => {
       event.preventDefault();
       const values = Object.fromEntries(new FormData(event.currentTarget).entries());
       const sign = Number(values.scoreSign || 1);
@@ -2303,11 +2419,14 @@
         timestamp: new Date().toISOString()
       };
 
-      state.scoreEntries.push(payload);
-      state.scoreEntries = dedupeScores(state.scoreEntries);
-      saveState();
+      const saved = await postToSheets("saveScore", payload);
+      if (!saved) {
+        toast("El movimiento no quedó guardado en Google Sheets.");
+        return;
+      }
+
+      await syncFromSheets(false);
       toast(`${sign < 0 ? "Se restaron" : "Se sumaron"} ${amount} puntos a ${getTeam(teamId).name}.`);
-      postToSheets("saveScore", payload);
       renderCurrentRoute();
     });
 
@@ -2410,13 +2529,30 @@
       renderCurrentRoute();
     });
 
-    $$("[data-unlock-key]").forEach(input => input.addEventListener("change", event => {
-      const key = event.currentTarget.dataset.unlockKey;
-      const open = event.currentTarget.checked;
+    $$("[data-unlock-key]").forEach(input => input.addEventListener("change", async event => {
+      const control = event.currentTarget;
+      const key = control.dataset.unlockKey;
+      const open = control.checked;
+
+      control.disabled = true;
+      const saved = await postToSheets("saveUnlock", {
+        key,
+        open,
+        adminPassword: state.adminPassword,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!saved) {
+        control.checked = !open;
+        control.disabled = false;
+        toast("No se pudo guardar el cambio del juego.");
+        return;
+      }
+
       state.manualUnlocks[key] = open;
       saveState();
-      toast(open ? "Candado abierto manualmente." : "Candado vuelve a su fecha original.");
-      postToSheets("saveUnlock", { key, open, adminPassword: state.adminPassword, timestamp: new Date().toISOString() });
+      await syncFromSheets(false);
+      toast(open ? "Juego liberado y sincronizado." : "Juego bloqueado y sincronizado.");
       renderCurrentRoute();
     }));
 

@@ -169,3 +169,15 @@ v32408:
 - Menú hamburguesa con tipografía más chica y sin fondo/sombra detrás de los textos.
 - Reemplazar index.html, styles.css y app.js.
 - Abrir con ?v=32408.
+
+
+v32409 — CORRECCIÓN CRÍTICA DE GOOGLE SHEETS:
+- El backend anterior solo escribía por doPost, pero la web enviaba las escrituras por JSONP/doGet.
+- Por eso la interfaz mostraba éxito aunque los datos quedaran únicamente en localStorage.
+- Code_v32409.gs agrega escrituras reales por doGet y conserva doPost.
+- También corrige la contraseña Admin del backend para que coincida con config.js.
+- RSVP y juegos ahora muestran éxito únicamente después de guardar y volver a leer el dato desde Sheets.
+- Las respuestas completas de canciones y trivia se conservan en RESPUESTAS_JUEGOS.
+- Reemplazar index.html, styles.css y app.js.
+- Además, reemplazar Code.gs y crear una NUEVA VERSIÓN de la implementación Web App.
+- Abrir con ?v=32409.
