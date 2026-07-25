@@ -3,11 +3,11 @@
   const CONFIG = window.WEDDING_APP_CONFIG || {};
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const ONLINE_COPY = {
-    idle: "Sheets sin configurar",
-    connecting: "Conectando Sheets",
-    online: "Sheets conectado",
+    idle: "Conexión pendiente",
+    connecting: "Sincronizando",
+    online: "Datos al día",
     local: "Modo local",
-    error: "Sheets no responde"
+    error: "Sin conexión"
   };
 
   // Puntos enteros por persona, equilibrados por cantidad de jugadores activos por equipo.
@@ -21,6 +21,7 @@
   let silentSyncTimer = null;
   let countdownTimer = null;
   let selectedTeamViewId = null;
+  let triviaFocusTarget = null;
   let selectedGuestId = null;
   let suggestionMatches = [];
   let activeSuggestionIndex = -1;
@@ -48,15 +49,28 @@
 
   function loadState() {
     try {
-      return { ...defaultState, ...(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}")) };
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      delete stored.adminUnlocked;
+      delete stored.adminPassword;
+      return {
+        ...defaultState,
+        ...stored,
+        adminUnlocked: false,
+        adminPassword: ""
+      };
     } catch (error) {
       console.warn("No se pudo leer el estado local", error);
-      return { ...defaultState };
+      return { ...defaultState, adminUnlocked: false, adminPassword: "" };
     }
   }
 
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const stateToPersist = {
+      ...state,
+      adminUnlocked: false,
+      adminPassword: ""
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToPersist));
   }
 
   function normalize(text) {
@@ -206,7 +220,7 @@
   function jsonp(action, params = {}) {
     return new Promise((resolve, reject) => {
       if (!isConfigured()) {
-        reject(new Error("Google Apps Script URL no configurada"));
+        reject(new Error("Conexión remota no configurada"));
         return;
       }
 
@@ -218,7 +232,7 @@
       Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
 
       const script = document.createElement("script");
-      const timeout = window.setTimeout(() => cleanup(() => reject(new Error("Timeout conectando con Google Sheets"))), 12000);
+      const timeout = window.setTimeout(() => cleanup(() => reject(new Error("La conexión tardó demasiado"))), 12000);
 
       function cleanup(done) {
         window.clearTimeout(timeout);
@@ -230,11 +244,11 @@
       window[callbackName] = payload => {
         cleanup(() => {
           if (payload && payload.ok !== false) resolve(payload);
-          else reject(new Error(payload?.error || "Respuesta inválida de Google Sheets"));
+          else reject(new Error(payload?.error || "Respuesta remota inválida"));
         });
       };
 
-      script.onerror = () => cleanup(() => reject(new Error("No se pudo cargar la respuesta de Google Sheets")));
+      script.onerror = () => cleanup(() => reject(new Error("No se pudo cargar la respuesta remota")));
       script.src = url.toString();
       document.body.appendChild(script);
     });
@@ -244,7 +258,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: DATA.appVersion,
+      appVersion: "32412",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -260,7 +274,7 @@
     try {
       const response = await jsonp(action, { payload: JSON.stringify(envelope) });
       const details = response?.data?.details || {};
-      setRemoteStatus("online", "Sheets conectado · guardado");
+      setRemoteStatus("online", "Guardado");
       state.lastRemoteError = "";
       saveState();
 
@@ -270,11 +284,11 @@
         record: details.record || null
       };
     } catch (error) {
-      console.warn("Fallo escritura Sheets", error);
+      console.warn("Fallo de escritura remota", error);
       state.lastRemoteError = error.message;
       saveState();
-      setRemoteStatus("error", "Sheets no guardó");
-      toast("No se pudo guardar en Google Sheets. Revisá la conexión y volvé a intentar.");
+      setRemoteStatus("error", "No se pudo guardar");
+      toast("No se pudo guardar. Revisá la conexión y volvé a intentar.");
       return null;
     }
   }
@@ -304,8 +318,8 @@
     };
 
     if (typeof verifier === "function" && !verifier(savedRecord, result)) {
-      setRemoteStatus("error", "Sheets devolvió un dato inválido");
-      toast("Google Sheets respondió, pero la confirmación recibida no coincide.");
+      setRemoteStatus("error", "La confirmación no coincide");
+      toast("La confirmación recibida no coincide. Volvé a intentar.");
       return null;
     }
 
@@ -384,22 +398,22 @@
   async function syncFromSheets(showToast = false) {
     if (!isConfigured()) {
       setRemoteStatus("idle");
-      if (showToast) toast("Pegá la URL de Apps Script en config.js para activar Google Sheets.");
+      if (showToast) toast("Falta configurar la conexión remota.");
       return false;
     }
     setRemoteStatus("connecting");
     try {
       const payload = await jsonp("getData");
       mergeRemoteData(payload.data || {});
-      setRemoteStatus("online", `Sheets conectado${state.lastSyncAt ? " · " + new Date(state.lastSyncAt).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) : ""}`);
-      if (showToast) toast("Datos sincronizados con Google Sheets.");
+      setRemoteStatus("online", `Datos al día${state.lastSyncAt ? " · " + new Date(state.lastSyncAt).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) : ""}`);
+      if (showToast) toast("Datos actualizados.");
       if (currentGuest) renderCurrentRoute();
       return true;
     } catch (error) {
       state.lastRemoteError = error.message;
       saveState();
       setRemoteStatus("error");
-      if (showToast) toast("No se pudo leer Google Sheets. La app sigue guardando localmente.");
+      if (showToast) toast("No se pudo actualizar. Se mantienen los últimos datos disponibles.");
       return false;
     }
   }
@@ -671,6 +685,8 @@
 
     $("#logoutButton").addEventListener("click", () => {
       closeMenu();
+      state.adminUnlocked = false;
+      state.adminPassword = "";
       currentGuest = null;
       state.currentGuestId = null;
       saveState();
@@ -720,6 +736,15 @@
   function navigate(route) {
     if (route === "ficha" || route === "juegos" || route === "info") route = "inicio";
     if (route === "torneo") route = "puntos";
+
+    const triviaTargets = { musica: "music-game", "trivia-pareja": "couple-trivia-game", sorpresa: "surprise-game" };
+    if (triviaTargets[route]) {
+      triviaFocusTarget = triviaTargets[route];
+      route = "trivia";
+    } else if (route !== "trivia") {
+      triviaFocusTarget = null;
+    }
+
     currentRoute = route;
     $$(".nav-tabs button[data-route]").forEach(button => {
       const active = button.dataset.route === route;
@@ -728,18 +753,16 @@
       else button.removeAttribute("aria-current");
     });
     renderCurrentRoute();
+
+    if (route === "trivia" && triviaFocusTarget) {
+      window.setTimeout(() => document.getElementById(triviaFocusTarget)?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    }
   }
 
   function renderCurrentRoute() {
     const routes = {
-      inicio: renderHome,
-      asistencia: renderRSVP,
-      equipo: renderTeam,
-      puntos: renderPointsHub,
-      trivia: renderTriviaHub,
-      ranking: renderRanking,
-      invitados: renderGuests,
-      admin: renderAdmin
+      inicio: renderHome, asistencia: renderRSVP, traslado: renderTransport, equipo: renderTeam,
+      puntos: renderPointsHub, trivia: renderTriviaHub, ranking: renderRanking, invitados: renderGuests, admin: renderAdmin
     };
     const html = (routes[currentRoute] || renderHome)();
     $("#view").innerHTML = html;
@@ -751,7 +774,7 @@
       <div class="section-head">
         <p class="eyebrow">${escapeHTML(kicker)}</p>
         <h3>${escapeHTML(title)}</h3>
-        <p>${escapeHTML(text)}</p>
+        ${text ? `<p>${escapeHTML(text)}</p>` : ""}
       </div>`;
   }
 
@@ -796,6 +819,7 @@
       gift: '<path d="M4 10h16v10H4z"/><path d="M3 7h18v3H3zM12 7v13"/><path d="M12 7c-3.5 0-5-1.1-5-2.6C7 3.2 8 3 8.8 3 10.3 3 12 5.2 12 7ZM12 7c3.5 0 5-1.1 5-2.6C17 3.2 16 3 15.2 3 13.7 3 12 5.2 12 7Z"/>',
       sync: '<path d="M20 7h-5V2"/><path d="M4 17h5v5"/><path d="M6.1 8A7 7 0 0 1 18.5 5.5L20 7"/><path d="M17.9 16A7 7 0 0 1 5.5 18.5L4 17"/>',
       question: '<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2"/><path d="M12 17h.01"/>',
+      person: '<circle cx="12" cy="8" r="3"/><path d="M5.5 20c.6-4.3 2.8-6.5 6.5-6.5s5.9 2.2 6.5 6.5"/>',
       download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>'
     };
     const path = icons[name] || icons.sparkle;
@@ -850,7 +874,8 @@
   const TRIVIA_GAME_DEFAULTS = {
     "trivia-music": true,
     "trivia-couple": true,
-    "trivia-surprise": false
+    "trivia-surprise": false,
+    "transport-info": false
   };
 
   const SAMPLE_COUPLE_QUESTIONS = [
@@ -1031,7 +1056,7 @@
           </article>
           <article class="home-essential-row">
             <span class="home-essential-icon">${uiIcon("bus")}</span>
-            <div><small>Traslado</small><strong>Combi desde el Obelisco</strong><p>Habrá ida y regreso previsto a las 03:00.</p></div>
+            <div><small>Traslado</small><strong>Micro desde el Obelisco</strong><p>Habrá ida y regreso previsto a las 03:00.</p></div>
           </article>
           <article class="home-essential-row">
             <span class="home-essential-icon">${uiIcon("dress")}</span>
@@ -1043,7 +1068,7 @@
           <summary><span>Ver todos los detalles</span><i aria-hidden="true">⌄</i></summary>
           <div class="home-details-content">
             <article><strong>Ubicación</strong><p>${locationOpen ? `${escapeHTML(DATA.couple.placeName)}, ${escapeHTML(DATA.couple.placeArea)}.` : "La dirección exacta y el mapa se habilitarán más adelante."}</p></article>
-            <article><strong>Traslado</strong><p>Al confirmar asistencia podés pedir información de la combi desde el Obelisco.</p></article>
+            <article><strong>Traslado</strong><p>Al confirmar asistencia podés pedir información del micro desde el Obelisco.</p></article>
             <article><strong>Para estar cómodo</strong><p>Puede refrescar de noche. Recomendamos abrigo liviano y evitar tacos finos.</p></article>
             <article><strong>Menú</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Se revelará más adelante. Cargá cualquier restricción en Asistencia."}</p></article>
           </div>
@@ -1135,10 +1160,10 @@
           <span class="card-icon">🚌</span>
           <h4>Micro misterioso</h4>
           <p><strong>Relax, no te preocupes por cómo ir ni cómo volver.</strong></p>
-          <p>Vamos a poner una combi / micro que saldrá desde el <strong>Obelisco</strong> y llevará a los invitados hasta el lugar secreto.</p>
+          <p>Vamos a disponer un micro que saldrá desde el <strong>Obelisco</strong> y llevará a los invitados hasta el lugar secreto.</p>
           <div class="micro-steps"><span>Subís en el Obelisco</span><span>→</span><span>Bajás en el bosque</span></div>
           <p>Regreso previsto: <strong>03:00 hs</strong>.</p>
-          <small>Si querés recibir información de la combi, marcá “Necesito info de combi” al confirmar asistencia.</small>
+          <small>Si querés recibir información del micro, marcá “Necesito información del micro” al confirmar asistencia.</small>
         </article>
       </section>
 
@@ -1165,8 +1190,36 @@
         <article class="section-card ${menuOpen ? "" : "locked-panel"}"><div class="card-title-row"><h4>🍽️ Menú</h4><span class="badge">${menuOpen ? "Disponible" : "Bloqueado"}</span></div>${menuOpen ? `<div class="grid two compact">${Object.entries(DATA.info.menu).map(([key, value]) => `<div class="menu-line"><strong>${menuLabel(key)}</strong><p>${escapeHTML(value)}</p></div>`).join("")}</div>` : `<p>Se revelará más adelante.</p><p>Si tenés restricciones alimentarias, alergias o preferencias importantes, cargalas en <strong>Confirmar asistencia</strong>.</p>`}</article>
       </section>
 
-      <section class="section-card"><div class="card-title-row"><h4>Preguntas rápidas</h4><span class="badge muted">FAQ</span></div><div class="faq-grid"><div><strong>¿Dónde es?</strong><p>Todavía es secreto. El destino final se revelará más adelante.</p></div><div><strong>¿Hay combi?</strong><p>Sí. Saldrá desde el Obelisco y volverá al finalizar la fiesta.</p></div><div><strong>¿A qué hora es?</strong><p>El evento es de 18:00 a 03:00 hs.</p></div><div><strong>¿Qué calzado conviene?</strong><p>Algo elegante, pero cómodo para caminar sobre pasto.</p></div></div></section>`;
+      <section class="section-card"><div class="card-title-row"><h4>Preguntas rápidas</h4><span class="badge muted">FAQ</span></div><div class="faq-grid"><div><strong>¿Dónde es?</strong><p>Todavía es secreto. El destino final se revelará más adelante.</p></div><div><strong>¿Hay micro?</strong><p>Sí. Saldrá desde el Obelisco y volverá al finalizar la fiesta.</p></div><div><strong>¿A qué hora es?</strong><p>El evento es de 18:00 a 03:00 hs.</p></div><div><strong>¿Qué calzado conviene?</strong><p>Algo elegante, pero cómodo para caminar sobre pasto.</p></div></div></section>`;
   }
+
+  function renderTransport() {
+    const open = isTriviaGameOpen("transport-info");
+    return `
+      ${transportStyles()}
+      ${sectionHeader("casamiento", "Traslado", "La ida y la vuelta también forman parte de la experiencia.")}
+      <section class="transport-hero section-card ${open ? "is-open" : "is-locked"}">
+        <div class="transport-illustration">${uiIcon("bus")}</div>
+        <div class="transport-copy"><span class="transport-status">${open ? "Información habilitada" : "Próximamente"}</span><h3>${open ? "Información del micro" : "El destino sigue siendo secreto"}</h3><p>${open ? "Estamos organizando el traslado para que puedan disfrutar sin preocuparse por el viaje." : "No se preocupen: nosotros nos ocupamos de que lleguen cómodos y vuelvan seguros. Cuando esté todo definido, los horarios y el punto exacto aparecerán en esta misma sección."}</p></div>
+      </section>
+      ${open ? `
+        <section class="transport-grid">
+          <article class="section-card"><span>${uiIcon("pin")}</span><div><small>Punto de encuentro</small><strong>Obelisco</strong><p>La ubicación exacta y la referencia para identificar el micro se publicarán acá.</p></div></article>
+          <article class="section-card"><span>${uiIcon("calendar")}</span><div><small>Horario de ida</small><strong>A confirmar</strong><p>Se informará con anticipación para que todos puedan organizarse.</p></div></article>
+          <article class="section-card"><span>${uiIcon("bus")}</span><div><small>Regreso</small><strong>03:00 hs</strong><p>El micro regresará al punto de origen al finalizar la fiesta.</p></div></article>
+        </section>
+        <section class="transport-note section-card">${uiIcon("checkCircle")}<div><strong>Nos ocupamos de todo</strong><p>El destino continuará siendo secreto hasta el momento indicado, pero el traslado estará organizado para la ida y la vuelta.</p></div></section>
+      ` : `
+        <section class="transport-preview section-card"><div>${uiIcon("lock")}</div><div><strong>La información detallada todavía está bajo llave</strong><p>Más adelante vas a encontrar acá el horario, el punto exacto, cómo reconocer el micro y todas las recomendaciones necesarias.</p></div></section>
+      `}`;
+  }
+
+  function transportStyles() {
+    return `<style>
+      .transport-hero{display:grid;grid-template-columns:112px minmax(0,1fr);gap:23px;align-items:center;padding:27px;background:linear-gradient(135deg,rgba(201,170,114,.13),rgba(255,253,248,.90))}.transport-illustration{width:96px;height:96px;display:grid;place-items:center;border:1px solid rgba(116,51,68,.18);border-radius:27px;background:rgba(116,51,68,.07);color:#743344}.transport-illustration .ui-icon{width:48px;height:48px}.transport-status{display:inline-flex;padding:6px 10px;border-radius:999px;background:rgba(201,170,114,.14);color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-copy h3{margin:8px 0;font-size:clamp(28px,4vw,43px)}.transport-copy p{margin:0}.transport-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.transport-grid article{display:grid;grid-template-columns:45px minmax(0,1fr);gap:13px}.transport-grid article>span{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:rgba(201,170,114,.13);color:#8a6129}.transport-grid .ui-icon{width:22px;height:22px}.transport-grid small,.transport-grid strong{display:block}.transport-grid strong{margin:3px 0 5px;font-size:20px}.transport-grid p{margin:0;font-size:13px}.transport-note,.transport-preview{display:flex;align-items:flex-start;gap:14px}.transport-note>.ui-icon{width:26px;height:26px;color:#426f47}.transport-preview{border-style:dashed}.transport-preview>div:first-child{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:rgba(132,104,68,.08)}@media(max-width:720px){.transport-hero{grid-template-columns:72px minmax(0,1fr);padding:20px}.transport-illustration{width:66px;height:66px}.transport-grid{grid-template-columns:1fr}}
+    </style>`;
+  }
+
 
   function infoStyles() {
     return `<style>
@@ -1193,7 +1246,7 @@
     const editing = Boolean(state.rsvpEditMode || !hasSaved);
     const deadlineLabel = "31 de agosto de 2026";
     const calendarUrl = "https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires";
-    const savedTransport = saved.transport === "auto" ? "particular" : saved.transport;
+    const savedTransport = ["combi", "micro"].includes(saved.transport) ? "combi" : saved.transport === "auto" ? "particular" : saved.transport;
 
     if (hasSaved && !editing) {
       return `
@@ -1211,7 +1264,7 @@
                 ${summaryLine("Mail", saved.email || "Sin cargar")}
                 ${summaryLine("Teléfono", saved.phone || "Sin cargar")}
                 ${summaryLine("Asistencia", attendanceLabel(saved.attendance))}
-                ${summaryLine("Traslado / combi", transportLabel(saved.transport))}
+                ${summaryLine("Traslado / micro", transportLabel(saved.transport))}
                 ${summaryLine("Restricciones", saved.diet || "Sin restricciones cargadas")}
                 ${summaryLine("Comentario", saved.comment || "Sin comentario cargado", true)}
               </div>
@@ -1271,11 +1324,11 @@
             </div>
           </fieldset>
 
-          <label>Traslado / combi
+          <label>Traslado / micro
             <select name="transport">
               ${option("", "Seleccionar", savedTransport)}
               ${option("particular", "De forma particular", savedTransport)}
-              ${option("combi", "Necesito info de combi", savedTransport)}
+              ${option("combi", "Necesito información del micro", savedTransport)}
             </select>
           </label>
         </div>
@@ -1382,7 +1435,7 @@
           gameId: "auto-couple-trivia",
           teamId: submission.teamId,
           points: bestScore * 20,
-          comment: `Trivia Vani y Fede · ${guest?.firstName || submission.guestId || "Invitado"} · ${bestScore}/5 correctas`,
+          comment: `Trivia Vani y Fede completada · ${guest?.firstName || submission.guestId || "Invitado"} · ${bestScore * 20} puntos`,
           automatic: true
         });
       }
@@ -1431,7 +1484,13 @@
   }
 
   function transportLabel(value) {
-    const labels = { "particular": "De forma particular", "auto": "De forma particular", "combi": "Necesito info de combi", "duermo": "Duermo en la estancia" };
+    const labels = {
+      "particular": "De forma particular",
+      "auto": "De forma particular",
+      "combi": "Necesito información del micro",
+      "micro": "Necesito información del micro",
+      "duermo": "Duermo en la estancia"
+    };
     return labels[value] || value || "Sin cargar";
   }
 
@@ -1529,6 +1588,17 @@
   }
 
 
+  function guestChallengeProgress(guest) {
+    if (!isCompetitionGuest(guest)) return { completed: 0, total: 0, label: "Fuera de competencia" };
+    const checks = [
+      hasCompletedRsvp(state.rsvps[guest.id]),
+      Boolean(state.gameSubmissions[`${guest.id}::music-selection`]),
+      Boolean(state.gameSubmissions[`${guest.id}::couple-trivia-test`])
+    ];
+    const completed = checks.filter(Boolean).length;
+    return { completed, total: checks.length, label: `${completed} de ${checks.length} desafíos` };
+  }
+
   function renderTeam() {
     const selectedTeamId = selectedTeamViewId || currentGuest.team;
     const team = getTeam(selectedTeamId);
@@ -1538,96 +1608,63 @@
     return `
       ${captainGuestStyles()}
       ${sectionHeader("mi fuerza", `Equipo ${team.name}`, `${team.group}. Capitán: ${team.captain}.`)}
-      <section class="team-hero section-card" style="--local-accent:${team.accent}">
-        <div class="team-symbol">${teamLogo(team, "team-symbol-logo")}</div>
-        <div>
-          <h3>${team.name}</h3>
-          <p>${escapeHTML(team.motto)}</p>
-          <div class="badge-row">
-            <span class="badge">${escapeHTML(team.colorName)}</span>
-            <span class="badge muted">${escapeHTML(team.trait)}</span>
-            
-          </div>
-          <div class="team-page-actions">
-            <button type="button" data-go="ranking">${uiIcon("ranking")}<span>Ver ranking</span></button>
-          </div>
-        </div>
+      <section class="team-hero team-hero-v2 section-card" style="--local-accent:${team.accent}">
+        <div class="team-identity-panel">${teamLogo(team, "team-symbol-logo team-symbol-logo-large")}<small>Tu fuerza</small><strong>${escapeHTML(team.name)}</strong></div>
+        <div class="team-hero-copy"><p class="eyebrow">${escapeHTML(team.colorName)} · ${escapeHTML(team.trait)}</p><h3>${escapeHTML(team.motto)}</h3><div class="badge-row"><span class="badge muted">${escapeHTML(team.group)}</span><span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">${activePlayers} jugadores activos</span></div></div>
+        <div class="team-ranking-cta">${uiIcon("ranking")}<div><small>Competencia</small><strong>Revisá cómo viene tu equipo</strong></div><button type="button" data-go="ranking"><span>Ver ranking</span>${uiIcon("play")}</button></div>
       </section>
-      <section class="grid two">
-        <article class="section-card"><h4>Formación</h4><p class="form-note">Capitán primero. Fede y Vani no cuentan para los puntos competitivos.</p><div class="guest-list">${members.map(guestPill).join("")}</div></article>
+      <section class="grid two team-page-grid">
+        <article class="section-card"><div class="card-title-row"><div><h4>Integrantes y desafíos</h4><p class="form-note">Cada persona puede completar asistencia, canciones y trivia.</p></div><span class="badge">${members.length} integrantes</span></div><div class="guest-list team-member-list">${members.map(guest => guestPill(guest, { minimalIcon: true, showChallenges: true })).join("")}</div></article>
         <article class="section-card team-attendance-card"><span class="team-attendance-icon">${uiIcon("calendar")}</span><div><h4>Asistencia</h4><p><strong>${confirmed} de ${activePlayers}</strong> integrantes ya confirmaron.</p><div class="team-attendance-progress" role="progressbar" aria-label="Asistencia confirmada del equipo" aria-valuemin="0" aria-valuemax="${activePlayers}" aria-valuenow="${confirmed}"><span style="width:${Math.min(100, Math.round((confirmed / Math.max(activePlayers, 1)) * 100))}%"></span></div><small>El estado se actualiza cuando cada integrante completa su confirmación.</small></div></article>
       </section>`;
   }
 
   function captainGuestStyles() {
-    return `<style>
-      .guest-pill.captain-pill{border-color:rgba(216,185,106,.70);background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.72));box-shadow:0 0 0 1px rgba(216,185,106,.10) inset}
-      .captain-label{display:inline-flex;align-items:center;gap:6px;margin-top:5px;padding:4px 8px;border-radius:999px;background:rgba(216,185,106,.14);color:#f2d482;font-weight:950;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-    </style>`;
+    return `<style>.guest-pill.captain-pill{border-color:rgba(201,170,114,.72);background:linear-gradient(135deg,rgba(201,170,114,.17),rgba(255,255,255,.52));box-shadow:0 0 0 1px rgba(201,170,114,.10) inset}.captain-label{display:inline-flex;align-items:center;gap:6px;margin-top:5px;padding:4px 8px;border-radius:999px;background:rgba(201,170,114,.15);color:var(--gold-deep);font-weight:950;font-size:10px;text-transform:uppercase;letter-spacing:.06em}</style>`;
   }
 
-  function guestPill(guest) {
-    const team = getTeam(guest.team);
+  function guestPill(guest, options = {}) {
     const captain = isGuestCaptain(guest);
     const visibleRole = guest.roleVisible || guest.displayRelation || guest.relation || guest.role || "invitado";
     const aliasText = guest.alias ? `${guest.alias} · ${visibleRole}` : visibleRole;
-    return `<div class="guest-pill ${captain ? "captain-pill" : ""}"><span>${captain ? "👑" : teamLogo(team, "guest-pill-logo")}</span><div><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}</div></div>`;
+    const progress = guestChallengeProgress(guest);
+    const icon = captain ? `<span class="guest-person-icon is-captain">👑</span>` : options.minimalIcon ? `<span class="guest-person-icon">${uiIcon("person")}</span>` : teamLogo(getTeam(guest.team), "guest-pill-logo");
+    const challengeStatus = options.showChallenges ? (progress.total ? `<div class="guest-challenge-status"><span><b>${progress.completed}/${progress.total}</b> desafíos completados</span><i><em style="width:${Math.round((progress.completed / progress.total) * 100)}%"></em></i></div>` : `<div class="guest-challenge-status is-host"><span>${escapeHTML(progress.label)}</span></div>`) : "";
+    return `<div class="guest-pill ${captain ? "captain-pill" : ""} ${options.showChallenges ? "has-challenges" : ""}"><span class="guest-pill-avatar">${icon}</span><div class="guest-pill-copy"><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}${challengeStatus}</div></div>`;
   }
 
   function renderPointsHub() {
     const team = getTeam(currentGuest.team);
     const activePlayers = teamSizeForPoints(team.id);
-    const rsvpPoints = rsvpPointsForTeam(team.id);
     const rsvp = state.rsvps[currentGuest.id];
     const currentGuestCanScore = isCompetitionGuest(currentGuest);
     const rsvpDone = currentGuestCanScore && hasCompletedRsvp(rsvp);
     const rsvpDoneCount = completedRsvpMembers(team.id).length;
-    const rsvpCurrentPoints = rsvpDoneCount * rsvpPoints;
-    const rsvpMaxPoints = activePlayers * rsvpPoints;
     const rank = calculateRanking();
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
-
+    const musicDone = Boolean(triviaSubmission("music-selection"));
+    const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
     return `
       ${pointsHubStyles()}
-      ${sectionHeader("sumá puntos!", "La competencia empieza ahora", "Mientras esperamos que todos confirmen asistencia, cada equipo puede empezar a sumar puntos. Algunas consignas son individuales, otras son de equipo y otras se activarán más adelante.")}
-
-      <section class="points-hero section-card" style="--local-accent:${team.accent}">
-        <div>
-          <p class="eyebrow">Equipo ${escapeHTML(team.name)}</p>
-          <h3>Tu aporte suma para toda la fuerza.</h3>
-          <p>Vas a competir contra otros 5 equipos desde ahora hasta que finalice la fiesta. Cada acción completada suma para tu equipo.</p>
-          <div class="badge-row">${teamBadge(team, team.name)}<span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div>
-        </div>
-        <div class="points-medal"><span>🏆</span><strong>${myPoints}</strong><small>puntos actuales</small></div>
-      </section>
-
-      <section class="grid one points-rules">
-        <article class="section-card"><span class="card-icon">🎉</span><h4>Hasta el final</h4><p>Los puntos se acumulan desde ahora y siguen durante la fiesta con juegos físicos, bonus y sorpresas.</p></article>
-      </section>
-
-      <section class="section-card">
-        <div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
-        ${pointsAction("✉️", "Confirmar asistencia antes del 31/08", currentGuestCanScore ? (rsvpDone ? `Ya sumaste puntos para ${team.name}. Podés editar tu respuesta, pero no suma dos veces.` : `Al completar esta acción sumás puntos para ${team.name}. También elegís traslado y cargás restricciones alimenticias.`) : "Los novios no suman puntos, pero pueden revisar el estado del equipo.", "Suma puntos", rsvpDone, "asistencia", `${rsvpDoneCount} de ${activePlayers} confirmaron`)}
-        ${pointsAction("🎵", "Elegir canciones", "Proponé una canción para la boda y otra para la entrada de tu equipo.", isTriviaGameOpen("trivia-music") ? "Disponible" : "Bloqueado", Boolean(triviaSubmission("music-selection")), "trivia", "Juego musical")}
-        ${pointsAction("❓", "Trivia Vani y Fede", "Respondé preguntas sobre los novios y poné a prueba cuánto sabés.", isTriviaGameOpen("trivia-couple") ? "Disponible" : "Bloqueado", Boolean(triviaSubmission("couple-trivia-test")), "trivia", "Modo de prueba")}
-        ${pointsAction("🎁", "Juego sorpresa", "La tercera misión se revelará más adelante.", isTriviaGameOpen("trivia-surprise") ? "Liberado" : "Bloqueado", false, "trivia", "Secreto")}
-      </section>
-
-    `;
+      ${sectionHeader("sumá puntos", "La competencia empieza ahora", "Cada acción completada suma para tu equipo. Algunas consignas son individuales y otras se activarán más adelante.")}
+      <section class="points-hero section-card" style="--local-accent:${team.accent}"><div><p class="eyebrow">Equipo ${escapeHTML(team.name)}</p><h3>Tu aporte suma para toda la fuerza.</h3><p>Vas a competir contra otros 5 equipos desde ahora hasta que finalice la fiesta.</p><div class="badge-row">${teamBadge(team, team.name)}<span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div></div><div class="points-medal"><span>🏆</span><strong>${myPoints}</strong><small>puntos actuales</small></div></section>
+      <section class="section-card"><div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
+        ${pointsAction({icon:"✉️",title:"Confirmar asistencia antes del 31/08",text:currentGuestCanScore?(rsvpDone?"Tu respuesta ya quedó registrada. Podés editarla sin volver a sumar puntos.":"Confirmá tu asistencia, elegí traslado y cargá restricciones alimenticias."):"Los novios no suman puntos, pero pueden revisar el estado del equipo.",status:"Suma puntos",done:rsvpDone,route:"asistencia",progressText:`${rsvpDoneCount} de ${activePlayers} confirmaron`,editable:true})}
+        ${pointsAction({icon:"🎵",title:"Elegir canciones",text:"Proponé una canción para la boda y otra para la entrada de tu equipo.",status:isTriviaGameOpen("trivia-music")?"Disponible":"Bloqueado",done:musicDone,route:"musica",progressText:"Juego musical",editable:true})}
+        ${pointsAction({icon:"❓",title:"Trivia Vani y Fede",text:triviaDone?"Ya jugaste esta trivia. Tu resultado quedó cerrado.":"Respondé preguntas sobre los novios. Tenés una sola oportunidad.",status:isTriviaGameOpen("trivia-couple")?"Disponible":"Bloqueado",done:triviaDone,route:"trivia-pareja",progressText:triviaDone?"Resultado final":"Una sola oportunidad",editable:false})}
+        ${pointsAction({icon:"🎁",title:"Juego sorpresa",text:"La tercera misión se revelará más adelante.",status:isTriviaGameOpen("trivia-surprise")?"Liberado":"Bloqueado",done:false,route:"sorpresa",progressText:"Secreto",editable:false})}
+      </section>`;
   }
 
-  function pointsAction(icon, title, text, points, done, route, progressText = "") {
-    const action = route
-      ? `<button type="button" data-go="${escapeHTML(route === "equipo" ? "equipo" : route)}">${done ? "Ver / editar" : route === "asistencia" ? "Hacer" : "Ver"}</button>`
-      : `<button type="button" disabled aria-disabled="true">Próximamente</button>`;
-    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${progressText ? `<small class="points-progress">${escapeHTML(progressText)}</small>` : ""}${done ? `<small class="points-done-note">✅ Ya sumaste estos puntos</small>` : ""}</div></div><div class="points-right"><b>${escapeHTML(points)}</b>${action}</div></article>`;
+  function pointsAction({ icon, title, text, status, done, route, progressText = "", editable = true }) {
+    const actionLabel = done ? (editable ? "Ver / editar" : "Ver") : route === "asistencia" ? "Hacer" : "Ver";
+    const action = route ? `<button type="button" data-go="${escapeHTML(route)}">${actionLabel}</button>` : `<button type="button" disabled aria-disabled="true">Próximamente</button>`;
+    const rightStatus = done ? `<span class="points-complete-badge">${uiIcon("checkCircle")}<b>Completado</b></span>` : `<b>${escapeHTML(status)}</b>`;
+    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${progressText ? `<small class="points-progress">${escapeHTML(progressText)}</small>` : ""}</div></div><div class="points-right">${rightStatus}${action}</div></article>`;
   }
 
   function pointsHubStyles() {
-    return `<style>
-      .points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(216,185,106,.16),rgba(24,39,25,.84));border-color:rgba(216,185,106,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(247,238,217,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,9,5,.34);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:#f0cd75;line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-rules{margin-top:16px}.points-action{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(247,238,217,.14);border-radius:22px;padding:18px;background:rgba(4,9,5,.26);margin-top:12px}.points-action.done{border-color:rgba(189,240,182,.28);background:rgba(189,240,182,.07)}.points-done-note,.points-progress{display:inline-block;margin-top:8px;font-weight:900}.points-done-note{color:#bdf0b6}.points-progress{color:#f0cd75}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right b{font-family:Georgia,serif;font-size:24px;color:#f0cd75;white-space:nowrap}.points-right button{white-space:nowrap}.points-note{margin-top:16px;border-color:rgba(216,185,106,.40);background:rgba(216,185,106,.10)}
-      @media(max-width:850px){.points-hero{grid-template-columns:1fr}.points-medal{width:100%;height:auto;padding:22px}.points-action{grid-template-columns:1fr}.points-right{justify-content:space-between}}
-    </style>`;
+    return `<style>.points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(201,170,114,.13),rgba(255,253,248,.90));border-color:rgba(201,170,114,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(132,104,68,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.40);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:var(--gold-deep);line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-action{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;border:1px solid rgba(132,104,68,.15);border-radius:22px;padding:18px;background:rgba(255,255,255,.34);margin-top:12px}.points-action.done{border-color:rgba(74,125,79,.25);background:linear-gradient(135deg,rgba(74,125,79,.08),rgba(255,255,255,.42))}.points-progress{display:inline-block;margin-top:8px;color:var(--gold-deep);font-weight:900}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right>b{font-family:Georgia,serif;font-size:24px;color:var(--gold-deep);white-space:nowrap}.points-right button{white-space:nowrap}.points-complete-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;background:rgba(74,125,79,.11);color:#426f47;font-size:13px}.points-complete-badge .ui-icon{width:19px;height:19px}@media(max-width:850px){.points-hero{grid-template-columns:1fr}.points-medal{width:100%;height:auto;padding:22px}.points-action{grid-template-columns:1fr}.points-right{justify-content:space-between}}@media(max-width:520px){.points-right{align-items:stretch;flex-direction:column}.points-right button{width:100%}.points-complete-badge{width:max-content}}</style>`;
   }
 
   function renderTournament() {
@@ -1650,7 +1687,7 @@
 
   function renderGames() {
     return `
-      ${sectionHeader("juegos", "Desafíos digitales y batalla física", "Los juegos se pueden habilitar antes o durante la fiesta. Las respuestas digitales quedan en Google Sheets y los puntos físicos se cargan desde Admin.")}
+      ${sectionHeader("juegos", "Desafíos digitales y batalla física", "Los juegos se pueden habilitar antes o durante la fiesta. Las respuestas quedan registradas y los puntos físicos se cargan desde Admin.")}
       <section class="game-grid">${DATA.games.map(renderGameCard).join("")}</section>
     `;
   }
@@ -1682,167 +1719,49 @@
     const surpriseOpen = isTriviaGameOpen("trivia-surprise");
     const musicSaved = triviaSubmission("music-selection");
     const triviaSaved = triviaSubmission("couple-trivia-test");
-
-    return `
-      ${triviaHubStyles()}
-      ${sectionHeader("juegos", "Trivia Vani y Fede", "Tres misiones para conocerlos mejor, participar de la previa y ayudar a tu equipo.")}
-
-      <section class="trivia-prize-banner">
-        ${uiIcon("gift")}
-        <div><strong>Habrá premios especiales</strong><p>Participar, acertar y jugar en equipo puede tener recompensa.</p></div>
-      </section>
-
-      <section class="trivia-game-list">
-        ${renderMusicGame(musicOpen, musicSaved, team)}
-        ${renderCoupleTrivia(coupleOpen, triviaSaved)}
-        ${renderSurpriseGame(surpriseOpen)}
-      </section>`;
+    return `${triviaHubStyles()}${sectionHeader("sumá puntos", "Juegos de Vani y Fede", "Elegí una misión, participá y ayudá a tu equipo.")}<section class="trivia-prize-banner">${uiIcon("gift")}<div><strong>Habrá premios especiales</strong><p>Participar, acertar y jugar en equipo puede tener recompensa.</p></div></section><section class="trivia-game-list">${renderMusicGame(musicOpen,musicSaved,team)}${renderCoupleTrivia(coupleOpen,triviaSaved)}${renderSurpriseGame(surpriseOpen)}</section>`;
   }
 
   function renderMusicGame(open, saved, team) {
-    if (!open) {
-      return renderLockedTriviaCard("01", "La banda sonora", "Dos canciones tendrán una misión especial.", "trivia-music");
-    }
-
-    return `
-      <article class="trivia-game-card is-open">
-        <div class="trivia-game-number">01</div>
-        <div class="trivia-game-content">
-          <div class="trivia-game-heading">
-            <div><span class="trivia-status open">Disponible</span><h4>La banda sonora</h4></div>
-            ${uiIcon("music", "trivia-main-icon")}
-          </div>
-          <p>Elegí una canción que te gustaría escuchar en la boda y otra que represente la entrada del equipo ${escapeHTML(team.name)}.</p>
-          <div class="trivia-points-rule">${uiIcon("star")}<span>Completar este juego suma <strong>${rsvpPointsForTeam(team.id)} puntos</strong> para tu equipo, una sola vez.</span></div>
-          <div class="trivia-secret-note">No te vamos a contar todavía cómo se usarán. Elegí pensando en energía, identidad y ganas de entrar con todo.</div>
-
-          <form id="musicGameForm" class="trivia-form">
-            <label>Canción para la boda
-              <input name="weddingSong" type="text" value="${escapeHTML(saved?.weddingSong || "")}" placeholder="Tema y artista" required>
-            </label>
-            <label>Canción para la entrada del equipo
-              <input name="teamEntranceSong" type="text" value="${escapeHTML(saved?.teamEntranceSong || "")}" placeholder="Tema y artista" required>
-            </label>
-            <label>¿Por qué la elegirías? <span>(opcional)</span>
-              <textarea name="reason" placeholder="Contanos qué tiene de especial...">${escapeHTML(saved?.reason || "")}</textarea>
-            </label>
-            <div class="trivia-form-footer">
-              <button type="submit">${saved ? "Actualizar canciones" : "Enviar mis canciones"}</button>
-              ${saved ? `<span class="trivia-saved">${uiIcon("checkCircle")} Propuesta guardada</span>` : ""}
-            </div>
-          </form>
-        </div>
-      </article>`;
+    if (!open) return renderLockedTriviaCard("01","La banda sonora","Dos canciones tendrán una misión especial.","trivia-music","music-game");
+    return `<article id="music-game" class="trivia-game-card is-open"><div class="trivia-game-number">01</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status open">${saved?"Completado":"Disponible"}</span><h4>La banda sonora</h4></div>${uiIcon("music","trivia-main-icon")}</div><p>Elegí una canción que te gustaría escuchar en la boda y otra que represente la entrada del equipo ${escapeHTML(team.name)}.</p><div class="trivia-points-rule">${uiIcon("star")}<span>Completar este juego suma <strong>${rsvpPointsForTeam(team.id)} puntos</strong> para tu equipo, una sola vez.</span></div><div class="trivia-secret-note">No te vamos a contar todavía cómo se usarán. Elegí pensando en energía, identidad y ganas de entrar con todo.</div><form id="musicGameForm" class="trivia-form"><label>Canción para la boda<input name="weddingSong" type="text" value="${escapeHTML(saved?.weddingSong||"")}" placeholder="Tema y artista" required></label><label>Canción para la entrada del equipo<input name="teamEntranceSong" type="text" value="${escapeHTML(saved?.teamEntranceSong||"")}" placeholder="Tema y artista" required></label><label>¿Por qué la elegirías? <span>(opcional)</span><textarea name="reason" placeholder="Contanos qué tiene de especial...">${escapeHTML(saved?.reason||"")}</textarea></label><div class="trivia-form-footer"><button type="submit">${saved?"Actualizar canciones":"Enviar mis canciones"}</button>${saved?`<span class="trivia-saved">${uiIcon("checkCircle")} Propuesta guardada</span>`:""}</div></form></div></article>`;
   }
 
   function renderCoupleTrivia(open, saved) {
-    if (!open) {
-      return renderLockedTriviaCard("02", "¿Cuánto sabés de los novios?", "Preguntas, recuerdos y algunas trampas.", "trivia-couple");
+    if (!open) return renderLockedTriviaCard("02","¿Cuánto sabés de los novios?","Preguntas, recuerdos y algunas trampas.","trivia-couple","couple-trivia-game");
+    if (saved) {
+      const earnedPoints = Math.max(0,Number(saved.earnedPoints ?? (Number(saved.score ?? saved.bestScore ?? 0)*20)));
+      return `<article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card is-completed"><div class="trivia-game-number">02</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status completed">Completada</span><h4>¿Cuánto sabés de Vani y Fede?</h4></div>${uiIcon("checkCircle","trivia-main-icon")}</div><p>Esta trivia se juega una sola vez. Tu participación ya quedó registrada y las preguntas no volverán a mostrarse.</p><div class="trivia-result trivia-result-final">${uiIcon("star")}<div><strong>${earnedPoints} puntos</strong><span>Resultado final obtenido para tu equipo</span></div></div></div></article>`;
     }
-
-    const savedBestScore = saved
-      ? Math.max(0, Math.min(SAMPLE_COUPLE_QUESTIONS.length, Number(saved.bestScore ?? saved.score ?? 0)))
-      : 0;
-    const result = saved
-      ? `<div class="trivia-result">${uiIcon("star")}<div><strong>${savedBestScore} de ${SAMPLE_COUPLE_QUESTIONS.length} · ${savedBestScore * 20} puntos</strong><span>Mejor resultado registrado para tu equipo</span></div></div>`
-      : "";
-
-    return `
-      <article class="trivia-game-card is-open trivia-quiz-card">
-        <div class="trivia-game-number">02</div>
-        <div class="trivia-game-content">
-          <div class="trivia-game-heading">
-            <div><span class="trivia-status open">Disponible · prueba</span><h4>¿Cuánto sabés de Vani y Fede?</h4></div>
-            ${uiIcon("question", "trivia-main-icon")}
-          </div>
-          <p>Respondé cinco preguntas sobre los novios. Cada respuesta correcta suma <strong>20 puntos</strong>: podés conseguir hasta <strong>100 puntos</strong> para tu equipo.</p>
-          <div class="trivia-points-rule">${uiIcon("star")}<span>Podés volver a jugar para mejorar. El ranking conserva solamente tu mejor resultado.</span></div>
-          ${result}
-          <form id="coupleTriviaForm" class="trivia-quiz-form">
-            ${SAMPLE_COUPLE_QUESTIONS.map((item, index) => `
-              <fieldset class="trivia-question">
-                <legend><span>${String(index + 1).padStart(2, "0")}</span>${escapeHTML(item.question)}</legend>
-                <div class="trivia-options">
-                  ${item.options.map(option => `
-                    <label>
-                      <input type="radio" name="${item.id}" value="${escapeHTML(option)}" ${saved?.answers?.[item.id] === option ? "checked" : ""} required>
-                      <span>${escapeHTML(option)}</span>
-                    </label>`).join("")}
-                </div>
-              </fieldset>`).join("")}
-            <button type="submit">${saved ? "Volver a probar" : "Enviar respuestas"}</button>
-          </form>
-        </div>
-      </article>`;
+    return `<article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card"><div class="trivia-game-number">02</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status open">Una sola oportunidad</span><h4>¿Cuánto sabés de Vani y Fede?</h4></div>${uiIcon("question","trivia-main-icon")}</div><p>Respondé cinco preguntas sobre los novios. Cada acierto suma <strong>20 puntos</strong>: podés conseguir hasta <strong>100 puntos</strong> para tu equipo.</p><div class="trivia-points-rule">${uiIcon("star")}<span>Cuando envíes tus respuestas, el resultado quedará cerrado y no podrás volver a jugar.</span></div><form id="coupleTriviaForm" class="trivia-quiz-form">${SAMPLE_COUPLE_QUESTIONS.map((item,index)=>`<fieldset class="trivia-question"><legend><span>${String(index+1).padStart(2,"0")}</span>${escapeHTML(item.question)}</legend><div class="trivia-options">${item.options.map(option=>`<label><input type="radio" name="${item.id}" value="${escapeHTML(option)}" required><span>${escapeHTML(option)}</span></label>`).join("")}</div></fieldset>`).join("")}<button type="submit">Enviar respuestas</button></form></div></article>`;
   }
 
   function renderSurpriseGame(open) {
-    if (!open) {
-      return renderLockedTriviaCard("03", "Juego sorpresa", "La tercera misión sigue bajo llave.", "trivia-surprise");
-    }
-
-    return `
-      <article class="trivia-game-card is-open surprise-open">
-        <div class="trivia-game-number">03</div>
-        <div class="trivia-game-content">
-          <div class="trivia-game-heading">
-            <div><span class="trivia-status open">Liberado</span><h4>Una nueva misión se acerca</h4></div>
-            ${uiIcon("gift", "trivia-main-icon")}
-          </div>
-          <p>El candado fue abierto. La consigna completa aparecerá acá cuando esté lista para jugar.</p>
-          <div class="trivia-secret-note">Por ahora, mantenete atento y no le cuentes nada a los otros equipos.</div>
-        </div>
-      </article>`;
+    if (!open) return renderLockedTriviaCard("03","Juego sorpresa","La tercera misión sigue bajo llave.","trivia-surprise","surprise-game");
+    return `<article id="surprise-game" class="trivia-game-card is-open surprise-open"><div class="trivia-game-number">03</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status open">Liberado</span><h4>Una nueva misión se acerca</h4></div>${uiIcon("gift","trivia-main-icon")}</div><p>El candado fue abierto. La consigna completa aparecerá acá cuando esté lista para jugar.</p><div class="trivia-secret-note">Por ahora, mantenete atento y no le cuentes nada a los otros equipos.</div></div></article>`;
   }
 
-  function renderLockedTriviaCard(number, title, text, key) {
-    return `
-      <article class="trivia-game-card is-locked">
-        <div class="trivia-game-number">${number}</div>
-        <div class="trivia-game-content">
-          <div class="trivia-game-heading">
-            <div><span class="trivia-status locked">Bloqueado</span><h4>${escapeHTML(title)}</h4></div>
-            ${uiIcon("lock", "trivia-main-icon")}
-          </div>
-          <p>${escapeHTML(text)}</p>
-          <small>Se habilitará cuando Vani y Fede liberen este juego.</small>
-        </div>
-      </article>`;
+  function renderLockedTriviaCard(number, title, text, key, elementId = "") {
+    return `<article ${elementId?`id="${elementId}"`:""} class="trivia-game-card is-locked"><div class="trivia-game-number">${number}</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status locked">Bloqueado</span><h4>${escapeHTML(title)}</h4></div>${uiIcon("lock","trivia-main-icon")}</div><p>${escapeHTML(text)}</p><small>Se habilitará cuando Vani y Fede liberen este juego.</small></div></article>`;
   }
 
   function triviaHubStyles() {
     return `<style>
       .trivia-prize-banner{display:flex;align-items:center;gap:13px;padding:16px 19px;border:1px solid rgba(154,110,47,.23);border-radius:19px;background:linear-gradient(135deg,rgba(201,170,114,.16),rgba(255,253,248,.84));color:#8a6129}.trivia-prize-banner>.ui-icon{width:27px;height:27px}.trivia-prize-banner strong{display:block;color:var(--ink);font-size:16px}.trivia-prize-banner p{margin:2px 0 0;font-size:13px}
       .trivia-game-list{display:grid;gap:15px}.trivia-game-card{position:relative;display:grid;grid-template-columns:66px minmax(0,1fr);gap:18px;padding:23px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,rgba(255,253,248,.90),rgba(239,228,209,.76));box-shadow:0 10px 25px rgba(76,51,22,.06);overflow:hidden}.trivia-game-card.is-locked{opacity:.76}.trivia-game-card.is-locked::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.18));pointer-events:none}
-      .trivia-game-number{width:54px;height:54px;display:grid;place-items:center;border:1px solid rgba(201,170,114,.28);border-radius:16px;background:rgba(201,170,114,.12);color:var(--gold-deep);font-family:var(--font-title);font-size:20px;font-weight:900}.trivia-game-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.trivia-game-heading h4{margin:6px 0 8px;font-size:clamp(23px,3vw,31px)}.trivia-main-icon{width:31px;height:31px;color:#743344}.trivia-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.trivia-status.open{background:rgba(74,125,79,.10);color:#426f47}.trivia-status.locked{background:rgba(132,104,68,.10);color:var(--muted)}
+      .trivia-game-number{width:54px;height:54px;display:grid;place-items:center;border:1px solid rgba(201,170,114,.28);border-radius:16px;background:rgba(201,170,114,.12);color:var(--gold-deep);font-family:var(--font-title);font-size:20px;font-weight:900}.trivia-game-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.trivia-game-heading h4{margin:6px 0 8px;font-size:clamp(23px,3vw,31px)}.trivia-main-icon{width:31px;height:31px;color:#743344}.trivia-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.trivia-status.open,.trivia-status.completed{background:rgba(74,125,79,.10);color:#426f47}.trivia-status.locked{background:rgba(132,104,68,.10);color:var(--muted)}
       .trivia-game-content>p{margin:0 0 14px}.trivia-points-rule{display:flex;align-items:flex-start;gap:9px;margin:10px 0 14px;padding:11px 13px;border:1px solid rgba(154,110,47,.18);border-radius:13px;background:rgba(201,170,114,.09);color:#765529;font-size:12px;font-weight:750;line-height:1.4}.trivia-points-rule .ui-icon{width:18px;height:18px;flex:0 0 auto}.trivia-secret-note{margin:12px 0 16px;padding:12px 14px;border-left:3px solid #743344;border-radius:0 12px 12px 0;background:rgba(116,51,68,.055);color:var(--muted);font-size:13px;font-weight:700;line-height:1.45}
       .trivia-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.trivia-form label:last-of-type,.trivia-form-footer{grid-column:1/-1}.trivia-form label>span{color:var(--muted-2);font-weight:600}.trivia-form textarea{min-height:85px}.trivia-form-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}.trivia-saved{display:inline-flex;align-items:center;gap:7px;color:#426f47;font-weight:850;font-size:13px}.trivia-saved .ui-icon{width:18px;height:18px}
       .trivia-result{display:flex;align-items:center;gap:11px;margin:12px 0 18px;padding:13px 15px;border:1px solid rgba(74,125,79,.20);border-radius:15px;background:rgba(74,125,79,.08);color:#426f47}.trivia-result>.ui-icon{width:24px;height:24px}.trivia-result strong,.trivia-result span{display:block}.trivia-result strong{font-size:18px}.trivia-result span{font-size:12px}
       .trivia-quiz-form{display:grid;gap:16px}.trivia-question{margin:0;padding:16px;border:1px solid rgba(132,104,68,.16);border-radius:17px;background:rgba(255,255,255,.35)}.trivia-question legend{display:flex;align-items:center;gap:10px;padding:0 7px;color:var(--ink);font-weight:900}.trivia-question legend>span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:rgba(201,170,114,.15);color:var(--gold-deep);font-size:11px}.trivia-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.trivia-options label{position:relative;margin:0}.trivia-options input{position:absolute;opacity:0;pointer-events:none}.trivia-options label>span{display:flex;align-items:center;min-height:46px;padding:10px 13px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.45);color:var(--ink);font-size:13px;font-weight:750;cursor:pointer}.trivia-options label:has(input:checked)>span{border-color:#743344;background:rgba(116,51,68,.09);color:#652c3b;box-shadow:0 0 0 2px rgba(116,51,68,.08)}
+      .trivia-game-card{scroll-margin-top:120px}.trivia-quiz-card.is-completed{border-color:rgba(74,125,79,.25);background:linear-gradient(135deg,rgba(74,125,79,.08),rgba(255,253,248,.92))}.trivia-result-final strong{font-size:28px}
       @media(max-width:650px){.trivia-game-card{grid-template-columns:48px minmax(0,1fr);gap:12px;padding:17px}.trivia-game-number{width:44px;height:44px;font-size:16px}.trivia-main-icon{width:26px;height:26px}.trivia-form{grid-template-columns:1fr}.trivia-form label:last-of-type,.trivia-form-footer{grid-column:auto}.trivia-form-footer{align-items:stretch;flex-direction:column}.trivia-form-footer button{width:100%}.trivia-options{grid-template-columns:1fr}}
     </style>`;
   }
 
   function renderRanking() {
     const ranking = calculateRanking();
-    return `
-      ${sectionHeader("ranking", "La tabla de fuerzas", "Suma desafíos digitales, juegos físicos, bonus y penalizaciones cargadas desde el panel admin.")}
-      <section class="ranking-prize-note">
-        ${uiIcon("gift")}
-        <div><strong>Habrá premios especiales</strong><p>El ranking importa, pero también habrá reconocimientos por creatividad, actitud y espíritu de equipo.</p></div>
-      </section>
-      <section class="ranking-action-card section-card">
-        <div>
-          <strong>Ranking actualizado hasta la última sincronización</strong>
-          <p>Tocá actualizar para cargar los puntajes enviados hasta este momento.</p>
-        </div>
-        <div class="ranking-action-buttons">
-          <button id="refreshRanking" type="button" class="ranking-refresh-button">${uiIcon("sync")}<span>Actualizar</span></button>
-          <button type="button" data-go="puntos">${uiIcon("play")}<span>Sumá puntos</span></button>
-        </div>
-      </section>
-      <section class="ranking-list">${ranking.map(rankRow).join("")}</section>
-      <section class="section-card"><h4>Últimos movimientos</h4>${allPointEntries().length ? `<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Acción</th><th>Equipo</th><th>Movimiento</th><th>Comentario</th></tr></thead><tbody>${allPointEntries().slice(-12).reverse().map(entry => `<tr><td>${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>Sumó puntos</td><td>${escapeHTML(entry.comment || "El equipo sumó puntos.")}</td></tr>`).join("")}</tbody></table></div>` : `<p>Todavía no hay movimientos cargados.</p>`}</section>`;
+    return `${sectionHeader("ranking", "La tabla de fuerzas", "Desafíos digitales, juegos físicos, bonus y penalizaciones construyen la tabla.")}<section class="ranking-prize-note">${uiIcon("gift")}<div><strong>Habrá premios especiales</strong><p>El ranking importa, pero también habrá reconocimientos por creatividad, actitud y espíritu de equipo.</p></div></section><section class="ranking-action-card section-card"><div><strong>Ranking actualizado hasta la última sincronización</strong><p>Tocá actualizar para cargar los puntajes enviados hasta este momento.</p></div><div class="ranking-action-buttons"><button id="refreshRanking" type="button" class="ranking-refresh-button"><span class="ranking-button-icon">${uiIcon("sync")}</span><span>Actualizar</span></button><button type="button" data-go="puntos" class="ranking-points-button"><span class="ranking-button-icon">${uiIcon("star")}</span><span>Sumá puntos</span></button></div></section><section class="ranking-list">${ranking.map(rankRow).join("")}</section><section class="section-card"><h4>Últimos movimientos</h4>${allPointEntries().length?`<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Acción</th><th>Equipo</th><th>Movimiento</th><th>Comentario</th></tr></thead><tbody>${allPointEntries().slice(-12).reverse().map(entry=>`<tr><td>${formatDateLabel(entry.timestamp||entry.submittedAt||entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>Sumó puntos</td><td>${escapeHTML(entry.comment||"El equipo sumó puntos.")}</td></tr>`).join("")}</tbody></table></div>`:`<p>Todavía no hay movimientos cargados.</p>`}</section>`;
   }
 
   function rankRow(row, index) {
@@ -1875,16 +1794,7 @@
   function renderGuests() {
     const open = isUnlocked("guestMap");
     const grouped = Object.values(DATA.teams).map(team => ({ team, guests: DATA.guests.filter(guest => guest.team === team.id).sort(sortGuestsForDisplay) }));
-    return `
-      ${captainGuestStyles()}
-      ${sectionHeader("organigrama", "Mapa de invitados", "Un quién-es-quién de la noche, con alias, equipos y personajes clave. Los capitanes aparecen primeros en cada fuerza.")}
-      ${open ? "" : lockedNotice("guestMap")}
-      <section class="guest-map">${grouped.map(group => `
-        <article class="section-card team-column" style="--local-accent:${group.team.accent}">
-          <h4 class="team-heading">${teamLogo(group.team, "team-heading-logo")}<span>${group.team.name}</span></h4>
-          <small>${escapeHTML(group.team.group)}</small>
-          <div class="guest-list">${group.guests.map(guestPill).join("")}</div>
-        </article>`).join("")}</section>`;
+    return `${captainGuestStyles()}${sectionHeader("comunidad", "Invitados", "")}${open?"":lockedNotice("guestMap")}<section class="guest-map">${grouped.map(group=>`<article class="section-card team-column" style="--local-accent:${group.team.accent}"><h4 class="team-heading">${teamLogo(group.team,"team-heading-logo")}<span>${group.team.name}</span></h4><small>${escapeHTML(group.team.group)}</small><div class="guest-list">${group.guests.map(guest=>guestPill(guest,{minimalIcon:true})).join("")}</div></article>`).join("")}</section>`;
   }
 
   function scoreEntriesForGames(gameIds) {
@@ -1916,14 +1826,46 @@
     </style>`;
   }
 
+  function adminGuestListData(type) {
+    const guests = DATA.guests.filter(isCompetitionGuest);
+    const definitions = {
+      attending: { title: "Confirmaron asistencia", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]) && state.rsvps[guest.id].attendance === "si", detail: guest => `Equipo ${getTeam(guest.team).name} · Asiste` },
+      answered: { title: "Respondieron la invitación", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]), detail: guest => `Equipo ${getTeam(guest.team).name} · ${attendanceLabel(state.rsvps[guest.id]?.attendance)}` },
+      declined: { title: "No asistirán", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]) && state.rsvps[guest.id].attendance === "no", detail: guest => `Equipo ${getTeam(guest.team).name} · No asiste` },
+      unanswered: { title: "Todavía no respondieron", filter: guest => !hasCompletedRsvp(state.rsvps[guest.id]), detail: guest => `Equipo ${getTeam(guest.team).name} · Pendiente` },
+      micro: { title: "Necesitan información del micro", filter: guest => { const row = state.rsvps[guest.id]; return hasCompletedRsvp(row) && row.attendance === "si" && ["combi","micro"].includes(row.transport); }, detail: guest => `Equipo ${getTeam(guest.team).name} · Micro desde el Obelisco` }
+    };
+    const definition = definitions[type] || definitions.answered;
+    return { title: definition.title, guests: guests.filter(definition.filter).sort((x,y)=>guestFullName(x).localeCompare(guestFullName(y),"es")), detail: definition.detail };
+  }
+
+  function renderAdminPeopleModal() {
+    return `<div id="adminPeopleModal" class="admin-people-modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminPeopleTitle"><div class="admin-people-dialog"><div class="admin-people-head"><div><p class="eyebrow">Detalle</p><h4 id="adminPeopleTitle">Personas</h4><p id="adminPeopleCount"></p></div><button type="button" class="admin-people-close" data-admin-modal-close aria-label="Cerrar">×</button></div><div id="adminPeopleList" class="admin-people-list"></div><button type="button" class="ghost-button admin-people-done" data-admin-modal-close>Cerrar</button></div></div>`;
+  }
+
   function renderAdmin() {
     if (!state.adminUnlocked) {
       return `
-        ${sectionHeader("admin", "Panel de control", "Revisá la asistencia y gestioná puntos de forma simple.")}
-        <form id="adminLoginForm" class="section-card form-card narrow">
-          <label>Clave admin<input name="password" type="password" placeholder="Clave"></label>
-          <button type="submit">Entrar al panel</button>
-        </form>`;
+        ${adminAccessStyles()}
+        <section class="admin-access-card section-card">
+          <div class="admin-access-icon">${uiIcon("lock")}</div>
+          <div class="admin-access-copy">
+            <p class="eyebrow">Acceso restringido</p>
+            <h3>Administración</h3>
+            <p>Ingresá la contraseña para acceder al centro de mando.</p>
+          </div>
+          <form id="adminLoginForm" class="admin-access-form" autocomplete="off">
+            <label for="adminPasswordInput">Contraseña</label>
+            <div class="admin-password-row">
+              <input id="adminPasswordInput" name="password" type="password"
+                     placeholder="Ingresá la contraseña"
+                     autocomplete="current-password" required>
+              <button type="submit">Ingresar</button>
+            </div>
+            <div id="adminLoginMessage" class="form-message"
+                 role="status" aria-live="polite"></div>
+          </form>
+        </section>`;
     }
 
     const invitedGuests = DATA.guests.filter(isCompetitionGuest);
@@ -1939,47 +1881,40 @@
     const answeredCount = invitedGuests.filter(guest => hasCompletedRsvp(state.rsvps[guest.id])).length;
     const unansweredCount = Math.max(0, invitedCount - answeredCount);
     const attendancePercent = invitedCount ? Math.round((attendingCount / invitedCount) * 100) : 0;
+    const answeredPercent = invitedCount ? Math.round((answeredCount / invitedCount) * 100) : 0;
     const combiCount = invitedGuests.filter(guest => {
       const rsvp = state.rsvps[guest.id];
-      return hasCompletedRsvp(rsvp) && rsvp.attendance === "si" && rsvp.transport === "combi";
+      return hasCompletedRsvp(rsvp) && rsvp.attendance === "si" && ["combi", "micro"].includes(rsvp.transport);
     }).length;
+    const transportInfoOpen = isTriviaGameOpen("transport-info");
 
     return `
       ${adminUxStyles()}
-      ${sectionHeader("admin", "Centro de mando", "Asistencia general, juegos y ajustes rápidos del ranking.")}
+      <section class="admin-title-row">
+        ${sectionHeader("admin", "Centro de mando", "Asistencia general, juegos y ajustes rápidos del ranking.")}
+        <button id="lockAdminButton" type="button" class="admin-lock-button">
+          ${uiIcon("lock")}<span>Bloquear Admin</span>
+        </button>
+      </section>
 
       <section class="admin-sync-card ${remoteStatus}">
         <div class="admin-sync-indicator"><span></span></div>
         <div>
-          <small>Google Sheets</small>
-          <strong>${remoteStatus === "online" ? "Sincronizado" : remoteStatus === "connecting" ? "Sincronizando…" : remoteStatus === "error" ? "Error de conexión" : isConfigured() ? "Pendiente de sincronización" : "No configurado"}</strong>
+          <small>Base de datos</small>
+          <strong>${remoteStatus === "online" ? "Datos al día" : remoteStatus === "connecting" ? "Sincronizando…" : remoteStatus === "error" ? "Error de conexión" : isConfigured() ? "Pendiente de sincronización" : "No configurado"}</strong>
           <p>${state.lastSyncAt ? `Última sincronización: ${formatDateLabel(state.lastSyncAt)}` : "Todavía no se registró una sincronización en este navegador."}</p>
         </div>
         <button id="syncNow" type="button">${uiIcon("sync")}<span>Sincronizar ahora</span></button>
       </section>
 
       <section class="admin-attendance-summary">
-        <article>
-          <span>✓</span>
-          <div><small>Confirmaron asistencia</small><strong>${attendingCount}</strong><p>de ${invitedCount} invitados</p></div>
-        </article>
-        <article>
-          <span>%</span>
-          <div><small>Porcentaje confirmado</small><strong>${attendancePercent}%</strong><p>sobre el total invitado</p></div>
-        </article>
-        <article>
-          <span>−</span>
-          <div><small>No asistirán</small><strong>${declinedCount}</strong><p>respuestas registradas</p></div>
-        </article>
-        <article>
-          <span>?</span>
-          <div><small>Sin responder</small><strong>${unansweredCount}</strong><p>faltan completar RSVP</p></div>
-        </article>
-        <article class="admin-combi-stat">
-          <span>🚌</span>
-          <div><small>Necesitan combi</small><strong>${combiCount}</strong><p>desde el Obelisco</p></div>
-        </article>
+        <button type="button" class="admin-stat-button" data-admin-list="attending"><span>✓</span><div><small>Confirmaron asistencia</small><strong>${attendingCount}</strong><p>de ${invitedCount} invitados</p><em>Ver personas</em></div></button>
+        <button type="button" class="admin-stat-button" data-admin-list="answered"><span>%</span><div><small>Respondieron</small><strong>${answeredCount}</strong><p>${answeredPercent}% del total</p><em>Ver personas</em></div></button>
+        <button type="button" class="admin-stat-button" data-admin-list="declined"><span>−</span><div><small>No asistirán</small><strong>${declinedCount}</strong><p>respuestas registradas</p><em>Ver personas</em></div></button>
+        <button type="button" class="admin-stat-button" data-admin-list="unanswered"><span>?</span><div><small>Sin responder</small><strong>${unansweredCount}</strong><p>faltan completar RSVP</p><em>Ver personas</em></div></button>
+        <button type="button" class="admin-stat-button admin-combi-stat" data-admin-list="micro"><span>🚌</span><div><small>Necesitan micro</small><strong>${combiCount}</strong><p>desde el Obelisco</p><em>Ver personas</em></div></button>
       </section>
+      ${renderAdminPeopleModal()}
 
       <section class="section-card admin-official-export">
         <div class="admin-official-export-icon">${uiIcon("download")}</div>
@@ -1991,14 +1926,19 @@
         <button id="exportOfficialGuests" type="button">${uiIcon("download")}<span>Exportar CSV</span></button>
       </section>
 
+      <section class="section-card admin-game-controls admin-transport-control">
+        <div class="admin-game-controls-head"><div><p class="eyebrow">Casamiento</p><h4>Información de traslado</h4><p>Habilitá esta sección cuando quieras mostrar los datos del micro a todos los invitados.</p></div></div>
+        <div class="admin-game-toggle-list"><label class="admin-game-toggle ${transportInfoOpen ? "is-open" : ""}"><span><strong>Traslado en micro</strong><small>Mostrar u ocultar horarios, punto de encuentro y regreso.</small></span><input type="checkbox" data-unlock-key="transport-info" ${transportInfoOpen ? "checked" : ""}><i aria-hidden="true"></i><b>${transportInfoOpen ? "Habilitado" : "Oculto"}</b></label></div>
+      </section>
+
       <section class="section-card admin-game-controls">
         <div class="admin-game-controls-head">
-          <div><p class="eyebrow">Juegos</p><h4>Bloquear o liberar</h4><p>Los cambios se aplican a todos los invitados después de sincronizar.</p></div>
+          <div><p class="eyebrow">Juegos</p><h4>Bloquear o liberar</h4><p>Los cambios se aplican a todos los invitados al actualizar los datos.</p></div>
         </div>
         <div class="admin-game-toggle-list">
           ${[
             { key: "trivia-music", title: "La banda sonora", text: "Canción para la boda y entrada del equipo." },
-            { key: "trivia-couple", title: "Trivia Vani y Fede", text: "Preguntas de prueba sobre los novios." },
+            { key: "trivia-couple", title: "Trivia Vani y Fede", text: "Trivia de una sola oportunidad." },
             { key: "trivia-surprise", title: "Juego sorpresa", text: "Tercera misión secreta." }
           ].map(game => {
             const open = isTriviaGameOpen(game.key);
@@ -2096,6 +2036,10 @@
 
   function adminUxStyles() {
     return `<style>
+      .admin-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+      .admin-title-row>.section-head{flex:1}
+      .admin-lock-button{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;margin-top:8px;border:1px solid rgba(122,49,64,.22);background:rgba(255,255,255,.42);color:#743344;box-shadow:none}
+      .admin-lock-button .ui-icon{width:17px;height:17px}
       .admin-sync-card{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:14px;align-items:center;padding:17px 19px;margin-bottom:15px;border:1px solid var(--line);border-radius:19px;background:rgba(255,253,248,.78)}.admin-sync-indicator{display:grid;place-items:center}.admin-sync-indicator span{width:11px;height:11px;border-radius:50%;background:#b68b45;box-shadow:0 0 0 5px rgba(182,139,69,.10)}.admin-sync-card.online .admin-sync-indicator span{background:#4f8655;box-shadow:0 0 0 5px rgba(79,134,85,.10)}.admin-sync-card.error .admin-sync-indicator span{background:#b9574d;box-shadow:0 0 0 5px rgba(185,87,77,.10)}.admin-sync-card.connecting .admin-sync-indicator span{animation:syncPulse 1s infinite}.admin-sync-card small,.admin-sync-card strong{display:block}.admin-sync-card small{color:var(--muted-2);font-weight:850}.admin-sync-card strong{margin-top:2px;color:var(--ink);font-size:16px}.admin-sync-card p{margin:2px 0 0;font-size:12px}.admin-sync-card button{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.admin-sync-card button .ui-icon{width:18px;height:18px}@keyframes syncPulse{50%{opacity:.35;transform:scale(.78)}}
       .admin-game-controls{margin:15px 0;padding:22px}.admin-game-controls-head h4{margin:4px 0 6px;font-size:25px}.admin-game-controls-head p:not(.eyebrow){margin:0}.admin-game-toggle-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:17px}.admin-game-toggle{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;margin:0;padding:15px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.40);cursor:pointer}.admin-game-toggle>span strong,.admin-game-toggle>span small{display:block}.admin-game-toggle>span strong{color:var(--ink)}.admin-game-toggle>span small{margin-top:4px;line-height:1.35}.admin-game-toggle input{position:absolute;opacity:0;pointer-events:none}.admin-game-toggle i{grid-column:2;width:42px;height:24px;padding:3px;border-radius:999px;background:rgba(132,104,68,.20);transition:.18s}.admin-game-toggle i::after{content:"";display:block;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:.18s}.admin-game-toggle b{grid-column:1/-1;color:var(--muted-2);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.admin-game-toggle.is-open{border-color:rgba(74,125,79,.25);background:rgba(74,125,79,.06)}.admin-game-toggle.is-open i{background:#5d8e62}.admin-game-toggle.is-open i::after{transform:translateX(18px)}.admin-game-toggle.is-open b{color:#426f47}
       .admin-attendance-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
@@ -2113,7 +2057,7 @@
       .team-page-actions{display:flex;gap:9px;margin-top:17px}.team-page-actions button,.ranking-action-card button{display:inline-flex;align-items:center;gap:8px}.team-page-actions .ui-icon,.ranking-action-card .ui-icon{width:19px;height:19px}
       .ranking-action-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px}.ranking-action-card strong{color:var(--ink);font-size:17px}.ranking-action-card p{margin:3px 0 0;font-size:13px}.ranking-action-card button{white-space:nowrap}.ranking-action-buttons{display:flex;gap:9px;align-items:center}.ranking-refresh-button{border:1px solid rgba(132,104,68,.24);background:rgba(255,255,255,.50);color:var(--ink);box-shadow:none}.ranking-action-buttons button{display:inline-flex;align-items:center;gap:8px}.ranking-action-buttons .ui-icon{width:18px;height:18px}
       @media(max-width:1100px){.admin-attendance-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
-      @media(max-width:900px){.admin-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-team-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-game-toggle-list{grid-template-columns:1fr}.admin-sync-card{grid-template-columns:18px minmax(0,1fr)}.admin-sync-card button{grid-column:1/-1;width:100%;justify-content:center}}
+      @media(max-width:900px){.admin-title-row{align-items:stretch;flex-direction:column}.admin-lock-button{width:100%;justify-content:center;margin-top:0}.admin-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-team-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-game-toggle-list{grid-template-columns:1fr}.admin-sync-card{grid-template-columns:18px minmax(0,1fr)}.admin-sync-card button{grid-column:1/-1;width:100%;justify-content:center}}
       @media(max-width:560px){.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-combi-stat{grid-column:1/-1}.admin-official-export{grid-template-columns:44px minmax(0,1fr)}.admin-official-export-icon{width:42px;height:42px}.admin-official-export button{grid-column:1/-1;width:100%;justify-content:center}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-buttons{display:grid;width:100%;grid-template-columns:1fr 1fr}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}.admin-test-reset-panel{align-items:stretch;flex-direction:column}.admin-test-reset-copy{grid-template-columns:44px minmax(0,1fr)}.admin-test-reset-icon{width:42px;height:42px}.admin-test-reset-button{width:100%;white-space:normal}}
     </style>`;
   }
@@ -2144,7 +2088,8 @@
       $("#refreshRanking")?.addEventListener("click", async event => {
         const button = event.currentTarget;
         button.disabled = true;
-        button.innerHTML = `${uiIcon("sync")}<span>Actualizando…</span>`;
+        button.classList.add("is-loading");
+        button.innerHTML = `<span class="ranking-button-icon">${uiIcon("sync")}</span><span>Actualizando…</span>`;
         const updated = await syncFromSheets(false);
         if (updated) toast("Ranking actualizado con los últimos puntajes.");
         else toast("No se pudo actualizar. Se muestran los últimos datos disponibles.");
@@ -2179,7 +2124,7 @@
 
         if (submitButton) {
           submitButton.disabled = true;
-          submitButton.textContent = "Guardando en Google Sheets…";
+          submitButton.textContent = "Guardando…";
         }
 
         const savedRecord = await saveAndVerifyRemote(
@@ -2209,7 +2154,7 @@
         };
         state.rsvpEditMode = false;
         saveState();
-        toast("Asistencia guardada en Google Sheets.");
+        toast("Asistencia guardada.");
         renderCurrentRoute();
       });
     }
@@ -2266,7 +2211,7 @@
         };
         state.profileEditMode = false;
         saveState();
-        toast("Formulario guardado en Google Sheets.");
+        toast("Formulario guardado.");
         renderCurrentRoute();
       });
     }
@@ -2313,7 +2258,7 @@
           ...savedRecord
         };
         saveState();
-        toast("Respuesta guardada en Google Sheets.");
+        toast("Respuesta guardada.");
         renderCurrentRoute();
       }));
     }
@@ -2375,15 +2320,14 @@
         const form = event.currentTarget;
         const submitButton = form.querySelector('button[type="submit"]');
         const originalText = submitButton?.textContent || "Enviar respuestas";
+        const key = `${currentGuest.id}::couple-trivia-test`;
+        if (state.gameSubmissions[key]) { toast("Esta trivia ya fue jugada. Podés ver tu resultado."); renderCurrentRoute(); return; }
         const answers = Object.fromEntries(new FormData(form).entries());
         const score = SAMPLE_COUPLE_QUESTIONS.reduce(
           (total, question) => total + (answers[question.id] === question.answer ? 1 : 0),
           0
         );
-        const key = `${currentGuest.id}::couple-trivia-test`;
-        const previous = state.gameSubmissions[key] || {};
-        const previousBest = Math.max(0, Number(previous.bestScore ?? previous.score ?? 0));
-        const bestScore = Math.max(previousBest, score);
+        const bestScore = score;
         const payload = {
           answers,
           score,
@@ -2428,12 +2372,7 @@
         };
         saveState();
 
-        const improved = bestScore > previousBest;
-        toast(
-          improved
-            ? `¡Resultado guardado! ${bestScore}/5 correctas: ${bestScore * 20} puntos.`
-            : `Guardado. Tu mejor marca sigue siendo ${bestScore}/5.`
-        );
+        toast(`Trivia completada: ${bestScore * 20} puntos.`);
         renderCurrentRoute();
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
@@ -2442,20 +2381,67 @@
     if (route === "admin") bindAdminEvents();
   }
 
+
+  function adminAccessStyles() {
+    return `<style>
+      .admin-access-card{max-width:580px;margin:28px auto;padding:28px;display:grid;grid-template-columns:64px minmax(0,1fr);gap:18px;align-items:start;border-color:rgba(122,49,64,.20);background:linear-gradient(145deg,rgba(255,253,248,.92),rgba(239,228,209,.82))}
+      .admin-access-icon{width:62px;height:62px;display:grid;place-items:center;border-radius:18px;background:rgba(122,49,64,.09);color:#743344;border:1px solid rgba(122,49,64,.16)}
+      .admin-access-icon .ui-icon{width:28px;height:28px}
+      .admin-access-copy h3{margin:5px 0 7px;font-size:32px}
+      .admin-access-copy p:not(.eyebrow){margin:0}
+      .admin-access-form{grid-column:1/-1;display:grid;gap:10px;margin-top:6px}
+      .admin-access-form label{margin:0}
+      .admin-password-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+      .admin-password-row input{height:50px;margin:0;border-radius:14px}
+      .admin-password-row button{min-width:120px}
+      .admin-access-form .form-message{min-height:0;margin:2px 0 0}
+      .admin-access-form .form-message:empty{display:none}
+      @media(max-width:540px){
+        .admin-access-card{grid-template-columns:50px minmax(0,1fr);padding:20px}
+        .admin-access-icon{width:48px;height:48px}
+        .admin-access-copy h3{font-size:27px}
+        .admin-password-row{grid-template-columns:1fr}
+        .admin-password-row button{width:100%}
+      }
+    </style>`;
+  }
+
   function bindAdminEvents() {
     $("#adminLoginForm")?.addEventListener("submit", event => {
       event.preventDefault();
-      const password = new FormData(event.currentTarget).get("password");
-      if ((CONFIG.LOCAL_ADMIN_PASSWORD || "") && password !== CONFIG.LOCAL_ADMIN_PASSWORD) {
-        toast("Clave admin incorrecta.");
+      const form = event.currentTarget;
+      const password = String(new FormData(form).get("password") || "");
+      const message = $("#adminLoginMessage");
+      const submitButton = form.querySelector('button[type="submit"]');
+
+      if (password !== CONFIG.LOCAL_ADMIN_PASSWORD) {
+        if (message) message.textContent = "Contraseña incorrecta. Volvé a intentarlo.";
+        form.elements.password?.select();
         return;
       }
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Ingresando…";
+      }
+
       state.adminPassword = password;
       state.adminUnlocked = true;
-      saveState();
-      toast("Panel admin abierto.");
+      toast("Centro de mando desbloqueado.");
       renderCurrentRoute();
     });
+
+    const adminModal = $("#adminPeopleModal");
+    const closeAdminModal = () => { adminModal?.classList.add("hidden"); document.body.classList.remove("admin-modal-open"); };
+    $$('[data-admin-list]').forEach(button => button.addEventListener("click", () => {
+      const data = adminGuestListData(button.dataset.adminList);
+      const title = $("#adminPeopleTitle"); const count = $("#adminPeopleCount"); const list = $("#adminPeopleList");
+      if (title) title.textContent = data.title;
+      if (count) count.textContent = `${data.guests.length} ${data.guests.length === 1 ? "persona" : "personas"}`;
+      if (list) list.innerHTML = data.guests.length ? data.guests.map(guest => `<div class="admin-person-row"><span>${uiIcon("person")}</span><div><strong>${escapeHTML(guestFullName(guest))}</strong><small>${escapeHTML(data.detail(guest))}</small></div></div>`).join("") : `<div class="admin-empty-list">${uiIcon("checkCircle")}<strong>No hay personas en esta categoría.</strong></div>`;
+      adminModal?.classList.remove("hidden"); document.body.classList.add("admin-modal-open");
+    }));
+    adminModal?.addEventListener("click", event => { if (event.target === adminModal || event.target.closest("[data-admin-modal-close]")) closeAdminModal(); });
 
     const scoreForm = $("#scoreForm");
     const updateScorePreview = () => {
@@ -2519,7 +2505,7 @@
 
       const result = await writeToSheets("saveScore", payload);
       if (!result) {
-        toast("El movimiento no quedó guardado en Google Sheets.");
+        toast("El movimiento no quedó guardado.");
         return;
       }
 
@@ -2570,7 +2556,7 @@
           button.disabled = false;
           button.textContent = originalText;
         }
-        toast("No se pudo guardar el reset en Google Sheets. No se borró nada.");
+        toast("No se pudo guardar el reset. No se borró nada.");
         return;
       }
 
@@ -2648,22 +2634,25 @@
       if (!saved) {
         control.checked = !open;
         control.disabled = false;
-        toast("No se pudo guardar el cambio del juego.");
+        toast("No se pudo guardar el cambio.");
         return;
       }
 
       state.manualUnlocks[key] = open;
       saveState();
       scheduleSilentSync();
-      toast(open ? "Juego liberado." : "Juego bloqueado.");
+      const featureMessage = key === "transport-info"
+        ? (open ? "Información de traslado habilitada." : "Información de traslado oculta.")
+        : (open ? "Juego habilitado." : "Juego oculto.");
+      toast(featureMessage);
       renderCurrentRoute();
     }));
 
     $("#setupSheets")?.addEventListener("click", async () => {
-      if (!isConfigured()) { toast("Primero pegá la URL de Apps Script en config.js."); return; }
+      if (!isConfigured()) { toast("Falta configurar la conexión remota."); return; }
       try {
         await jsonp("setup", { adminPassword: state.adminPassword });
-        toast("Hojas inicializadas en Google Sheets.");
+        toast("Base inicializada.");
         syncFromSheets(true);
       } catch (error) {
         toast(`No se pudo inicializar: ${error.message}`);
@@ -2699,11 +2688,19 @@
       toast(`Lista oficial exportada: ${confirmed} personas confirmadas.`);
     });
 
+    $("#lockAdminButton")?.addEventListener("click", () => {
+      state.adminUnlocked = false;
+      state.adminPassword = "";
+      toast("Administración bloqueada.");
+      renderCurrentRoute();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
     $("#syncNow")?.addEventListener("click", () => syncFromSheets(true));
     $("#exportJson")?.addEventListener("click", () => downloadFile("convocatoria-vani-fede-datos.json", JSON.stringify(state, null, 2), "application/json"));
     $("#exportCsv")?.addEventListener("click", () => downloadFile("rsvp-vani-fede.csv", buildRsvpCsv(), "text/csv;charset=utf-8"));
     $("#resetLocal")?.addEventListener("click", () => {
-      if (!confirm("¿Borrar todos los datos locales de este navegador? Google Sheets no se borra.")) return;
+      if (!confirm("¿Borrar todos los datos locales de este navegador? Los datos compartidos no se borran.")) return;
       localStorage.removeItem(STORAGE_KEY);
       location.reload();
     });
@@ -2719,7 +2716,7 @@
       "Email",
       "Teléfono",
       "Asistencia",
-      "Traslado / combi",
+      "Traslado / micro",
       "Restricciones alimenticias",
       "Comentario RSVP",
       "Canción que quiere escuchar",
