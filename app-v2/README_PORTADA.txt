@@ -130,3 +130,14 @@ v32405:
 - “Foto creativa del equipo” fue reemplazada por “Trivia Vani y Fede”, próximamente.
 - Reemplazar index.html, styles.css y app.js.
 - Abrir con ?v=32405.
+
+
+v32406:
+- Nuevo botón Admin “Resetear RSVP y formularios”.
+- Limpia funcionalmente RSVP, formularios personales y respuestas de juegos.
+- Usa confirmación doble: diálogo + palabra RESET.
+- El reset se guarda en Google Sheets mediante una marca temporal, por lo que se aplica a todos los celulares con esta versión.
+- Las filas históricas permanecen en Sheets como respaldo, pero dejan de contar y de mostrarse.
+- No borra invitados ni puntos discrecionales.
+- Reemplazar index.html, styles.css y app.js.
+- Abrir con ?v=32406.

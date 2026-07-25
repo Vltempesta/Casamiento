@@ -35,6 +35,7 @@
     gameSubmissions: {},
     scoreEntries: [],
     manualUnlocks: {},
+    dataResetAt: null,
     lastSyncAt: null,
     lastRemoteError: ""
   };
@@ -263,10 +264,57 @@
     }
   }
 
+  function recordTimestamp(record) {
+    const value = record?.updatedAt || record?.submittedAt || record?.timestamp || "";
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function resetMarkerTimestamp(records = {}) {
+    return Object.values(records).reduce((latest, record) => {
+      if (!record?.resetMarker || record?.resetScope !== "test-data") return latest;
+      return Math.max(latest, recordTimestamp(record));
+    }, 0);
+  }
+
+  function mergeRecordsAfterReset(localRecords = {}, remoteRecords = {}, resetAt = null) {
+    const cutoff = resetAt ? Date.parse(resetAt) : 0;
+    const merged = { ...localRecords, ...remoteRecords };
+
+    return Object.fromEntries(
+      Object.entries(merged).filter(([, record]) => {
+        if (!record || record.resetMarker) return false;
+        return !cutoff || recordTimestamp(record) > cutoff;
+      })
+    );
+  }
+
   function mergeRemoteData(remote = {}) {
-    if (remote.rsvps && typeof remote.rsvps === "object") state.rsvps = { ...state.rsvps, ...remote.rsvps };
-    if (remote.profiles && typeof remote.profiles === "object") state.profiles = { ...state.profiles, ...remote.profiles };
-    if (remote.gameSubmissions && typeof remote.gameSubmissions === "object") state.gameSubmissions = { ...state.gameSubmissions, ...remote.gameSubmissions };
+    const remoteRsvps = remote.rsvps && typeof remote.rsvps === "object" ? remote.rsvps : {};
+    const remoteResetMs = resetMarkerTimestamp(remoteRsvps);
+    const localResetMs = state.dataResetAt ? Date.parse(state.dataResetAt) : 0;
+    const effectiveResetMs = Math.max(remoteResetMs, localResetMs || 0);
+
+    if (effectiveResetMs) state.dataResetAt = new Date(effectiveResetMs).toISOString();
+
+    state.rsvps = mergeRecordsAfterReset(
+      state.rsvps,
+      remoteRsvps,
+      state.dataResetAt
+    );
+
+    state.profiles = mergeRecordsAfterReset(
+      state.profiles,
+      remote.profiles && typeof remote.profiles === "object" ? remote.profiles : {},
+      state.dataResetAt
+    );
+
+    state.gameSubmissions = mergeRecordsAfterReset(
+      state.gameSubmissions,
+      remote.gameSubmissions && typeof remote.gameSubmissions === "object" ? remote.gameSubmissions : {},
+      state.dataResetAt
+    );
+
     if (Array.isArray(remote.scoreEntries)) state.scoreEntries = dedupeScores([...state.scoreEntries, ...remote.scoreEntries]);
     if (remote.manualUnlocks && typeof remote.manualUnlocks === "object") state.manualUnlocks = { ...state.manualUnlocks, ...remote.manualUnlocks };
     state.lastSyncAt = new Date().toISOString();
@@ -1661,6 +1709,20 @@
       </form>
 
       ${resetButtonStyles()}
+
+      <section class="section-card admin-test-reset-panel">
+        <div class="admin-test-reset-copy">
+          <span class="admin-test-reset-icon" aria-hidden="true">↺</span>
+          <div>
+            <p class="eyebrow">Modo de pruebas</p>
+            <h4>Resetear datos de prueba</h4>
+            <p>Limpia confirmaciones RSVP, formularios personales y respuestas de juegos para que los testers puedan completar todo nuevamente.</p>
+            <small>No borra invitados ni los puntos discrecionales cargados desde Admin.</small>
+          </div>
+        </div>
+        <button id="resetTestData" type="button" class="admin-test-reset-button">Resetear RSVP y formularios</button>
+      </section>
+
       <section class="section-card admin-reset-panel">
         <h4>Reseteo de puntos</h4>
         <p>Usalo únicamente cuando necesites volver atrás. No borra asistencias ni invitados.</p>
@@ -1682,10 +1744,12 @@
       .admin-sign-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-sign-picker label{position:relative;margin:0}.admin-sign-picker input{position:absolute;opacity:0;pointer-events:none}.admin-sign-picker span{display:flex;align-items:center;justify-content:center;min-height:49px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.42);color:var(--ink);font-weight:900;cursor:pointer}.admin-sign-picker label:first-child:has(input:checked) span{border-color:rgba(74,125,79,.35);background:rgba(74,125,79,.10);color:#426f47}.admin-sign-picker label:last-child:has(input:checked) span{border-color:rgba(185,87,77,.34);background:rgba(185,87,77,.09);color:#93463c}
       .admin-points-input{position:relative}.admin-points-input input{height:58px;margin:0;padding-right:80px;border-radius:15px;font-size:21px;font-weight:850}.admin-points-input>span{position:absolute;right:17px;top:50%;transform:translateY(-50%);color:var(--muted-2);font-size:13px;font-weight:850}.admin-preset-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}.admin-preset-row button{min-width:64px;padding:9px 13px;border:1px solid var(--line);background:rgba(255,255,255,.45);color:var(--ink);box-shadow:none}.admin-comment-label{margin:0}.admin-comment-label>span{color:var(--muted-2);font-weight:600}.admin-comment-label textarea{min-height:85px}
       .admin-score-submit{width:100%;min-height:52px}.admin-score-submit.is-negative{background:linear-gradient(135deg,#c66b5d,#9d4138);color:#fff}.admin-score-submit:disabled{cursor:not-allowed;opacity:.48;transform:none}
+      .admin-test-reset-panel{display:flex;align-items:center;justify-content:space-between;gap:22px;margin-top:16px;padding:22px;border-color:rgba(122,49,64,.20);background:linear-gradient(135deg,rgba(122,49,64,.055),rgba(255,253,248,.84))}
+      .admin-test-reset-copy{display:grid;grid-template-columns:52px minmax(0,1fr);gap:15px;align-items:start}.admin-test-reset-icon{width:50px;height:50px;display:grid;place-items:center;border:1px solid rgba(122,49,64,.18);border-radius:15px;background:rgba(122,49,64,.08);color:#743344;font-size:25px;font-weight:900}.admin-test-reset-copy h4{margin:4px 0 6px;font-size:24px}.admin-test-reset-copy p:not(.eyebrow){margin:0;max-width:700px}.admin-test-reset-copy small{display:block;margin-top:7px;line-height:1.4}.admin-test-reset-button{min-height:48px;flex:0 0 auto;border:1px solid #743344;background:#743344;color:#fffaf0;box-shadow:0 8px 18px rgba(116,51,68,.13);white-space:nowrap}.admin-test-reset-button:hover{background:#652c3b}
       .team-page-actions{display:flex;gap:9px;margin-top:17px}.team-page-actions button,.ranking-action-card button{display:inline-flex;align-items:center;gap:8px}.team-page-actions .ui-icon,.ranking-action-card .ui-icon{width:19px;height:19px}
       .ranking-action-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px}.ranking-action-card strong{color:var(--ink);font-size:17px}.ranking-action-card p{margin:3px 0 0;font-size:13px}.ranking-action-card button{white-space:nowrap}
       @media(max-width:900px){.admin-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-team-picker{grid-template-columns:repeat(3,minmax(0,1fr))}}
-      @media(max-width:560px){.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}}
+      @media(max-width:560px){.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}.admin-test-reset-panel{align-items:stretch;flex-direction:column}.admin-test-reset-copy{grid-template-columns:44px minmax(0,1fr)}.admin-test-reset-icon{width:42px;height:42px}.admin-test-reset-button{width:100%;white-space:normal}}
     </style>`;
   }
 
@@ -1863,6 +1927,60 @@
       saveState();
       toast(`${sign < 0 ? "Se restaron" : "Se sumaron"} ${amount} puntos a ${getTeam(teamId).name}.`);
       postToSheets("saveScore", payload);
+      renderCurrentRoute();
+    });
+
+    $("#resetTestData")?.addEventListener("click", async () => {
+      const firstConfirmation = confirm(
+        "¿Resetear los datos de prueba?\n\nSe limpiarán:\n• Confirmaciones RSVP\n• Formularios personales\n• Respuestas de juegos\n\nLos invitados y los puntos discrecionales no se borrarán."
+      );
+      if (!firstConfirmation) return;
+
+      const confirmationWord = prompt('Para confirmar, escribí RESET');
+      if (normalize(confirmationWord) !== "reset") {
+        toast("Reset cancelado.");
+        return;
+      }
+
+      const button = $("#resetTestData");
+      const originalText = button?.textContent || "Resetear RSVP y formularios";
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Reseteando…";
+      }
+
+      const timestamp = new Date().toISOString();
+      const markerPayload = {
+        guestId: "__vf_reset_test_data__",
+        teamId: "admin",
+        resetMarker: true,
+        resetScope: "test-data",
+        updatedAt: timestamp,
+        adminPassword: state.adminPassword,
+        comment: "Reset general de datos de prueba desde Admin"
+      };
+
+      const savedRemotely = await postToSheets("saveRsvp", markerPayload);
+
+      if (!savedRemotely) {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+        toast("No se pudo guardar el reset en Google Sheets. No se borró nada.");
+        return;
+      }
+
+      state.dataResetAt = timestamp;
+      state.rsvps = {};
+      state.profiles = {};
+      state.gameSubmissions = {};
+      state.rsvpEditMode = false;
+      state.profileEditMode = false;
+      saveState();
+
+      await syncFromSheets(false);
+      toast("Datos de prueba reseteados. Los testers ya pueden completar todo nuevamente.");
       renderCurrentRoute();
     });
 
