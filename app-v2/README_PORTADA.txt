@@ -156,3 +156,16 @@ v32407:
 - Se agregó aviso de premios especiales.
 - Reemplazar index.html, styles.css y app.js.
 - Abrir con ?v=32407.
+
+
+v32408:
+- Ranking con botón Actualizar para sincronizar los puntajes actuales.
+- Juego musical funcional: completar suma puntos una sola vez con la misma escala por equipo que RSVP.
+- Trivia funcional: cinco preguntas, veinte puntos por acierto y máximo de cien puntos por persona.
+- Reintentos permitidos; el ranking conserva únicamente el mejor resultado.
+- Admin muestra cuántas personas necesitan combi desde el Obelisco.
+- Nuevo botón para exportar la lista oficial de confirmados en CSV compatible con Excel.
+- La exportación incluye contacto, traslado, restricciones, comentarios y preferencias disponibles.
+- Menú hamburguesa con tipografía más chica y sin fondo/sombra detrás de los textos.
+- Reemplazar index.html, styles.css y app.js.
+- Abrir con ?v=32408.

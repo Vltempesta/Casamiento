@@ -746,7 +746,8 @@
       lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
       gift: '<path d="M4 10h16v10H4z"/><path d="M3 7h18v3H3zM12 7v13"/><path d="M12 7c-3.5 0-5-1.1-5-2.6C7 3.2 8 3 8.8 3 10.3 3 12 5.2 12 7ZM12 7c3.5 0 5-1.1 5-2.6C17 3.2 16 3 15.2 3 13.7 3 12 5.2 12 7Z"/>',
       sync: '<path d="M20 7h-5V2"/><path d="M4 17h5v5"/><path d="M6.1 8A7 7 0 0 1 18.5 5.5L20 7"/><path d="M17.9 16A7 7 0 0 1 5.5 18.5L4 17"/>',
-      question: '<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2"/><path d="M12 17h.01"/>'
+      question: '<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2"/><path d="M12 17h.01"/>',
+      download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
@@ -1303,6 +1304,41 @@
       });
     });
 
+    Object.values(state.gameSubmissions || {}).forEach(submission => {
+      if (!submission || submission.resetMarker || !submission.teamId) return;
+
+      if (submission.gameId === "music-selection") {
+        const guest = getGuestById(submission.guestId);
+        entries.push({
+          timestamp: submission.updatedAt,
+          gameId: "auto-music-selection",
+          teamId: submission.teamId,
+          points: rsvpPointsForTeam(submission.teamId),
+          comment: `Juego musical completado · ${guest?.firstName || submission.guestId || "Invitado"}`,
+          automatic: true
+        });
+      }
+
+      if (submission.gameId === "couple-trivia-test") {
+        const bestScore = Math.max(
+          0,
+          Math.min(
+            SAMPLE_COUPLE_QUESTIONS.length,
+            Number(submission.bestScore ?? submission.score ?? 0)
+          )
+        );
+        const guest = getGuestById(submission.guestId);
+        entries.push({
+          timestamp: submission.updatedAt,
+          gameId: "auto-couple-trivia",
+          teamId: submission.teamId,
+          points: bestScore * 20,
+          comment: `Trivia Vani y Fede · ${guest?.firstName || submission.guestId || "Invitado"} · ${bestScore}/5 correctas`,
+          automatic: true
+        });
+      }
+    });
+
     return entries;
   }
 
@@ -1628,6 +1664,7 @@
             ${uiIcon("music", "trivia-main-icon")}
           </div>
           <p>Elegí una canción que te gustaría escuchar en la boda y otra que represente la entrada del equipo ${escapeHTML(team.name)}.</p>
+          <div class="trivia-points-rule">${uiIcon("star")}<span>Completar este juego suma <strong>${rsvpPointsForTeam(team.id)} puntos</strong> para tu equipo, una sola vez.</span></div>
           <div class="trivia-secret-note">No te vamos a contar todavía cómo se usarán. Elegí pensando en energía, identidad y ganas de entrar con todo.</div>
 
           <form id="musicGameForm" class="trivia-form">
@@ -1654,8 +1691,11 @@
       return renderLockedTriviaCard("02", "¿Cuánto sabés de los novios?", "Preguntas, recuerdos y algunas trampas.", "trivia-couple");
     }
 
-    const result = saved?.score !== undefined
-      ? `<div class="trivia-result">${uiIcon("star")}<div><strong>${saved.score} de ${SAMPLE_COUPLE_QUESTIONS.length}</strong><span>respuestas correctas · modo de prueba</span></div></div>`
+    const savedBestScore = saved
+      ? Math.max(0, Math.min(SAMPLE_COUPLE_QUESTIONS.length, Number(saved.bestScore ?? saved.score ?? 0)))
+      : 0;
+    const result = saved
+      ? `<div class="trivia-result">${uiIcon("star")}<div><strong>${savedBestScore} de ${SAMPLE_COUPLE_QUESTIONS.length} · ${savedBestScore * 20} puntos</strong><span>Mejor resultado registrado para tu equipo</span></div></div>`
       : "";
 
     return `
@@ -1666,7 +1706,8 @@
             <div><span class="trivia-status open">Disponible · prueba</span><h4>¿Cuánto sabés de Vani y Fede?</h4></div>
             ${uiIcon("question", "trivia-main-icon")}
           </div>
-          <p>Respondé estas preguntas de prueba. Más adelante definiremos las preguntas oficiales y el sistema definitivo de puntos.</p>
+          <p>Respondé cinco preguntas sobre los novios. Cada respuesta correcta suma <strong>20 puntos</strong>: podés conseguir hasta <strong>100 puntos</strong> para tu equipo.</p>
+          <div class="trivia-points-rule">${uiIcon("star")}<span>Podés volver a jugar para mejorar. El ranking conserva solamente tu mejor resultado.</span></div>
           ${result}
           <form id="coupleTriviaForm" class="trivia-quiz-form">
             ${SAMPLE_COUPLE_QUESTIONS.map((item, index) => `
@@ -1725,7 +1766,7 @@
       .trivia-prize-banner{display:flex;align-items:center;gap:13px;padding:16px 19px;border:1px solid rgba(154,110,47,.23);border-radius:19px;background:linear-gradient(135deg,rgba(201,170,114,.16),rgba(255,253,248,.84));color:#8a6129}.trivia-prize-banner>.ui-icon{width:27px;height:27px}.trivia-prize-banner strong{display:block;color:var(--ink);font-size:16px}.trivia-prize-banner p{margin:2px 0 0;font-size:13px}
       .trivia-game-list{display:grid;gap:15px}.trivia-game-card{position:relative;display:grid;grid-template-columns:66px minmax(0,1fr);gap:18px;padding:23px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,rgba(255,253,248,.90),rgba(239,228,209,.76));box-shadow:0 10px 25px rgba(76,51,22,.06);overflow:hidden}.trivia-game-card.is-locked{opacity:.76}.trivia-game-card.is-locked::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.18));pointer-events:none}
       .trivia-game-number{width:54px;height:54px;display:grid;place-items:center;border:1px solid rgba(201,170,114,.28);border-radius:16px;background:rgba(201,170,114,.12);color:var(--gold-deep);font-family:var(--font-title);font-size:20px;font-weight:900}.trivia-game-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.trivia-game-heading h4{margin:6px 0 8px;font-size:clamp(23px,3vw,31px)}.trivia-main-icon{width:31px;height:31px;color:#743344}.trivia-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.trivia-status.open{background:rgba(74,125,79,.10);color:#426f47}.trivia-status.locked{background:rgba(132,104,68,.10);color:var(--muted)}
-      .trivia-game-content>p{margin:0 0 14px}.trivia-secret-note{margin:12px 0 16px;padding:12px 14px;border-left:3px solid #743344;border-radius:0 12px 12px 0;background:rgba(116,51,68,.055);color:var(--muted);font-size:13px;font-weight:700;line-height:1.45}
+      .trivia-game-content>p{margin:0 0 14px}.trivia-points-rule{display:flex;align-items:flex-start;gap:9px;margin:10px 0 14px;padding:11px 13px;border:1px solid rgba(154,110,47,.18);border-radius:13px;background:rgba(201,170,114,.09);color:#765529;font-size:12px;font-weight:750;line-height:1.4}.trivia-points-rule .ui-icon{width:18px;height:18px;flex:0 0 auto}.trivia-secret-note{margin:12px 0 16px;padding:12px 14px;border-left:3px solid #743344;border-radius:0 12px 12px 0;background:rgba(116,51,68,.055);color:var(--muted);font-size:13px;font-weight:700;line-height:1.45}
       .trivia-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.trivia-form label:last-of-type,.trivia-form-footer{grid-column:1/-1}.trivia-form label>span{color:var(--muted-2);font-weight:600}.trivia-form textarea{min-height:85px}.trivia-form-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}.trivia-saved{display:inline-flex;align-items:center;gap:7px;color:#426f47;font-weight:850;font-size:13px}.trivia-saved .ui-icon{width:18px;height:18px}
       .trivia-result{display:flex;align-items:center;gap:11px;margin:12px 0 18px;padding:13px 15px;border:1px solid rgba(74,125,79,.20);border-radius:15px;background:rgba(74,125,79,.08);color:#426f47}.trivia-result>.ui-icon{width:24px;height:24px}.trivia-result strong,.trivia-result span{display:block}.trivia-result strong{font-size:18px}.trivia-result span{font-size:12px}
       .trivia-quiz-form{display:grid;gap:16px}.trivia-question{margin:0;padding:16px;border:1px solid rgba(132,104,68,.16);border-radius:17px;background:rgba(255,255,255,.35)}.trivia-question legend{display:flex;align-items:center;gap:10px;padding:0 7px;color:var(--ink);font-weight:900}.trivia-question legend>span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:rgba(201,170,114,.15);color:var(--gold-deep);font-size:11px}.trivia-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.trivia-options label{position:relative;margin:0}.trivia-options input{position:absolute;opacity:0;pointer-events:none}.trivia-options label>span{display:flex;align-items:center;min-height:46px;padding:10px 13px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.45);color:var(--ink);font-size:13px;font-weight:750;cursor:pointer}.trivia-options label:has(input:checked)>span{border-color:#743344;background:rgba(116,51,68,.09);color:#652c3b;box-shadow:0 0 0 2px rgba(116,51,68,.08)}
@@ -1743,10 +1784,13 @@
       </section>
       <section class="ranking-action-card section-card">
         <div>
-          <strong>¿Querés ayudar a tu equipo?</strong>
-          <p>Revisá las acciones disponibles y sumá puntos.</p>
+          <strong>Ranking actualizado hasta la última sincronización</strong>
+          <p>Tocá actualizar para cargar los puntajes enviados hasta este momento.</p>
         </div>
-        <button type="button" data-go="puntos">${uiIcon("play")}<span>Sumá puntos</span></button>
+        <div class="ranking-action-buttons">
+          <button id="refreshRanking" type="button" class="ranking-refresh-button">${uiIcon("sync")}<span>Actualizar</span></button>
+          <button type="button" data-go="puntos">${uiIcon("play")}<span>Sumá puntos</span></button>
+        </div>
       </section>
       <section class="ranking-list">${ranking.map(rankRow).join("")}</section>
       <section class="section-card"><h4>Últimos movimientos</h4>${allPointEntries().length ? `<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Acción</th><th>Equipo</th><th>Movimiento</th><th>Comentario</th></tr></thead><tbody>${allPointEntries().slice(-12).reverse().map(entry => `<tr><td>${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>Sumó puntos</td><td>${escapeHTML(entry.comment || "El equipo sumó puntos.")}</td></tr>`).join("")}</tbody></table></div>` : `<p>Todavía no hay movimientos cargados.</p>`}</section>`;
@@ -1771,6 +1815,8 @@
 
   function gameName(id) {
     if (id === "auto-rsvp") return "Confirmación de asistencia";
+    if (id === "auto-music-selection") return "Juego musical";
+    if (id === "auto-couple-trivia") return "Trivia Vani y Fede";
     if (id === "discrecional-fede-vani") return "Puntos a discreción";
     if (["reset-discretionary-clear-marker", "reset-discrecional-fede-vani"].includes(id)) return "Limpieza de puntos discrecionales";
     if (["reset-total-clear-marker", "reset-total-fede-vani"].includes(id)) return "Limpieza general de puntos";
@@ -1844,6 +1890,10 @@
     const answeredCount = invitedGuests.filter(guest => hasCompletedRsvp(state.rsvps[guest.id])).length;
     const unansweredCount = Math.max(0, invitedCount - answeredCount);
     const attendancePercent = invitedCount ? Math.round((attendingCount / invitedCount) * 100) : 0;
+    const combiCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return hasCompletedRsvp(rsvp) && rsvp.attendance === "si" && rsvp.transport === "combi";
+    }).length;
 
     return `
       ${adminUxStyles()}
@@ -1876,6 +1926,20 @@
           <span>?</span>
           <div><small>Sin responder</small><strong>${unansweredCount}</strong><p>faltan completar RSVP</p></div>
         </article>
+        <article class="admin-combi-stat">
+          <span>🚌</span>
+          <div><small>Necesitan combi</small><strong>${combiCount}</strong><p>desde el Obelisco</p></div>
+        </article>
+      </section>
+
+      <section class="section-card admin-official-export">
+        <div class="admin-official-export-icon">${uiIcon("download")}</div>
+        <div>
+          <p class="eyebrow">Lista oficial</p>
+          <h4>Exportar confirmados para el salón</h4>
+          <p>Descarga solamente quienes confirmaron que asisten, con contacto, traslado, restricciones alimenticias, comentarios y preferencias disponibles.</p>
+        </div>
+        <button id="exportOfficialGuests" type="button">${uiIcon("download")}<span>Exportar CSV</span></button>
       </section>
 
       <section class="section-card admin-game-controls">
@@ -1985,10 +2049,11 @@
     return `<style>
       .admin-sync-card{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:14px;align-items:center;padding:17px 19px;margin-bottom:15px;border:1px solid var(--line);border-radius:19px;background:rgba(255,253,248,.78)}.admin-sync-indicator{display:grid;place-items:center}.admin-sync-indicator span{width:11px;height:11px;border-radius:50%;background:#b68b45;box-shadow:0 0 0 5px rgba(182,139,69,.10)}.admin-sync-card.online .admin-sync-indicator span{background:#4f8655;box-shadow:0 0 0 5px rgba(79,134,85,.10)}.admin-sync-card.error .admin-sync-indicator span{background:#b9574d;box-shadow:0 0 0 5px rgba(185,87,77,.10)}.admin-sync-card.connecting .admin-sync-indicator span{animation:syncPulse 1s infinite}.admin-sync-card small,.admin-sync-card strong{display:block}.admin-sync-card small{color:var(--muted-2);font-weight:850}.admin-sync-card strong{margin-top:2px;color:var(--ink);font-size:16px}.admin-sync-card p{margin:2px 0 0;font-size:12px}.admin-sync-card button{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.admin-sync-card button .ui-icon{width:18px;height:18px}@keyframes syncPulse{50%{opacity:.35;transform:scale(.78)}}
       .admin-game-controls{margin:15px 0;padding:22px}.admin-game-controls-head h4{margin:4px 0 6px;font-size:25px}.admin-game-controls-head p:not(.eyebrow){margin:0}.admin-game-toggle-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:17px}.admin-game-toggle{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;margin:0;padding:15px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.40);cursor:pointer}.admin-game-toggle>span strong,.admin-game-toggle>span small{display:block}.admin-game-toggle>span strong{color:var(--ink)}.admin-game-toggle>span small{margin-top:4px;line-height:1.35}.admin-game-toggle input{position:absolute;opacity:0;pointer-events:none}.admin-game-toggle i{grid-column:2;width:42px;height:24px;padding:3px;border-radius:999px;background:rgba(132,104,68,.20);transition:.18s}.admin-game-toggle i::after{content:"";display:block;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:.18s}.admin-game-toggle b{grid-column:1/-1;color:var(--muted-2);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.admin-game-toggle.is-open{border-color:rgba(74,125,79,.25);background:rgba(74,125,79,.06)}.admin-game-toggle.is-open i{background:#5d8e62}.admin-game-toggle.is-open i::after{transform:translateX(18px)}.admin-game-toggle.is-open b{color:#426f47}
-      .admin-attendance-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+      .admin-attendance-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
       .admin-attendance-summary article{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.78);box-shadow:0 8px 20px rgba(76,51,22,.05)}
       .admin-attendance-summary article>span{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:rgba(122,49,64,.09);color:#743344;font-size:20px;font-weight:950}
       .admin-attendance-summary small{display:block;color:var(--muted-2);font-weight:850}.admin-attendance-summary strong{display:block;margin-top:2px;color:var(--ink);font-family:var(--font-title);font-size:29px}.admin-attendance-summary p{margin:1px 0 0;font-size:12px;line-height:1.35}
+      .admin-official-export{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:16px;align-items:center;margin-top:15px;padding:20px 22px;border-color:rgba(74,125,79,.22);background:linear-gradient(135deg,rgba(74,125,79,.06),rgba(255,253,248,.86))}.admin-official-export-icon{width:50px;height:50px;display:grid;place-items:center;border-radius:15px;background:rgba(74,125,79,.10);color:#426f47}.admin-official-export-icon .ui-icon{width:24px;height:24px}.admin-official-export h4{margin:4px 0 5px;font-size:22px}.admin-official-export p:not(.eyebrow){margin:0;font-size:13px}.admin-official-export button{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.admin-official-export button .ui-icon{width:18px;height:18px}
       .admin-score-card{display:grid;gap:22px;margin-top:16px;padding:26px}.admin-score-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.admin-score-heading h4{margin:5px 0 6px;font-size:28px}.admin-score-heading p{margin:0}.admin-score-preview{display:inline-flex;align-items:center;min-height:36px;padding:8px 12px;border-radius:999px;background:rgba(201,170,114,.13);color:var(--gold-deep);font-size:12px;font-weight:900;white-space:nowrap}
       .admin-score-fieldset{margin:0;padding:0;border:0}.admin-score-fieldset legend{margin-bottom:11px;color:var(--ink);font-weight:900}.admin-team-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.admin-team-option{position:relative;display:grid;justify-items:center;gap:7px;min-height:104px;margin:0;padding:13px 8px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.40);color:var(--ink);font-size:12px;font-weight:900;cursor:pointer;text-align:center}.admin-team-option input{position:absolute;opacity:0;pointer-events:none}.admin-team-option:has(input:checked){border-color:color-mix(in srgb,var(--local-accent) 65%,var(--line));background:color-mix(in srgb,var(--local-accent) 13%,rgba(255,255,255,.56));box-shadow:0 0 0 3px color-mix(in srgb,var(--local-accent) 12%,transparent)}.admin-team-logo{width:48px;height:48px}
       .admin-sign-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-sign-picker label{position:relative;margin:0}.admin-sign-picker input{position:absolute;opacity:0;pointer-events:none}.admin-sign-picker span{display:flex;align-items:center;justify-content:center;min-height:49px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.42);color:var(--ink);font-weight:900;cursor:pointer}.admin-sign-picker label:first-child:has(input:checked) span{border-color:rgba(74,125,79,.35);background:rgba(74,125,79,.10);color:#426f47}.admin-sign-picker label:last-child:has(input:checked) span{border-color:rgba(185,87,77,.34);background:rgba(185,87,77,.09);color:#93463c}
@@ -1997,9 +2062,10 @@
       .admin-test-reset-panel{display:flex;align-items:center;justify-content:space-between;gap:22px;margin-top:16px;padding:22px;border-color:rgba(122,49,64,.20);background:linear-gradient(135deg,rgba(122,49,64,.055),rgba(255,253,248,.84))}
       .admin-test-reset-copy{display:grid;grid-template-columns:52px minmax(0,1fr);gap:15px;align-items:start}.admin-test-reset-icon{width:50px;height:50px;display:grid;place-items:center;border:1px solid rgba(122,49,64,.18);border-radius:15px;background:rgba(122,49,64,.08);color:#743344;font-size:25px;font-weight:900}.admin-test-reset-copy h4{margin:4px 0 6px;font-size:24px}.admin-test-reset-copy p:not(.eyebrow){margin:0;max-width:700px}.admin-test-reset-copy small{display:block;margin-top:7px;line-height:1.4}.admin-test-reset-button{min-height:48px;flex:0 0 auto;border:1px solid #743344;background:#743344;color:#fffaf0;box-shadow:0 8px 18px rgba(116,51,68,.13);white-space:nowrap}.admin-test-reset-button:hover{background:#652c3b}
       .team-page-actions{display:flex;gap:9px;margin-top:17px}.team-page-actions button,.ranking-action-card button{display:inline-flex;align-items:center;gap:8px}.team-page-actions .ui-icon,.ranking-action-card .ui-icon{width:19px;height:19px}
-      .ranking-action-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px}.ranking-action-card strong{color:var(--ink);font-size:17px}.ranking-action-card p{margin:3px 0 0;font-size:13px}.ranking-action-card button{white-space:nowrap}
+      .ranking-action-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px}.ranking-action-card strong{color:var(--ink);font-size:17px}.ranking-action-card p{margin:3px 0 0;font-size:13px}.ranking-action-card button{white-space:nowrap}.ranking-action-buttons{display:flex;gap:9px;align-items:center}.ranking-refresh-button{border:1px solid rgba(132,104,68,.24);background:rgba(255,255,255,.50);color:var(--ink);box-shadow:none}.ranking-action-buttons button{display:inline-flex;align-items:center;gap:8px}.ranking-action-buttons .ui-icon{width:18px;height:18px}
+      @media(max-width:1100px){.admin-attendance-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
       @media(max-width:900px){.admin-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-team-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-game-toggle-list{grid-template-columns:1fr}.admin-sync-card{grid-template-columns:18px minmax(0,1fr)}.admin-sync-card button{grid-column:1/-1;width:100%;justify-content:center}}
-      @media(max-width:560px){.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}.admin-test-reset-panel{align-items:stretch;flex-direction:column}.admin-test-reset-copy{grid-template-columns:44px minmax(0,1fr)}.admin-test-reset-icon{width:42px;height:42px}.admin-test-reset-button{width:100%;white-space:normal}}
+      @media(max-width:560px){.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-combi-stat{grid-column:1/-1}.admin-official-export{grid-template-columns:44px minmax(0,1fr)}.admin-official-export-icon{width:42px;height:42px}.admin-official-export button{grid-column:1/-1;width:100%;justify-content:center}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-buttons{display:grid;width:100%;grid-template-columns:1fr 1fr}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}.admin-test-reset-panel{align-items:stretch;flex-direction:column}.admin-test-reset-copy{grid-template-columns:44px minmax(0,1fr)}.admin-test-reset-icon{width:42px;height:42px}.admin-test-reset-button{width:100%;white-space:normal}}
     </style>`;
   }
 
@@ -2024,6 +2090,17 @@
       const target = document.getElementById(button.dataset.scroll);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
+
+    if (route === "ranking") {
+      $("#refreshRanking")?.addEventListener("click", async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.innerHTML = `${uiIcon("sync")}<span>Actualizando…</span>`;
+        const updated = await syncFromSheets(false);
+        if (updated) toast("Ranking actualizado con los últimos puntajes.");
+        else toast("No se pudo actualizar. Se muestran los últimos datos disponibles.");
+      });
+    }
 
     if (route === "asistencia") {
       $("#editRsvp")?.addEventListener("click", () => {
@@ -2106,7 +2183,8 @@
         };
         state.gameSubmissions[key] = payload;
         saveState();
-        toast("Tus canciones quedaron guardadas.");
+        const earnedPoints = rsvpPointsForTeam(currentGuest.team);
+        toast(`Canciones guardadas. El equipo sumó ${earnedPoints} puntos.`);
         postToSheets("saveGameSubmission", payload);
         renderCurrentRoute();
       });
@@ -2119,9 +2197,14 @@
           0
         );
         const key = `${currentGuest.id}::couple-trivia-test`;
+        const previous = state.gameSubmissions[key] || {};
+        const previousBest = Math.max(0, Number(previous.bestScore ?? previous.score ?? 0));
+        const bestScore = Math.max(previousBest, score);
         const payload = {
           answers,
           score,
+          bestScore,
+          earnedPoints: bestScore * 20,
           maxScore: SAMPLE_COUPLE_QUESTIONS.length,
           gameId: "couple-trivia-test",
           guestId: currentGuest.id,
@@ -2130,7 +2213,12 @@
         };
         state.gameSubmissions[key] = payload;
         saveState();
-        toast(`Trivia enviada: ${score} de ${SAMPLE_COUPLE_QUESTIONS.length} correctas.`);
+        const improved = bestScore > previousBest;
+        toast(
+          improved
+            ? `¡Nuevo récord! ${bestScore}/5 correctas: ${bestScore * 20} puntos para tu equipo.`
+            : `Resultado: ${score}/5. Tu mejor marca sigue siendo ${bestScore}/5 (${bestScore * 20} puntos).`
+        );
         postToSheets("saveGameSubmission", payload);
         renderCurrentRoute();
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2343,6 +2431,35 @@
       }
     });
 
+    $("#exportOfficialGuests")?.addEventListener("click", async event => {
+      const button = event.currentTarget;
+      const original = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = `${uiIcon("sync")}<span>Actualizando datos…</span>`;
+
+      await syncFromSheets(false);
+
+      const confirmed = DATA.guests.filter(guest => {
+        const rsvp = state.rsvps[guest.id];
+        return isCompetitionGuest(guest) && hasCompletedRsvp(rsvp) && rsvp.attendance === "si";
+      }).length;
+
+      if (!confirmed) {
+        toast("Todavía no hay personas confirmadas para exportar.");
+        button.disabled = false;
+        button.innerHTML = original;
+        return;
+      }
+
+      const date = new Date().toISOString().slice(0, 10);
+      downloadFile(
+        `lista-oficial-casamiento-vani-fede-${date}.csv`,
+        buildOfficialGuestCsv(),
+        "text/csv;charset=utf-8"
+      );
+      toast(`Lista oficial exportada: ${confirmed} personas confirmadas.`);
+    });
+
     $("#syncNow")?.addEventListener("click", () => syncFromSheets(true));
     $("#exportJson")?.addEventListener("click", () => downloadFile("convocatoria-vani-fede-datos.json", JSON.stringify(state, null, 2), "application/json"));
     $("#exportCsv")?.addEventListener("click", () => downloadFile("rsvp-vani-fede.csv", buildRsvpCsv(), "text/csv;charset=utf-8"));
@@ -2351,6 +2468,72 @@
       localStorage.removeItem(STORAGE_KEY);
       location.reload();
     });
+  }
+
+  function buildOfficialGuestCsv() {
+    const header = [
+      "Nombre",
+      "Apellido",
+      "Nombre completo",
+      "Equipo",
+      "Relación",
+      "Email",
+      "Teléfono",
+      "Asistencia",
+      "Traslado / combi",
+      "Restricciones alimenticias",
+      "Comentario RSVP",
+      "Canción que quiere escuchar",
+      "Canción que no quiere escuchar",
+      "Comida preferida",
+      "Postre preferido",
+      "Canción propuesta para la boda",
+      "Canción propuesta para entrada del equipo",
+      "Última actualización"
+    ];
+
+    const rows = DATA.guests
+      .filter(guest => {
+        const rsvp = state.rsvps[guest.id];
+        return isCompetitionGuest(guest) && hasCompletedRsvp(rsvp) && rsvp.attendance === "si";
+      })
+      .sort((a, b) => `${a.lastName || ""} ${a.firstName || ""}`.localeCompare(
+        `${b.lastName || ""} ${b.firstName || ""}`,
+        "es"
+      ))
+      .map(guest => {
+        const rsvp = state.rsvps[guest.id] || {};
+        const profile = state.profiles[guest.id] || {};
+        const music = state.gameSubmissions[`${guest.id}::music-selection`] || {};
+
+        return [
+          guest.firstName || rsvp.firstName || "",
+          guest.lastName || rsvp.lastName || "",
+          `${guest.firstName || rsvp.firstName || ""} ${guest.lastName || rsvp.lastName || ""}`.trim(),
+          getTeam(guest.team).name,
+          guest.roleVisible || guest.displayRelation || guest.relation || "",
+          rsvp.email || guest.email || "",
+          rsvp.phone || "",
+          attendanceLabel(rsvp.attendance),
+          transportLabel(rsvp.transport),
+          rsvp.diet || "",
+          rsvp.comment || "",
+          profile.songYes || "",
+          profile.songNo || "",
+          profile.favoriteFood || "",
+          profile.favoriteDessert || "",
+          music.weddingSong || "",
+          music.teamEntranceSong || "",
+          rsvp.updatedAt || ""
+        ];
+      });
+
+    const separator = ";";
+    const csv = [header, ...rows]
+      .map(row => row.map(csvCell).join(separator))
+      .join("\r\n");
+
+    return "\uFEFF" + csv;
   }
 
   function buildRsvpCsv() {
