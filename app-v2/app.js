@@ -261,7 +261,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32420",
+      appVersion: "32421",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -992,7 +992,8 @@
     "trivia-music": true,
     "trivia-couple": true,
     "trivia-surprise": false,
-    "transport-info": false
+    "transport-info": false,
+    "gifts-section": false
   };
 
   const SAMPLE_COUPLE_QUESTIONS = [
@@ -1050,7 +1051,7 @@
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
     const rankingStarted = rank.some(row => Number(row.total || 0) !== 0);
     const visibleRank = rankingStarted ? myRank : "—";
-    const calendarUrl = "https://calendar.app.google/xtbbnf4p4VCJd95w8";
+    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
     const deadline = CONFIG.RSVP_DEADLINE_LABEL || "31 de agosto de 2026";
 
     const now = new Date();
@@ -1088,7 +1089,7 @@
         <h3>Bienvenido al equipo ${escapeHTML(team.name)}!</h3>
       </section>
 
-      ${rsvpDone ? `<button class="home-rsvp-confirmed" type="button" data-go="asistencia">${uiIcon("checkCircle")}<span>${rsvp.attendance === "si" ? "Asistencia confirmada" : "Respuesta registrada"}</span></button>` : ""}
+      ${rsvpDone ? `<button class="home-rsvp-confirmed" type="button" data-go="asistencia">${uiIcon("checkCircle")}<span>${rsvp.attendance === "si" ? "Asistencia confirmada" : "Respuesta guardada"}</span></button>` : ""}
 
       <section class="home-primary-action home-primary-action--${primaryAction.tone}">
         <span class="home-primary-icon">${uiIcon(primaryAction.icon)}</span>
@@ -1130,7 +1131,7 @@
   function renderInfo() {
     const locationOpen = isUnlocked("location");
     const menuOpen = isUnlocked("menu");
-    const calendarUrl = "https://calendar.app.google/xtbbnf4p4VCJd95w8";
+    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
 
     return `
       ${infoStyles()}
@@ -1197,22 +1198,29 @@
 
   function renderTransport() {
     const open = isTriviaGameOpen("transport-info");
+
     return `
       ${transportStyles()}
       ${sectionHeader("casamiento", "Traslado", "")}
       <section class="transport-hero section-card ${open ? "is-open" : "is-locked"}">
         <div class="transport-illustration">${uiIcon("bus")}</div>
-        <div class="transport-copy"><span class="transport-status">${open ? "Información habilitada" : "Próximamente"}</span><h3>${open ? "Información del micro" : "El destino sigue siendo secreto"}</h3><p>${open ? "Acá vas a encontrar todos los datos para la ida y el regreso." : "Nos ocupamos de que lleguen cómodos y vuelvan seguros. Los horarios y el punto exacto se compartirán más adelante."}</p></div>
+        <div class="transport-copy">
+          <span class="transport-status">${open ? "Información habilitada" : "Próximamente"}</span>
+          <h3>${open ? "Información del micro" : "El destino sigue siendo secreto"}</h3>
+          <p>${open
+            ? "Acá vas a encontrar todos los datos para la ida y el regreso."
+            : "Nos ocupamos de que lleguen cómodos y vuelvan seguros. Los horarios y el punto exacto se compartirán más adelante."}</p>
+        </div>
       </section>
+
       ${open ? `
         <section class="transport-grid">
           <article class="section-card"><span>${uiIcon("pin")}</span><div><small>Punto</small><strong>Obelisco</strong><p>Referencia exacta próximamente.</p></div></article>
           <article class="section-card"><span>${uiIcon("calendar")}</span><div><small>Ida</small><strong>A confirmar</strong><p>Se informará con anticipación.</p></div></article>
           <article class="section-card"><span>${uiIcon("bus")}</span><div><small>Regreso</small><strong>03:00 hs</strong><p>Al finalizar la fiesta.</p></div></article>
-        </section>` : `
-        <section class="transport-preview section-card"><div>${uiIcon("lock")}</div><div><strong>Información bajo llave</strong><p>Más adelante aparecerán acá horarios, punto de encuentro y recomendaciones.</p></div></section>
-      `}`;
+        </section>` : ""}`;
   }
+
 
   function transportStyles() {
     return `<style>
@@ -1244,15 +1252,22 @@
   function renderRSVP() {
     const saved = state.rsvps[currentGuest.id] || {};
     const hasSaved = Boolean(saved && saved.updatedAt);
-    const editing = Boolean(state.rsvpEditMode || !hasSaved);
+    const hasFinalSaved = hasCompletedRsvp(saved);
+    const editing = Boolean(state.rsvpEditMode || !hasSaved || !hasFinalSaved);
     const deadlineLabel = "31 de agosto de 2026";
-    const calendarUrl = "https://calendar.app.google/xtbbnf4p4VCJd95w8";
-    const savedTransport = ["combi", "micro"].includes(saved.transport) ? "combi" : saved.transport === "auto" ? "particular" : saved.transport;
+    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
+    const savedTransport = ["combi", "micro"].includes(saved.transport)
+      ? "combi"
+      : saved.transport === "auto"
+        ? "particular"
+        : saved.transport;
+    const savedDietChoice = saved.dietChoice ||
+      (hasSaved ? (String(saved.diet || "").trim() ? "si" : "no") : "");
 
-    if (hasSaved && !editing) {
+    if (hasSaved && hasFinalSaved && !editing) {
       return `
         ${rsvpStyles()}
-        ${sectionHeader("confirmación", "Asistencia registrada", "")}
+        ${sectionHeader("confirmación", "Asistencia confirmada", "")}
         <section class="section-card rsvp-confirmed-compact">
           <div class="rsvp-confirmed-head">
             <span class="rsvp-okmark">✓</span>
@@ -1261,41 +1276,45 @@
           <div class="rsvp-summary-grid">
             ${summaryLine("Asistencia", attendanceLabel(saved.attendance))}
             ${summaryLine("Traslado / micro", transportLabel(saved.transport))}
-            ${summaryLine("Restricciones", saved.diet || "Sin restricciones")}
-            ${summaryLine("Comentario", saved.comment || "Sin comentario", true)}
+            ${summaryLine(
+              "Restricciones",
+              saved.dietChoice === "no" || !String(saved.diet || "").trim()
+                ? "No"
+                : saved.diet
+            )}
           </div>
           <div class="rsvp-actions-row">
             <button id="editRsvp" type="button">Editar respuesta</button>
             <a class="rsvp-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
           </div>
         </section>
-        ${hasFinalRsvp(saved) ? `
-          <section class="rsvp-next-challenge section-card">
-            <div class="rsvp-next-icon">${uiIcon("star")}</div>
-            <div><h4>Ya podés participar</h4><p>Las canciones, la trivia y las próximas misiones están disponibles.</p></div>
-            <button type="button" data-go="puntos">Ver desafíos</button>
-          </section>` : ""}
-      `;
+
+        <section class="rsvp-next-challenge section-card">
+          <div class="rsvp-next-icon">${uiIcon("star")}</div>
+          <div><h4>Ya podés participar</h4><p>Las canciones, la trivia y las próximas misiones están disponibles.</p></div>
+          <button type="button" data-go="puntos">Ver desafíos</button>
+        </section>`;
     }
 
     return `
       ${rsvpStyles()}
       ${sectionHeader("confirmación", hasSaved ? "Editar asistencia" : "Confirmar asistencia", `Responder antes del ${deadlineLabel}.`)}
       <form id="rsvpForm" class="section-card form-card rsvp-form-compact">
-        ${hasSaved ? `<div class="warning-ribbon">Estás editando una respuesta ya registrada.</div>` : ""}
+        ${hasSaved ? `<div class="warning-ribbon">Completá una respuesta definitiva por sí o por no.</div>` : ""}
         <div class="form-grid">
           ${field("firstName", "Nombre", saved.firstName || currentGuest.firstName, "text", true)}
           ${field("lastName", "Apellido", saved.lastName || currentGuest.lastName, "text", true)}
           ${field("email", "Mail", saved.email || currentGuest.email || "", "email", true)}
           ${field("phone", "Teléfono", saved.phone || "", "tel", false)}
-          <fieldset class="choice-field">
+
+          <fieldset class="choice-field attendance-choice-field">
             <legend>Confirmo asistencia</legend>
-            <div class="choice-group">
+            <div class="choice-group choice-group-two">
               ${choicePill("attendance", "si", "Sí, voy", saved.attendance, true)}
               ${choicePill("attendance", "no", "No puedo asistir", saved.attendance, true)}
-              ${choicePill("attendance", "a-confirmar", "A confirmar", saved.attendance, true)}
             </div>
           </fieldset>
+
           <label>Traslado / micro
             <select name="transport">
               ${option("", "Seleccionar", savedTransport)}
@@ -1303,16 +1322,30 @@
               ${option("combi", "Necesito información del micro", savedTransport)}
             </select>
           </label>
+
+          <fieldset class="choice-field diet-choice-field">
+            <legend>¿Tenés restricciones alimentarias?</legend>
+            <div class="choice-group choice-group-two">
+              ${choicePill("dietChoice", "si", "Sí", savedDietChoice, true)}
+              ${choicePill("dietChoice", "no", "No", savedDietChoice, true)}
+            </div>
+          </fieldset>
         </div>
-        <label>Restricciones alimentarias / alergias
-          <textarea name="diet" placeholder="Ej: vegetariano, celíaco, sin lactosa...">${escapeHTML(saved.diet || "")}</textarea>
+
+        <label class="diet-detail-label ${savedDietChoice === "no" ? "is-disabled" : ""}" data-diet-detail>
+          <span>Detalle de restricciones / alergias</span>
+          <textarea
+            name="diet"
+            placeholder="Ej: vegetariano, celíaco, sin lactosa..."
+            ${savedDietChoice === "no" ? "disabled" : ""}
+            ${savedDietChoice === "si" ? "required" : ""}
+          >${escapeHTML(saved.diet || "")}</textarea>
+          <small>${savedDietChoice === "no" ? "No es necesario completar este campo." : "Completalo únicamente si marcaste Sí."}</small>
         </label>
-        <label>Comentario
-          <textarea name="comment" placeholder="Algo que necesitemos saber...">${escapeHTML(saved.comment || "")}</textarea>
-        </label>
+
         <div class="form-actions rsvp-form-actions">
           <button type="submit">${hasSaved ? "Guardar cambios" : "Guardar asistencia"}</button>
-          ${hasSaved ? `<button id="cancelRsvpEdit" type="button" class="ghost-button">Cancelar</button>` : ""}
+          ${hasSaved && hasFinalSaved ? `<button id="cancelRsvpEdit" type="button" class="ghost-button">Cancelar</button>` : ""}
           <a class="rsvp-calendar-link rsvp-calendar-link-small" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
         </div>
       </form>`;
@@ -1321,13 +1354,16 @@
 
   function rsvpStyles() {
     return `<style>
-      .rsvp-form-compact{padding:17px}.rsvp-form-compact .form-grid{gap:11px}.rsvp-form-compact label{gap:5px}.rsvp-form-compact input,.rsvp-form-compact select{min-height:43px}.rsvp-form-compact textarea{min-height:70px}.choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--ink);font-weight:900;margin:0 0 7px}.choice-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:43px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
-      .rsvp-confirmed-compact{padding:17px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.80))}.rsvp-confirmed-head{display:flex;align-items:center;gap:11px}.rsvp-confirmed-head h4{margin:0 0 2px;font-size:21px}.rsvp-confirmed-head p{margin:0;font-size:12px}.rsvp-okmark{width:41px;height:41px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:22px;font-weight:1000}
-      .rsvp-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px}.rsvp-summary-grid .wide{grid-column:1/-1}.summary-item{border:1px solid rgba(132,104,68,.14);border-radius:13px;padding:10px 11px;background:rgba(255,255,255,.44)}.summary-item strong{display:block;color:#7a3140;font-size:9px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.summary-item p{margin:0;color:var(--ink);font-size:12px;font-weight:750;word-break:break-word}
-      .rsvp-actions-row,.rsvp-form-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:13px}.rsvp-actions-row button,.rsvp-form-actions button{min-height:38px;padding:8px 13px}
-      .rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:8px 12px;border:1px solid rgba(54,85,111,.25);border-radius:999px;background:rgba(54,85,111,.07);color:#36556f!important;text-decoration:none;font-size:11px;font-weight:900;box-shadow:none}.rsvp-calendar-link .ui-icon{width:16px;height:16px}.rsvp-calendar-link-small{margin-left:auto}
-      .rsvp-next-challenge{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:11px;align-items:center;margin-top:10px;padding:13px 15px;border-color:rgba(201,170,114,.35);background:linear-gradient(135deg,rgba(201,170,114,.10),rgba(255,253,248,.86))}.rsvp-next-icon{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.15);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:20px;height:20px}.rsvp-next-challenge h4{margin:0 0 2px;font-size:17px}.rsvp-next-challenge p{margin:0;font-size:11px}.rsvp-next-challenge button{min-height:37px;padding:8px 12px;white-space:nowrap}
-      @media(max-width:650px){.choice-group{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
+      .rsvp-form-compact{padding:16px}.rsvp-form-compact .form-grid{gap:10px}.rsvp-form-compact label{gap:5px}.rsvp-form-compact input,.rsvp-form-compact select{min-height:42px}.rsvp-form-compact textarea{min-height:70px}
+      .choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
+      .diet-detail-label{display:grid;gap:5px;margin-top:10px;padding:11px;border:1px solid rgba(132,104,68,.14);border-radius:14px;background:rgba(255,255,255,.35);transition:.18s}.diet-detail-label>span{font-size:12px;font-weight:900}.diet-detail-label small{color:var(--muted);font-size:9px}.diet-detail-label.is-disabled{background:rgba(120,120,120,.055);border-color:rgba(120,120,120,.13)}.diet-detail-label.is-disabled>span,.diet-detail-label.is-disabled small{color:#8b8782}.diet-detail-label textarea:disabled{background:rgba(120,120,120,.08)!important;color:#999!important;cursor:not-allowed}
+      .rsvp-confirmed-compact{padding:16px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.80))}.rsvp-confirmed-head{display:flex;align-items:center;gap:11px}.rsvp-confirmed-head h4{margin:0 0 2px;font-size:20px}.rsvp-confirmed-head p{margin:0;font-size:11px}.rsvp-okmark{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:21px;font-weight:1000}
+      .rsvp-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.summary-item{border:1px solid rgba(132,104,68,.14);border-radius:13px;padding:10px;background:rgba(255,255,255,.44)}.summary-item strong{display:block;color:#7a3140;font-size:8px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.summary-item p{margin:0;color:var(--ink);font-size:12px;font-weight:750;word-break:break-word}
+      .rsvp-actions-row,.rsvp-form-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-actions-row button,.rsvp-form-actions button{min-height:37px;padding:8px 12px}
+      .rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:37px;padding:8px 12px;border:1px solid rgba(54,85,111,.25);border-radius:999px;background:rgba(54,85,111,.07);color:#36556f!important;text-decoration:none;font-size:10px;font-weight:900;box-shadow:none}.rsvp-calendar-link .ui-icon{width:15px;height:15px}.rsvp-calendar-link-small{margin-left:auto}
+      .rsvp-next-challenge{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:9px;padding:12px 14px;border-color:rgba(201,170,114,.35);background:linear-gradient(135deg,rgba(201,170,114,.10),rgba(255,253,248,.86))}.rsvp-next-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.15);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:19px;height:19px}.rsvp-next-challenge h4{margin:0 0 2px;font-size:17px}.rsvp-next-challenge p{margin:0;font-size:10px}.rsvp-next-challenge button{min-height:36px;padding:8px 11px;white-space:nowrap}
+      @media(max-width:650px){.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
     </style>`;
   }
 
@@ -1343,11 +1379,11 @@
 
 
   function hasCompletedRsvp(row) {
-    return Boolean(row && row.updatedAt && row.attendance);
+    return Boolean(row && row.updatedAt && ["si", "no"].includes(row.attendance));
   }
 
   function hasFinalRsvp(row) {
-    return Boolean(row && row.updatedAt && ["si", "no"].includes(row.attendance));
+    return hasCompletedRsvp(row);
   }
 
   function hasCompletedProfile(row) {
@@ -1446,7 +1482,7 @@
   }
 
   function attendanceLabel(value) {
-    const labels = { "si": "Sí, voy", "no": "No puedo asistir", "a-confirmar": "A confirmar" };
+    const labels = { "si": "Sí, voy", "no": "No puedo asistir", "a-confirmar": "Pendiente" };
     return labels[value] || value || "Sin cargar";
   }
 
@@ -1634,7 +1670,7 @@
         <span><b>${myPoints}</b><small>puntos</small></span>
       </section>
       <section class="points-compact-list section-card">
-        ${pointsAction({icon:"✉️",title:"Confirmar asistencia",text:rsvpDone?"Respuesta definitiva registrada.":"Primero respondé por sí o por no.",done:rsvpDone,route:"asistencia",progressText:`${rsvpDoneCount}/${activePlayers} definieron`,editable:true})}
+        ${pointsAction({icon:"✉️",title:"Confirmar asistencia",text:rsvpDone?"Respuesta definitiva guardada.":"Primero respondé por sí o por no.",done:rsvpDone,route:"asistencia",progressText:`${rsvpDoneCount}/${activePlayers} definieron`,editable:true})}
         ${rsvpDone ? `
           ${pointsAction({icon:"🎵",title:"Elegir canciones",text:musicDone?"Propuesta guardada.":"Elegí dos canciones.",done:musicDone,route:"musica",progressText:"Juego musical",editable:true})}
           ${pointsAction({icon:"❓",title:"Trivia Vani y Fede",text:triviaDone?"Resultado cerrado.":"Una sola oportunidad.",done:triviaDone,route:"trivia-pareja",progressText:triviaDone?"Resultado final":"Hasta 100 puntos",editable:false})}
@@ -1860,6 +1896,48 @@
     };
   }
 
+  const SOCIAL_EMOJIS = ["😀", "😍", "🥳", "😂", "❤️", "🔥", "👏", "🎉", "🍾", "💍", "✨", "🌙"];
+
+  function safeSocialGifUrl(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+
+    try {
+      const url = new URL(text);
+      if (!["http:", "https:"].includes(url.protocol)) return "";
+      return url.href;
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function socialGifMarkup(value, className = "") {
+    const url = safeSocialGifUrl(value);
+    if (!url) return "";
+
+    return `
+      <div class="social-gif ${className}">
+        <img src="${escapeHTML(url)}" alt="GIF compartido" loading="lazy">
+      </div>`;
+  }
+
+  function socialEmojiToolbar() {
+    return `
+      <div class="social-media-tools">
+        <div class="social-emoji-strip" aria-label="Emoticonos">
+          ${SOCIAL_EMOJIS.map(emoji => `
+            <button type="button" data-social-emoji="${escapeHTML(emoji)}" aria-label="Agregar ${escapeHTML(emoji)}">${escapeHTML(emoji)}</button>
+          `).join("")}
+        </div>
+        <button type="button" class="social-gif-toggle" data-social-gif-toggle>GIF</button>
+      </div>
+      <label class="social-gif-field hidden">
+        <span>Enlace del GIF</span>
+        <input name="gifUrl" type="url" inputmode="url" placeholder="Pegá un enlace directo de Tenor o Giphy">
+        <small>Usá el enlace directo de la imagen o animación.</small>
+      </label>`;
+  }
+
   function socialReplyMarkup(reply) {
     const author = socialAuthor(reply);
     return `
@@ -1871,13 +1949,15 @@
             <span>${teamLogo(author.team, "social-team-logo")} ${escapeHTML(author.team.name)}</span>
             <time>${escapeHTML(formatSocialDate(reply.timestamp || reply.updatedAt || reply.submittedAt))}</time>
           </div>
-          <p>${escapeHTML(reply.message)}</p>
+          ${reply.message ? `<p>${escapeHTML(reply.message)}</p>` : ""}
+          ${socialGifMarkup(reply.gifUrl, "social-gif-reply")}
         </div>
       </article>`;
   }
 
   function socialPostMarkup(post, replies) {
     const author = socialAuthor(post);
+
     return `
       <article class="social-post section-card" style="--social-accent:${author.team.accent}">
         <header class="social-post-header">
@@ -1890,29 +1970,45 @@
           </div>
           <time>${escapeHTML(formatSocialDate(post.timestamp || post.updatedAt || post.submittedAt))}</time>
         </header>
-        <p class="social-post-text">${escapeHTML(post.message)}</p>
+
+        ${post.message ? `<p class="social-post-text">${escapeHTML(post.message)}</p>` : ""}
+        ${socialGifMarkup(post.gifUrl)}
+
         <footer class="social-post-footer">
           <button type="button" class="social-reply-toggle" data-social-reply="${escapeHTML(post.messageId)}">${uiIcon("chat")}<span>Responder</span></button>
           <small>${replies.length ? `${replies.length} ${replies.length === 1 ? "respuesta" : "respuestas"}` : "Sé el primero en responder"}</small>
         </footer>
+
         <form class="social-reply-form hidden" data-social-parent="${escapeHTML(post.messageId)}">
-          <textarea name="message" maxlength="400" placeholder="Escribí una respuesta..." required></textarea>
-          <div><button type="button" class="ghost-button" data-social-cancel>Cancelar</button><button type="submit">Responder</button></div>
+          <textarea name="message" maxlength="400" placeholder="Escribí una respuesta..."></textarea>
+          ${socialEmojiToolbar()}
+          <div class="social-reply-actions">
+            <button type="button" class="ghost-button" data-social-cancel>Cancelar</button>
+            <button type="submit">Responder</button>
+          </div>
         </form>
+
         ${replies.length ? `<div class="social-replies">${replies.map(socialReplyMarkup).join("")}</div>` : ""}
       </article>`;
   }
 
+
   function renderSocial() {
     const messages = dedupeSocialMessages(state.socialMessages || []);
-    const rootMessages = messages.filter(message => !message.parentId).sort((a, b) => socialMessageTime(b) - socialMessageTime(a));
+    const rootMessages = messages
+      .filter(message => !message.parentId)
+      .sort((a, b) => socialMessageTime(b) - socialMessageTime(a));
+
     const repliesByParent = messages.reduce((groups, message) => {
       if (!message.parentId) return groups;
       if (!groups[message.parentId]) groups[message.parentId] = [];
       groups[message.parentId].push(message);
       return groups;
     }, {});
-    Object.values(repliesByParent).forEach(replies => replies.sort((a, b) => socialMessageTime(a) - socialMessageTime(b)));
+
+    Object.values(repliesByParent).forEach(replies => {
+      replies.sort((a, b) => socialMessageTime(a) - socialMessageTime(b));
+    });
 
     const team = getTeam(currentGuest.team);
     const initial = String(currentGuest.firstName || currentGuest.lastName || "I").charAt(0).toUpperCase();
@@ -1923,39 +2019,68 @@
         ${sectionHeader("comunidad", "Social", "Mensajes para todos los invitados.")}
         <button id="refreshSocial" type="button" class="social-refresh-button">${uiIcon("sync")}<span>Actualizar</span></button>
       </section>
+
       <form id="socialPostForm" class="social-composer section-card" style="--social-accent:${team.accent}">
         <span class="social-avatar">${escapeHTML(initial)}</span>
         <div>
-          <div class="social-composer-meta"><strong>${escapeHTML(guestFullName(currentGuest))}</strong><span>${teamLogo(team, "social-team-logo")} Equipo ${escapeHTML(team.name)}</span></div>
-          <textarea name="message" maxlength="400" placeholder="Escribí un mensaje para todos..." required></textarea>
-          <div class="social-composer-actions"><small>Máximo 400 caracteres</small><button type="submit">${uiIcon("chat")}<span>Publicar</span></button></div>
+          <div class="social-composer-meta">
+            <strong>${escapeHTML(guestFullName(currentGuest))}</strong>
+            <span>${teamLogo(team, "social-team-logo")} Equipo ${escapeHTML(team.name)}</span>
+          </div>
+
+          <textarea name="message" maxlength="400" placeholder="Escribí un mensaje para todos..."></textarea>
+          ${socialEmojiToolbar()}
+
+          <div class="social-composer-actions">
+            <small>Podés publicar texto, emoticonos o un GIF.</small>
+            <button type="submit">${uiIcon("chat")}<span>Publicar</span></button>
+          </div>
         </div>
       </form>
+
       <section class="social-feed">
-        ${rootMessages.length ? rootMessages.map(post => socialPostMarkup(post, repliesByParent[post.messageId] || [])).join("") : `<div class="social-empty section-card">${uiIcon("chat")}<strong>Todavía no hay mensajes</strong><p>Podés ser la primera persona en saludar a todos.</p></div>`}
+        ${rootMessages.length
+          ? rootMessages.map(post => socialPostMarkup(post, repliesByParent[post.messageId] || [])).join("")
+          : `<div class="social-empty section-card">${uiIcon("chat")}<strong>Todavía no hay mensajes</strong><p>Podés ser la primera persona en saludar a todos.</p></div>`}
       </section>`;
   }
+
 
   function socialStyles() {
     return `<style>
-      .social-title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}.social-title-row>.section-head{flex:1}.social-refresh-button{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:7px 10px;border:1px solid rgba(54,85,111,.20);border-radius:11px;background:rgba(54,85,111,.06);color:#36556f;box-shadow:none;font-size:10px}.social-refresh-button .ui-icon{width:15px;height:15px}
-      .social-composer{display:grid;grid-template-columns:42px minmax(0,1fr);gap:11px;padding:14px;border-color:color-mix(in srgb,var(--social-accent) 30%,var(--line))}.social-avatar{width:40px;height:40px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--social-accent) 35%,transparent);border-radius:50%;background:color-mix(in srgb,var(--social-accent) 10%,#fff);color:var(--ink);font-family:var(--font-title);font-size:18px;font-weight:900}.social-avatar-small{width:31px;height:31px;font-size:14px}.social-composer-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.social-composer-meta>strong{font-size:13px}.social-composer-meta>span,.social-team-chip{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:9px;font-weight:850}.social-team-logo{width:17px!important;height:17px!important}.social-composer textarea{width:100%;min-height:72px;margin-top:8px;padding:10px 11px;border-radius:13px;resize:vertical}.social-composer-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:7px}.social-composer-actions small{color:var(--muted);font-size:9px}.social-composer-actions button{display:inline-flex;align-items:center;gap:6px;min-height:35px;padding:7px 12px}.social-composer-actions .ui-icon{width:15px;height:15px}
-      .social-feed{display:grid;gap:9px;margin-top:10px}.social-post{padding:13px;border-left:3px solid var(--social-accent)}.social-post-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.social-author{display:grid;grid-template-columns:40px minmax(0,1fr);gap:9px;align-items:center}.social-author strong{display:block;font-size:13px}.social-post-header>time{color:var(--muted);font-size:8px;white-space:nowrap}.social-post-text{margin:11px 0 9px;color:var(--ink);font-size:13px;line-height:1.45;white-space:pre-wrap;word-break:break-word}.social-post-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:7px;border-top:1px solid rgba(132,104,68,.10)}.social-post-footer small{color:var(--muted);font-size:8px}.social-reply-toggle{display:inline-flex;align-items:center;gap:5px;min-height:29px;padding:5px 8px;border:0;background:transparent;color:#36556f;box-shadow:none;font-size:9px}.social-reply-toggle .ui-icon{width:14px;height:14px}
-      .social-reply-form{margin-top:9px;padding:9px;border:1px solid rgba(54,85,111,.13);border-radius:12px;background:rgba(54,85,111,.035)}.social-reply-form textarea{width:100%;min-height:58px;padding:8px 9px;border-radius:10px;resize:vertical}.social-reply-form>div{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}.social-reply-form button{min-height:31px;padding:6px 9px;font-size:9px}
-      .social-replies{display:grid;gap:6px;margin:10px 0 0 22px;padding-left:10px;border-left:1px solid color-mix(in srgb,var(--social-accent) 30%,var(--line))}.social-reply{display:grid;grid-template-columns:31px minmax(0,1fr);gap:8px;align-items:start;padding:8px;border-radius:11px;background:rgba(255,255,255,.38)}.social-reply-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.social-reply-meta strong{font-size:11px}.social-reply-meta span{display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:8px}.social-reply-meta time{margin-left:auto;color:var(--muted);font-size:7px}.social-reply-body p{margin:4px 0 0;font-size:11px;line-height:1.4;white-space:pre-wrap;word-break:break-word}.social-empty{display:grid;place-items:center;min-height:170px;text-align:center}.social-empty>.ui-icon{width:31px;height:31px;color:#36556f}.social-empty strong{margin-top:8px}.social-empty p{margin:4px 0 0;font-size:11px}
-      @media(max-width:600px){.social-title-row{align-items:center}.social-title-row .section-head p:not(.eyebrow){display:none}.social-refresh-button span{display:none}.social-refresh-button{width:34px;padding:6px}.social-composer{grid-template-columns:36px minmax(0,1fr);padding:11px}.social-avatar{width:35px;height:35px;font-size:16px}.social-author{grid-template-columns:35px minmax(0,1fr)}.social-post{padding:11px}.social-post-text{font-size:12px}.social-replies{margin-left:12px;padding-left:8px}}
+      .social-title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}.social-title-row>.section-head{flex:1}.social-refresh-button{display:inline-flex;align-items:center;gap:6px;min-height:33px;padding:7px 9px;border:1px solid rgba(54,85,111,.20);border-radius:10px;background:rgba(54,85,111,.06);color:#36556f;box-shadow:none;font-size:9px}.social-refresh-button .ui-icon{width:14px;height:14px}
+      .social-composer{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;padding:13px;border-color:color-mix(in srgb,var(--social-accent) 30%,var(--line))}.social-avatar{width:38px;height:38px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--social-accent) 35%,transparent);border-radius:50%;background:color-mix(in srgb,var(--social-accent) 10%,#fff);color:var(--ink);font-family:var(--font-title);font-size:17px;font-weight:900}.social-avatar-small{width:30px;height:30px;font-size:13px}.social-composer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.social-composer-meta>strong{font-size:12px}.social-composer-meta>span,.social-team-chip{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:8px;font-weight:850}.social-team-logo{width:16px!important;height:16px!important}.social-composer textarea{width:100%;min-height:68px;margin-top:7px;padding:9px 10px;border-radius:12px;resize:vertical}
+      .social-media-tools{display:flex;align-items:center;gap:7px;margin-top:7px}.social-emoji-strip{display:flex;gap:4px;min-width:0;overflow-x:auto;padding:2px 1px;scrollbar-width:none}.social-emoji-strip::-webkit-scrollbar{display:none}.social-emoji-strip button,.social-gif-toggle{min-width:29px;height:29px;display:grid;place-items:center;padding:0;border:1px solid rgba(132,104,68,.14);border-radius:9px;background:rgba(255,255,255,.48);color:var(--ink);box-shadow:none;font-size:15px}.social-gif-toggle{min-width:39px;padding:0 7px;color:#36556f;font-size:9px;font-weight:950}
+      .social-gif-field{display:grid;gap:4px;margin-top:7px;padding:8px;border:1px dashed rgba(54,85,111,.18);border-radius:11px;background:rgba(54,85,111,.035)}.social-gif-field>span{font-size:9px;font-weight:900}.social-gif-field input{min-height:36px;padding:7px 9px;border-radius:9px;font-size:10px}.social-gif-field small{color:var(--muted);font-size:8px}
+      .social-composer-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:7px}.social-composer-actions small{color:var(--muted);font-size:8px}.social-composer-actions button{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:7px 11px}.social-composer-actions .ui-icon{width:14px;height:14px}
+      .social-feed{display:grid;gap:8px;margin-top:9px}.social-post{padding:12px;border-left:3px solid var(--social-accent)}.social-post-header{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}.social-author{display:grid;grid-template-columns:38px minmax(0,1fr);gap:8px;align-items:center}.social-author strong{display:block;font-size:12px}.social-post-header>time{color:var(--muted);font-size:7px;white-space:nowrap}.social-post-text{margin:10px 0 8px;color:var(--ink);font-size:12px;line-height:1.42;white-space:pre-wrap;word-break:break-word}
+      .social-gif{margin:9px 0;overflow:hidden;border:1px solid rgba(132,104,68,.12);border-radius:13px;background:rgba(0,0,0,.03)}.social-gif img{display:block;width:100%;max-height:310px;object-fit:contain}.social-gif-reply{max-width:330px;margin:6px 0 0}.social-gif-reply img{max-height:210px}
+      .social-post-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:7px;border-top:1px solid rgba(132,104,68,.10)}.social-post-footer small{color:var(--muted);font-size:8px}.social-reply-toggle{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:5px 8px;border:0;background:transparent;color:#36556f;box-shadow:none;font-size:9px}.social-reply-toggle .ui-icon{width:13px;height:13px}
+      .social-reply-form{margin-top:8px;padding:8px;border:1px solid rgba(54,85,111,.13);border-radius:11px;background:rgba(54,85,111,.035)}.social-reply-form textarea{width:100%;min-height:56px;padding:8px 9px;border-radius:9px;resize:vertical}.social-reply-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}.social-reply-form button{min-height:30px;padding:6px 9px;font-size:9px}
+      .social-replies{display:grid;gap:6px;margin:9px 0 0 19px;padding-left:9px;border-left:1px solid color-mix(in srgb,var(--social-accent) 30%,var(--line))}.social-reply{display:grid;grid-template-columns:30px minmax(0,1fr);gap:7px;align-items:start;padding:7px;border-radius:10px;background:rgba(255,255,255,.38)}.social-reply-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.social-reply-meta strong{font-size:10px}.social-reply-meta span{display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:7px}.social-reply-meta time{margin-left:auto;color:var(--muted);font-size:7px}.social-reply-body p{margin:4px 0 0;font-size:10px;line-height:1.4;white-space:pre-wrap;word-break:break-word}.social-empty{display:grid;place-items:center;min-height:160px;text-align:center}.social-empty>.ui-icon{width:29px;height:29px;color:#36556f}.social-empty strong{margin-top:7px}.social-empty p{margin:4px 0 0;font-size:10px}
+      @media(max-width:600px){.social-title-row{align-items:center}.social-title-row .section-head p:not(.eyebrow){display:none}.social-refresh-button span{display:none}.social-refresh-button{width:33px;padding:6px}.social-composer{grid-template-columns:34px minmax(0,1fr);padding:10px}.social-avatar{width:34px;height:34px;font-size:15px}.social-author{grid-template-columns:34px minmax(0,1fr)}.social-post{padding:10px}.social-post-text{font-size:11px}.social-replies{margin-left:10px;padding-left:7px}}
     </style>`;
   }
 
+
   function renderGifts() {
+    const open = isTriviaGameOpen("gifts-section");
+
     return `
       ${giftStyles()}
       ${sectionHeader("casamiento", "Regalos", "")}
-      <section class="gift-placeholder section-card">
-        <span class="gift-placeholder-icon">${uiIcon("gift")}</span>
-        <div><p class="eyebrow">Próximamente</p><h3>Esta sección se habilitará más adelante</h3><p>Cuando esté definida, acá van a encontrar la información para quienes quieran hacernos un regalo.</p></div>
+      <section class="gift-placeholder section-card ${open ? "is-open" : "is-locked"}">
+        <span class="gift-placeholder-icon">${uiIcon(open ? "gift" : "lock")}</span>
+        <div>
+          <p class="eyebrow">${open ? "Sección habilitada" : "Próximamente"}</p>
+          <h3>${open ? "Información de regalos" : "Esta sección todavía no está disponible"}</h3>
+          <p>${open
+            ? "El alias o CBU se incorporará acá cuando esté definido."
+            : "Cuando esté lista, vas a poder verla desde este mismo lugar."}</p>
+        </div>
       </section>`;
   }
+
 
   function giftStyles() {
     return `<style>
@@ -1966,34 +2091,68 @@
 
   async function submitSocialMessage(form, parentId = "") {
     const textarea = form.querySelector('textarea[name="message"]');
+    const gifInput = form.querySelector('input[name="gifUrl"]');
     const submitButton = form.querySelector('button[type="submit"]');
     const message = String(textarea?.value || "").trim();
-    if (!message) { toast("Escribí un mensaje antes de publicar."); textarea?.focus(); return; }
+    const rawGifUrl = String(gifInput?.value || "").trim();
+    const gifUrl = safeSocialGifUrl(rawGifUrl);
 
-    const originalText = submitButton?.textContent || "Publicar";
-    if (submitButton) { submitButton.disabled = true; submitButton.textContent = "Guardando…"; }
-
-    const payload = {
-      messageId: newSocialMessageId(), parentId, guestId: currentGuest.id,
-      guestName: guestFullName(currentGuest), teamId: currentGuest.team,
-      message: message.slice(0, 400), updatedAt: new Date().toISOString()
-    };
-
-    const savedRecord = await saveAndVerifyRemote(
-      "saveSocialMessage", payload,
-      record => Boolean(record && record.messageId === payload.messageId && record.message)
-    );
-
-    if (!savedRecord) {
-      if (submitButton) { submitButton.disabled = false; submitButton.textContent = originalText; }
+    if (!message && !gifUrl) {
+      toast("Escribí un mensaje o agregá un GIF.");
+      textarea?.focus();
       return;
     }
 
-    state.socialMessages = dedupeSocialMessages([...(state.socialMessages || []), { ...payload, ...savedRecord }]);
+    if (rawGifUrl && !gifUrl) {
+      toast("El enlace del GIF no es válido.");
+      gifInput?.focus();
+      return;
+    }
+
+    const originalText = submitButton?.textContent || "Publicar";
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Guardando…";
+    }
+
+    const payload = {
+      messageId: newSocialMessageId(),
+      parentId,
+      guestId: currentGuest.id,
+      guestName: guestFullName(currentGuest),
+      teamId: currentGuest.team,
+      message: message.slice(0, 400),
+      gifUrl,
+      updatedAt: new Date().toISOString()
+    };
+
+    const savedRecord = await saveAndVerifyRemote(
+      "saveSocialMessage",
+      payload,
+      record => Boolean(
+        record &&
+        record.messageId === payload.messageId &&
+        (record.message || record.gifUrl)
+      )
+    );
+
+    if (!savedRecord) {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+      }
+      return;
+    }
+
+    state.socialMessages = dedupeSocialMessages([
+      ...(state.socialMessages || []),
+      { ...payload, ...savedRecord }
+    ]);
     saveState();
     toast(parentId ? "Respuesta publicada." : "Mensaje publicado.");
     renderCurrentRoute();
   }
+
 
   function scoreEntriesForGames(gameIds) {
     const ids = Array.isArray(gameIds) ? gameIds : [gameIds];
@@ -2090,13 +2249,14 @@
       return hasCompletedRsvp(rsvp) && rsvp.attendance === "si" && ["combi", "micro"].includes(rsvp.transport);
     }).length;
     const transportInfoOpen = isTriviaGameOpen("transport-info");
+    const giftsSectionOpen = isTriviaGameOpen("gifts-section");
 
     return `
       ${adminUxStyles()}
       <section class="admin-title-row">
-        ${sectionHeader("admin", "Centro de mando", "Asistencia general, juegos y ajustes rápidos del ranking.")}
+        ${sectionHeader("admin", "Administración", "")}
         <button id="lockAdminButton" type="button" class="admin-lock-button">
-          ${uiIcon("lock")}<span>Bloquear Admin</span>
+          ${uiIcon("lock")}<span>Bloquear</span>
         </button>
       </section>
 
@@ -2111,11 +2271,11 @@
       </section>
 
       <section class="admin-attendance-summary">
-        <button type="button" class="admin-stat-button" data-admin-list="attending"><span>✓</span><div><small>Confirmaron asistencia</small><strong>${attendingCount}</strong><p>de ${invitedCount} invitados</p><em>Ver personas</em></div></button>
-        <button type="button" class="admin-stat-button" data-admin-list="answered"><span>%</span><div><small>Respondieron</small><strong>${answeredCount}</strong><p>${answeredPercent}% del total</p><em>Ver personas</em></div></button>
-        <button type="button" class="admin-stat-button" data-admin-list="declined"><span>−</span><div><small>No asistirán</small><strong>${declinedCount}</strong><p>respuestas registradas</p><em>Ver personas</em></div></button>
-        <button type="button" class="admin-stat-button" data-admin-list="unanswered"><span>?</span><div><small>Sin responder</small><strong>${unansweredCount}</strong><p>faltan completar RSVP</p><em>Ver personas</em></div></button>
-        <button type="button" class="admin-stat-button admin-combi-stat" data-admin-list="micro"><span>🚌</span><div><small>Necesitan micro</small><strong>${combiCount}</strong><p>desde el Obelisco</p><em>Ver personas</em></div></button>
+        <button type="button" class="admin-stat-button" data-admin-list="attending"><span>✓</span><div><small>Asisten</small><strong>${attendingCount}</strong><em>Ver</em></div></button>
+        <button type="button" class="admin-stat-button" data-admin-list="answered"><span>%</span><div><small>Respondieron</small><strong>${answeredCount}</strong><em>${answeredPercent}%</em></div></button>
+        <button type="button" class="admin-stat-button" data-admin-list="declined"><span>−</span><div><small>No asisten</small><strong>${declinedCount}</strong><em>Ver</em></div></button>
+        <button type="button" class="admin-stat-button" data-admin-list="unanswered"><span>?</span><div><small>Pendientes</small><strong>${unansweredCount}</strong><em>Ver</em></div></button>
+        <button type="button" class="admin-stat-button admin-combi-stat" data-admin-list="micro"><span>🚌</span><div><small>Micro</small><strong>${combiCount}</strong><em>Ver</em></div></button>
       </section>
       ${renderAdminPeopleModal()}
 
@@ -2124,7 +2284,7 @@
           <div>
             <p class="eyebrow">Ajuste discrecional</p>
             <h4>Sumar o restar puntos</h4>
-            <p>Elegí el equipo, el tipo de movimiento y la cantidad.</p>
+            <p>Carga rápida de puntos.</p>
           </div>
           <span id="adminScorePreview" class="admin-score-preview">Seleccioná un equipo</span>
         </div>
@@ -2181,19 +2341,30 @@
         <div>
           <p class="eyebrow">Lista oficial</p>
           <h4>Exportar confirmados para el salón</h4>
-          <p>Descarga solamente quienes confirmaron que asisten, con contacto, traslado, restricciones alimenticias, comentarios y preferencias disponibles.</p>
+          <p>Confirmados con contacto, traslado y restricciones.</p>
         </div>
         <button id="exportOfficialGuests" type="button">${uiIcon("download")}<span>Exportar CSV</span></button>
       </section>
 
-      <section class="section-card admin-game-controls admin-transport-control">
-        <div class="admin-game-controls-head"><div><p class="eyebrow">Casamiento</p><h4>Información de traslado</h4><p>Habilitá esta sección cuando quieras mostrar los datos del micro a todos los invitados.</p></div></div>
-        <div class="admin-game-toggle-list"><label class="admin-game-toggle ${transportInfoOpen ? "is-open" : ""}"><span><strong>Traslado en micro</strong><small>Mostrar u ocultar horarios, punto de encuentro y regreso.</small></span><input type="checkbox" data-unlock-key="transport-info" ${transportInfoOpen ? "checked" : ""}><i aria-hidden="true"></i><b>${transportInfoOpen ? "Habilitado" : "Oculto"}</b></label></div>
+      <section class="section-card admin-game-controls admin-section-controls">
+        <div class="admin-game-controls-head"><div><p class="eyebrow">Secciones</p><h4>Visibilidad</h4></div></div>
+        <div class="admin-game-toggle-list admin-two-toggle-list">
+          <label class="admin-game-toggle ${transportInfoOpen ? "is-open" : ""}">
+            <span><strong>Traslado</strong><small>Datos del micro.</small></span>
+            <input type="checkbox" data-unlock-key="transport-info" ${transportInfoOpen ? "checked" : ""}>
+            <i aria-hidden="true"></i><b>${transportInfoOpen ? "Visible" : "Oculto"}</b>
+          </label>
+          <label class="admin-game-toggle ${giftsSectionOpen ? "is-open" : ""}">
+            <span><strong>Regalos</strong><small>Sección del alias o CBU.</small></span>
+            <input type="checkbox" data-unlock-key="gifts-section" ${giftsSectionOpen ? "checked" : ""}>
+            <i aria-hidden="true"></i><b>${giftsSectionOpen ? "Visible" : "Oculto"}</b>
+          </label>
+        </div>
       </section>
 
       <section class="section-card admin-game-controls">
         <div class="admin-game-controls-head">
-          <div><p class="eyebrow">Juegos</p><h4>Bloquear o liberar</h4><p>Los cambios se aplican a todos los invitados al actualizar los datos.</p></div>
+          <div><p class="eyebrow">Juegos</p><h4>Disponibilidad</h4></div>
         </div>
         <div class="admin-game-toggle-list">
           ${[
@@ -2222,8 +2393,8 @@
           <div>
             <p class="eyebrow">Modo de pruebas</p>
             <h4>Resetear datos de prueba</h4>
-            <p>Limpia confirmaciones RSVP, formularios personales y respuestas de juegos para que los testers puedan completar todo nuevamente.</p>
-            <small>No borra invitados ni los puntos discrecionales cargados desde Admin.</small>
+            <p>Limpia RSVP, formularios y juegos.</p>
+            <small>No borra invitados ni puntos discrecionales.</small>
           </div>
         </div>
         <button id="resetTestData" type="button" class="admin-test-reset-button">Resetear RSVP y formularios</button>
@@ -2231,7 +2402,7 @@
 
       <section class="section-card admin-reset-panel">
         <h4>Reseteo de puntos</h4>
-        <p>Usalo únicamente cuando necesites volver atrás. No borra asistencias ni invitados.</p>
+        <p>No borra asistencias ni invitados.</p>
         <div class="admin-reset-actions">
           <button id="resetDiscretionaryPoints" type="button" class="danger-button">Resetear discrecionales</button>
           <button id="resetAllPoints" type="button" class="danger-button">Resetear todo el ranking</button>
@@ -2302,6 +2473,34 @@
     }
 
     if (route === "asistencia") {
+      const rsvpForm = $("#rsvpForm");
+      const updateDietField = () => {
+        if (!rsvpForm) return;
+        const choice = rsvpForm.querySelector('input[name="dietChoice"]:checked')?.value || "";
+        const label = rsvpForm.querySelector("[data-diet-detail]");
+        const textarea = rsvpForm.querySelector('textarea[name="diet"]');
+        if (!label || !textarea) return;
+
+        const disabled = choice === "no";
+        label.classList.toggle("is-disabled", disabled);
+        textarea.disabled = disabled;
+        textarea.required = choice === "si";
+
+        const helper = label.querySelector("small");
+        if (helper) {
+          helper.textContent = disabled
+            ? "No es necesario completar este campo."
+            : "Completalo únicamente si marcaste Sí.";
+        }
+
+        if (disabled) textarea.value = "";
+      };
+
+      rsvpForm?.querySelectorAll('input[name="dietChoice"]').forEach(input => {
+        input.addEventListener("change", updateDietField);
+      });
+      updateDietField();
+
       $("#editRsvp")?.addEventListener("click", () => {
         state.rsvpEditMode = true;
         saveState();
@@ -2320,8 +2519,31 @@
         const submitButton = form.querySelector('button[type="submit"]');
         const originalText = submitButton?.textContent || "Guardar asistencia";
         const values = Object.fromEntries(new FormData(form).entries());
+
+        if (!["si", "no"].includes(values.attendance)) {
+          toast("Elegí si vas a asistir.");
+          return;
+        }
+
+        if (!["si", "no"].includes(values.dietChoice)) {
+          toast("Indicá si tenés restricciones alimentarias.");
+          return;
+        }
+
+        const diet = values.dietChoice === "si"
+          ? String(values.diet || "").trim()
+          : "";
+
+        if (values.dietChoice === "si" && !diet) {
+          toast("Detallá la restricción alimentaria.");
+          form.querySelector('textarea[name="diet"]')?.focus();
+          return;
+        }
+
         const payload = {
           ...values,
+          diet,
+          comment: "",
           guestId: currentGuest.id,
           teamId: currentGuest.team,
           updatedAt: new Date().toISOString()
@@ -2595,6 +2817,33 @@
       $("#socialPostForm")?.addEventListener("submit", event => {
         event.preventDefault();
         submitSocialMessage(event.currentTarget, "");
+      });
+
+      $$("[data-social-emoji]").forEach(button => {
+        button.addEventListener("click", () => {
+          const form = button.closest("form");
+          const textarea = form?.querySelector('textarea[name="message"]');
+          if (!textarea) return;
+
+          const emoji = button.dataset.socialEmoji || "";
+          const start = textarea.selectionStart ?? textarea.value.length;
+          const end = textarea.selectionEnd ?? textarea.value.length;
+          textarea.value = `${textarea.value.slice(0, start)}${emoji}${textarea.value.slice(end)}`;
+          textarea.focus();
+          textarea.setSelectionRange(start + emoji.length, start + emoji.length);
+        });
+      });
+
+      $$("[data-social-gif-toggle]").forEach(button => {
+        button.addEventListener("click", () => {
+          const form = button.closest("form");
+          const field = form?.querySelector(".social-gif-field");
+          if (!field) return;
+          field.classList.toggle("hidden");
+          if (!field.classList.contains("hidden")) {
+            field.querySelector("input")?.focus();
+          }
+        });
       });
 
       $$('[data-social-reply]').forEach(button => {
@@ -2887,7 +3136,9 @@
       scheduleSilentSync();
       const featureMessage = key === "transport-info"
         ? (open ? "Información de traslado habilitada." : "Información de traslado oculta.")
-        : (open ? "Juego habilitado." : "Juego oculto.");
+        : key === "gifts-section"
+          ? (open ? "Sección Regalos habilitada." : "Sección Regalos oculta.")
+          : (open ? "Juego habilitado." : "Juego oculto.");
       toast(featureMessage);
       renderCurrentRoute();
     }));
@@ -2961,7 +3212,6 @@
       "Asistencia",
       "Traslado / micro",
       "Restricciones alimenticias",
-      "Comentario RSVP",
       "Canción que quiere escuchar",
       "Canción que no quiere escuchar",
       "Comida preferida",
@@ -2996,7 +3246,6 @@
           attendanceLabel(rsvp.attendance),
           transportLabel(rsvp.transport),
           rsvp.diet || "",
-          rsvp.comment || "",
           profile.songYes || "",
           profile.songNo || "",
           profile.favoriteFood || "",
@@ -3016,8 +3265,8 @@
   }
 
   function buildRsvpCsv() {
-    const header = ["guestId", "nombre", "apellido", "email", "telefono", "asistencia", "traslado", "restricciones", "comentario", "updatedAt"];
-    const rows = Object.entries(state.rsvps).map(([guestId, row]) => [guestId, row.firstName, row.lastName, row.email, row.phone, row.attendance, row.transport, row.diet, row.comment, row.updatedAt]);
+    const header = ["guestId", "nombre", "apellido", "email", "telefono", "asistencia", "traslado", "restricciones", "updatedAt"];
+    const rows = Object.entries(state.rsvps).map(([guestId, row]) => [guestId, row.firstName, row.lastName, row.email, row.phone, row.attendance, row.transport, row.diet, row.updatedAt]);
     return [header, ...rows].map(row => row.map(csvCell).join(",")).join("\n");
   }
 
