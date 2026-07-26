@@ -261,7 +261,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32426",
+      appVersion: "32427",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -833,13 +833,18 @@
     if (route === "ficha" || route === "juegos" || route === "info") route = "inicio";
     if (route === "torneo") route = "puntos";
 
-    const gameRoutes = ["musica", "trivia-pareja", "sorpresa", "trivia"];
+    const gameRoutes = ["musica", "trivia-pareja", "trivia-quien", "sorpresa", "trivia"];
     if (currentGuest && gameRoutes.includes(route) && !hasFinalRsvp(state.rsvps[currentGuest.id])) {
       toast("Primero confirmá tu asistencia por sí o por no.");
       route = "asistencia";
     }
 
-    const triviaTargets = { musica: "music-game", "trivia-pareja": "couple-trivia-game", sorpresa: "surprise-game" };
+    const triviaTargets = {
+      musica: "music-game",
+      "trivia-pareja": "couple-trivia-game",
+      "trivia-quien": "who-is-who-game",
+      sorpresa: "surprise-game"
+    };
     if (triviaTargets[route]) {
       triviaFocusTarget = triviaTargets[route];
       route = "trivia";
@@ -992,6 +997,7 @@
   const TRIVIA_GAME_DEFAULTS = {
     "trivia-music": true,
     "trivia-couple": true,
+    "trivia-who": true,
     "trivia-surprise": false,
     "transport-info": false,
     "gifts-section": false
@@ -999,36 +1005,85 @@
 
   const SAMPLE_COUPLE_QUESTIONS = [
     {
-      id: "met",
-      question: "¿Dónde se conocieron Vani y Fede?",
-      options: ["En el trabajo", "En la facultad", "En un viaje", "En una fiesta"],
-      answer: "En el trabajo"
+      id: "first-look",
+      question: "¿En qué lugar cruzaron miradas por primera vez?",
+      options: [
+        "En una merienda con amigos.",
+        "En el comedor de su primer trabajo.",
+        "En un boliche a las 3 de la mañana.",
+        "En una plaza tomando unos mates."
+      ],
+      answer: "En el comedor de su primer trabajo."
+    },
+    {
+      id: "first-date",
+      question: "¿Dónde fue la esperada primera cita?",
+      options: [
+        "En el cine.",
+        "En un restaurante elegante.",
+        "Tomando una merienda.",
+        "En una plaza."
+      ],
+      answer: "En el cine."
+    },
+    {
+      id: "shared-passion",
+      question: "Si pudieran armar las valijas hoy mismo, ¿cuál es la mayor pasión que comparten?",
+      options: [
+        "Viajar a cualquier rincón del mundo.",
+        "Trabajar hasta tarde.",
+        "Hacer deporte juntos.",
+        "Quedarse jugando juegos de mesa."
+      ],
+      answer: "Viajar a cualquier rincón del mundo."
     },
     {
       id: "dog",
-      question: "¿Cómo se llama su perro?",
-      options: ["Simba", "Milo", "Rocco", "Toto"],
-      answer: "Simba"
+      question: "¿Cómo se llama el integrante peludo de 4 patas que reina en la casa?",
+      options: ["Simba.", "Coco.", "Milo.", "Loki."],
+      answer: "Simba."
     },
     {
       id: "years",
-      question: "¿Cuántos años llevan juntos?",
-      options: ["7 años", "9 años", "11 años", "13 años"],
-      answer: "11 años"
-    },
-    {
-      id: "favorite",
-      question: "¿Qué actividad disfrutan especialmente juntos?",
-      options: ["Viajar", "Correr maratones", "Pescar", "Jugar al golf"],
-      answer: "Viajar"
-    },
-    {
-      id: "date",
-      question: "¿Cuál es la fecha del casamiento?",
-      options: ["24 de octubre de 2026", "17 de octubre de 2026", "24 de noviembre de 2026", "31 de octubre de 2026"],
-      answer: "24 de octubre de 2026"
+      question: "¿Cuántos años de paciencia, amor y aventuras llevan juntos?",
+      options: ["9 años.", "10 años.", "11 años.", "12 años."],
+      answer: "11 años."
     }
   ];
+
+  const WHO_IS_WHO_QUESTIONS = [
+    {
+      id: "lost-things",
+      question: "¿Quién es más probable que pierda las llaves o el celular?",
+      options: ["Vani", "Fede"],
+      answer: "Vani"
+    },
+    {
+      id: "movie-sleep",
+      question: "¿Quién es el primero en quedarse dormido en medio de una película?",
+      options: ["Vani", "Fede"],
+      answer: "Fede"
+    },
+    {
+      id: "exercise",
+      question: "Termina el día y llega la hora de moverse... ¿Quién es más probable que cumpla con la actividad física por la tarde?",
+      options: ["Vani", "Fede"],
+      answer: "Vani"
+    },
+    {
+      id: "masterchef",
+      question: "¿Quién es el MasterChef oficial de la casa?",
+      options: ["Vani", "Fede"],
+      answer: "Fede"
+    },
+    {
+      id: "organized",
+      question: "¿Quién es la persona más ordenada de la pareja?",
+      options: ["Vani", "Fede"],
+      answer: "Vani"
+    }
+  ];
+
 
   function isTriviaGameOpen(key) {
     if (Object.prototype.hasOwnProperty.call(state.manualUnlocks || {}, key)) {
@@ -1454,6 +1509,25 @@
           automatic: true
         });
       }
+      if (submission.gameId === "who-is-who-trivia-test") {
+        const bestScore = Math.max(
+          0,
+          Math.min(
+            WHO_IS_WHO_QUESTIONS.length,
+            Number(submission.bestScore ?? submission.score ?? 0)
+          )
+        );
+        const guest = getGuestById(submission.guestId);
+        entries.push({
+          timestamp: submission.updatedAt,
+          gameId: "auto-who-is-who-trivia",
+          teamId: submission.teamId,
+          points: bestScore * 20,
+          comment: `Trivia Vani o Fede completada · ${guest?.firstName || submission.guestId || "Invitado"} · ${bestScore * 20} puntos`,
+          automatic: true
+        });
+      }
+
     });
 
     return entries;
@@ -1605,7 +1679,12 @@
 
   function guestChallengeProgress(guest) {
     if (!isCompetitionGuest(guest)) return { completed: 0, total: 0, label: "Fuera de competencia" };
-    const checks = [hasCompletedRsvp(state.rsvps[guest.id]), Boolean(state.gameSubmissions[`${guest.id}::music-selection`]), Boolean(state.gameSubmissions[`${guest.id}::couple-trivia-test`])];
+    const checks = [
+      hasCompletedRsvp(state.rsvps[guest.id]),
+      Boolean(state.gameSubmissions[`${guest.id}::music-selection`]),
+      Boolean(state.gameSubmissions[`${guest.id}::couple-trivia-test`]),
+      Boolean(state.gameSubmissions[`${guest.id}::who-is-who-trivia-test`])
+    ];
     const completed = checks.filter(Boolean).length;
     return { completed, total: checks.length, label: `${completed} de ${checks.length} desafíos` };
   }
@@ -1693,10 +1772,12 @@
     const myPoints = calculateRanking().find(row => row.id === team.id)?.total || 0;
     const musicOpen = isTriviaGameOpen("trivia-music");
     const triviaOpen = isTriviaGameOpen("trivia-couple");
+    const whoTriviaOpen = isTriviaGameOpen("trivia-who");
     const surpriseOpen = isTriviaGameOpen("trivia-surprise");
     const musicDone = Boolean(triviaSubmission("music-selection"));
     const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
-    const currentGamesDone = rsvpDone && musicDone && triviaDone;
+    const whoTriviaDone = Boolean(triviaSubmission("who-is-who-trivia-test"));
+    const currentGamesDone = rsvpDone && musicDone && triviaDone && whoTriviaDone;
 
     return `
       ${pointsHubStyles()}
@@ -1728,16 +1809,28 @@
             locked:!musicOpen
           })}
           ${pointsAction({
-            icon:"❓",
-            title:"Trivia Vani y Fede",
+            icon:"🎯",
+            title:"¿Cuánto conocés a los novios?",
             text:triviaOpen
-              ? (triviaDone ? "Resultado cerrado." : "Una sola oportunidad.")
+              ? (triviaDone ? "Resultado cerrado." : "Cinco preguntas de opción múltiple.")
               : "Se habilitará más adelante.",
             done:triviaDone,
             route:"trivia-pareja",
             progressText:triviaOpen ? (triviaDone ? "Resultado final" : "Hasta 100 puntos") : "Bloqueado",
             editable:false,
             locked:!triviaOpen
+          })}
+          ${pointsAction({
+            icon:"⚖️",
+            title:"¿Quién es quién?",
+            text:whoTriviaOpen
+              ? (whoTriviaDone ? "Resultado cerrado." : "Elegí entre Vani o Fede.")
+              : "Se habilitará más adelante.",
+            done:whoTriviaDone,
+            route:"trivia-quien",
+            progressText:whoTriviaOpen ? (whoTriviaDone ? "Resultado final" : "Hasta 100 puntos") : "Bloqueado",
+            editable:false,
+            locked:!whoTriviaOpen
           })}
           ${pointsAction({
             icon:"🎁",
@@ -1853,11 +1946,30 @@
     const team = getTeam(currentGuest.team);
     const musicOpen = isTriviaGameOpen("trivia-music");
     const coupleOpen = isTriviaGameOpen("trivia-couple");
+    const whoOpen = isTriviaGameOpen("trivia-who");
     const surpriseOpen = isTriviaGameOpen("trivia-surprise");
     const musicSaved = triviaSubmission("music-selection");
     const triviaSaved = triviaSubmission("couple-trivia-test");
-    return `${triviaHubStyles()}${sectionHeader("sumá puntos", "Juegos de Vani y Fede", "Elegí una misión, participá y ayudá a tu equipo.")}<section class="trivia-prize-banner">${uiIcon("gift")}<div><strong>Habrá premios especiales</strong><p>Participar, acertar y jugar en equipo puede tener recompensa.</p></div></section><section class="trivia-game-list">${renderMusicGame(musicOpen,musicSaved,team)}${renderCoupleTrivia(coupleOpen,triviaSaved)}${renderSurpriseGame(surpriseOpen)}</section>`;
+    const whoSaved = triviaSubmission("who-is-who-trivia-test");
+
+    return `
+      ${triviaHubStyles()}
+      ${sectionHeader("sumá puntos", "Juegos de Vani y Fede", "Elegí una misión, participá y ayudá a tu equipo.")}
+      <section class="trivia-prize-banner">
+        ${uiIcon("gift")}
+        <div>
+          <strong>Habrá premios especiales</strong>
+          <p>Participar, acertar y jugar en equipo puede tener recompensa.</p>
+        </div>
+      </section>
+      <section class="trivia-game-list">
+        ${renderMusicGame(musicOpen, musicSaved, team)}
+        ${renderCoupleTrivia(coupleOpen, triviaSaved)}
+        ${renderWhoIsWhoTrivia(whoOpen, whoSaved)}
+        ${renderSurpriseGame(surpriseOpen)}
+      </section>`;
   }
+
 
   function renderMusicGame(open, saved, team) {
     if (!open) return renderLockedTriviaCard("01","La banda sonora","Dos canciones tendrán una misión especial.","trivia-music","music-game");
@@ -1882,17 +1994,174 @@
 
 
   function renderCoupleTrivia(open, saved) {
-    if (!open) return renderLockedTriviaCard("02","¿Cuánto sabés de los novios?","Preguntas, recuerdos y algunas trampas.","trivia-couple","couple-trivia-game");
-    if (saved) {
-      const earnedPoints = Math.max(0,Number(saved.earnedPoints ?? (Number(saved.score ?? saved.bestScore ?? 0)*20)));
-      return `<article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card is-completed"><div class="trivia-game-number">02</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status completed">Completada</span><h4>¿Cuánto sabés de Vani y Fede?</h4></div>${uiIcon("checkCircle","trivia-main-icon")}</div><p>Esta trivia se juega una sola vez. Tu participación ya quedó registrada y las preguntas no volverán a mostrarse.</p><div class="trivia-result trivia-result-final">${uiIcon("star")}<div><strong>${earnedPoints} puntos</strong><span>Resultado final obtenido para tu equipo</span></div></div></div></article>`;
+    if (!open) {
+      return renderLockedTriviaCard(
+        "02",
+        "¿Cuánto conocés a los novios?",
+        "Cinco preguntas sobre la historia de Vani y Fede.",
+        "trivia-couple",
+        "couple-trivia-game"
+      );
     }
-    return `<article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card"><div class="trivia-game-number">02</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status open">Una sola oportunidad</span><h4>¿Cuánto sabés de Vani y Fede?</h4></div>${uiIcon("question","trivia-main-icon")}</div><p>Respondé cinco preguntas sobre los novios. Cada acierto suma <strong>20 puntos</strong>: podés conseguir hasta <strong>100 puntos</strong> para tu equipo.</p><div class="trivia-points-rule">${uiIcon("star")}<span>Cuando envíes tus respuestas, el resultado quedará cerrado y no podrás volver a jugar.</span></div><form id="coupleTriviaForm" class="trivia-quiz-form">${SAMPLE_COUPLE_QUESTIONS.map((item,index)=>`<fieldset class="trivia-question"><legend><span>${String(index+1).padStart(2,"0")}</span>${escapeHTML(item.question)}</legend><div class="trivia-options">${item.options.map(option=>`<label><input type="radio" name="${item.id}" value="${escapeHTML(option)}" required><span>${escapeHTML(option)}</span></label>`).join("")}</div></fieldset>`).join("")}<button type="submit">Enviar respuestas</button></form></div></article>`;
+
+    if (saved) {
+      const earnedPoints = Math.max(
+        0,
+        Number(saved.earnedPoints ?? (Number(saved.score ?? saved.bestScore ?? 0) * 20))
+      );
+
+      return `
+        <article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card is-completed">
+          <div class="trivia-game-number">02</div>
+          <div class="trivia-game-content">
+            <div class="trivia-game-heading">
+              <div>
+                <span class="trivia-status completed">Completada</span>
+                <h4>¿Cuánto conocés a los novios?</h4>
+              </div>
+              ${uiIcon("checkCircle","trivia-main-icon")}
+            </div>
+            <p>Esta trivia se juega una sola vez. Tu participación ya quedó registrada.</p>
+            <div class="trivia-result trivia-result-final">
+              ${uiIcon("star")}
+              <div>
+                <strong>${earnedPoints} puntos</strong>
+                <span>Resultado final obtenido para tu equipo</span>
+              </div>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    return `
+      <article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card">
+        <div class="trivia-game-number">02</div>
+        <div class="trivia-game-content">
+          <div class="trivia-game-heading">
+            <div>
+              <span class="trivia-status open">Una sola oportunidad</span>
+              <h4>¿Cuánto conocés a los novios?</h4>
+            </div>
+            ${uiIcon("question","trivia-main-icon")}
+          </div>
+
+          <p>Respondé cinco preguntas. Cada acierto suma <strong>20 puntos</strong>: podés conseguir hasta <strong>100 puntos</strong> para tu equipo.</p>
+
+          <div class="trivia-points-rule">
+            ${uiIcon("star")}
+            <span>Cuando envíes las respuestas, el resultado quedará cerrado.</span>
+          </div>
+
+          <form id="coupleTriviaForm" class="trivia-quiz-form">
+            ${SAMPLE_COUPLE_QUESTIONS.map((item,index) => `
+              <fieldset class="trivia-question">
+                <legend>
+                  <span>${String(index + 1).padStart(2,"0")}</span>
+                  ${escapeHTML(item.question)}
+                </legend>
+                <div class="trivia-options">
+                  ${item.options.map(option => `
+                    <label>
+                      <input type="radio" name="${item.id}" value="${escapeHTML(option)}" required>
+                      <span>${escapeHTML(option)}</span>
+                    </label>
+                  `).join("")}
+                </div>
+              </fieldset>
+            `).join("")}
+            <button type="submit">Enviar respuestas</button>
+          </form>
+        </div>
+      </article>`;
   }
 
+
+  function renderWhoIsWhoTrivia(open, saved) {
+    if (!open) {
+      return renderLockedTriviaCard(
+        "03",
+        "¿Quién es quién? · Vani o Fede",
+        "Cinco situaciones para descubrir quién es quién.",
+        "trivia-who",
+        "who-is-who-game"
+      );
+    }
+
+    if (saved) {
+      const earnedPoints = Math.max(
+        0,
+        Number(saved.earnedPoints ?? (Number(saved.score ?? saved.bestScore ?? 0) * 20))
+      );
+
+      return `
+        <article id="who-is-who-game" class="trivia-game-card is-open trivia-quiz-card trivia-who-card is-completed">
+          <div class="trivia-game-number">03</div>
+          <div class="trivia-game-content">
+            <div class="trivia-game-heading">
+              <div>
+                <span class="trivia-status completed">Completada</span>
+                <h4>¿Quién es quién? · Vani o Fede</h4>
+              </div>
+              ${uiIcon("checkCircle","trivia-main-icon")}
+            </div>
+            <p>Esta trivia se juega una sola vez. Tu resultado ya quedó registrado.</p>
+            <div class="trivia-result trivia-result-final">
+              ${uiIcon("star")}
+              <div>
+                <strong>${earnedPoints} puntos</strong>
+                <span>Resultado final obtenido para tu equipo</span>
+              </div>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    return `
+      <article id="who-is-who-game" class="trivia-game-card is-open trivia-quiz-card trivia-who-card">
+        <div class="trivia-game-number">03</div>
+        <div class="trivia-game-content">
+          <div class="trivia-game-heading">
+            <div>
+              <span class="trivia-status open">Una sola oportunidad</span>
+              <h4>¿Quién es quién? · Vani o Fede</h4>
+            </div>
+            ${uiIcon("question","trivia-main-icon")}
+          </div>
+
+          <p>Elegí entre <strong>Vani</strong> o <strong>Fede</strong>. Cada acierto suma <strong>20 puntos</strong>: podés conseguir hasta <strong>100 puntos</strong>.</p>
+
+          <div class="trivia-points-rule">
+            ${uiIcon("star")}
+            <span>Cuando envíes las respuestas, el resultado quedará cerrado.</span>
+          </div>
+
+          <form id="whoIsWhoTriviaForm" class="trivia-quiz-form">
+            ${WHO_IS_WHO_QUESTIONS.map((item,index) => `
+              <fieldset class="trivia-question trivia-who-question">
+                <legend>
+                  <span>${String(index + 1).padStart(2,"0")}</span>
+                  ${escapeHTML(item.question)}
+                </legend>
+                <div class="trivia-options trivia-binary-options">
+                  ${item.options.map(option => `
+                    <label>
+                      <input type="radio" name="${item.id}" value="${escapeHTML(option)}" required>
+                      <span>${escapeHTML(option)}</span>
+                    </label>
+                  `).join("")}
+                </div>
+              </fieldset>
+            `).join("")}
+            <button type="submit">Enviar respuestas</button>
+          </form>
+        </div>
+      </article>`;
+  }
+
+
   function renderSurpriseGame(open) {
-    if (!open) return renderLockedTriviaCard("03","Juego sorpresa","La tercera misión sigue bajo llave.","trivia-surprise","surprise-game");
-    return `<article id="surprise-game" class="trivia-game-card is-open surprise-open"><div class="trivia-game-number">03</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status open">Liberado</span><h4>Una nueva misión se acerca</h4></div>${uiIcon("gift","trivia-main-icon")}</div><p>El candado fue abierto. La consigna completa aparecerá acá cuando esté lista para jugar.</p><div class="trivia-secret-note">Por ahora, mantenete atento y no le cuentes nada a los otros equipos.</div></div></article>`;
+    if (!open) return renderLockedTriviaCard("04","Juego sorpresa","La tercera misión sigue bajo llave.","trivia-surprise","surprise-game");
+    return `<article id="surprise-game" class="trivia-game-card is-open surprise-open"><div class="trivia-game-number">04</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status open">Liberado</span><h4>Una nueva misión se acerca</h4></div>${uiIcon("gift","trivia-main-icon")}</div><p>El candado fue abierto. La consigna completa aparecerá acá cuando esté lista para jugar.</p><div class="trivia-secret-note">Por ahora, mantenete atento y no le cuentes nada a los otros equipos.</div></div></article>`;
   }
 
   function renderLockedTriviaCard(number, title, text, key, elementId = "") {
@@ -1986,7 +2255,8 @@
   function gameName(id) {
     if (id === "auto-rsvp") return "Confirmación de asistencia";
     if (id === "auto-music-selection") return "Juego musical";
-    if (id === "auto-couple-trivia") return "Trivia Vani y Fede";
+    if (id === "auto-couple-trivia") return "¿Cuánto conocés a los novios?";
+    if (id === "auto-who-is-who-trivia") return "¿Quién es quién?";
     if (id === "discrecional-fede-vani") return "Puntos a discreción";
     if (["reset-discretionary-clear-marker", "reset-discrecional-fede-vani"].includes(id)) return "Limpieza de puntos discrecionales";
     if (["reset-total-clear-marker", "reset-total-fede-vani"].includes(id)) return "Limpieza general de puntos";
@@ -2500,8 +2770,9 @@
         <div class="admin-game-toggle-list">
           ${[
             { key: "trivia-music", title: "La banda sonora", text: "Canción para la boda y entrada del equipo." },
-            { key: "trivia-couple", title: "Trivia Vani y Fede", text: "Trivia de una sola oportunidad." },
-            { key: "trivia-surprise", title: "Juego sorpresa", text: "Tercera misión secreta." }
+            { key: "trivia-couple", title: "¿Cuánto conocés a los novios?", text: "Cinco preguntas de opción múltiple." },
+            { key: "trivia-who", title: "¿Quién es quién?", text: "Cinco preguntas Vani o Fede." },
+            { key: "trivia-surprise", title: "Juego sorpresa", text: "Próxima misión secreta." }
           ].map(game => {
             const open = isTriviaGameOpen(game.key);
             return `<label class="admin-game-toggle ${open ? "is-open" : ""}">
@@ -2942,7 +3213,78 @@
 
         toast(`Trivia completada: ${bestScore * 20} puntos.`);
         renderCurrentRoute();
-        });
+      });
+
+
+      $("#whoIsWhoTriviaForm")?.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const form = event.currentTarget;
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton?.textContent || "Enviar respuestas";
+        const key = `${currentGuest.id}::who-is-who-trivia-test`;
+
+        if (state.gameSubmissions[key]) {
+          toast("Esta trivia ya fue jugada. Podés ver tu resultado.");
+          renderCurrentRoute();
+          return;
+        }
+
+        const answers = Object.fromEntries(new FormData(form).entries());
+        const score = WHO_IS_WHO_QUESTIONS.reduce(
+          (total, question) =>
+            total + (answers[question.id] === question.answer ? 1 : 0),
+          0
+        );
+        const bestScore = score;
+
+        const payload = {
+          answers,
+          score,
+          bestScore,
+          earnedPoints: bestScore * 20,
+          maxScore: WHO_IS_WHO_QUESTIONS.length,
+          gameId: "who-is-who-trivia-test",
+          guestId: currentGuest.id,
+          teamId: currentGuest.team,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Guardando resultado…";
+        }
+
+        const savedRecord = await saveAndVerifyRemote(
+          "saveGameSubmission",
+          payload,
+          record => Boolean(
+            record &&
+            record.guestId === payload.guestId &&
+            record.gameId === payload.gameId &&
+            Number(record.bestScore ?? record.score ?? -1) === bestScore
+          )
+        );
+
+        if (!savedRecord) {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+          }
+          toast("El resultado no quedó guardado. Volvé a intentar.");
+          return;
+        }
+
+        state.gameSubmissions[key] = {
+          ...(state.gameSubmissions[key] || {}),
+          ...payload,
+          ...savedRecord
+        };
+        saveState();
+
+        toast(`Trivia completada: ${bestScore * 20} puntos.`);
+        renderCurrentRoute();
+      });
     }
 
 
