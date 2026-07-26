@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32423 · Fondo bordado minimalista en portada ===== */
+/* ===== v32424 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32423');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32424');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32423 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32424 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32423');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32424');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32423 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32424 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32423');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32424');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32423 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32424 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32423 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32424 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32423 · Inicio minimalista ===== */
+/* ===== v32424 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32423 · Navegación en menú hamburguesa ===== */
+/* ===== v32424 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32423 · UX universal 30–70 años ===== */
+/* ===== v32424 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32423 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32424 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32423 · Ajustes UX solicitados ===== */
+/* ===== v32424 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32423 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32424 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32423 · Reset seguro de datos de prueba ===== */
+/* ===== v32424 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32423 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32424 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32423 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32424 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32423 · Estados reales de guardado ===== */
+/* ===== v32424 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32423 · Guardado rápido ===== */
+/* ===== v32424 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32423 · Seguridad de Administración ===== */
+/* ===== v32424 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32423 · Mejoras integrales
+   v32424 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3134,7 +3134,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Optimización móvil, historial y vistas compactas
+   v32424 · Optimización móvil, historial y vistas compactas
    ============================================================ */
 .guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
 
@@ -3167,7 +3167,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · compactación móvil y refinamiento visual
+   v32424 · compactación móvil y refinamiento visual
    ============================================================ */
 
 /* Barra superior: inicial + nombre + casita + menú */
@@ -3499,7 +3499,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Ranking vertical y ajustes de espaciado
+   v32424 · Ranking vertical y ajustes de espaciado
    ============================================================ */
 
 /* Cuenta regresiva sin fecha fija */
@@ -3713,7 +3713,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Ranking ultra compacto y alineado
+   v32424 · Ranking ultra compacto y alineado
    ============================================================ */
 
 .ranking-summary-ultra {
@@ -3943,7 +3943,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Ranking corregido con clases aisladas
+   v32424 · Ranking corregido con clases aisladas
    ============================================================ */
 
 .vf-ranking-head {
@@ -4172,7 +4172,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Ranking equilibrado, menú sutil e invitados compactos
+   v32424 · Ranking equilibrado, menú sutil e invitados compactos
    ============================================================ */
 
 /* Botón hamburguesa apenas más chico */
@@ -4518,7 +4518,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Acciones del ranking al pie
+   v32424 · Acciones del ranking al pie
    ============================================================ */
 
 .vf18-ranking-title h3 {
@@ -4565,7 +4565,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Menú, Mi equipo, Social y Regalos
+   v32424 · Menú, Mi equipo, Social y Regalos
    ============================================================ */
 .menu-nav-clean{gap:8px!important}.menu-nav-clean .menu-group{gap:3px!important}.menu-nav-clean .menu-group+.menu-group{margin-top:5px;padding-top:10px;border-top:1px solid rgba(132,104,68,.15)}.menu-nav-clean .menu-group-admin{margin-top:5px!important;padding-top:10px!important}.menu-nav-clean .menu-group>p{display:none!important}
 .team-ranking-summary-button{display:grid!important;grid-template-columns:23px auto auto!important;gap:7px!important;align-items:center!important;width:auto!important;min-width:156px!important;min-height:43px!important;padding:7px 9px!important;border-radius:13px!important}.team-ranking-summary-icon{display:grid!important;place-items:center!important}.team-ranking-summary-icon .ui-icon{width:18px!important;height:18px!important}.team-ranking-summary-label{display:block!important;color:#fff!important;font-size:11px!important;font-weight:900!important}.team-ranking-summary-data{display:flex!important;align-items:center!important;gap:5px!important;padding-left:7px;border-left:1px solid rgba(255,255,255,.23)}.team-ranking-summary-data b,.team-ranking-summary-data em{display:block!important;color:#fff!important;font-style:normal;white-space:nowrap}.team-ranking-summary-data b{font-size:10px}.team-ranking-summary-data em{min-width:23px;padding:3px 5px;border-radius:999px;background:rgba(255,255,255,.16);font-size:9px;font-weight:900}
@@ -4574,7 +4574,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Coherencia tipográfica, RSVP y Admin compacto
+   v32424 · Coherencia tipográfica, RSVP y Admin compacto
    ============================================================ */
 
 #view .section-head {
@@ -4833,7 +4833,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Menú inferior persistente
+   v32424 · Menú inferior persistente
    ============================================================ */
 
 #mainScreen {
@@ -5168,7 +5168,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32423 · Refinamiento de navegación y asistencia
+   v32424 · Refinamiento de navegación y asistencia
    ============================================================ */
 
 /* Hamburguesa superior: exactamente tan compacta como Inicio */
@@ -5481,5 +5481,153 @@ body.admin-modal-open { overflow:hidden; }
 
   .rsvp-summary-grid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* ============================================================
+   v32424 · Ajustes de Inicio, Social, RSVP y Ranking
+   ============================================================ */
+
+/* Sin botón Inicio superior: hamburguesa ocupa el único acceso circular */
+#mainScreen .topbar-actions {
+  gap: 7px !important;
+}
+
+/* Formulario RSVP todavía más compacto */
+.rsvp-form-compact {
+  padding: 11px 12px !important;
+}
+.rsvp-form-compact .form-grid {
+  row-gap: 3px !important;
+  column-gap: 7px !important;
+}
+.rsvp-form-compact .form-grid > label {
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 2px !important;
+}
+.rsvp-form-compact .form-grid > label,
+.rsvp-form-compact .choice-field {
+  line-height: 1.08 !important;
+}
+.rsvp-form-compact .form-grid label,
+.rsvp-form-compact .choice-field legend {
+  font-size: 10.5px !important;
+}
+.rsvp-form-compact input,
+.rsvp-form-compact select {
+  min-height: 36px !important;
+  height: 36px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+.rsvp-form-compact .choice-field legend {
+  margin-bottom: 3px !important;
+}
+.rsvp-form-compact .choice-group {
+  gap: 5px !important;
+}
+.rsvp-form-compact .choice-pill {
+  min-height: 35px !important;
+  padding: 6px 7px !important;
+}
+.rsvp-form-compact .diet-detail-label {
+  margin-top: 4px !important;
+  padding: 8px !important;
+}
+.rsvp-form-compact .diet-detail-label textarea {
+  min-height: 56px !important;
+}
+.rsvp-form-actions {
+  margin-top: 6px !important;
+}
+
+/* Mensajes ya publicados: texto y emojis más legibles */
+.social-post-text {
+  font-size: 14px !important;
+  line-height: 1.48 !important;
+}
+.social-reply-body p {
+  font-size: 12px !important;
+  line-height: 1.46 !important;
+}
+.social-sent-emoji {
+  display: inline-block;
+  margin: 0 .03em;
+  font-size: 1.25em;
+  line-height: .9;
+  vertical-align: -.08em;
+}
+
+/* Acceso Social al pie del Ranking */
+.ranking-social-card {
+  width: 100%;
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 32px minmax(0,1fr) 12px;
+  gap: 9px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  border-color: rgba(116,51,68,.22);
+  background: linear-gradient(135deg,rgba(116,51,68,.055),rgba(255,253,248,.88));
+  color: var(--ink);
+  text-align: left;
+  box-shadow: none;
+}
+.ranking-social-card > span {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(116,51,68,.09);
+  color: #743344;
+}
+.ranking-social-card .ui-icon {
+  width: 17px;
+  height: 17px;
+}
+.ranking-social-card strong {
+  display: block;
+  font-size: 11px;
+}
+.ranking-social-card small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.25;
+}
+.ranking-social-card > b {
+  color: var(--muted);
+  font-size: 19px;
+  font-weight: 500;
+}
+
+/* Lo esencial ahora tiene seis elementos: mantiene buen ritmo */
+.home-essential-card {
+  overflow: hidden;
+}
+.home-essential-row {
+  min-height: 57px;
+}
+.home-essential-row .home-essential-icon {
+  flex: 0 0 auto;
+}
+
+@media(max-width:600px) {
+  .rsvp-form-compact .form-grid {
+    row-gap: 2px !important;
+  }
+
+  .social-post-text {
+    font-size: 13.5px !important;
+  }
+
+  .social-reply-body p {
+    font-size: 11.5px !important;
   }
 }

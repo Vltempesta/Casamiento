@@ -261,7 +261,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32423",
+      appVersion: "32424",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -926,6 +926,7 @@
       pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
       bus: '<rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 7h8"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/>',
       dress: '<path d="M10 3h4l1 4-2 2 4 11H7l4-11-2-2 1-4Z"/><path d="M9 7h6"/>',
+      food: '<path d="M7 3v7M4.5 3v4.5A2.5 2.5 0 0 0 7 10M9.5 3v4.5A2.5 2.5 0 0 1 7 10v11"/><path d="M15 3v18"/><path d="M15 3c3.2 0 5 2.1 5 5.2 0 3.2-1.8 5.3-5 5.3"/>',
       calendarPlus: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/>',
       checkCircle: '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.6 2.6L16.5 9"/>',
       ranking: '<path d="M5 20V10h4v10"/><path d="M10 20V4h4v16"/><path d="M15 20v-7h4v7"/>',
@@ -1046,6 +1047,7 @@
     const rsvpDone = hasFinalRsvp(rsvp);
     const locationOpen = isUnlocked("location");
     const menuOpen = isUnlocked("menu");
+    const giftsOpen = isTriviaGameOpen("gifts-section");
     const rank = calculateRanking();
     const myRank = rank.findIndex(row => row.id === team.id) + 1;
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
@@ -1101,9 +1103,10 @@
         <div class="home-essential-card">
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("calendar")}</span><div><small>Fecha</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div></article>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Próximamente compartiremos toda la información.</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("dress")}</span><div><small>Vestimenta</small><strong>Elegante sport</strong><p>Habrá pasto: elegí calzado cómodo.</p></div></article>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Menú</small><strong>${menuOpen ? "Menú habilitado" : "Próximamente"}</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Cargá tus restricciones en Asistencia."}</p></div></article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("food")}</span><div><small>Menú</small><strong>${menuOpen ? "Menú habilitado" : "Próximamente"}</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Cargá tus restricciones en Asistencia."}</p></div></article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Indicá en Asistencia si te interesa el servicio.</p></div></article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Regalos</small><strong>${giftsOpen ? "Información disponible" : "Próximamente"}</strong><p>${giftsOpen ? "Ingresá a Regalos para ver la información." : "La sección se habilitará más adelante."}</p></div></article>
         </div>
       </section>
 
@@ -1872,7 +1875,13 @@
             <span>Sumá puntos</span>
           </button>
         </div>
-      </section>`;
+      </section>
+
+      <button type="button" class="ranking-social-card section-card" data-go="social">
+        <span>${uiIcon("chat")}</span>
+        <div><strong>Social</strong><small>Chateá con los demás equipos y contales quién va a ganar.</small></div>
+        <b aria-hidden="true">›</b>
+      </button>`;
   }
 
   function vf18RankRow(row, index) {
@@ -1949,6 +1958,14 @@
       </div>`;
   }
 
+  function formatSocialMessage(value) {
+    const safe = escapeHTML(String(value || ""));
+    return safe.replace(
+      /(\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/gu,
+      '<span class="social-sent-emoji">$1</span>'
+    );
+  }
+
   function socialReplyMarkup(reply) {
     const author = socialAuthor(reply);
     return `
@@ -1960,7 +1977,7 @@
             <span>${teamLogo(author.team, "social-team-logo")} ${escapeHTML(author.team.name)}</span>
             <time>${escapeHTML(formatSocialDate(reply.timestamp || reply.updatedAt || reply.submittedAt))}</time>
           </div>
-          <p>${escapeHTML(reply.message || "")}</p>
+          <p>${formatSocialMessage(reply.message || "")}</p>
         </div>
       </article>`;
   }
@@ -1981,7 +1998,7 @@
           <time>${escapeHTML(formatSocialDate(post.timestamp || post.updatedAt || post.submittedAt))}</time>
         </header>
 
-        <p class="social-post-text">${escapeHTML(post.message || "")}</p>
+        <p class="social-post-text">${formatSocialMessage(post.message || "")}</p>
 
         <footer class="social-post-footer">
           <button type="button" class="social-reply-toggle" data-social-reply="${escapeHTML(post.messageId)}">${uiIcon("chat")}<span>Responder</span></button>
@@ -2896,6 +2913,49 @@
   }
 
   function bindAdminEvents() {
+
+    $("#clearSocialMessages")?.addEventListener("click", async event => {
+      const button = event.currentTarget;
+      const currentMessages = dedupeSocialMessages(state.socialMessages || []);
+
+      if (!currentMessages.length) {
+        toast("La sección Social ya está vacía.");
+        return;
+      }
+
+      if (!confirm("¿Vaciar todos los mensajes y respuestas de Social? Esta acción no se puede deshacer.")) {
+        return;
+      }
+
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = "Vaciando…";
+
+      const result = await writeToSheets("clearSocialMessages", {
+        adminPassword: state.adminPassword,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!result) {
+        button.disabled = false;
+        button.textContent = originalText;
+        toast("No se pudieron borrar los mensajes.");
+        return;
+      }
+
+      state.socialMessages = [];
+      saveState();
+
+      await syncFromSheets(false);
+
+      state.socialMessages = [];
+      saveState();
+
+      toast("Se borraron todos los mensajes y respuestas.");
+      renderCurrentRoute();
+    });
+
+
     $("#adminLoginForm")?.addEventListener("submit", event => {
       event.preventDefault();
       const form = event.currentTarget;
