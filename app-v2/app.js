@@ -37,6 +37,7 @@
     gameSubmissions: {},
     scoreEntries: [],
     socialMessages: [],
+    socialLikes: {},
     manualUnlocks: {},
     dataResetAt: null,
     lastSyncAt: null,
@@ -261,7 +262,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32427",
+      appVersion: "32429",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -372,6 +373,63 @@
     return Array.from(byId.values());
   }
 
+
+  function socialLikeKey(messageId, guestId) {
+    return `${String(messageId || "")}::${String(guestId || "")}`;
+  }
+
+  function activeSocialLikes() {
+    return Object.values(state.socialLikes || {}).filter(like =>
+      like &&
+      (like.active === true || String(like.active).toUpperCase() === "TRUE")
+    );
+  }
+
+  function socialLikeCount(messageId) {
+    return activeSocialLikes().filter(like => like.messageId === messageId).length;
+  }
+
+  function currentGuestLikesMessage(messageId) {
+    if (!currentGuest?.id) return false;
+    const record = state.socialLikes?.[socialLikeKey(messageId, currentGuest.id)];
+    return Boolean(
+      record &&
+      (record.active === true || String(record.active).toUpperCase() === "TRUE")
+    );
+  }
+
+  function socialEngagementPosts(limit = 3) {
+    const messages = dedupeSocialMessages(state.socialMessages || []);
+    const roots = messages.filter(message => !message.parentId);
+
+    const replyCounts = messages.reduce((counts, message) => {
+      if (message.parentId) {
+        counts[message.parentId] = (counts[message.parentId] || 0) + 1;
+      }
+      return counts;
+    }, {});
+
+    return roots
+      .map(post => ({
+        post,
+        likes: socialLikeCount(post.messageId),
+        replies: replyCounts[post.messageId] || 0
+      }))
+      .filter(item => item.likes > 0 || item.replies > 0)
+      .sort((a, b) =>
+        (b.likes + b.replies) - (a.likes + a.replies) ||
+        b.likes - a.likes ||
+        b.replies - a.replies ||
+        socialMessageTime(b.post) - socialMessageTime(a.post)
+      )
+      .slice(0, limit);
+  }
+
+  function socialMessageExcerpt(value, length = 90) {
+    const text = String(value || "").trim();
+    return text.length > length ? `${text.slice(0, length).trim()}…` : text;
+  }
+
   function newSocialMessageId() {
     if (window.crypto?.randomUUID) return window.crypto.randomUUID();
     return `social-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -417,6 +475,9 @@
     if (Array.isArray(remote.scoreEntries)) state.scoreEntries = dedupeScores([...state.scoreEntries, ...remote.scoreEntries]);
     if (Array.isArray(remote.socialMessages)) {
       state.socialMessages = dedupeSocialMessages(remote.socialMessages);
+    }
+    if (remote.socialLikes && typeof remote.socialLikes === "object") {
+      state.socialLikes = { ...remote.socialLikes };
     }
     if (remote.manualUnlocks && typeof remote.manualUnlocks === "object") state.manualUnlocks = { ...state.manualUnlocks, ...remote.manualUnlocks };
     state.lastSyncAt = new Date().toISOString();
@@ -928,6 +989,8 @@
       hourglass: '<path d="M6 3h12M6 21h12"/><path d="M8 3c0 4 1.4 5.7 4 7 2.6-1.3 4-3 4-7"/><path d="M8 21c0-4 1.4-5.7 4-7 2.6 1.3 4 3 4 7"/>',
       star: '<path d="M12 3 14.6 8.3 20.5 9.2 16.2 13.3 17.2 19.2 12 16.4 6.8 19.2 7.8 13.3 3.5 9.2 9.4 8.3 12 3Z"/>',
       calendar: '<path d="M8 3h8"/><path d="M9 2v3M15 2v3"/><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="M8 13h3M8 16h5"/>',
+      calendarCheck: '<path d="M8 3h8"/><path d="M9 2v3M15 2v3"/><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="m8 14 2.2 2.2L16 11"/>',
+      heart: '<path d="M20.8 5.8a5.1 5.1 0 0 0-7.2 0L12 7.4l-1.6-1.6a5.1 5.1 0 0 0-7.2 7.2L12 21l8.8-8a5.1 5.1 0 0 0 0-7.2Z"/>',
       pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
       bus: '<rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 7h8"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/>',
       dress: '<path d="M10 3h4l1 4-2 2 4 11H7l4-11-2-2 1-4Z"/><path d="M9 7h6"/>',
@@ -1118,7 +1181,7 @@
 
     let primaryAction;
     if (!rsvpDone) {
-      primaryAction = { tone: "pending", icon: "mail", kicker: "Tu próximo paso", title: "Confirmá tu asistencia", text: `Respondé antes del ${deadline}.`, button: "Confirmar asistencia", attr: 'data-go="asistencia"' };
+      primaryAction = { tone: "pending", icon: "calendarCheck", kicker: "Tu próximo paso", title: "Confirmá tu asistencia", text: `Respondé antes del ${deadline}.`, button: "Confirmar asistencia", attr: 'data-go="asistencia"' };
     } else if (eventDay) {
       primaryAction = { tone: "today", icon: "sparkle", kicker: "Hoy es el gran día", title: "Todo listo para celebrar", text: "Revisá la información clave antes de salir.", button: "Ver lo esencial", attr: 'data-scroll="homeEssential"' };
     } else if (nearEvent) {
@@ -2182,6 +2245,56 @@
     </style>`;
   }
 
+  function renderRankingSocialHighlights() {
+    const highlights = socialEngagementPosts(3);
+
+    if (!highlights.length) {
+      return `
+        <section class="ranking-social-highlights section-card">
+          <div class="ranking-social-highlights-head">
+            <span>${uiIcon("heart")}</span>
+            <div>
+              <p class="eyebrow">Social</p>
+              <h4>Mensajes destacados</h4>
+            </div>
+          </div>
+          <p class="ranking-social-empty">Todavía no hay mensajes con likes o respuestas.</p>
+          <button type="button" data-go="social">Ir a Social</button>
+        </section>`;
+    }
+
+    return `
+      <section class="ranking-social-highlights section-card">
+        <div class="ranking-social-highlights-head">
+          <span>${uiIcon("heart")}</span>
+          <div>
+            <p class="eyebrow">Social</p>
+            <h4>Mensajes destacados</h4>
+          </div>
+        </div>
+
+        <div class="ranking-social-highlight-list">
+          ${highlights.map((item, index) => {
+            const author = socialAuthor(item.post);
+            return `
+              <button type="button" class="ranking-social-highlight" data-go="social">
+                <span class="ranking-social-highlight-position">${index + 1}</span>
+                <span class="ranking-social-highlight-avatar">${escapeHTML(author.initial)}</span>
+                <span class="ranking-social-highlight-copy">
+                  <strong>${escapeHTML(author.name)} · ${escapeHTML(author.team.name)}</strong>
+                  <small>${escapeHTML(socialMessageExcerpt(item.post.message))}</small>
+                </span>
+                <span class="ranking-social-highlight-stats">
+                  <b>${uiIcon("heart")}${item.likes}</b>
+                  <b>${uiIcon("chat")}${item.replies}</b>
+                </span>
+              </button>`;
+          }).join("")}
+        </div>
+      </section>`;
+  }
+
+
   function renderRanking() {
     const ranking = calculateRanking();
 
@@ -2215,7 +2328,9 @@
         <span>${uiIcon("chat")}</span>
         <div><strong>Social</strong><small>Chateá con los demás equipos y contales quién va a ganar.</small></div>
         <b aria-hidden="true">›</b>
-      </button>`;
+      </button>
+
+      ${renderRankingSocialHighlights()}`;
   }
 
   function vf18RankRow(row, index) {
@@ -2319,6 +2434,8 @@
 
   function socialPostMarkup(post, replies) {
     const author = socialAuthor(post);
+    const likeCount = socialLikeCount(post.messageId);
+    const liked = currentGuestLikesMessage(post.messageId);
 
     return `
       <article class="social-post section-card" style="--social-accent:${author.team.accent}">
@@ -2336,7 +2453,23 @@
         <p class="social-post-text">${formatSocialMessage(post.message || "")}</p>
 
         <footer class="social-post-footer">
-          <button type="button" class="social-reply-toggle" data-social-reply="${escapeHTML(post.messageId)}">${uiIcon("chat")}<span>Responder</span></button>
+          <div class="social-post-actions">
+            <button
+              type="button"
+              class="social-like-button ${liked ? "is-liked" : ""}"
+              data-social-like="${escapeHTML(post.messageId)}"
+              aria-pressed="${liked ? "true" : "false"}">
+              ${uiIcon("heart")}
+              <span>${liked ? "Te gusta" : "Me gusta"}</span>
+              <b>${likeCount}</b>
+            </button>
+
+            <button type="button" class="social-reply-toggle" data-social-reply="${escapeHTML(post.messageId)}">
+              ${uiIcon("chat")}
+              <span>Responder</span>
+            </button>
+          </div>
+
           <small>${replies.length ? `${replies.length} ${replies.length === 1 ? "respuesta" : "respuestas"}` : "Sé el primero en responder"}</small>
         </footer>
 
@@ -2352,6 +2485,7 @@
         ${replies.length ? `<div class="social-replies">${replies.map(socialReplyMarkup).join("")}</div>` : ""}
       </article>`;
   }
+
 
   function renderSocial() {
     const messages = dedupeSocialMessages(state.socialMessages || []);
@@ -3289,6 +3423,57 @@
 
 
     if (route === "social") {
+
+      $$("[data-social-like]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const messageId = button.dataset.socialLike;
+          if (!messageId || !currentGuest?.id) return;
+
+          const key = socialLikeKey(messageId, currentGuest.id);
+          const previous = state.socialLikes?.[key] || null;
+          const active = !currentGuestLikesMessage(messageId);
+          const payload = {
+            messageId,
+            guestId: currentGuest.id,
+            guestName: guestFullName(currentGuest),
+            teamId: currentGuest.team,
+            active,
+            updatedAt: new Date().toISOString()
+          };
+
+          button.disabled = true;
+          state.socialLikes = {
+            ...(state.socialLikes || {}),
+            [key]: payload
+          };
+          saveState();
+          renderCurrentRoute();
+
+          const result = await writeToSheets("saveSocialLike", payload);
+
+          if (!result?.record) {
+            const nextLikes = { ...(state.socialLikes || {}) };
+            if (previous) nextLikes[key] = previous;
+            else delete nextLikes[key];
+            state.socialLikes = nextLikes;
+            saveState();
+            renderCurrentRoute();
+            toast("No se pudo guardar el Me gusta.");
+            return;
+          }
+
+          state.socialLikes = {
+            ...(state.socialLikes || {}),
+            [key]: {
+              ...payload,
+              ...result.record
+            }
+          };
+          saveState();
+          renderCurrentRoute();
+        });
+      });
+
       $("#refreshSocial")?.addEventListener("click", async event => {
         const button = event.currentTarget;
         button.disabled = true;
