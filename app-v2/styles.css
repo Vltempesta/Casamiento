@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32414 · Fondo bordado minimalista en portada ===== */
+/* ===== v32415 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32414');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32415');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32414 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32415 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32414');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32415');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32414 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32415 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32414');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32415');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32414 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32415 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32414 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32415 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32414 · Inicio minimalista ===== */
+/* ===== v32415 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32414 · Navegación en menú hamburguesa ===== */
+/* ===== v32415 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32414 · UX universal 30–70 años ===== */
+/* ===== v32415 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32414 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32415 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32414 · Ajustes UX solicitados ===== */
+/* ===== v32415 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32414 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32415 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32414 · Reset seguro de datos de prueba ===== */
+/* ===== v32415 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32414 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32415 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32414 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32415 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32414 · Estados reales de guardado ===== */
+/* ===== v32415 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32414 · Guardado rápido ===== */
+/* ===== v32415 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32414 · Seguridad de Administración ===== */
+/* ===== v32415 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32414 · Mejoras integrales
+   v32415 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3134,7 +3134,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32414 · Optimización móvil, historial y vistas compactas
+   v32415 · Optimización móvil, historial y vistas compactas
    ============================================================ */
 .guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
 
@@ -3167,7 +3167,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32414 · compactación móvil y refinamiento visual
+   v32415 · compactación móvil y refinamiento visual
    ============================================================ */
 
 /* Barra superior: inicial + nombre + casita + menú */
@@ -3494,5 +3494,219 @@ body.admin-modal-open { overflow:hidden; }
   }
   .admin-team-picker {
     grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  }
+}
+
+
+/* ============================================================
+   v32415 · Ranking vertical y ajustes de espaciado
+   ============================================================ */
+
+/* Cuenta regresiva sin fecha fija */
+.home-countdown-v2 {
+  grid-template-columns: 74px minmax(0,1fr) !important;
+}
+.home-countdown-copy {
+  display: grid !important;
+  place-items: center !important;
+  min-height: 54px !important;
+  padding-right: 12px !important;
+}
+.home-countdown-copy span {
+  font-size: 11px !important;
+  letter-spacing: .16em !important;
+}
+
+/* Ranking vertical */
+.ranking-summary-card {
+  padding: 13px 14px !important;
+}
+.ranking-summary-card > div:first-child {
+  min-width: 0;
+}
+.ranking-action-buttons {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.ranking-action-buttons button {
+  min-height: 36px !important;
+  padding: 7px 12px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  box-shadow: 0 6px 14px rgba(42,35,26,.08) !important;
+}
+.ranking-refresh-button {
+  background: linear-gradient(135deg,#4a6e87,#35546b) !important;
+  color: #fff !important;
+}
+.ranking-points-button {
+  background: linear-gradient(135deg,#e6c777,#cfa34b) !important;
+  color: #2c2114 !important;
+}
+.ranking-list-compact {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+.rank-item-compact {
+  width: 100% !important;
+  min-height: 58px !important;
+  display: grid !important;
+  grid-template-columns: 28px 42px minmax(0,1fr) 58px !important;
+  gap: 10px !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  border-radius: 15px !important;
+}
+.rank-item-compact .rank-pos {
+  width: 28px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: var(--gold-deep) !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+.rank-logo-wrap {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(255,255,255,.45);
+}
+.rank-item-compact .rank-team-logo {
+  width: 38px !important;
+  height: 38px !important;
+  display: block !important;
+}
+.rank-team-copy {
+  min-width: 0;
+  display: block;
+  text-align: left;
+}
+.rank-team-copy strong {
+  display: block;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px !important;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-team-copy small {
+  display: block !important;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 8px !important;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.rank-item-compact .rank-points {
+  min-width: 58px;
+  display: grid;
+  justify-items: end;
+}
+.rank-item-compact .rank-points b {
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+.rank-item-compact .rank-points small {
+  margin-top: 2px;
+  font-size: 8px !important;
+}
+.rank-item-compact.is-my-team {
+  box-shadow: 0 0 0 2px rgba(116,51,68,.16), 0 8px 18px rgba(42,35,26,.07) !important;
+}
+
+/* Invitados y Mi equipo: avatar separado del texto */
+.guest-pill {
+  grid-template-columns: 42px minmax(0,1fr) !important;
+  gap: 12px !important;
+  align-items: center !important;
+  padding: 9px 10px !important;
+}
+.guest-pill-avatar {
+  width: 42px !important;
+  height: 42px !important;
+  display: grid !important;
+  place-items: center !important;
+  align-self: start;
+}
+.guest-person-initial {
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 18px !important;
+}
+.guest-pill-copy {
+  min-width: 0 !important;
+  padding-left: 1px;
+}
+.guest-pill-copy > strong {
+  display: block;
+  overflow: hidden;
+  font-size: 13px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.guest-pill-copy > small {
+  display: block;
+  margin-top: 2px;
+}
+
+/* Mobile */
+@media(max-width:700px) {
+  .ranking-summary-card {
+    display: block !important;
+  }
+  .ranking-summary-card > div:first-child {
+    margin-bottom: 10px !important;
+  }
+  .ranking-action-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .ranking-action-buttons button {
+    width: 100%;
+    justify-content: center;
+  }
+  .rank-item-compact {
+    grid-template-columns: 26px 40px minmax(0,1fr) 52px !important;
+    gap: 9px !important;
+    min-height: 55px !important;
+    padding: 7px 10px !important;
+  }
+  .rank-logo-wrap {
+    width: 40px;
+    height: 40px;
+  }
+  .rank-item-compact .rank-team-logo {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .rank-team-copy strong {
+    font-size: 13px !important;
+  }
+  .rank-item-compact .rank-points {
+    min-width: 52px;
+  }
+  .rank-item-compact .rank-points b {
+    font-size: 18px !important;
+  }
+  .guest-pill {
+    grid-template-columns: 40px minmax(0,1fr) !important;
+    gap: 11px !important;
+  }
+  .guest-pill-avatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  .guest-person-initial {
+    width: 36px !important;
+    height: 36px !important;
   }
 }

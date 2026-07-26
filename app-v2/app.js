@@ -260,7 +260,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32414",
+      appVersion: "32415",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1012,7 +1012,6 @@
       <section id="homeCountdown" class="home-countdown-v2" aria-label="Cuenta regresiva para el casamiento">
         <div class="home-countdown-copy">
           <span id="countdownLabel">Faltan</span>
-          <strong>24 · 10 · 2026</strong>
         </div>
         <div class="home-countdown-values-v2">
           <span><strong id="countdownDays">—</strong><small>días</small></span>
@@ -1720,7 +1719,20 @@
     const team = getTeam(row.id);
     const ownTeam = currentGuest?.team === team.id;
     const leading = index === 0 && Number(row.total || 0) > 0;
-    return `<button type="button" class="rank-item rank-item-button rank-item-compact ${ownTeam ? "is-my-team" : ""} ${leading ? "is-leading" : ""}" data-team-open="${team.id}" style="--local-accent:${team.accent}" aria-label="Abrir equipo ${escapeHTML(team.name)}"><span class="rank-pos">${leading ? "♛" : index + 1}</span>${teamLogo(team,"rank-team-logo")}<strong>${escapeHTML(team.name)}${ownTeam ? `<small>Tu equipo</small>` : ""}</strong><span class="rank-points"><b>${row.total}</b><small>pts</small></span></button>`;
+    return `
+      <button type="button"
+        class="rank-item rank-item-button rank-item-compact ${ownTeam ? "is-my-team" : ""} ${leading ? "is-leading" : ""}"
+        data-team-open="${team.id}"
+        style="--local-accent:${team.accent}"
+        aria-label="Abrir equipo ${escapeHTML(team.name)}">
+        <span class="rank-pos">${leading ? "♛" : index + 1}</span>
+        <span class="rank-logo-wrap">${teamLogo(team,"rank-team-logo")}</span>
+        <span class="rank-team-copy">
+          <strong>${escapeHTML(team.name)}</strong>
+          ${ownTeam ? `<small>Tu equipo</small>` : ""}
+        </span>
+        <span class="rank-points"><b>${row.total}</b><small>pts</small></span>
+      </button>`;
   }
 
   function calculateRanking() {
