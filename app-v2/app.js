@@ -174,6 +174,7 @@
     if (!wanted) return null;
 
     const exactMatches = DATA.guests.filter(guest => {
+      if (!isCompetitionGuest(guest)) return false;
       const keys = [
         guest.id,
         guestFullName(guest),
@@ -194,6 +195,7 @@
 
     return DATA.guests
       .filter(guest => {
+        if (!isCompetitionGuest(guest)) return false;
         const firstName = normalize(guest.firstName);
         const lastName = normalize(guest.lastName);
         const fullName = normalize(guestFullName(guest));
@@ -258,7 +260,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32412",
+      appVersion: "32413",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -452,16 +454,58 @@
     }, 3600);
   }
 
+  function basePageUrl() {
+    return `${location.pathname}${location.search}`;
+  }
+
   function boot() {
     setRemoteStatus(isConfigured() ? "connecting" : "idle");
+    history.replaceState({ screen: "login" }, "", basePageUrl());
     fillGuestSuggestions();
     configureNavigation();
     bindShellEvents();
+    window.addEventListener("popstate", handleBrowserNavigation);
+
     if (state.currentGuestId) {
       const guest = getGuestById(state.currentGuestId);
-      if (guest) enterApp(guest, false);
+      if (guest && isCompetitionGuest(guest)) enterApp(guest, false, "push");
     }
     syncFromSheets(false);
+  }
+
+  function applyGuestShell(guest) {
+    currentGuest = guest;
+    const team = getTeam(guest.team);
+    document.documentElement.style.setProperty("--team-accent", team.accent || "#c8a75d");
+    $("#loginScreen").classList.add("hidden");
+    $("#mainScreen").classList.remove("hidden");
+    $("#welcomeTitle").textContent = guest.firstName || guestFullName(guest);
+    $("#welcomeInitial").textContent = (guest.firstName || guest.lastName || "V").charAt(0).toUpperCase();
+  }
+
+  function showLandingFromHistory() {
+    closeMenu();
+    currentGuest = null;
+    $("#mainScreen").classList.add("hidden");
+    $("#loginScreen").classList.remove("hidden");
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }
+
+  function handleBrowserNavigation(event) {
+    const destination = event.state || { screen: "login" };
+    if (destination.screen !== "app") {
+      showLandingFromHistory();
+      return;
+    }
+
+    const guest = getGuestById(destination.guestId || state.currentGuestId);
+    if (!guest || !isCompetitionGuest(guest)) {
+      showLandingFromHistory();
+      return;
+    }
+
+    applyGuestShell(guest);
+    navigate(destination.route || "inicio", { historyMode: "none", fromHistory: true });
   }
 
   function fillGuestSuggestions() {
@@ -510,14 +554,11 @@
 
       panel.innerHTML = suggestionMatches.map((guest, index) => {
         const fullName = guestFullName(guest);
-        const alias = normalize(guest.alias) && normalize(guest.alias) !== normalize(guest.firstName)
-          ? `También figura como “${escapeHTML(guest.alias)}”`
-          : "Invitación personal";
         const initial = escapeHTML((guest.firstName || guest.lastName || "V").charAt(0).toUpperCase());
         return `
-          <button id="guest-option-${index}" class="guest-suggestion" type="button" role="option" data-guest-id="${escapeHTML(guest.id)}" aria-selected="false">
+          <button id="guest-option-${index}" class="guest-suggestion guest-suggestion--name-only" type="button" role="option" data-guest-id="${escapeHTML(guest.id)}" aria-selected="false">
             <span class="guest-suggestion-mark" aria-hidden="true">${initial}</span>
-            <span><strong>${escapeHTML(fullName)}</strong><small>${alias}</small></span>
+            <span><strong>${escapeHTML(fullName)}</strong></span>
           </button>`;
       }).join("");
 
@@ -690,6 +731,7 @@
       currentGuest = null;
       state.currentGuestId = null;
       saveState();
+      history.replaceState({ screen: "login" }, "", basePageUrl());
       $("#mainScreen").classList.add("hidden");
       $("#loginScreen").classList.remove("hidden");
       selectedGuestId = null;
@@ -705,7 +747,6 @@
       selectedTeamViewId = null;
       navigate("inicio");
       closeMenu();
-      window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     $("#syncButton").addEventListener("click", () => syncFromSheets(true));
@@ -719,21 +760,15 @@
     });
   }
 
-  function enterApp(guest, showWelcome) {
-    currentGuest = guest;
+  function enterApp(guest, showWelcome, historyMode = "push") {
+    applyGuestShell(guest);
     state.currentGuestId = guest.id;
     saveState();
-    const team = getTeam(guest.team);
-    document.documentElement.style.setProperty("--team-accent", team.accent || "#c8a75d");
-    $("#loginScreen").classList.add("hidden");
-    $("#mainScreen").classList.remove("hidden");
-    $("#welcomeTitle").textContent = `Hola, ${guest.firstName}`;
-    $("#welcomeSub").textContent = `Equipo ${team.name}`;
-    navigate("inicio");
-    if (showWelcome) toast(`Acceso concedido · Equipo ${team.name}.`);
+    navigate("inicio", { historyMode });
+    if (showWelcome) toast(`Acceso concedido · Equipo ${getTeam(guest.team).name}.`);
   }
 
-  function navigate(route) {
+  function navigate(route, options = {}) {
     if (route === "ficha" || route === "juegos" || route === "info") route = "inicio";
     if (route === "torneo") route = "puntos";
 
@@ -752,11 +787,24 @@
       if (active) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
     });
+
+    const historyMode = options.historyMode || "push";
+    if (currentGuest && historyMode !== "none") {
+      const historyState = { screen: "app", route, guestId: currentGuest.id };
+      const url = `${basePageUrl()}#${encodeURIComponent(route)}`;
+      if (historyMode === "replace") history.replaceState(historyState, "", url);
+      else history.pushState(historyState, "", url);
+    }
+
     renderCurrentRoute();
 
-    if (route === "trivia" && triviaFocusTarget) {
-      window.setTimeout(() => document.getElementById(triviaFocusTarget)?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
-    }
+    window.requestAnimationFrame(() => {
+      if (route === "trivia" && triviaFocusTarget) {
+        document.getElementById(triviaFocusTarget)?.scrollIntoView({ behavior: "auto", block: "start" });
+      } else {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
+    });
   }
 
   function renderCurrentRoute() {
@@ -933,202 +981,88 @@
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
     const rankingStarted = rank.some(row => Number(row.total || 0) !== 0);
     const visibleRank = rankingStarted ? myRank : "—";
-    const calendarUrl = "https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires";
+    const calendarUrl = "vani-fede.ics";
     const deadline = CONFIG.RSVP_DEADLINE_LABEL || "31 de agosto de 2026";
 
     const now = new Date();
     const eventDate = new Date(DATA.couple.eventDate);
-    const dayMs = 24 * 60 * 60 * 1000;
-    const daysToEvent = Math.ceil((eventDate.getTime() - now.getTime()) / dayMs);
-    const eventDay = now.getFullYear() === eventDate.getFullYear()
-      && now.getMonth() === eventDate.getMonth()
-      && now.getDate() === eventDate.getDate();
+    const daysToEvent = Math.ceil((eventDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+    const eventDay = now.getFullYear() === eventDate.getFullYear() && now.getMonth() === eventDate.getMonth() && now.getDate() === eventDate.getDate();
     const nearEvent = !eventDay && daysToEvent > 0 && daysToEvent <= 30;
 
     let primaryAction;
     if (!rsvpDone) {
-      primaryAction = {
-        tone: "pending",
-        icon: "mail",
-        kicker: "Tu próximo paso",
-        title: "Confirmá tu asistencia",
-        text: `Respondé antes del ${deadline}. Ahí también podés indicar traslado y restricciones alimentarias.`,
-        button: "Confirmar asistencia",
-        attr: 'data-go="asistencia"'
-      };
+      primaryAction = { tone: "pending", icon: "mail", kicker: "Tu próximo paso", title: "Confirmá tu asistencia", text: `Respondé antes del ${deadline} e indicá traslado o restricciones.`, button: "Confirmar asistencia", attr: 'data-go="asistencia"' };
     } else if (eventDay) {
-      primaryAction = {
-        tone: "today",
-        icon: "sparkle",
-        kicker: "Hoy es el gran día",
-        title: "Todo listo para celebrar",
-        text: "Revisá horarios, traslado y novedades importantes antes de salir.",
-        button: "Ver datos clave",
-        attr: 'data-scroll="homeEssential"'
-      };
+      primaryAction = { tone: "today", icon: "sparkle", kicker: "Hoy es el gran día", title: "Todo listo para celebrar", text: "Revisá la información clave antes de salir.", button: "Ver lo esencial", attr: 'data-scroll="homeEssential"' };
     } else if (nearEvent) {
-      primaryAction = {
-        tone: "soon",
-        icon: "hourglass",
-        kicker: "Falta poco",
-        title: `${daysToEvent} ${daysToEvent === 1 ? "día" : "días"} para el casamiento`,
-        text: "Revisá horario, traslado, vestimenta y la información disponible del lugar.",
-        button: "Ver datos clave",
-        attr: 'data-scroll="homeEssential"'
-      };
+      primaryAction = { tone: "soon", icon: "hourglass", kicker: "Falta poco", title: `${daysToEvent} ${daysToEvent === 1 ? "día" : "días"} para el casamiento`, text: "Revisá horario, traslado y vestimenta.", button: "Ver lo esencial", attr: 'data-scroll="homeEssential"' };
     } else {
-      primaryAction = {
-        tone: "play",
-        icon: "star",
-        kicker: "Tu próximo desafío",
-        title: "Tu equipo ya está jugando",
-        text: `Descubrí las acciones disponibles y ayudá a ${team.name} a sumar puntos.`,
-        button: "Ver cómo sumar puntos",
-        attr: 'data-go="puntos"'
-      };
+      primaryAction = { tone: "play", icon: "star", kicker: "Tu próximo desafío", title: "Sumá puntos para tu equipo", text: "Revisá las misiones disponibles.", button: "Ver desafíos", attr: 'data-go="puntos"' };
     }
-
-    const secondTeamAction = rsvpDone && !nearEvent && !eventDay
-      ? { route: "ranking", label: "Ver ranking" }
-      : { route: "puntos", label: "Sumá puntos" };
 
     return `
       ${homeStyles()}
-
-      <section id="homeCountdown" class="home-countdown" aria-label="Cuenta regresiva para el casamiento">
+      <section id="homeCountdown" class="home-countdown home-countdown-compact" aria-label="Cuenta regresiva para el casamiento">
         <span id="countdownLabel" class="home-countdown-label">Faltan</span>
-        <div class="home-countdown-values">
-          <span><strong id="countdownDays">—</strong><small>días</small></span>
-          <i aria-hidden="true">:</i>
-          <span><strong id="countdownHours">—</strong><small>horas</small></span>
-          <i aria-hidden="true">:</i>
-          <span><strong id="countdownMinutes">—</strong><small>min</small></span>
-        </div>
-        <small class="home-countdown-date">24 · 10 · 2026 · 18:00</small>
+        <div class="home-countdown-values"><span><strong id="countdownDays">—</strong><small>días</small></span><i>:</i><span><strong id="countdownHours">—</strong><small>horas</small></span><i>:</i><span><strong id="countdownMinutes">—</strong><small>min</small></span></div>
       </section>
 
-      <section class="home-welcome" style="--local-accent:${team.accent}">
-        <div class="home-welcome-logo">${teamLogo(team, "home-team-logo")}</div>
-        <div class="home-welcome-copy">
-          <p class="home-kicker">Tu espacio personal</p>
-          <h3>Bienvenido al equipo ${escapeHTML(team.name)}</h3>
-          <p>Todo para el gran día, en un solo lugar.</p>
-          <div class="home-meta">
-            <span>Capitanía: <strong>${escapeHTML(team.captain)}</strong></span>
-            <span>24 · 10 · 2026</span>
-          </div>
-        </div>
+      <section class="home-welcome home-welcome-compact" style="--local-accent:${team.accent}">
+        ${teamLogo(team, "home-team-logo")}
+        <h3>Bienvenido al equipo ${escapeHTML(team.name)}</h3>
       </section>
 
-      ${rsvpDone ? `
-        <button class="home-rsvp-confirmed" type="button" data-go="asistencia">
-          ${uiIcon("checkCircle")}
-          <span>${rsvp.attendance === "si" ? "Asistencia confirmada" : "Respuesta de asistencia registrada"}</span>
-        </button>` : ""}
+      ${rsvpDone ? `<button class="home-rsvp-confirmed" type="button" data-go="asistencia">${uiIcon("checkCircle")}<span>${rsvp.attendance === "si" ? "Asistencia confirmada" : "Respuesta registrada"}</span></button>` : ""}
 
       <section class="home-primary-action home-primary-action--${primaryAction.tone}">
         <span class="home-primary-icon">${uiIcon(primaryAction.icon)}</span>
-        <div class="home-primary-copy">
-          <small>${escapeHTML(primaryAction.kicker)}</small>
-          <h3>${escapeHTML(primaryAction.title)}</h3>
-          <p>${escapeHTML(primaryAction.text)}</p>
-        </div>
+        <div class="home-primary-copy"><small>${escapeHTML(primaryAction.kicker)}</small><h3>${escapeHTML(primaryAction.title)}</h3><p>${escapeHTML(primaryAction.text)}</p></div>
         <button type="button" ${primaryAction.attr}>${escapeHTML(primaryAction.button)}</button>
       </section>
 
       <section id="homeEssential" class="home-essential" aria-labelledby="homeEssentialTitle">
-        <div class="home-section-heading">
-          <div>
-            <p class="home-kicker">Información práctica</p>
-            <h3 id="homeEssentialTitle">Lo esencial</h3>
-          </div>
-          <a class="home-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
-        </div>
-
+        <div class="home-section-heading"><div><p class="home-kicker">Información práctica</p><h3 id="homeEssentialTitle">Lo esencial</h3></div><a class="home-calendar-link" href="${calendarUrl}" type="text/calendar">${uiIcon("calendarPlus")}<span>Agendalo</span></a></div>
         <div class="home-essential-card">
-          <article class="home-essential-row">
-            <span class="home-essential-icon">${uiIcon("calendar")}</span>
-            <div><small>Fecha y horario</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div>
-          </article>
-          <article class="home-essential-row">
-            <span class="home-essential-icon">${uiIcon("pin")}</span>
-            <div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div>
-          </article>
-          <article class="home-essential-row">
-            <span class="home-essential-icon">${uiIcon("bus")}</span>
-            <div><small>Traslado</small><strong>Micro desde el Obelisco</strong><p>Habrá ida y regreso previsto a las 03:00.</p></div>
-          </article>
-          <article class="home-essential-row">
-            <span class="home-essential-icon">${uiIcon("dress")}</span>
-            <div><small>Vestimenta</small><strong>Elegante festivo</strong><p>Habrá pasto: elegí calzado cómodo.</p></div>
-          </article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("calendar")}</span><div><small>Fecha</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div></article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div></article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Próximamente compartiremos toda la información.</p></div></article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("dress")}</span><div><small>Vestimenta</small><strong>Elegante festivo</strong><p>Habrá pasto: elegí calzado cómodo.</p></div></article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Menú</small><strong>${menuOpen ? "Menú habilitado" : "Próximamente"}</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Cargá tus restricciones en Asistencia."}</p></div></article>
         </div>
-
-        <details class="home-details">
-          <summary><span>Ver todos los detalles</span><i aria-hidden="true">⌄</i></summary>
-          <div class="home-details-content">
-            <article><strong>Ubicación</strong><p>${locationOpen ? `${escapeHTML(DATA.couple.placeName)}, ${escapeHTML(DATA.couple.placeArea)}.` : "La dirección exacta y el mapa se habilitarán más adelante."}</p></article>
-            <article><strong>Traslado</strong><p>Al confirmar asistencia podés pedir información del micro desde el Obelisco.</p></article>
-            <article><strong>Para estar cómodo</strong><p>Puede refrescar de noche. Recomendamos abrigo liviano y evitar tacos finos.</p></article>
-            <article><strong>Menú</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Se revelará más adelante. Cargá cualquier restricción en Asistencia."}</p></article>
-          </div>
-        </details>
       </section>
 
-      <section class="home-team-card" style="--local-accent:${team.accent}">
-        <div class="home-team-identity">
-          ${teamLogo(team, "home-team-card-logo")}
-          <div><small>Tu equipo</small><h3>${escapeHTML(team.name)}</h3><p>${rankingStarted ? "La competencia está en marcha." : "Los primeros movimientos aparecerán acá."}</p></div>
-        </div>
-        <div class="home-team-score" aria-label="Estado del equipo">
-          <span><b>${myPoints}</b><small>Puntos</small></span>
-          <span><b>${visibleRank}</b><small>Puesto</small></span>
-        </div>
-        <div class="home-team-actions">
-          <button class="ghost-button" type="button" data-go="equipo">Ver mi equipo</button>
-          <button type="button" data-go="${secondTeamAction.route}">${secondTeamAction.label}</button>
-        </div>
+      <section class="home-team-mini" style="--local-accent:${team.accent}">
+        ${teamLogo(team, "home-team-mini-logo")}
+        <div class="home-team-mini-name"><small>Equipo</small><strong>${escapeHTML(team.name)}</strong></div>
+        <div class="home-team-mini-stat"><b>${myPoints}</b><small>puntos</small></div>
+        <div class="home-team-mini-stat"><b>${visibleRank}</b><small>puesto</small></div>
+        <button type="button" data-go="ranking" aria-label="Ver ranking">${uiIcon("ranking")}</button>
       </section>
     `;
   }
 
   function homeStyles() {
     return `<style>
-      .home-kicker{margin:0;color:var(--gold-deep);font-size:11px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
-      .home-welcome{display:grid;grid-template-columns:132px minmax(0,1fr);gap:26px;align-items:center;padding:30px;border:1px solid var(--line);border-radius:26px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.76));box-shadow:0 12px 32px rgba(76,51,22,.08);position:relative;overflow:hidden}
-      .home-welcome::after{content:"";position:absolute;width:280px;height:280px;right:-130px;top:-140px;border-radius:50%;background:color-mix(in srgb,var(--local-accent) 11%,transparent);pointer-events:none}.home-welcome>*{position:relative;z-index:1}
-      .home-welcome-logo{display:grid;place-items:center}.home-team-logo{width:118px;height:118px}.home-welcome h3{margin:6px 0 9px;font-size:clamp(30px,4vw,44px);letter-spacing:-.035em}.home-welcome-copy>p:not(.home-kicker){max-width:650px;margin:0;font-size:16px;line-height:1.55;font-weight:580}
-      .home-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:15px;color:var(--muted);font-size:13px;font-weight:700}.home-meta span+span{position:relative}.home-meta span+span::before{content:"·";position:absolute;left:-11px}
-      .home-primary-action{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:18px;align-items:center;margin-top:14px;padding:21px 22px;border:1px solid rgba(183,137,69,.34);border-radius:22px;background:rgba(255,253,248,.84);box-shadow:0 9px 25px rgba(76,51,22,.06)}
-      .home-primary-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:50%;background:rgba(201,170,114,.16);color:var(--ink);font-size:24px;font-weight:900}.home-primary-copy small{color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.home-primary-copy h3{margin:3px 0 4px;font-size:23px;letter-spacing:-.02em}.home-primary-copy p{margin:0;max-width:690px;font-size:14px;line-height:1.48}.home-primary-action button{min-height:48px;white-space:nowrap}
-      .home-primary-action--today{border-color:rgba(122,49,64,.36)}.home-primary-action--today .home-primary-icon{background:rgba(122,49,64,.11);color:#7a3140}.home-primary-action--play{border-color:color-mix(in srgb,var(--team-accent) 35%,var(--line))}
-      .home-essential{margin-top:32px;scroll-margin-top:90px}.home-section-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:13px}.home-section-heading h3{margin:5px 0 0;font-size:clamp(28px,3.5vw,38px);letter-spacing:-.03em}.home-calendar-link{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 15px;border:1px solid var(--line);border-radius:999px;background:rgba(255,253,248,.70);color:var(--ink);font-size:13px;font-weight:850;text-decoration:none}
-      .home-essential-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);border-radius:22px;background:rgba(255,253,248,.78);overflow:hidden;box-shadow:0 8px 24px rgba(76,51,22,.05)}.home-essential-row{display:grid;grid-template-columns:44px 1fr;gap:13px;align-items:start;padding:20px}.home-essential-row:nth-child(odd){border-right:1px solid var(--line)}.home-essential-row:nth-child(-n+2){border-bottom:1px solid var(--line)}
-      .home-essential-icon{width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(201,170,114,.30);border-radius:13px;background:rgba(201,170,114,.10);color:var(--ink);font-size:20px;font-weight:850}.home-essential-row small{display:block;color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.home-essential-row strong{display:block;margin-top:4px;color:var(--ink);font-family:var(--font-title);font-size:17px;line-height:1.25}.home-essential-row p{margin:4px 0 0;font-size:13px;line-height:1.42}
-      .home-details{margin-top:10px;border:1px solid var(--line);border-radius:17px;background:rgba(255,253,248,.58);overflow:hidden}.home-details summary{min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 17px;cursor:pointer;color:var(--ink);font-size:14px;font-weight:850;list-style:none}.home-details summary::-webkit-details-marker{display:none}.home-details summary i{font-style:normal;font-size:19px;transition:transform .18s ease}.home-details[open] summary i{transform:rotate(180deg)}.home-details-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 15px 15px}.home-details-content article{padding:14px;border-radius:14px;background:rgba(255,255,255,.46)}.home-details-content strong{color:var(--ink);font-size:14px}.home-details-content p{margin:5px 0 0;font-size:13px;line-height:1.45}
-      .home-team-card{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:22px;align-items:center;margin-top:30px;padding:22px;border:1px solid color-mix(in srgb,var(--local-accent) 25%,var(--line));border-radius:23px;background:linear-gradient(135deg,rgba(255,253,248,.88),rgba(239,228,209,.72))}.home-team-identity{display:flex;align-items:center;gap:15px;min-width:0}.home-team-card-logo{width:68px;height:68px;flex:0 0 auto}.home-team-identity small{display:block;color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}.home-team-identity h3{margin:3px 0 2px;font-size:25px}.home-team-identity p{margin:0;font-size:12px;line-height:1.35}
-      .home-team-score{display:grid;grid-template-columns:repeat(2,72px);text-align:center}.home-team-score span{display:grid;gap:2px}.home-team-score span+span{border-left:1px solid var(--line)}.home-team-score b{color:var(--ink);font-family:var(--font-title);font-size:22px}.home-team-score small{color:var(--muted-2);font-size:9px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}.home-team-actions{display:flex;gap:8px}.home-team-actions button{min-height:46px;white-space:nowrap}
-      @media(max-width:900px){.home-team-card{grid-template-columns:minmax(0,1fr) auto}.home-team-actions{grid-column:1/-1}.home-team-actions button{flex:1}.home-primary-action{grid-template-columns:52px 1fr}.home-primary-action button{grid-column:1/-1;width:100%}}
-      @media(max-width:680px){.home-welcome{grid-template-columns:84px 1fr;gap:16px;padding:22px 18px}.home-team-logo{width:82px;height:82px}.home-welcome h3{font-size:29px}.home-welcome-copy>p:not(.home-kicker){font-size:15px}.home-meta{display:grid;gap:3px;margin-top:11px}.home-meta span+span::before{display:none}.home-primary-action{grid-template-columns:44px 1fr;gap:13px;padding:18px 16px}.home-primary-icon{width:44px;height:44px}.home-primary-copy h3{font-size:21px}.home-primary-copy p{font-size:14px}.home-section-heading{align-items:center}.home-calendar-link{padding:9px 12px}.home-essential-card{grid-template-columns:1fr}.home-essential-row{padding:17px 16px}.home-essential-row:nth-child(n){border-right:0}.home-essential-row:not(:last-child){border-bottom:1px solid var(--line)}.home-details-content{grid-template-columns:1fr}.home-team-card{grid-template-columns:1fr;padding:18px}.home-team-score{grid-template-columns:repeat(2,1fr);padding:13px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.home-team-actions{grid-column:auto}.home-team-actions button{width:100%}}
-      @media(max-width:430px){.home-welcome{grid-template-columns:1fr;text-align:center}.home-welcome-logo{margin-bottom:-4px}.home-team-logo{width:72px;height:72px}.home-meta{justify-items:center}.home-section-heading h3{font-size:30px}.home-calendar-link span{display:inline}.home-team-identity{justify-content:center;text-align:left}.home-team-actions{display:grid}.home-primary-action button,.home-team-actions button{min-height:50px}}
-
-      .home-countdown{min-height:64px;display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px;padding:10px 18px;border:1px solid rgba(122,49,64,.18);border-radius:18px;background:rgba(255,253,248,.72);box-shadow:0 6px 18px rgba(76,51,22,.04)}
-      .home-countdown-label{color:#7a3140;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.home-countdown-values{display:flex;align-items:center;gap:9px}.home-countdown-values>span{display:grid;justify-items:center;min-width:44px}.home-countdown-values strong{color:var(--ink);font-family:var(--font-title);font-size:21px;line-height:1}.home-countdown-values small{margin-top:3px;color:var(--muted-2);font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.home-countdown-values i{color:rgba(122,49,64,.44);font-style:normal;font-weight:900}.home-countdown-date{color:var(--muted-2);font-size:10px;font-weight:750}
-      .home-welcome{grid-template-columns:86px minmax(0,1fr);gap:18px;padding:18px 22px;border-radius:21px}.home-team-logo{width:76px;height:76px}.home-welcome h3{margin:4px 0 5px;font-size:clamp(24px,3vw,31px)}.home-welcome-copy>p:not(.home-kicker){font-size:14px;line-height:1.42}.home-meta{margin-top:10px}
-      .home-rsvp-confirmed{width:max-content;max-width:100%;min-height:38px;display:inline-flex;align-items:center;gap:8px;margin:10px 0 0;padding:8px 13px;border:1px solid rgba(74,125,79,.28);border-radius:999px;background:rgba(74,125,79,.09);color:#426f47;font-size:13px;font-weight:850;box-shadow:none}.home-rsvp-confirmed .ui-icon{width:18px;height:18px}
-      @media(max-width:680px){.home-countdown{gap:10px;padding:9px 12px}.home-countdown-date{display:none}.home-welcome{grid-template-columns:70px minmax(0,1fr);gap:14px;padding:16px}.home-team-logo{width:64px;height:64px}.home-welcome h3{font-size:23px}.home-welcome-copy>p:not(.home-kicker){font-size:13px}.home-meta{font-size:12px}.home-rsvp-confirmed{display:flex;width:100%;justify-content:center}}
-      @media(max-width:430px){.home-countdown{justify-content:space-between}.home-countdown-values{gap:6px}.home-countdown-values>span{min-width:38px}.home-countdown-values strong{font-size:19px}.home-welcome{grid-template-columns:64px minmax(0,1fr);text-align:left}.home-welcome-logo{margin:0}.home-team-logo{width:58px;height:58px}.home-meta{justify-items:start}}
+      .home-kicker{margin:0;color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+      .home-countdown-compact{padding:15px 20px}.home-countdown-compact .home-countdown-date{display:none}
+      .home-welcome-compact{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.72));box-shadow:0 8px 22px rgba(76,51,22,.06)}
+      .home-welcome-compact .home-team-logo{width:58px;height:58px;flex:0 0 auto}.home-welcome-compact h3{font-size:clamp(22px,4vw,31px);line-height:1.08}
+      .home-rsvp-confirmed{width:max-content;display:flex;align-items:center;gap:7px;margin:9px 0 0;padding:7px 11px;border:1px solid rgba(74,125,79,.2);border-radius:999px;background:rgba(74,125,79,.08);color:#426f47;box-shadow:none;font-size:12px;font-weight:900}.home-rsvp-confirmed .ui-icon{width:17px;height:17px}
+      .home-primary-action{display:grid;grid-template-columns:43px minmax(0,1fr) auto;gap:13px;align-items:center;margin-top:10px;padding:15px 16px;border:1px solid rgba(183,137,69,.28);border-radius:19px;background:rgba(255,253,248,.84);box-shadow:0 7px 18px rgba(76,51,22,.045)}
+      .home-primary-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:rgba(122,49,64,.08);color:#743344}.home-primary-icon .ui-icon{width:22px;height:22px}.home-primary-copy small{color:var(--gold-deep);font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.home-primary-copy h3{margin:2px 0 3px;font-size:20px}.home-primary-copy p{margin:0;font-size:12px;line-height:1.35}.home-primary-action button{min-height:40px;padding:9px 14px;white-space:nowrap}
+      .home-essential{margin-top:20px;scroll-margin-top:86px}.home-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}.home-section-heading h3{margin:2px 0 0;font-size:28px}.home-calendar-link{min-height:38px;display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(255,253,248,.72);color:var(--ink);font-size:12px;font-weight:850;text-decoration:none}.home-calendar-link .ui-icon{width:17px;height:17px}
+      .home-essential-card{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));overflow:hidden;border:1px solid var(--line);border-radius:21px;background:rgba(255,253,248,.76)}.home-essential-row{display:grid;grid-template-columns:35px minmax(0,1fr);gap:9px;align-items:start;padding:13px 12px;border-right:1px solid var(--line)}.home-essential-row:last-child{border-right:0}.home-essential-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:rgba(201,170,114,.12);color:var(--gold-deep)}.home-essential-icon .ui-icon{width:18px;height:18px}.home-essential-row small,.home-essential-row strong{display:block}.home-essential-row small{font-size:9px;text-transform:uppercase;letter-spacing:.06em}.home-essential-row strong{margin:2px 0;font-size:13px;line-height:1.2}.home-essential-row p{margin:0;font-size:10.5px;line-height:1.3}
+      .home-team-mini{display:grid;grid-template-columns:42px minmax(0,1fr) auto auto 40px;gap:10px;align-items:center;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:17px;background:rgba(255,253,248,.78)}.home-team-mini-logo{width:40px;height:40px}.home-team-mini-name small,.home-team-mini-name strong,.home-team-mini-stat small,.home-team-mini-stat b{display:block}.home-team-mini-name small,.home-team-mini-stat small{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.home-team-mini-name strong{font-size:15px}.home-team-mini-stat{text-align:center;min-width:44px}.home-team-mini-stat b{font-size:17px}.home-team-mini button{width:38px;height:38px;display:grid;place-items:center;padding:0;border-radius:12px;background:#36556f;color:#fff}.home-team-mini button .ui-icon{width:19px;height:19px}
+      @media(max-width:900px){.home-essential-card{grid-template-columns:repeat(2,minmax(0,1fr))}.home-essential-row{border-bottom:1px solid var(--line)}.home-essential-row:nth-child(2n){border-right:0}.home-essential-row:last-child{grid-column:1/-1;border-bottom:0}}
+      @media(max-width:560px){.home-countdown-compact{padding:13px 15px}.home-welcome-compact{padding:12px 14px;gap:11px}.home-welcome-compact .home-team-logo{width:46px;height:46px}.home-welcome-compact h3{font-size:21px}.home-primary-action{grid-template-columns:38px minmax(0,1fr);padding:13px}.home-primary-icon{width:38px;height:38px}.home-primary-copy h3{font-size:18px}.home-primary-action button{grid-column:1/-1;width:100%;min-height:42px}.home-essential{margin-top:17px}.home-section-heading h3{font-size:25px}.home-essential-card{grid-template-columns:1fr}.home-essential-row,.home-essential-row:nth-child(2n),.home-essential-row:last-child{grid-column:auto;border-right:0;border-bottom:1px solid var(--line);padding:11px 12px}.home-essential-row:last-child{border-bottom:0}.home-team-mini{grid-template-columns:38px minmax(0,1fr) auto auto 36px;padding:9px;gap:7px}.home-team-mini-logo{width:36px;height:36px}.home-team-mini-name strong{font-size:14px}.home-team-mini-stat{min-width:37px}.home-team-mini-stat b{font-size:15px}.home-team-mini button{width:34px;height:34px}}
     </style>`;
-  }
-
-  function statCard(label, value, icon) {
-    return `<article class="stat-card"><span>${icon}</span><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong></article>`;
   }
 
   function renderInfo() {
     const locationOpen = isUnlocked("location");
     const menuOpen = isUnlocked("menu");
-    const calendarUrl = "https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires";
+    const calendarUrl = "vani-fede.ics";
 
     return `
       ${infoStyles()}
@@ -1145,7 +1079,7 @@
             <span class="badge muted">📍 Lugar secreto</span>
           </div>
         </div>
-        <a class="info-calendar-button" href="${calendarUrl}" target="_blank" rel="noopener">📅 AGENDALO!</a>
+        <a class="info-calendar-button" href="${calendarUrl}" type="text/calendar">📅 AGENDALO!</a>
       </section>
 
       <section class="grid two info-main-grid">
@@ -1245,7 +1179,7 @@
     const hasSaved = Boolean(saved && saved.updatedAt);
     const editing = Boolean(state.rsvpEditMode || !hasSaved);
     const deadlineLabel = "31 de agosto de 2026";
-    const calendarUrl = "https://www.google.com/calendar/event?eid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&ctz=America/Argentina/Buenos_Aires";
+    const calendarUrl = "vani-fede.ics";
     const savedTransport = ["combi", "micro"].includes(saved.transport) ? "combi" : saved.transport === "auto" ? "particular" : saved.transport;
 
     if (hasSaved && !editing) {
@@ -1271,7 +1205,7 @@
 
               <div class="rsvp-actions-row">
                 <button id="editRsvp" type="button">Editar mi respuesta</button>
-                <a class="rsvp-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
+                <a class="rsvp-calendar-link" href="${calendarUrl}" type="text/calendar">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
               </div>
 
               <p class="form-note">Última edición: ${formatDateLabel(saved.updatedAt)}</p>
@@ -1302,9 +1236,9 @@
       <section class="calendar-strip">
         <div>
           <strong>📅 AGENDALO!</strong>
-          <p>Guardá el evento en Google Calendar para tener fecha, horario y recordatorio a mano.</p>
+          <p>Abrí el evento con el calendario de tu celular para guardar la fecha y el horario.</p>
         </div>
-        <a href="${calendarUrl}" target="_blank" rel="noopener">Guardar en Google Calendar</a>
+        <a href="${calendarUrl}" type="text/calendar">Agregar a mi calendario</a>
       </section>
 
       <form id="rsvpForm" class="section-card form-card">
@@ -1590,11 +1524,7 @@
 
   function guestChallengeProgress(guest) {
     if (!isCompetitionGuest(guest)) return { completed: 0, total: 0, label: "Fuera de competencia" };
-    const checks = [
-      hasCompletedRsvp(state.rsvps[guest.id]),
-      Boolean(state.gameSubmissions[`${guest.id}::music-selection`]),
-      Boolean(state.gameSubmissions[`${guest.id}::couple-trivia-test`])
-    ];
+    const checks = [hasCompletedRsvp(state.rsvps[guest.id]), Boolean(state.gameSubmissions[`${guest.id}::music-selection`]), Boolean(state.gameSubmissions[`${guest.id}::couple-trivia-test`])];
     const completed = checks.filter(Boolean).length;
     return { completed, total: checks.length, label: `${completed} de ${checks.length} desafíos` };
   }
@@ -1602,69 +1532,79 @@
   function renderTeam() {
     const selectedTeamId = selectedTeamViewId || currentGuest.team;
     const team = getTeam(selectedTeamId);
-    const members = DATA.guests.filter(guest => guest.team === team.id).sort(sortGuestsForDisplay);
-    const activePlayers = teamCompetitionMembers(team.id).length;
+    const members = DATA.guests.filter(guest => guest.team === team.id && isCompetitionGuest(guest)).sort(sortGuestsForDisplay);
+    const activePlayers = members.length;
     const confirmed = completedRsvpMembers(team.id).length;
+    const percent = Math.min(100, Math.round((confirmed / Math.max(activePlayers, 1)) * 100));
+
     return `
       ${captainGuestStyles()}
-      ${sectionHeader("mi fuerza", `Equipo ${team.name}`, `${team.group}. Capitán: ${team.captain}.`)}
-      <section class="team-hero team-hero-v2 section-card" style="--local-accent:${team.accent}">
-        <div class="team-identity-panel">${teamLogo(team, "team-symbol-logo team-symbol-logo-large")}<small>Tu fuerza</small><strong>${escapeHTML(team.name)}</strong></div>
-        <div class="team-hero-copy"><p class="eyebrow">${escapeHTML(team.colorName)} · ${escapeHTML(team.trait)}</p><h3>${escapeHTML(team.motto)}</h3><div class="badge-row"><span class="badge muted">${escapeHTML(team.group)}</span><span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">${activePlayers} jugadores activos</span></div></div>
-        <div class="team-ranking-cta">${uiIcon("ranking")}<div><small>Competencia</small><strong>Revisá cómo viene tu equipo</strong></div><button type="button" data-go="ranking"><span>Ver ranking</span>${uiIcon("play")}</button></div>
+      <section class="team-summary-compact section-card" style="--local-accent:${team.accent}">
+        ${teamLogo(team, "team-summary-logo")}
+        <div class="team-summary-copy"><p class="eyebrow">Mi equipo</p><h3>${escapeHTML(team.name)}</h3><small>Capitán: ${escapeHTML(team.captain)} · ${activePlayers} integrantes</small></div>
+        <button type="button" data-go="ranking">${uiIcon("ranking")}<span>Ranking</span></button>
       </section>
-      <section class="grid two team-page-grid">
-        <article class="section-card"><div class="card-title-row"><div><h4>Integrantes y desafíos</h4><p class="form-note">Cada persona puede completar asistencia, canciones y trivia.</p></div><span class="badge">${members.length} integrantes</span></div><div class="guest-list team-member-list">${members.map(guest => guestPill(guest, { minimalIcon: true, showChallenges: true })).join("")}</div></article>
-        <article class="section-card team-attendance-card"><span class="team-attendance-icon">${uiIcon("calendar")}</span><div><h4>Asistencia</h4><p><strong>${confirmed} de ${activePlayers}</strong> integrantes ya confirmaron.</p><div class="team-attendance-progress" role="progressbar" aria-label="Asistencia confirmada del equipo" aria-valuemin="0" aria-valuemax="${activePlayers}" aria-valuenow="${confirmed}"><span style="width:${Math.min(100, Math.round((confirmed / Math.max(activePlayers, 1)) * 100))}%"></span></div><small>El estado se actualiza cuando cada integrante completa su confirmación.</small></div></article>
+      <section class="team-attendance-mini section-card">
+        <span>${uiIcon("calendar")}</span>
+        <div><strong>${confirmed} de ${activePlayers} confirmaron asistencia</strong><i><em style="width:${percent}%"></em></i></div>
+        <b>${percent}%</b>
+      </section>
+      <section class="section-card team-members-card">
+        <div class="card-title-row"><h4>Integrantes y desafíos</h4><span class="badge">${members.length}</span></div>
+        <div class="guest-list team-member-list">${members.map(guest => guestPill(guest, { minimalIcon: true, showChallenges: true })).join("")}</div>
       </section>`;
   }
 
   function captainGuestStyles() {
-    return `<style>.guest-pill.captain-pill{border-color:rgba(201,170,114,.72);background:linear-gradient(135deg,rgba(201,170,114,.17),rgba(255,255,255,.52));box-shadow:0 0 0 1px rgba(201,170,114,.10) inset}.captain-label{display:inline-flex;align-items:center;gap:6px;margin-top:5px;padding:4px 8px;border-radius:999px;background:rgba(201,170,114,.15);color:var(--gold-deep);font-weight:950;font-size:10px;text-transform:uppercase;letter-spacing:.06em}</style>`;
+    return `<style>
+      .guest-pill.captain-pill{border-color:rgba(201,170,114,.72);background:linear-gradient(135deg,rgba(201,170,114,.17),rgba(255,255,255,.52));box-shadow:0 0 0 1px rgba(201,170,114,.10) inset}.captain-label{display:inline-flex;align-items:center;gap:5px;margin-top:4px;padding:3px 7px;border-radius:999px;background:rgba(201,170,114,.15);color:var(--gold-deep);font-weight:950;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+      .guest-pill.is-declined{filter:grayscale(1);opacity:.52;border-style:dashed;background:rgba(220,220,216,.38)!important}.guest-pill.is-declined .guest-person-icon{background:rgba(100,100,100,.08);color:#777}.declined-label{display:inline-flex;margin-top:4px;color:#666;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+    </style>`;
   }
 
   function guestPill(guest, options = {}) {
     const captain = isGuestCaptain(guest);
+    const declined = hasCompletedRsvp(state.rsvps[guest.id]) && state.rsvps[guest.id]?.attendance === "no";
     const visibleRole = guest.roleVisible || guest.displayRelation || guest.relation || guest.role || "invitado";
     const aliasText = guest.alias ? `${guest.alias} · ${visibleRole}` : visibleRole;
     const progress = guestChallengeProgress(guest);
     const icon = captain ? `<span class="guest-person-icon is-captain">👑</span>` : options.minimalIcon ? `<span class="guest-person-icon">${uiIcon("person")}</span>` : teamLogo(getTeam(guest.team), "guest-pill-logo");
-    const challengeStatus = options.showChallenges ? (progress.total ? `<div class="guest-challenge-status"><span><b>${progress.completed}/${progress.total}</b> desafíos completados</span><i><em style="width:${Math.round((progress.completed / progress.total) * 100)}%"></em></i></div>` : `<div class="guest-challenge-status is-host"><span>${escapeHTML(progress.label)}</span></div>`) : "";
-    return `<div class="guest-pill ${captain ? "captain-pill" : ""} ${options.showChallenges ? "has-challenges" : ""}"><span class="guest-pill-avatar">${icon}</span><div class="guest-pill-copy"><strong>${escapeHTML(`${guest.firstName} ${guest.lastName}`.trim())}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}${challengeStatus}</div></div>`;
+    const challengeStatus = options.showChallenges ? `<div class="guest-challenge-status"><span><b>${progress.completed}/${progress.total}</b><em>desafíos</em></span><i><em style="width:${Math.round((progress.completed / Math.max(progress.total,1)) * 100)}%"></em></i></div>` : "";
+    return `<div class="guest-pill ${captain ? "captain-pill" : ""} ${declined ? "is-declined" : ""} ${options.showChallenges ? "has-challenges" : ""}"><span class="guest-pill-avatar">${icon}</span><div class="guest-pill-copy"><strong>${escapeHTML(guestFullName(guest))}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}${declined ? `<span class="declined-label">No asiste</span>` : ""}${challengeStatus}</div></div>`;
   }
 
   function renderPointsHub() {
     const team = getTeam(currentGuest.team);
     const activePlayers = teamSizeForPoints(team.id);
     const rsvp = state.rsvps[currentGuest.id];
-    const currentGuestCanScore = isCompetitionGuest(currentGuest);
-    const rsvpDone = currentGuestCanScore && hasCompletedRsvp(rsvp);
+    const rsvpDone = isCompetitionGuest(currentGuest) && hasCompletedRsvp(rsvp);
     const rsvpDoneCount = completedRsvpMembers(team.id).length;
-    const rank = calculateRanking();
-    const myPoints = rank.find(row => row.id === team.id)?.total || 0;
+    const myPoints = calculateRanking().find(row => row.id === team.id)?.total || 0;
     const musicDone = Boolean(triviaSubmission("music-selection"));
     const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
+
     return `
       ${pointsHubStyles()}
-      ${sectionHeader("sumá puntos", "La competencia empieza ahora", "Cada acción completada suma para tu equipo. Algunas consignas son individuales y otras se activarán más adelante.")}
-      <section class="points-hero section-card" style="--local-accent:${team.accent}"><div><p class="eyebrow">Equipo ${escapeHTML(team.name)}</p><h3>Tu aporte suma para toda la fuerza.</h3><p>Vas a competir contra otros 5 equipos desde ahora hasta que finalice la fiesta.</p><div class="badge-row">${teamBadge(team, team.name)}<span class="badge muted">Capitán: ${escapeHTML(team.captain)}</span><span class="badge muted">Jugadores activos: ${activePlayers}</span><span class="badge muted">Puntos actuales: ${myPoints}</span></div></div><div class="points-medal"><span>🏆</span><strong>${myPoints}</strong><small>puntos actuales</small></div></section>
-      <section class="section-card"><div class="card-title-row"><h4>Qué podés hacer ahora</h4><span class="badge">Primera tanda</span></div>
-        ${pointsAction({icon:"✉️",title:"Confirmar asistencia antes del 31/08",text:currentGuestCanScore?(rsvpDone?"Tu respuesta ya quedó registrada. Podés editarla sin volver a sumar puntos.":"Confirmá tu asistencia, elegí traslado y cargá restricciones alimenticias."):"Los novios no suman puntos, pero pueden revisar el estado del equipo.",status:"Suma puntos",done:rsvpDone,route:"asistencia",progressText:`${rsvpDoneCount} de ${activePlayers} confirmaron`,editable:true})}
-        ${pointsAction({icon:"🎵",title:"Elegir canciones",text:"Proponé una canción para la boda y otra para la entrada de tu equipo.",status:isTriviaGameOpen("trivia-music")?"Disponible":"Bloqueado",done:musicDone,route:"musica",progressText:"Juego musical",editable:true})}
-        ${pointsAction({icon:"❓",title:"Trivia Vani y Fede",text:triviaDone?"Ya jugaste esta trivia. Tu resultado quedó cerrado.":"Respondé preguntas sobre los novios. Tenés una sola oportunidad.",status:isTriviaGameOpen("trivia-couple")?"Disponible":"Bloqueado",done:triviaDone,route:"trivia-pareja",progressText:triviaDone?"Resultado final":"Una sola oportunidad",editable:false})}
-        ${pointsAction({icon:"🎁",title:"Juego sorpresa",text:"La tercera misión se revelará más adelante.",status:isTriviaGameOpen("trivia-surprise")?"Liberado":"Bloqueado",done:false,route:"sorpresa",progressText:"Secreto",editable:false})}
+      <section class="points-compact-head section-card" style="--local-accent:${team.accent}">${teamLogo(team,"points-compact-logo")}<div><p class="eyebrow">Sumá puntos</p><h3>Qué podés hacer ahora</h3></div><span><b>${myPoints}</b><small>puntos</small></span></section>
+      <section class="points-compact-list section-card">
+        ${pointsAction({icon:"✉️",title:"Confirmar asistencia",text:rsvpDone?"Respuesta registrada.":"Respondé antes del 31/08.",done:rsvpDone,route:"asistencia",progressText:`${rsvpDoneCount}/${activePlayers} confirmaron`,editable:true})}
+        ${pointsAction({icon:"🎵",title:"Elegir canciones",text:musicDone?"Propuesta guardada.":"Elegí dos canciones.",done:musicDone,route:"musica",progressText:"Juego musical",editable:true})}
+        ${pointsAction({icon:"❓",title:"Trivia Vani y Fede",text:triviaDone?"Resultado cerrado.":"Una sola oportunidad.",done:triviaDone,route:"trivia-pareja",progressText:triviaDone?"Resultado final":"Hasta 100 puntos",editable:false})}
+        ${pointsAction({icon:"🎁",title:"Juego sorpresa",text:"Se revelará más adelante.",done:false,route:"sorpresa",progressText:"Bloqueado",editable:false})}
       </section>`;
   }
 
-  function pointsAction({ icon, title, text, status, done, route, progressText = "", editable = true }) {
-    const actionLabel = done ? (editable ? "Ver / editar" : "Ver") : route === "asistencia" ? "Hacer" : "Ver";
-    const action = route ? `<button type="button" data-go="${escapeHTML(route)}">${actionLabel}</button>` : `<button type="button" disabled aria-disabled="true">Próximamente</button>`;
-    const rightStatus = done ? `<span class="points-complete-badge">${uiIcon("checkCircle")}<b>Completado</b></span>` : `<b>${escapeHTML(status)}</b>`;
-    return `<article class="points-action ${done ? "done" : ""}"><div class="points-left"><span>${icon}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>${progressText ? `<small class="points-progress">${escapeHTML(progressText)}</small>` : ""}</div></div><div class="points-right">${rightStatus}${action}</div></article>`;
+  function pointsAction({ icon, title, text, done, route, progressText = "", editable = true }) {
+    const label = done ? (editable ? "Ver / editar" : "Ver") : "Ver";
+    return `<article class="points-action ${done ? "done" : ""}"><span class="points-action-icon">${icon}</span><div class="points-action-copy"><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p><small>${escapeHTML(progressText)}</small></div><div class="points-action-end">${done ? `<span class="points-complete-badge">${uiIcon("checkCircle")}<b>Hecho</b></span>` : ""}<button type="button" data-go="${escapeHTML(route)}">${label}</button></div></article>`;
   }
 
   function pointsHubStyles() {
-    return `<style>.points-hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(201,170,114,.13),rgba(255,253,248,.90));border-color:rgba(201,170,114,.45)}.points-hero h3{font-size:38px;margin:4px 0 10px}.points-hero p{max-width:780px}.points-medal{width:170px;height:170px;border-radius:32px;border:1px solid rgba(132,104,68,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.40);text-align:center}.points-medal span{font-size:42px}.points-medal strong{font-family:Georgia,serif;font-size:46px;color:var(--gold-deep);line-height:1}.points-medal small{color:var(--muted);font-weight:900}.points-action{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;border:1px solid rgba(132,104,68,.15);border-radius:22px;padding:18px;background:rgba(255,255,255,.34);margin-top:12px}.points-action.done{border-color:rgba(74,125,79,.25);background:linear-gradient(135deg,rgba(74,125,79,.08),rgba(255,255,255,.42))}.points-progress{display:inline-block;margin-top:8px;color:var(--gold-deep);font-weight:900}.points-left{display:flex;gap:15px;align-items:flex-start}.points-left>span{font-size:30px}.points-left strong{font-size:18px}.points-left p{margin:5px 0 0;color:var(--muted);font-weight:780;line-height:1.45}.points-right{display:flex;gap:12px;align-items:center}.points-right>b{font-family:Georgia,serif;font-size:24px;color:var(--gold-deep);white-space:nowrap}.points-right button{white-space:nowrap}.points-complete-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;background:rgba(74,125,79,.11);color:#426f47;font-size:13px}.points-complete-badge .ui-icon{width:19px;height:19px}@media(max-width:850px){.points-hero{grid-template-columns:1fr}.points-medal{width:100%;height:auto;padding:22px}.points-action{grid-template-columns:1fr}.points-right{justify-content:space-between}}@media(max-width:520px){.points-right{align-items:stretch;flex-direction:column}.points-right button{width:100%}.points-complete-badge{width:max-content}}</style>`;
+    return `<style>
+      .points-compact-head{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:13px;align-items:center;padding:16px 18px}.points-compact-logo{width:50px;height:50px}.points-compact-head h3{margin:3px 0 0;font-size:25px}.points-compact-head>span{text-align:center}.points-compact-head>span b,.points-compact-head>span small{display:block}.points-compact-head>span b{font-size:23px}.points-compact-head>span small{font-size:9px;text-transform:uppercase;color:var(--muted)}
+      .points-compact-list{padding:10px}.points-action{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:11px;align-items:center;padding:12px;border:1px solid rgba(132,104,68,.13);border-radius:16px;background:rgba(255,255,255,.34);margin:7px 0}.points-action.done{border-color:rgba(74,125,79,.22);background:rgba(74,125,79,.055)}.points-action-icon{font-size:25px;text-align:center}.points-action-copy strong{font-size:15px}.points-action-copy p{margin:2px 0;font-size:11.5px;line-height:1.3}.points-action-copy small{color:var(--gold-deep);font-size:10px;font-weight:900}.points-action-end{display:flex;align-items:center;gap:7px}.points-action-end button{min-height:37px;padding:8px 12px}.points-complete-badge{display:inline-flex;align-items:center;gap:4px;color:#426f47;font-size:10px;font-weight:900}.points-complete-badge .ui-icon{width:17px;height:17px}
+      @media(max-width:570px){.points-compact-head{grid-template-columns:44px minmax(0,1fr) auto;padding:13px}.points-compact-logo{width:42px;height:42px}.points-compact-head h3{font-size:21px}.points-action{grid-template-columns:36px minmax(0,1fr);padding:11px}.points-action-icon{font-size:22px}.points-action-end{grid-column:2;justify-content:space-between}.points-action-end button{min-width:91px}.points-action-copy strong{font-size:14px}}
+    </style>`;
   }
 
   function renderTournament() {
@@ -1761,15 +1701,19 @@
 
   function renderRanking() {
     const ranking = calculateRanking();
-    return `${sectionHeader("ranking", "La tabla de fuerzas", "Desafíos digitales, juegos físicos, bonus y penalizaciones construyen la tabla.")}<section class="ranking-prize-note">${uiIcon("gift")}<div><strong>Habrá premios especiales</strong><p>El ranking importa, pero también habrá reconocimientos por creatividad, actitud y espíritu de equipo.</p></div></section><section class="ranking-action-card section-card"><div><strong>Ranking actualizado hasta la última sincronización</strong><p>Tocá actualizar para cargar los puntajes enviados hasta este momento.</p></div><div class="ranking-action-buttons"><button id="refreshRanking" type="button" class="ranking-refresh-button"><span class="ranking-button-icon">${uiIcon("sync")}</span><span>Actualizar</span></button><button type="button" data-go="puntos" class="ranking-points-button"><span class="ranking-button-icon">${uiIcon("star")}</span><span>Sumá puntos</span></button></div></section><section class="ranking-list">${ranking.map(rankRow).join("")}</section><section class="section-card"><h4>Últimos movimientos</h4>${allPointEntries().length?`<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Acción</th><th>Equipo</th><th>Movimiento</th><th>Comentario</th></tr></thead><tbody>${allPointEntries().slice(-12).reverse().map(entry=>`<tr><td>${formatDateLabel(entry.timestamp||entry.submittedAt||entry.updatedAt)}</td><td>${escapeHTML(gameName(entry.gameId))}</td><td>${escapeHTML(getTeam(entry.teamId).name)}</td><td>Sumó puntos</td><td>${escapeHTML(entry.comment||"El equipo sumó puntos.")}</td></tr>`).join("")}</tbody></table></div>`:`<p>Todavía no hay movimientos cargados.</p>`}</section>`;
+    return `
+      <section class="ranking-summary-card section-card">
+        <div><p class="eyebrow">Competencia</p><h3>Ranking de equipos</h3><p>Se actualiza con los desafíos, juegos, bonus y penalizaciones.</p></div>
+        <div class="ranking-action-buttons"><button id="refreshRanking" type="button" class="ranking-refresh-button"><span class="ranking-button-icon">${uiIcon("sync")}</span><span>Actualizar</span></button><button type="button" data-go="puntos" class="ranking-points-button"><span class="ranking-button-icon">${uiIcon("star")}</span><span>Sumá puntos</span></button></div>
+      </section>
+      <section class="ranking-list ranking-list-compact">${ranking.map(rankRow).join("")}</section>`;
   }
 
   function rankRow(row, index) {
     const team = getTeam(row.id);
-    const pos = index + 1;
     const ownTeam = currentGuest?.team === team.id;
     const leading = index === 0 && Number(row.total || 0) > 0;
-    return `<button type="button" class="rank-item rank-item-button ${ownTeam ? "is-my-team" : ""} ${leading ? "is-leading" : ""}" data-team-open="${team.id}" style="--local-accent:${team.accent}" aria-label="Abrir equipo ${escapeHTML(team.name)}"><span class="rank-pos">${leading ? "♛" : pos}</span><span class="rank-emoji">${teamLogo(team, "rank-team-logo")}</span><div><strong>${escapeHTML(team.name)}${leading ? `<em class="leader-label">Va ganando</em>` : ""}</strong><small>${escapeHTML(team.group)}${ownTeam ? " · Tu equipo" : ""}</small></div><div class="rank-points"><strong>${row.total}</strong><small>puntos</small></div></button>`;
+    return `<button type="button" class="rank-item rank-item-button rank-item-compact ${ownTeam ? "is-my-team" : ""} ${leading ? "is-leading" : ""}" data-team-open="${team.id}" style="--local-accent:${team.accent}" aria-label="Abrir equipo ${escapeHTML(team.name)}"><span class="rank-pos">${leading ? "♛" : index + 1}</span>${teamLogo(team,"rank-team-logo")}<strong>${escapeHTML(team.name)}${ownTeam ? `<small>Tu equipo</small>` : ""}</strong><span class="rank-points"><b>${row.total}</b><small>pts</small></span></button>`;
   }
 
   function calculateRanking() {
@@ -1793,7 +1737,7 @@
 
   function renderGuests() {
     const open = isUnlocked("guestMap");
-    const grouped = Object.values(DATA.teams).map(team => ({ team, guests: DATA.guests.filter(guest => guest.team === team.id).sort(sortGuestsForDisplay) }));
+    const grouped = Object.values(DATA.teams).map(team => ({ team, guests: DATA.guests.filter(guest => guest.team === team.id && isCompetitionGuest(guest)).sort(sortGuestsForDisplay) }));
     return `${captainGuestStyles()}${sectionHeader("comunidad", "Invitados", "")}${open?"":lockedNotice("guestMap")}<section class="guest-map">${grouped.map(group=>`<article class="section-card team-column" style="--local-accent:${group.team.accent}"><h4 class="team-heading">${teamLogo(group.team,"team-heading-logo")}<span>${group.team.name}</span></h4><small>${escapeHTML(group.team.group)}</small><div class="guest-list">${group.guests.map(guest=>guestPill(guest,{minimalIcon:true})).join("")}</div></article>`).join("")}</section>`;
   }
 
@@ -1841,6 +1785,11 @@
 
   function renderAdminPeopleModal() {
     return `<div id="adminPeopleModal" class="admin-people-modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminPeopleTitle"><div class="admin-people-dialog"><div class="admin-people-head"><div><p class="eyebrow">Detalle</p><h4 id="adminPeopleTitle">Personas</h4><p id="adminPeopleCount"></p></div><button type="button" class="admin-people-close" data-admin-modal-close aria-label="Cerrar">×</button></div><div id="adminPeopleList" class="admin-people-list"></div><button type="button" class="ghost-button admin-people-done" data-admin-modal-close>Cerrar</button></div></div>`;
+  }
+
+  function renderAdminMovements() {
+    const entries = allPointEntries().slice(-20).reverse();
+    return `<section class="section-card admin-movements"><div class="card-title-row"><div><p class="eyebrow">Auditoría</p><h4>Últimos movimientos</h4></div><span class="badge">${entries.length}</span></div>${entries.length ? `<div class="admin-movement-list">${entries.map(entry => `<article><span>${Number(entry.points || 0) >= 0 ? "+" : "−"}</span><div><strong>${escapeHTML(gameName(entry.gameId))}</strong><small>${escapeHTML(getTeam(entry.teamId).name)} · ${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</small>${entry.comment ? `<p>${escapeHTML(entry.comment)}</p>` : ""}</div><b>${Math.abs(Number(entry.points || 0))} pts</b></article>`).join("")}</div>` : `<p>Todavía no hay movimientos.</p>`}</section>`;
   }
 
   function renderAdmin() {
@@ -2031,7 +1980,8 @@
           <button id="resetDiscretionaryPoints" type="button" class="danger-button">Resetear discrecionales</button>
           <button id="resetAllPoints" type="button" class="danger-button">Resetear todo el ranking</button>
         </div>
-      </section>`;
+      </section>
+      ${renderAdminMovements()}`;
   }
 
   function adminUxStyles() {
@@ -2072,7 +2022,6 @@
     $$('[data-team-open]').forEach(button => button.addEventListener("click", () => {
       selectedTeamViewId = button.dataset.teamOpen;
       navigate("equipo");
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }));
 
     $$('[data-go]').forEach(button => button.addEventListener("click", () => {
@@ -2374,8 +2323,7 @@
 
         toast(`Trivia completada: ${bestScore * 20} puntos.`);
         renderCurrentRoute();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
+        });
     }
 
     if (route === "admin") bindAdminEvents();
@@ -2693,7 +2641,6 @@
       state.adminPassword = "";
       toast("Administración bloqueada.");
       renderCurrentRoute();
-      window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     $("#syncNow")?.addEventListener("click", () => syncFromSheets(true));

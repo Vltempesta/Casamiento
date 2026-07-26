@@ -1,0 +1,22 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Vani y Fede//Casamiento 2026//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Casamiento Vani y Fede
+BEGIN:VEVENT
+UID:vani-fede-20261024@vltempesta.github.io
+DTSTAMP:20260726T120000Z
+DTSTART:20261024T210000Z
+DTEND:20261025T060000Z
+SUMMARY:Casamiento Vani y Fede
+LOCATION:Lugar secreto
+DESCRIPTION:Casamiento de Vani y Fede. La ubicación y la información del traslado se comunicarán más adelante.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-P7D
+ACTION:DISPLAY
+DESCRIPTION:Casamiento Vani y Fede en una semana
+END:VALARM
+END:VEVENT
+END:VCALENDAR

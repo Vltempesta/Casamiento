@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32412 · Fondo bordado minimalista en portada ===== */
+/* ===== v32413 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32412');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32413');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32412 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32413 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32412');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32413');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32412 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32413 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32412');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32413');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32412 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32413 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32412 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32413 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32412 · Inicio minimalista ===== */
+/* ===== v32413 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32412 · Navegación en menú hamburguesa ===== */
+/* ===== v32413 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32412 · UX universal 30–70 años ===== */
+/* ===== v32413 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32412 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32413 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32412 · Ajustes UX solicitados ===== */
+/* ===== v32413 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32412 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32413 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32412 · Reset seguro de datos de prueba ===== */
+/* ===== v32413 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32412 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32413 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32412 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32413 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32412 · Estados reales de guardado ===== */
+/* ===== v32413 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32412 · Guardado rápido ===== */
+/* ===== v32413 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32412 · Seguridad de Administración ===== */
+/* ===== v32413 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32412 · Mejoras integrales
+   v32413 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3130,4 +3130,37 @@ body.admin-modal-open { overflow:hidden; }
 }
 @media(max-width:440px) {
   .ranking-action-buttons { grid-template-columns:1fr !important; }
+}
+
+
+/* ============================================================
+   v32413 · Optimización móvil, historial y vistas compactas
+   ============================================================ */
+.guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
+
+#mainScreen .topbar{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px!important}
+#mainScreen .topbar-person{min-width:0;display:flex;align-items:center;gap:10px;padding:0;border:0;background:transparent;color:var(--ink);box-shadow:none;text-align:left}
+#mainScreen .topbar-initial{width:42px;height:42px;display:grid;place-items:center;flex:0 0 auto;border:1px solid rgba(54,85,111,.18);border-radius:14px;background:linear-gradient(145deg,rgba(54,85,111,.11),rgba(255,255,255,.56));color:#36556f;font-family:var(--font-title);font-size:19px;font-weight:900}
+#mainScreen .topbar-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-title);font-size:22px;font-weight:800}
+#mainScreen .topbar-actions{width:auto!important;justify-content:flex-end!important;margin-left:auto}
+#mainScreen .menu-toggle{min-height:46px;padding:9px 14px}
+
+.team-summary-compact{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:15px;align-items:center;padding:16px 18px}.team-summary-logo{width:66px;height:66px}.team-summary-copy h3{margin:2px 0;font-size:29px}.team-summary-copy small{color:var(--muted);font-size:12px}.team-summary-compact>button{display:flex;align-items:center;gap:7px;min-height:42px;padding:9px 13px;background:#36556f;color:#fff}.team-summary-compact>button .ui-icon{width:18px;height:18px}
+.team-attendance-mini{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:9px;padding:11px 14px}.team-attendance-mini>span{color:#743344}.team-attendance-mini>span .ui-icon{width:22px;height:22px}.team-attendance-mini strong{font-size:12px}.team-attendance-mini i{display:block;height:5px;margin-top:5px;overflow:hidden;border-radius:999px;background:rgba(74,125,79,.1)}.team-attendance-mini i em{display:block;height:100%;border-radius:inherit;background:#6d9d72}.team-attendance-mini>b{font-size:13px;color:#426f47}.team-members-card{margin-top:9px;padding:15px}.team-members-card .card-title-row{margin-bottom:8px}.team-members-card h4{font-size:23px}
+.team-member-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.team-member-list .guest-pill{padding:11px}.guest-challenge-status>span{justify-content:flex-start!important;gap:5px}.guest-challenge-status>span em{font-style:normal;font-size:10px}.guest-challenge-status>i{height:5px}
+
+.ranking-summary-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:15px 17px}.ranking-summary-card h3{margin:3px 0;font-size:27px}.ranking-summary-card p:not(.eyebrow){margin:0;font-size:12px;line-height:1.35}.ranking-summary-card .ranking-action-buttons{display:flex;gap:7px}.ranking-summary-card .ranking-action-buttons button{min-height:40px;padding:8px 12px;border-radius:13px;box-shadow:none}.ranking-summary-card .ranking-button-icon{width:24px;height:24px;border-radius:8px}.ranking-list-compact{gap:6px;margin-top:9px}.rank-item-compact{grid-template-columns:30px 38px minmax(0,1fr) auto!important;min-height:52px;padding:7px 10px!important;border-radius:15px!important;gap:8px!important;box-shadow:none!important;text-align:left}.rank-item-compact .rank-pos{font-size:15px}.rank-item-compact .rank-team-logo{width:36px!important;height:36px!important}.rank-item-compact>strong{font-size:14px}.rank-item-compact>strong small{display:inline;margin-left:6px;color:#426f47;font-size:8px;text-transform:uppercase}.rank-item-compact .rank-points{display:flex;align-items:baseline;gap:3px;text-align:right}.rank-item-compact .rank-points b{font-size:18px}.rank-item-compact .rank-points small{font-size:9px;text-transform:uppercase}
+
+.admin-movements{margin-top:16px}.admin-movement-list{display:grid;gap:7px;margin-top:12px}.admin-movement-list article{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.38)}.admin-movement-list article>span{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:rgba(201,170,114,.12);color:var(--gold-deep);font-weight:900}.admin-movement-list strong,.admin-movement-list small{display:block}.admin-movement-list small{margin-top:2px;color:var(--muted);font-size:10px}.admin-movement-list p{margin:3px 0 0;font-size:11px}.admin-movement-list article>b{white-space:nowrap;color:#426f47;font-size:12px}
+
+@media(max-width:650px){
+  .app-shell{width:min(100% - 18px,1180px);padding-top:10px}
+  #mainScreen .topbar{top:6px;border-radius:20px}
+  #mainScreen .topbar-initial{width:38px;height:38px;border-radius:12px;font-size:17px}
+  #mainScreen .topbar-name{font-size:20px}
+  #mainScreen .menu-toggle{min-height:42px;padding:8px 12px}.menu-toggle-label{font-size:16px}
+  .team-summary-compact{grid-template-columns:53px minmax(0,1fr) auto;padding:13px;gap:10px}.team-summary-logo{width:50px;height:50px}.team-summary-copy h3{font-size:23px}.team-summary-copy small{font-size:10px}.team-summary-compact>button span{display:none}.team-summary-compact>button{width:40px;height:40px;padding:0;justify-content:center}
+  .team-member-list{grid-template-columns:1fr}.team-members-card{padding:12px}.team-members-card h4{font-size:20px}
+  .guest-pill{min-height:auto!important}.guest-pill.has-challenges{grid-template-columns:42px minmax(0,1fr)!important}.guest-pill-copy>strong{font-size:15px}.guest-pill-copy>small{font-size:11px}
+  .ranking-summary-card{grid-template-columns:1fr;padding:13px}.ranking-summary-card h3{font-size:24px}.ranking-summary-card .ranking-action-buttons{display:grid;grid-template-columns:1fr 1fr}.ranking-summary-card .ranking-action-buttons button{width:100%;justify-content:center;font-size:12px}.rank-item-compact{grid-template-columns:27px 34px minmax(0,1fr) auto!important;min-height:48px;padding:6px 8px!important}.rank-item-compact .rank-team-logo{width:32px!important;height:32px!important}.rank-item-compact>strong{font-size:13px}.rank-item-compact .rank-points b{font-size:16px}
 }
