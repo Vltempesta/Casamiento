@@ -261,7 +261,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32422",
+      appVersion: "32423",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1289,6 +1289,20 @@
           <div class="rsvp-next-icon">${uiIcon("star")}</div>
           <div><h4>Ya podés participar</h4><p>Las canciones, la trivia y las próximas misiones están disponibles.</p></div>
           <button type="button" data-go="puntos">Ver desafíos</button>
+        </section>
+
+        <section class="rsvp-related-links">
+          <button type="button" class="rsvp-related-card section-card" data-go="traslado">
+            <span>${uiIcon("bus")}</span>
+            <div><strong>Traslados</strong><small>Consultá la información del servicio.</small></div>
+            <b aria-hidden="true">›</b>
+          </button>
+
+          <button type="button" class="rsvp-related-card section-card" data-go="regalos">
+            <span>${uiIcon("gift")}</span>
+            <div><strong>Regalos</strong><small>Ingresá a la sección de regalos.</small></div>
+            <b aria-hidden="true">›</b>
+          </button>
         </section>`;
     }
 
@@ -1599,6 +1613,12 @@
     const members = DATA.guests
       .filter(guest => guest.team === team.id && isCompetitionGuest(guest))
       .sort((a, b) => {
+        const captainDiff =
+          Number(isGuestCaptain(b)) -
+          Number(isGuestCaptain(a));
+
+        if (captainDiff) return captainDiff;
+
         const completedDiff =
           guestChallengeProgress(b).completed -
           guestChallengeProgress(a).completed;
