@@ -36,6 +36,7 @@
     profiles: {},
     gameSubmissions: {},
     scoreEntries: [],
+    socialMessages: [],
     manualUnlocks: {},
     dataResetAt: null,
     lastSyncAt: null,
@@ -260,7 +261,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32419",
+      appVersion: "32420",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -354,6 +355,39 @@
     );
   }
 
+
+  function socialMessageTime(message) {
+    return new Date(message?.timestamp || message?.updatedAt || message?.submittedAt || 0).getTime() || 0;
+  }
+
+  function dedupeSocialMessages(entries) {
+    const byId = new Map();
+    (entries || []).forEach(message => {
+      if (!message || !message.messageId) return;
+      const previous = byId.get(message.messageId);
+      if (!previous || socialMessageTime(message) >= socialMessageTime(previous)) {
+        byId.set(message.messageId, message);
+      }
+    });
+    return Array.from(byId.values());
+  }
+
+  function newSocialMessageId() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return `social-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+
+  function formatSocialDate(value) {
+    if (!value) return "";
+    try {
+      return new Intl.DateTimeFormat("es-AR", {
+        day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+      }).format(new Date(value));
+    } catch (_) {
+      return "";
+    }
+  }
+
   function mergeRemoteData(remote = {}) {
     const remoteRsvps = remote.rsvps && typeof remote.rsvps === "object" ? remote.rsvps : {};
     const remoteResetMs = resetMarkerTimestamp(remoteRsvps);
@@ -381,6 +415,9 @@
     );
 
     if (Array.isArray(remote.scoreEntries)) state.scoreEntries = dedupeScores([...state.scoreEntries, ...remote.scoreEntries]);
+    if (Array.isArray(remote.socialMessages)) {
+      state.socialMessages = dedupeSocialMessages([...(state.socialMessages || []), ...remote.socialMessages]);
+    }
     if (remote.manualUnlocks && typeof remote.manualUnlocks === "object") state.manualUnlocks = { ...state.manualUnlocks, ...remote.manualUnlocks };
     state.lastSyncAt = new Date().toISOString();
     state.lastRemoteError = "";
@@ -840,7 +877,8 @@
   function renderCurrentRoute() {
     const routes = {
       inicio: renderHome, asistencia: renderRSVP, traslado: renderTransport, equipo: renderTeam,
-      puntos: renderPointsHub, trivia: renderTriviaHub, ranking: renderRanking, invitados: renderGuests, admin: renderAdmin
+      puntos: renderPointsHub, trivia: renderTriviaHub, ranking: renderRanking, invitados: renderGuests,
+      social: renderSocial, regalos: renderGifts, admin: renderAdmin
     };
     const html = (routes[currentRoute] || renderHome)();
     $("#view").innerHTML = html;
@@ -897,6 +935,7 @@
       gift: '<path d="M4 10h16v10H4z"/><path d="M3 7h18v3H3zM12 7v13"/><path d="M12 7c-3.5 0-5-1.1-5-2.6C7 3.2 8 3 8.8 3 10.3 3 12 5.2 12 7ZM12 7c3.5 0 5-1.1 5-2.6C17 3.2 16 3 15.2 3 13.7 3 12 5.2 12 7Z"/>',
       sync: '<path d="M20 7h-5V2"/><path d="M4 17h5v5"/><path d="M6.1 8A7 7 0 0 1 18.5 5.5L20 7"/><path d="M17.9 16A7 7 0 0 1 5.5 18.5L4 17"/>',
       question: '<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2"/><path d="M12 17h.01"/>',
+      chat: '<path d="M4 5h11a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4H9l-5 4v-4a4 4 0 0 1-2-3.5V9a4 4 0 0 1 2-4Z"/><path d="M7 9h7M7 12h4"/>',
       person: '<circle cx="12" cy="8" r="3"/><path d="M5.5 20c.6-4.3 2.8-6.5 6.5-6.5s5.9 2.2 6.5 6.5"/>',
       download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>'
     };
@@ -1011,7 +1050,7 @@
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
     const rankingStarted = rank.some(row => Number(row.total || 0) !== 0);
     const visibleRank = rankingStarted ? myRank : "—";
-    const calendarUrl = "vani-fede.ics";
+    const calendarUrl = "https://calendar.app.google/xtbbnf4p4VCJd95w8";
     const deadline = CONFIG.RSVP_DEADLINE_LABEL || "31 de agosto de 2026";
 
     const now = new Date();
@@ -1046,7 +1085,7 @@
 
       <section class="home-welcome home-welcome-compact" style="--local-accent:${team.accent}">
         ${teamLogo(team, "home-team-logo")}
-        <h3>Bienvenido al equipo ${escapeHTML(team.name)}</h3>
+        <h3>Bienvenido al equipo ${escapeHTML(team.name)}!</h3>
       </section>
 
       ${rsvpDone ? `<button class="home-rsvp-confirmed" type="button" data-go="asistencia">${uiIcon("checkCircle")}<span>${rsvp.attendance === "si" ? "Asistencia confirmada" : "Respuesta registrada"}</span></button>` : ""}
@@ -1058,7 +1097,7 @@
       </section>
 
       <section id="homeEssential" class="home-essential" aria-labelledby="homeEssentialTitle">
-        <div class="home-section-heading"><div><p class="home-kicker">Información práctica</p><h3 id="homeEssentialTitle">Lo esencial</h3></div><a class="home-calendar-link" href="${calendarUrl}" type="text/calendar">${uiIcon("calendarPlus")}<span>Agendalo</span></a></div>
+        <div class="home-section-heading"><div><p class="home-kicker">Información práctica</p><h3 id="homeEssentialTitle">Lo esencial</h3></div><a class="home-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a></div>
         <div class="home-essential-card">
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("calendar")}</span><div><small>Fecha</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div></article>
@@ -1068,13 +1107,6 @@
         </div>
       </section>
 
-      <section class="home-team-mini" style="--local-accent:${team.accent}">
-        ${teamLogo(team, "home-team-mini-logo")}
-        <div class="home-team-mini-name"><small>Equipo</small><strong>${escapeHTML(team.name)}</strong></div>
-        <div class="home-team-mini-stat"><b>${myPoints}</b><small>puntos</small></div>
-        <div class="home-team-mini-stat"><b>${visibleRank}</b><small>puesto</small></div>
-        <button type="button" data-go="ranking" aria-label="Ver ranking">${uiIcon("ranking")}</button>
-      </section>
     `;
   }
 
@@ -1098,7 +1130,7 @@
   function renderInfo() {
     const locationOpen = isUnlocked("location");
     const menuOpen = isUnlocked("menu");
-    const calendarUrl = "vani-fede.ics";
+    const calendarUrl = "https://calendar.app.google/xtbbnf4p4VCJd95w8";
 
     return `
       ${infoStyles()}
@@ -1115,7 +1147,7 @@
             <span class="badge muted">📍 Lugar secreto</span>
           </div>
         </div>
-        <a class="info-calendar-button" href="${calendarUrl}" type="text/calendar">📅 AGENDALO!</a>
+        <a class="info-calendar-button" href="${calendarUrl}" target="_blank" rel="noopener">📅 AGENDALO!</a>
       </section>
 
       <section class="grid two info-main-grid">
@@ -1214,7 +1246,7 @@
     const hasSaved = Boolean(saved && saved.updatedAt);
     const editing = Boolean(state.rsvpEditMode || !hasSaved);
     const deadlineLabel = "31 de agosto de 2026";
-    const calendarUrl = "vani-fede.ics";
+    const calendarUrl = "https://calendar.app.google/xtbbnf4p4VCJd95w8";
     const savedTransport = ["combi", "micro"].includes(saved.transport) ? "combi" : saved.transport === "auto" ? "particular" : saved.transport;
 
     if (hasSaved && !editing) {
@@ -1234,7 +1266,7 @@
           </div>
           <div class="rsvp-actions-row">
             <button id="editRsvp" type="button">Editar respuesta</button>
-            <a class="rsvp-calendar-link" href="${calendarUrl}" type="text/calendar">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
+            <a class="rsvp-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
           </div>
         </section>
         ${hasFinalRsvp(saved) ? `
@@ -1281,7 +1313,7 @@
         <div class="form-actions rsvp-form-actions">
           <button type="submit">${hasSaved ? "Guardar cambios" : "Guardar asistencia"}</button>
           ${hasSaved ? `<button id="cancelRsvpEdit" type="button" class="ghost-button">Cancelar</button>` : ""}
-          <a class="rsvp-calendar-link rsvp-calendar-link-small" href="${calendarUrl}" type="text/calendar">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
+          <a class="rsvp-calendar-link rsvp-calendar-link-small" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
         </div>
       </form>`;
   }
@@ -1537,13 +1569,21 @@
     const activePlayers = members.length;
     const confirmed = completedRsvpMembers(team.id).length;
     const percent = Math.min(100, Math.round((confirmed / Math.max(activePlayers, 1)) * 100));
+    const ranking = calculateRanking();
+    const rankingIndex = ranking.findIndex(row => row.id === team.id);
+    const teamPoints = ranking.find(row => row.id === team.id)?.total || 0;
+    const teamPosition = ranking.some(row => Number(row.total || 0) !== 0) ? `${rankingIndex + 1}º` : "—";
 
     return `
       ${captainGuestStyles()}
       <section class="team-summary-compact section-card" style="--local-accent:${team.accent}">
         ${teamLogo(team, "team-summary-logo")}
         <div class="team-summary-copy"><p class="eyebrow">Mi equipo</p><h3>${escapeHTML(team.name)}</h3><small>Capitán: ${escapeHTML(team.captain)} · ${activePlayers} integrantes</small></div>
-        <button type="button" data-go="ranking">${uiIcon("ranking")}<span>Ranking</span></button>
+        <button type="button" data-go="ranking" class="team-ranking-summary-button">
+          <span class="team-ranking-summary-icon">${uiIcon("ranking")}</span>
+          <span class="team-ranking-summary-label">Ranking</span>
+          <span class="team-ranking-summary-data"><b>${teamPoints} pts</b><em>${teamPosition}</em></span>
+        </button>
       </section>
       <section class="team-attendance-mini section-card">
         <span>${uiIcon("calendar")}</span>
@@ -1738,6 +1778,7 @@
           <div class="vf18-ranking-title">
             <p class="eyebrow">Competencia</p>
             <h3>Ranking de equipos</h3>
+            <p class="vf20-ranking-description">Los equipos competirán durante toda la fiesta para quedarse con el primer puesto.</p>
           </div>
         </div>
 
@@ -1806,6 +1847,152 @@
     const open = isUnlocked("guestMap");
     const grouped = Object.values(DATA.teams).map(team => ({ team, guests: DATA.guests.filter(guest => guest.team === team.id && isCompetitionGuest(guest)).sort(sortGuestsForDisplay) }));
     return `${captainGuestStyles()}${sectionHeader("comunidad", "Invitados", "")}${open?"":lockedNotice("guestMap")}<section class="guest-map">${grouped.map(group=>`<article class="section-card team-column" style="--local-accent:${group.team.accent}"><h4 class="team-heading">${teamLogo(group.team,"team-heading-logo")}<span>${group.team.name}</span></h4><small>${escapeHTML(group.team.group)}</small><div class="guest-list">${group.guests.map(guest=>guestPill(guest,{minimalIcon:true})).join("")}</div></article>`).join("")}</section>`;
+  }
+
+
+  function socialAuthor(message) {
+    const guest = getGuestById(message.guestId);
+    return {
+      guest,
+      name: guest ? guestFullName(guest) : (message.guestName || "Invitado"),
+      team: getTeam(message.teamId || guest?.team),
+      initial: String(guest?.firstName || message.guestName || "I").trim().charAt(0).toUpperCase()
+    };
+  }
+
+  function socialReplyMarkup(reply) {
+    const author = socialAuthor(reply);
+    return `
+      <article class="social-reply" style="--social-accent:${author.team.accent}">
+        <span class="social-avatar social-avatar-small">${escapeHTML(author.initial)}</span>
+        <div class="social-reply-body">
+          <div class="social-reply-meta">
+            <strong>${escapeHTML(author.name)}</strong>
+            <span>${teamLogo(author.team, "social-team-logo")} ${escapeHTML(author.team.name)}</span>
+            <time>${escapeHTML(formatSocialDate(reply.timestamp || reply.updatedAt || reply.submittedAt))}</time>
+          </div>
+          <p>${escapeHTML(reply.message)}</p>
+        </div>
+      </article>`;
+  }
+
+  function socialPostMarkup(post, replies) {
+    const author = socialAuthor(post);
+    return `
+      <article class="social-post section-card" style="--social-accent:${author.team.accent}">
+        <header class="social-post-header">
+          <div class="social-author">
+            <span class="social-avatar">${escapeHTML(author.initial)}</span>
+            <div>
+              <strong>${escapeHTML(author.name)}</strong>
+              <span class="social-team-chip">${teamLogo(author.team, "social-team-logo")} Equipo ${escapeHTML(author.team.name)}</span>
+            </div>
+          </div>
+          <time>${escapeHTML(formatSocialDate(post.timestamp || post.updatedAt || post.submittedAt))}</time>
+        </header>
+        <p class="social-post-text">${escapeHTML(post.message)}</p>
+        <footer class="social-post-footer">
+          <button type="button" class="social-reply-toggle" data-social-reply="${escapeHTML(post.messageId)}">${uiIcon("chat")}<span>Responder</span></button>
+          <small>${replies.length ? `${replies.length} ${replies.length === 1 ? "respuesta" : "respuestas"}` : "Sé el primero en responder"}</small>
+        </footer>
+        <form class="social-reply-form hidden" data-social-parent="${escapeHTML(post.messageId)}">
+          <textarea name="message" maxlength="400" placeholder="Escribí una respuesta..." required></textarea>
+          <div><button type="button" class="ghost-button" data-social-cancel>Cancelar</button><button type="submit">Responder</button></div>
+        </form>
+        ${replies.length ? `<div class="social-replies">${replies.map(socialReplyMarkup).join("")}</div>` : ""}
+      </article>`;
+  }
+
+  function renderSocial() {
+    const messages = dedupeSocialMessages(state.socialMessages || []);
+    const rootMessages = messages.filter(message => !message.parentId).sort((a, b) => socialMessageTime(b) - socialMessageTime(a));
+    const repliesByParent = messages.reduce((groups, message) => {
+      if (!message.parentId) return groups;
+      if (!groups[message.parentId]) groups[message.parentId] = [];
+      groups[message.parentId].push(message);
+      return groups;
+    }, {});
+    Object.values(repliesByParent).forEach(replies => replies.sort((a, b) => socialMessageTime(a) - socialMessageTime(b)));
+
+    const team = getTeam(currentGuest.team);
+    const initial = String(currentGuest.firstName || currentGuest.lastName || "I").charAt(0).toUpperCase();
+
+    return `
+      ${socialStyles()}
+      <section class="social-title-row">
+        ${sectionHeader("comunidad", "Social", "Mensajes para todos los invitados.")}
+        <button id="refreshSocial" type="button" class="social-refresh-button">${uiIcon("sync")}<span>Actualizar</span></button>
+      </section>
+      <form id="socialPostForm" class="social-composer section-card" style="--social-accent:${team.accent}">
+        <span class="social-avatar">${escapeHTML(initial)}</span>
+        <div>
+          <div class="social-composer-meta"><strong>${escapeHTML(guestFullName(currentGuest))}</strong><span>${teamLogo(team, "social-team-logo")} Equipo ${escapeHTML(team.name)}</span></div>
+          <textarea name="message" maxlength="400" placeholder="Escribí un mensaje para todos..." required></textarea>
+          <div class="social-composer-actions"><small>Máximo 400 caracteres</small><button type="submit">${uiIcon("chat")}<span>Publicar</span></button></div>
+        </div>
+      </form>
+      <section class="social-feed">
+        ${rootMessages.length ? rootMessages.map(post => socialPostMarkup(post, repliesByParent[post.messageId] || [])).join("") : `<div class="social-empty section-card">${uiIcon("chat")}<strong>Todavía no hay mensajes</strong><p>Podés ser la primera persona en saludar a todos.</p></div>`}
+      </section>`;
+  }
+
+  function socialStyles() {
+    return `<style>
+      .social-title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}.social-title-row>.section-head{flex:1}.social-refresh-button{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:7px 10px;border:1px solid rgba(54,85,111,.20);border-radius:11px;background:rgba(54,85,111,.06);color:#36556f;box-shadow:none;font-size:10px}.social-refresh-button .ui-icon{width:15px;height:15px}
+      .social-composer{display:grid;grid-template-columns:42px minmax(0,1fr);gap:11px;padding:14px;border-color:color-mix(in srgb,var(--social-accent) 30%,var(--line))}.social-avatar{width:40px;height:40px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--social-accent) 35%,transparent);border-radius:50%;background:color-mix(in srgb,var(--social-accent) 10%,#fff);color:var(--ink);font-family:var(--font-title);font-size:18px;font-weight:900}.social-avatar-small{width:31px;height:31px;font-size:14px}.social-composer-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.social-composer-meta>strong{font-size:13px}.social-composer-meta>span,.social-team-chip{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:9px;font-weight:850}.social-team-logo{width:17px!important;height:17px!important}.social-composer textarea{width:100%;min-height:72px;margin-top:8px;padding:10px 11px;border-radius:13px;resize:vertical}.social-composer-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:7px}.social-composer-actions small{color:var(--muted);font-size:9px}.social-composer-actions button{display:inline-flex;align-items:center;gap:6px;min-height:35px;padding:7px 12px}.social-composer-actions .ui-icon{width:15px;height:15px}
+      .social-feed{display:grid;gap:9px;margin-top:10px}.social-post{padding:13px;border-left:3px solid var(--social-accent)}.social-post-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.social-author{display:grid;grid-template-columns:40px minmax(0,1fr);gap:9px;align-items:center}.social-author strong{display:block;font-size:13px}.social-post-header>time{color:var(--muted);font-size:8px;white-space:nowrap}.social-post-text{margin:11px 0 9px;color:var(--ink);font-size:13px;line-height:1.45;white-space:pre-wrap;word-break:break-word}.social-post-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:7px;border-top:1px solid rgba(132,104,68,.10)}.social-post-footer small{color:var(--muted);font-size:8px}.social-reply-toggle{display:inline-flex;align-items:center;gap:5px;min-height:29px;padding:5px 8px;border:0;background:transparent;color:#36556f;box-shadow:none;font-size:9px}.social-reply-toggle .ui-icon{width:14px;height:14px}
+      .social-reply-form{margin-top:9px;padding:9px;border:1px solid rgba(54,85,111,.13);border-radius:12px;background:rgba(54,85,111,.035)}.social-reply-form textarea{width:100%;min-height:58px;padding:8px 9px;border-radius:10px;resize:vertical}.social-reply-form>div{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}.social-reply-form button{min-height:31px;padding:6px 9px;font-size:9px}
+      .social-replies{display:grid;gap:6px;margin:10px 0 0 22px;padding-left:10px;border-left:1px solid color-mix(in srgb,var(--social-accent) 30%,var(--line))}.social-reply{display:grid;grid-template-columns:31px minmax(0,1fr);gap:8px;align-items:start;padding:8px;border-radius:11px;background:rgba(255,255,255,.38)}.social-reply-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.social-reply-meta strong{font-size:11px}.social-reply-meta span{display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:8px}.social-reply-meta time{margin-left:auto;color:var(--muted);font-size:7px}.social-reply-body p{margin:4px 0 0;font-size:11px;line-height:1.4;white-space:pre-wrap;word-break:break-word}.social-empty{display:grid;place-items:center;min-height:170px;text-align:center}.social-empty>.ui-icon{width:31px;height:31px;color:#36556f}.social-empty strong{margin-top:8px}.social-empty p{margin:4px 0 0;font-size:11px}
+      @media(max-width:600px){.social-title-row{align-items:center}.social-title-row .section-head p:not(.eyebrow){display:none}.social-refresh-button span{display:none}.social-refresh-button{width:34px;padding:6px}.social-composer{grid-template-columns:36px minmax(0,1fr);padding:11px}.social-avatar{width:35px;height:35px;font-size:16px}.social-author{grid-template-columns:35px minmax(0,1fr)}.social-post{padding:11px}.social-post-text{font-size:12px}.social-replies{margin-left:12px;padding-left:8px}}
+    </style>`;
+  }
+
+  function renderGifts() {
+    return `
+      ${giftStyles()}
+      ${sectionHeader("casamiento", "Regalos", "")}
+      <section class="gift-placeholder section-card">
+        <span class="gift-placeholder-icon">${uiIcon("gift")}</span>
+        <div><p class="eyebrow">Próximamente</p><h3>Esta sección se habilitará más adelante</h3><p>Cuando esté definida, acá van a encontrar la información para quienes quieran hacernos un regalo.</p></div>
+      </section>`;
+  }
+
+  function giftStyles() {
+    return `<style>
+      .gift-placeholder{display:grid;grid-template-columns:74px minmax(0,1fr);gap:17px;align-items:center;padding:23px;background:linear-gradient(135deg,rgba(201,170,114,.12),rgba(255,253,248,.90));border-color:rgba(201,170,114,.30)}.gift-placeholder-icon{width:68px;height:68px;display:grid;place-items:center;border-radius:21px;background:rgba(201,170,114,.14);color:#8d642d}.gift-placeholder-icon .ui-icon{width:34px;height:34px}.gift-placeholder h3{margin:4px 0 6px;font-size:27px}.gift-placeholder p:not(.eyebrow){margin:0;max-width:650px;font-size:12px}
+      @media(max-width:560px){.gift-placeholder{grid-template-columns:54px minmax(0,1fr);padding:16px}.gift-placeholder-icon{width:51px;height:51px;border-radius:16px}.gift-placeholder-icon .ui-icon{width:27px;height:27px}.gift-placeholder h3{font-size:21px}}
+    </style>`;
+  }
+
+  async function submitSocialMessage(form, parentId = "") {
+    const textarea = form.querySelector('textarea[name="message"]');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const message = String(textarea?.value || "").trim();
+    if (!message) { toast("Escribí un mensaje antes de publicar."); textarea?.focus(); return; }
+
+    const originalText = submitButton?.textContent || "Publicar";
+    if (submitButton) { submitButton.disabled = true; submitButton.textContent = "Guardando…"; }
+
+    const payload = {
+      messageId: newSocialMessageId(), parentId, guestId: currentGuest.id,
+      guestName: guestFullName(currentGuest), teamId: currentGuest.team,
+      message: message.slice(0, 400), updatedAt: new Date().toISOString()
+    };
+
+    const savedRecord = await saveAndVerifyRemote(
+      "saveSocialMessage", payload,
+      record => Boolean(record && record.messageId === payload.messageId && record.message)
+    );
+
+    if (!savedRecord) {
+      if (submitButton) { submitButton.disabled = false; submitButton.textContent = originalText; }
+      return;
+    }
+
+    state.socialMessages = dedupeSocialMessages([...(state.socialMessages || []), { ...payload, ...savedRecord }]);
+    saveState();
+    toast(parentId ? "Respuesta publicada." : "Mensaje publicado.");
+    renderCurrentRoute();
   }
 
   function scoreEntriesForGames(gameIds) {
@@ -2393,6 +2580,46 @@
         toast(`Trivia completada: ${bestScore * 20} puntos.`);
         renderCurrentRoute();
         });
+    }
+
+
+    if (route === "social") {
+      $("#refreshSocial")?.addEventListener("click", async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        const updated = await syncFromSheets(false);
+        if (updated) toast("Mensajes actualizados.");
+        else toast("No se pudieron actualizar los mensajes.");
+      });
+
+      $("#socialPostForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        submitSocialMessage(event.currentTarget, "");
+      });
+
+      $$('[data-social-reply]').forEach(button => {
+        button.addEventListener("click", () => {
+          const form = $$(".social-reply-form").find(item => item.dataset.socialParent === button.dataset.socialReply);
+          if (!form) return;
+          form.classList.toggle("hidden");
+          if (!form.classList.contains("hidden")) form.querySelector("textarea")?.focus();
+        });
+      });
+
+      $$('[data-social-cancel]').forEach(button => {
+        button.addEventListener("click", () => {
+          const form = button.closest(".social-reply-form");
+          form?.classList.add("hidden");
+          form?.reset();
+        });
+      });
+
+      $$(".social-reply-form").forEach(form => {
+        form.addEventListener("submit", event => {
+          event.preventDefault();
+          submitSocialMessage(event.currentTarget, event.currentTarget.dataset.socialParent || "");
+        });
+      });
     }
 
     if (route === "admin") bindAdminEvents();
