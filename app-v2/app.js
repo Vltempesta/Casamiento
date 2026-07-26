@@ -260,7 +260,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32416",
+      appVersion: "32417",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1707,48 +1707,52 @@
 
   function renderRanking() {
     const ranking = calculateRanking();
+
     return `
-      <section class="ranking-summary-card ranking-summary-ultra section-card">
-        <div class="ranking-summary-copy">
+      <section class="vf-ranking-head section-card">
+        <div class="vf-ranking-title">
           <p class="eyebrow">Competencia</p>
           <h3>Ranking de equipos</h3>
-          <p>Desafíos, juegos, bonus y penalizaciones.</p>
         </div>
-        <div class="ranking-action-buttons ranking-action-buttons-ultra">
-          <button id="refreshRanking" type="button" class="ranking-refresh-button">
-            <span class="ranking-button-icon">${uiIcon("sync")}</span>
-            <span>Actualizar</span>
+        <div class="vf-ranking-actions">
+          <button id="refreshRanking" type="button" class="vf-ranking-action vf-ranking-refresh">
+            ${uiIcon("sync")}<span>Actualizar</span>
           </button>
-          <button type="button" data-go="puntos" class="ranking-points-button">
-            <span class="ranking-button-icon">${uiIcon("star")}</span>
-            <span>Sumá puntos</span>
+          <button type="button" data-go="puntos" class="vf-ranking-action vf-ranking-points">
+            ${uiIcon("star")}<span>Sumá puntos</span>
           </button>
         </div>
       </section>
-      <section class="ranking-list ranking-list-compact ranking-list-ultra">
-        ${ranking.map(rankRow).join("")}
+
+      <section class="vf-ranking-list" aria-label="Tabla de posiciones">
+        ${ranking.map(vfRankRow).join("")}
       </section>`;
   }
 
-  function rankRow(row, index) {
+  function vfRankRow(row, index) {
     const team = getTeam(row.id);
     const ownTeam = currentGuest?.team === team.id;
-    const leading = index === 0 && Number(row.total || 0) > 0;
+
     return `
-      <button type="button"
-        class="rank-item rank-item-button rank-item-compact rank-item-ultra ${ownTeam ? "is-my-team" : ""} ${leading ? "is-leading" : ""}"
+      <button
+        type="button"
+        class="vf-rank-row ${ownTeam ? "is-my-team" : ""} ${index === 0 ? "is-first" : ""}"
         data-team-open="${team.id}"
-        style="--local-accent:${team.accent}"
-        aria-label="Abrir equipo ${escapeHTML(team.name)}">
-        <span class="rank-pos">${index + 1}</span>
-        <span class="rank-logo-wrap">${teamLogo(team,"rank-team-logo")}</span>
-        <span class="rank-team-copy">
+        style="--vf-team-accent:${team.accent}"
+        aria-label="${index + 1}. ${escapeHTML(team.name)}, ${row.total} puntos">
+        <span class="vf-rank-position">${index + 1}</span>
+        <span class="vf-rank-logo">${teamLogo(team, "vf-rank-team-logo")}</span>
+        <span class="vf-rank-name">
           <strong>${escapeHTML(team.name)}</strong>
           ${ownTeam ? `<small>Tu equipo</small>` : ""}
         </span>
-        <span class="rank-points"><b>${row.total}</b><small>pts</small></span>
+        <span class="vf-rank-score">
+          <b>${row.total}</b>
+          <small>pts</small>
+        </span>
       </button>`;
   }
+
 
   function calculateRanking() {
     const totals = Object.keys(DATA.teams).map(id => ({ id, total: 0 }));

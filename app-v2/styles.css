@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32416 · Fondo bordado minimalista en portada ===== */
+/* ===== v32417 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32416');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32417');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32416 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32417 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32416');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32417');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32416 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32417 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32416');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32417');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32416 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32417 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32416 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32417 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32416 · Inicio minimalista ===== */
+/* ===== v32417 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32416 · Navegación en menú hamburguesa ===== */
+/* ===== v32417 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32416 · UX universal 30–70 años ===== */
+/* ===== v32417 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32416 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32417 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32416 · Ajustes UX solicitados ===== */
+/* ===== v32417 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32416 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32417 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32416 · Reset seguro de datos de prueba ===== */
+/* ===== v32417 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32416 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32417 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32416 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32417 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32416 · Estados reales de guardado ===== */
+/* ===== v32417 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32416 · Guardado rápido ===== */
+/* ===== v32417 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32416 · Seguridad de Administración ===== */
+/* ===== v32417 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32416 · Mejoras integrales
+   v32417 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3134,7 +3134,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32416 · Optimización móvil, historial y vistas compactas
+   v32417 · Optimización móvil, historial y vistas compactas
    ============================================================ */
 .guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
 
@@ -3167,7 +3167,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32416 · compactación móvil y refinamiento visual
+   v32417 · compactación móvil y refinamiento visual
    ============================================================ */
 
 /* Barra superior: inicial + nombre + casita + menú */
@@ -3499,7 +3499,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32416 · Ranking vertical y ajustes de espaciado
+   v32417 · Ranking vertical y ajustes de espaciado
    ============================================================ */
 
 /* Cuenta regresiva sin fecha fija */
@@ -3713,7 +3713,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32416 · Ranking ultra compacto y alineado
+   v32417 · Ranking ultra compacto y alineado
    ============================================================ */
 
 .ranking-summary-ultra {
@@ -3938,5 +3938,234 @@ body.admin-modal-open { overflow:hidden; }
   }
   .rank-item-ultra .rank-points b {
     font-size: 15px !important;
+  }
+}
+
+
+/* ============================================================
+   v32417 · Ranking corregido con clases aisladas
+   ============================================================ */
+
+.vf-ranking-head {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 11px 13px;
+  border-radius: 17px;
+  box-shadow: 0 7px 17px rgba(42,35,26,.05);
+}
+.vf-ranking-title { min-width: 0; }
+.vf-ranking-title .eyebrow {
+  margin: 0;
+  font-size: 8px;
+  letter-spacing: .13em;
+}
+.vf-ranking-title h3 {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.vf-ranking-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vf-ranking-action {
+  min-height: 31px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 10px;
+  box-shadow: none;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+.vf-ranking-action .ui-icon {
+  width: 14px;
+  height: 14px;
+}
+.vf-ranking-refresh {
+  border: 1px solid rgba(54,85,111,.24);
+  background: rgba(54,85,111,.07);
+  color: #36556f;
+}
+.vf-ranking-points {
+  border: 1px solid rgba(201,155,62,.25);
+  background: rgba(201,155,62,.11);
+  color: #7e5921;
+}
+.vf-ranking-action:hover { transform: translateY(-1px); }
+.vf-ranking-refresh.is-loading .ui-icon { animation: vfRankingSpin .8s linear infinite; }
+
+.vf-ranking-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  margin: 0;
+}
+.vf-rank-row {
+  width: 100%;
+  min-height: 47px;
+  display: grid;
+  grid-template-columns: 28px 38px minmax(0,1fr) 52px;
+  gap: 9px;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--vf-team-accent) 28%, var(--line));
+  border-radius: 13px;
+  background: linear-gradient(90deg,color-mix(in srgb, var(--vf-team-accent) 7%, #fffdf8),rgba(255,255,255,.48));
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  box-shadow: none;
+  cursor: pointer;
+}
+.vf-rank-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(42,35,26,.05);
+}
+.vf-rank-position {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(201,170,114,.13);
+  color: var(--gold-deep);
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1;
+}
+.vf-rank-logo {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(255,255,255,.50);
+}
+.vf-rank-team-logo {
+  width: 35px !important;
+  height: 35px !important;
+  display: block !important;
+}
+.vf-rank-name {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+}
+.vf-rank-name strong {
+  display: block;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vf-rank-name small {
+  display: block;
+  margin-top: 2px;
+  color: #743344;
+  font-size: 7px;
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.vf-rank-score {
+  position: static !important;
+  grid-column: 4 !important;
+  grid-row: 1 !important;
+  min-width: 52px;
+  display: grid !important;
+  justify-items: end;
+  align-content: center;
+  text-align: right;
+  transform: none !important;
+}
+.vf-rank-score b {
+  display: block;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 950;
+  line-height: 1;
+}
+.vf-rank-score small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 850;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.vf-rank-row.is-my-team {
+  border-color: rgba(116,51,68,.34);
+  background: linear-gradient(90deg,rgba(116,51,68,.055),rgba(255,253,248,.82));
+  box-shadow: inset 3px 0 0 rgba(116,51,68,.34);
+}
+.vf-rank-row.is-first { border-color: rgba(201,170,114,.48); }
+
+@media(max-width:700px) {
+  .vf-ranking-head {
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 8px;
+    padding: 9px 10px;
+  }
+  .vf-ranking-title h3 { font-size: 17px; }
+  .vf-ranking-actions { gap: 4px; }
+  .vf-ranking-action {
+    min-height: 27px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    font-size: 8px;
+  }
+  .vf-ranking-action .ui-icon {
+    width: 12px;
+    height: 12px;
+  }
+  .vf-ranking-list { gap: 4px; }
+  .vf-rank-row {
+    min-height: 44px;
+    grid-template-columns: 25px 34px minmax(0,1fr) 47px;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+  .vf-rank-position {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+  .vf-rank-logo {
+    width: 34px;
+    height: 34px;
+  }
+  .vf-rank-team-logo {
+    width: 31px !important;
+    height: 31px !important;
+  }
+  .vf-rank-name strong { font-size: 12px; }
+  .vf-rank-score { min-width: 47px; }
+  .vf-rank-score b { font-size: 16px; }
+}
+
+@media(max-width:390px) {
+  .vf-ranking-title h3 { font-size: 16px; }
+  .vf-ranking-action span { display: none; }
+  .vf-ranking-action {
+    width: 28px;
+    padding: 4px;
   }
 }
