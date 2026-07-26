@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=32421" />
+  <link rel="stylesheet" href="styles.css?v=32422" />
 </head>
 <body>
   <div class="scene" aria-hidden="true">
@@ -28,7 +28,7 @@
     <section id="loginScreen" class="login-screen">
       <div class="login-frame">
         <header class="login-brand">
-          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32421" alt="Sello de Vani y Fede" width="105" height="113" />
+          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32422" alt="Sello de Vani y Fede" width="105" height="113" />
 
           <h1 class="couple-wordmark couple-wordmark--elegant" aria-label="Vani y Fede">
             <span>VANI</span>
@@ -101,7 +101,6 @@
             <span class="menu-toggle-lines" aria-hidden="true">
               <i></i><i></i><i></i>
             </span>
-            <span class="menu-toggle-label">Menú</span>
           </button>
         </div>
       </header>
@@ -145,13 +144,56 @@
       </aside>
 
       <section id="view" class="view" aria-live="polite"></section>
+
+      <nav class="bottom-nav" aria-label="Accesos principales">
+        <button type="button" class="bottom-nav-item" data-route="asistencia">
+          <span class="bottom-nav-dot" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3h8"/><path d="M9 2v3M15 2v3"/><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="m8.5 14 2 2 5-5"/>
+          </svg>
+          <span>Asistencia</span>
+        </button>
+
+        <button type="button" class="bottom-nav-item" data-route="equipo">
+          <span class="bottom-nav-dot" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3 20 6v6c0 4.7-3.1 7.5-8 9-4.9-1.5-8-4.3-8-9V6l8-3Z"/><circle cx="12" cy="9" r="2.2"/><path d="M8.5 15.5c.6-2.2 1.7-3.3 3.5-3.3s2.9 1.1 3.5 3.3"/>
+          </svg>
+          <span>Mi equipo</span>
+        </button>
+
+        <button type="button" class="bottom-nav-item bottom-nav-main active" data-route="inicio">
+          <span class="bottom-nav-main-circle">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>
+            </svg>
+          </span>
+          <span>Inicio</span>
+        </button>
+
+        <button type="button" class="bottom-nav-item" data-route="puntos">
+          <span class="bottom-nav-dot" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3 14.6 8.3 20.5 9.2 16.2 13.3 17.2 19.2 12 16.4 6.8 19.2 7.8 13.3 3.5 9.2 9.4 8.3 12 3Z"/>
+          </svg>
+          <span>Sumá puntos</span>
+        </button>
+
+        <button type="button" class="bottom-nav-item" data-route="ranking">
+          <span class="bottom-nav-dot" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 20V10h4v10"/><path d="M10 20V4h4v16"/><path d="M15 20v-7h4v7"/>
+          </svg>
+          <span>Ranking</span>
+        </button>
+      </nav>
     </section>
   </main>
 
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
-  <script src="config.js?v=32421"></script>
-  <script src="data.js?v=32421"></script>
-  <script src="app.js?v=32421"></script>
+  <script src="config.js?v=32422"></script>
+  <script src="data.js?v=32422"></script>
+  <script src="app.js?v=32422"></script>
 </body>
 </html>

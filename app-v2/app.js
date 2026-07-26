@@ -261,7 +261,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32421",
+      appVersion: "32422",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -416,7 +416,7 @@
 
     if (Array.isArray(remote.scoreEntries)) state.scoreEntries = dedupeScores([...state.scoreEntries, ...remote.scoreEntries]);
     if (Array.isArray(remote.socialMessages)) {
-      state.socialMessages = dedupeSocialMessages([...(state.socialMessages || []), ...remote.socialMessages]);
+      state.socialMessages = dedupeSocialMessages(remote.socialMessages);
     }
     if (remote.manualUnlocks && typeof remote.manualUnlocks === "object") state.manualUnlocks = { ...state.manualUnlocks, ...remote.manualUnlocks };
     state.lastSyncAt = new Date().toISOString();
@@ -812,7 +812,7 @@
 
     $("#syncButton").addEventListener("click", () => syncFromSheets(true));
 
-    $$(".nav-tabs button[data-route]").forEach(button => {
+    $$(".nav-tabs button[data-route], .bottom-nav button[data-route]").forEach(button => {
       button.addEventListener("click", () => {
         if (button.dataset.route === "equipo") selectedTeamViewId = currentGuest?.team || null;
         navigate(button.dataset.route);
@@ -848,7 +848,7 @@
     }
 
     currentRoute = route;
-    $$(".nav-tabs button[data-route]").forEach(button => {
+    $$(".nav-tabs button[data-route], .bottom-nav button[data-route]").forEach(button => {
       const active = button.dataset.route === route;
       button.classList.toggle("active", active);
       if (active) button.setAttribute("aria-current", "page");
@@ -1051,7 +1051,6 @@
     const myPoints = rank.find(row => row.id === team.id)?.total || 0;
     const rankingStarted = rank.some(row => Number(row.total || 0) !== 0);
     const visibleRank = rankingStarted ? myRank : "—";
-    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
     const deadline = CONFIG.RSVP_DEADLINE_LABEL || "31 de agosto de 2026";
 
     const now = new Date();
@@ -1098,7 +1097,7 @@
       </section>
 
       <section id="homeEssential" class="home-essential" aria-labelledby="homeEssentialTitle">
-        <div class="home-section-heading"><div><p class="home-kicker">Información práctica</p><h3 id="homeEssentialTitle">Lo esencial</h3></div><a class="home-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a></div>
+        <div class="home-section-heading"><div><p class="home-kicker">Información práctica</p><h3 id="homeEssentialTitle">Lo esencial</h3></div></div>
         <div class="home-essential-card">
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("calendar")}</span><div><small>Fecha</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div></article>
@@ -1131,7 +1130,6 @@
   function renderInfo() {
     const locationOpen = isUnlocked("location");
     const menuOpen = isUnlocked("menu");
-    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
 
     return `
       ${infoStyles()}
@@ -1148,7 +1146,7 @@
             <span class="badge muted">📍 Lugar secreto</span>
           </div>
         </div>
-        <a class="info-calendar-button" href="${calendarUrl}" target="_blank" rel="noopener">📅 AGENDALO!</a>
+
       </section>
 
       <section class="grid two info-main-grid">
@@ -1208,8 +1206,8 @@
           <span class="transport-status">${open ? "Información habilitada" : "Próximamente"}</span>
           <h3>${open ? "Información del micro" : "El destino sigue siendo secreto"}</h3>
           <p>${open
-            ? "Acá vas a encontrar todos los datos para la ida y el regreso."
-            : "Nos ocupamos de que lleguen cómodos y vuelvan seguros. Los horarios y el punto exacto se compartirán más adelante."}</p>
+            ? "Acá vas a encontrar todos los datos para la ida y el regreso. En Asistencia podés avisarnos si te interesa usar este servicio."
+            : "Nos ocupamos de que lleguen cómodos y vuelvan seguros. En Asistencia podés avisarnos si te interesa este servicio. Los horarios y el punto exacto se compartirán más adelante."}</p>
         </div>
       </section>
 
@@ -1255,7 +1253,6 @@
     const hasFinalSaved = hasCompletedRsvp(saved);
     const editing = Boolean(state.rsvpEditMode || !hasSaved || !hasFinalSaved);
     const deadlineLabel = "31 de agosto de 2026";
-    const calendarUrl = "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NWNiZ2Fzb2Rxb2E2c3VxcTZ1cmJqMm9sMmsgZmVkZXJpY29zYW50aTkxQG0&tmsrc=federicosanti91%40gmail.com";
     const savedTransport = ["combi", "micro"].includes(saved.transport)
       ? "combi"
       : saved.transport === "auto"
@@ -1285,7 +1282,6 @@
           </div>
           <div class="rsvp-actions-row">
             <button id="editRsvp" type="button">Editar respuesta</button>
-            <a class="rsvp-calendar-link" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
           </div>
         </section>
 
@@ -1346,7 +1342,6 @@
         <div class="form-actions rsvp-form-actions">
           <button type="submit">${hasSaved ? "Guardar cambios" : "Guardar asistencia"}</button>
           ${hasSaved && hasFinalSaved ? `<button id="cancelRsvpEdit" type="button" class="ghost-button">Cancelar</button>` : ""}
-          <a class="rsvp-calendar-link rsvp-calendar-link-small" href="${calendarUrl}" target="_blank" rel="noopener">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
         </div>
       </form>`;
   }
@@ -1601,7 +1596,21 @@
   function renderTeam() {
     const selectedTeamId = selectedTeamViewId || currentGuest.team;
     const team = getTeam(selectedTeamId);
-    const members = DATA.guests.filter(guest => guest.team === team.id && isCompetitionGuest(guest)).sort(sortGuestsForDisplay);
+    const members = DATA.guests
+      .filter(guest => guest.team === team.id && isCompetitionGuest(guest))
+      .sort((a, b) => {
+        const completedDiff =
+          guestChallengeProgress(b).completed -
+          guestChallengeProgress(a).completed;
+
+        if (completedDiff) return completedDiff;
+
+        return guestFullName(a).localeCompare(
+          guestFullName(b),
+          "es",
+          { sensitivity: "base" }
+        );
+      });
     const activePlayers = members.length;
     const confirmed = completedRsvpMembers(team.id).length;
     const percent = Math.min(100, Math.round((confirmed / Math.max(activePlayers, 1)) * 100));
@@ -1661,6 +1670,7 @@
     const myPoints = calculateRanking().find(row => row.id === team.id)?.total || 0;
     const musicDone = Boolean(triviaSubmission("music-selection"));
     const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
+    const currentGamesDone = rsvpDone && musicDone && triviaDone;
 
     return `
       ${pointsHubStyles()}
@@ -1678,7 +1688,17 @@
         ` : `
           <div class="points-rsvp-lock">${uiIcon("lock")}<div><strong>Primero, asistencia</strong><p>Al responder por sí o por no se habilitarán las canciones, la trivia y las próximas actividades.</p></div></div>
         `}
-      </section>`;
+      </section>
+
+      ${currentGamesDone ? `
+        <section class="points-social-cta section-card">
+          <span>${uiIcon("chat")}</span>
+          <div>
+            <h4>¿Te quedaste con ganas de más?</h4>
+            <p>Haceles saber a los demás equipos quién va a ganar.</p>
+          </div>
+          <button type="button" data-go="social">Ir a Social</button>
+        </section>` : ""}`;
   }
 
   function pointsAction({ icon, title, text, done, route, progressText = "", editable = true }) {
@@ -1898,29 +1918,6 @@
 
   const SOCIAL_EMOJIS = ["😀", "😍", "🥳", "😂", "❤️", "🔥", "👏", "🎉", "🍾", "💍", "✨", "🌙"];
 
-  function safeSocialGifUrl(value) {
-    const text = String(value || "").trim();
-    if (!text) return "";
-
-    try {
-      const url = new URL(text);
-      if (!["http:", "https:"].includes(url.protocol)) return "";
-      return url.href;
-    } catch (_) {
-      return "";
-    }
-  }
-
-  function socialGifMarkup(value, className = "") {
-    const url = safeSocialGifUrl(value);
-    if (!url) return "";
-
-    return `
-      <div class="social-gif ${className}">
-        <img src="${escapeHTML(url)}" alt="GIF compartido" loading="lazy">
-      </div>`;
-  }
-
   function socialEmojiToolbar() {
     return `
       <div class="social-media-tools">
@@ -1929,13 +1926,7 @@
             <button type="button" data-social-emoji="${escapeHTML(emoji)}" aria-label="Agregar ${escapeHTML(emoji)}">${escapeHTML(emoji)}</button>
           `).join("")}
         </div>
-        <button type="button" class="social-gif-toggle" data-social-gif-toggle>GIF</button>
-      </div>
-      <label class="social-gif-field hidden">
-        <span>Enlace del GIF</span>
-        <input name="gifUrl" type="url" inputmode="url" placeholder="Pegá un enlace directo de Tenor o Giphy">
-        <small>Usá el enlace directo de la imagen o animación.</small>
-      </label>`;
+      </div>`;
   }
 
   function socialReplyMarkup(reply) {
@@ -1949,8 +1940,7 @@
             <span>${teamLogo(author.team, "social-team-logo")} ${escapeHTML(author.team.name)}</span>
             <time>${escapeHTML(formatSocialDate(reply.timestamp || reply.updatedAt || reply.submittedAt))}</time>
           </div>
-          ${reply.message ? `<p>${escapeHTML(reply.message)}</p>` : ""}
-          ${socialGifMarkup(reply.gifUrl, "social-gif-reply")}
+          <p>${escapeHTML(reply.message || "")}</p>
         </div>
       </article>`;
   }
@@ -1971,8 +1961,7 @@
           <time>${escapeHTML(formatSocialDate(post.timestamp || post.updatedAt || post.submittedAt))}</time>
         </header>
 
-        ${post.message ? `<p class="social-post-text">${escapeHTML(post.message)}</p>` : ""}
-        ${socialGifMarkup(post.gifUrl)}
+        <p class="social-post-text">${escapeHTML(post.message || "")}</p>
 
         <footer class="social-post-footer">
           <button type="button" class="social-reply-toggle" data-social-reply="${escapeHTML(post.messageId)}">${uiIcon("chat")}<span>Responder</span></button>
@@ -1980,7 +1969,7 @@
         </footer>
 
         <form class="social-reply-form hidden" data-social-parent="${escapeHTML(post.messageId)}">
-          <textarea name="message" maxlength="400" placeholder="Escribí una respuesta..."></textarea>
+          <textarea name="message" maxlength="400" placeholder="Escribí una respuesta..." required></textarea>
           ${socialEmojiToolbar()}
           <div class="social-reply-actions">
             <button type="button" class="ghost-button" data-social-cancel>Cancelar</button>
@@ -1991,7 +1980,6 @@
         ${replies.length ? `<div class="social-replies">${replies.map(socialReplyMarkup).join("")}</div>` : ""}
       </article>`;
   }
-
 
   function renderSocial() {
     const messages = dedupeSocialMessages(state.socialMessages || []);
@@ -2032,7 +2020,7 @@
           ${socialEmojiToolbar()}
 
           <div class="social-composer-actions">
-            <small>Podés publicar texto, emoticonos o un GIF.</small>
+            <small>Podés usar texto y emoticonos.</small>
             <button type="submit">${uiIcon("chat")}<span>Publicar</span></button>
           </div>
         </div>
@@ -2091,21 +2079,12 @@
 
   async function submitSocialMessage(form, parentId = "") {
     const textarea = form.querySelector('textarea[name="message"]');
-    const gifInput = form.querySelector('input[name="gifUrl"]');
     const submitButton = form.querySelector('button[type="submit"]');
     const message = String(textarea?.value || "").trim();
-    const rawGifUrl = String(gifInput?.value || "").trim();
-    const gifUrl = safeSocialGifUrl(rawGifUrl);
 
-    if (!message && !gifUrl) {
-      toast("Escribí un mensaje o agregá un GIF.");
+    if (!message) {
+      toast("Escribí un mensaje antes de publicar.");
       textarea?.focus();
-      return;
-    }
-
-    if (rawGifUrl && !gifUrl) {
-      toast("El enlace del GIF no es válido.");
-      gifInput?.focus();
       return;
     }
 
@@ -2122,7 +2101,6 @@
       guestName: guestFullName(currentGuest),
       teamId: currentGuest.team,
       message: message.slice(0, 400),
-      gifUrl,
       updatedAt: new Date().toISOString()
     };
 
@@ -2132,7 +2110,7 @@
       record => Boolean(
         record &&
         record.messageId === payload.messageId &&
-        (record.message || record.gifUrl)
+        record.message
       )
     );
 
@@ -2152,7 +2130,6 @@
     toast(parentId ? "Respuesta publicada." : "Mensaje publicado.");
     renderCurrentRoute();
   }
-
 
   function scoreEntriesForGames(gameIds) {
     const ids = Array.isArray(gameIds) ? gameIds : [gameIds];
@@ -2250,6 +2227,7 @@
     }).length;
     const transportInfoOpen = isTriviaGameOpen("transport-info");
     const giftsSectionOpen = isTriviaGameOpen("gifts-section");
+    const socialMessageCount = dedupeSocialMessages(state.socialMessages || []).length;
 
     return `
       ${adminUxStyles()}
@@ -2386,6 +2364,16 @@
 
 
       ${resetButtonStyles()}
+
+      <section class="section-card admin-social-reset-panel">
+        <span class="admin-social-reset-icon">${uiIcon("chat")}</span>
+        <div>
+          <p class="eyebrow">Social</p>
+          <h4>Vaciar mensajes</h4>
+          <p>${socialMessageCount} ${socialMessageCount === 1 ? "mensaje publicado" : "mensajes publicados"}.</p>
+        </div>
+        <button id="clearSocialMessages" type="button" ${socialMessageCount ? "" : "disabled"}>Vaciar Social</button>
+      </section>
 
       <section class="section-card admin-test-reset-panel">
         <div class="admin-test-reset-copy">
@@ -2831,18 +2819,6 @@
           textarea.value = `${textarea.value.slice(0, start)}${emoji}${textarea.value.slice(end)}`;
           textarea.focus();
           textarea.setSelectionRange(start + emoji.length, start + emoji.length);
-        });
-      });
-
-      $$("[data-social-gif-toggle]").forEach(button => {
-        button.addEventListener("click", () => {
-          const form = button.closest("form");
-          const field = form?.querySelector(".social-gif-field");
-          if (!field) return;
-          field.classList.toggle("hidden");
-          if (!field.classList.contains("hidden")) {
-            field.querySelector("input")?.focus();
-          }
         });
       });
 
