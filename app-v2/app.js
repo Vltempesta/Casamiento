@@ -261,7 +261,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32424",
+      appVersion: "32425",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1660,7 +1660,7 @@
       </section>
       <section class="section-card team-members-card">
         <div class="card-title-row"><h4>Integrantes y desafíos</h4><span class="badge">${members.length}</span></div>
-        <div class="guest-list team-member-list">${members.map(guest => guestPill(guest, { minimalIcon: true, showChallenges: true })).join("")}</div>
+        <div class="guest-list team-member-list">${members.map(guest => guestPill(guest, { minimalIcon: true, showChallenges: true, hideAlias: true })).join("")}</div>
       </section>`;
   }
 
@@ -1680,7 +1680,9 @@
     const initial = String(guest.firstName || guest.lastName || "?").trim().charAt(0).toUpperCase();
     const icon = `<span class="guest-person-initial ${captain ? "is-captain" : ""}">${escapeHTML(initial)}</span>`;
     const challengeStatus = options.showChallenges ? `<div class="guest-challenge-status"><span><b>${progress.completed}/${progress.total}</b><em>desafíos</em></span><i><em style="width:${Math.round((progress.completed / Math.max(progress.total,1)) * 100)}%"></em></i></div>` : "";
-    return `<div class="guest-pill ${captain ? "captain-pill" : ""} ${declined ? "is-declined" : ""} ${options.showChallenges ? "has-challenges" : ""}"><span class="guest-pill-avatar">${icon}</span><div class="guest-pill-copy"><strong>${escapeHTML(guestFullName(guest))}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}${declined ? `<span class="declined-label">No asiste</span>` : ""}${challengeStatus}</div></div>`;
+    const secondaryText = options.hideAlias ? "" : `<small>${escapeHTML(aliasText)}</small>`;
+
+    return `<div class="guest-pill ${captain ? "captain-pill" : ""} ${declined ? "is-declined" : ""} ${options.showChallenges ? "has-challenges" : ""} ${options.hideAlias ? "without-alias" : ""}"><span class="guest-pill-avatar">${icon}</span><div class="guest-pill-copy"><strong>${escapeHTML(guestFullName(guest))}</strong>${secondaryText}${captain ? `<span class="captain-label">Capitán</span>` : ""}${declined ? `<span class="declined-label">No asiste</span>` : ""}${challengeStatus}</div></div>`;
   }
 
 
@@ -1931,7 +1933,7 @@
   function renderGuests() {
     const open = isUnlocked("guestMap");
     const grouped = Object.values(DATA.teams).map(team => ({ team, guests: DATA.guests.filter(guest => guest.team === team.id && isCompetitionGuest(guest)).sort(sortGuestsForDisplay) }));
-    return `${captainGuestStyles()}${sectionHeader("comunidad", "Invitados", "")}${open?"":lockedNotice("guestMap")}<section class="guest-map">${grouped.map(group=>`<article class="section-card team-column" style="--local-accent:${group.team.accent}"><h4 class="team-heading">${teamLogo(group.team,"team-heading-logo")}<span>${group.team.name}</span></h4><small>${escapeHTML(group.team.group)}</small><div class="guest-list">${group.guests.map(guest=>guestPill(guest,{minimalIcon:true})).join("")}</div></article>`).join("")}</section>`;
+    return `${captainGuestStyles()}${sectionHeader("comunidad", "Invitados", "")}${open?"":lockedNotice("guestMap")}<section class="guest-map">${grouped.map(group=>`<article class="section-card team-column" style="--local-accent:${group.team.accent}"><h4 class="team-heading">${teamLogo(group.team,"team-heading-logo")}<span>${group.team.name}</span></h4><small>${escapeHTML(group.team.group)}</small><div class="guest-list">${group.guests.map(guest=>guestPill(guest,{minimalIcon:true,hideAlias:true})).join("")}</div></article>`).join("")}</section>`;
   }
 
 
@@ -2204,7 +2206,22 @@
       answered: { title: "Respondieron la invitación", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]), detail: guest => `Equipo ${getTeam(guest.team).name} · ${attendanceLabel(state.rsvps[guest.id]?.attendance)}` },
       declined: { title: "No asistirán", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]) && state.rsvps[guest.id].attendance === "no", detail: guest => `Equipo ${getTeam(guest.team).name} · No asiste` },
       unanswered: { title: "Todavía no respondieron", filter: guest => !hasCompletedRsvp(state.rsvps[guest.id]), detail: guest => `Equipo ${getTeam(guest.team).name} · Pendiente` },
-      micro: { title: "Necesitan información del micro", filter: guest => { const row = state.rsvps[guest.id]; return hasCompletedRsvp(row) && row.attendance === "si" && ["combi","micro"].includes(row.transport); }, detail: guest => `Equipo ${getTeam(guest.team).name} · Micro desde el Obelisco` }
+      micro: { title: "Necesitan información del micro", filter: guest => { const row = state.rsvps[guest.id]; return hasCompletedRsvp(row) && row.attendance === "si" && ["combi","micro"].includes(row.transport); }, detail: guest => `Equipo ${getTeam(guest.team).name} · Micro desde el Obelisco` },
+      restrictions: {
+        title: "Restricciones alimentarias",
+        filter: guest => {
+          const row = state.rsvps[guest.id];
+          return hasCompletedRsvp(row) && (
+            row.dietChoice === "si" ||
+            Boolean(String(row.diet || "").trim())
+          );
+        },
+        detail: guest => {
+          const row = state.rsvps[guest.id] || {};
+          const restriction = String(row.diet || "").trim() || "Restricción sin detalle";
+          return `Equipo ${getTeam(guest.team).name} · ${restriction}`;
+        }
+      }
     };
     const definition = definitions[type] || definitions.answered;
     return { title: definition.title, guests: guests.filter(definition.filter).sort((x,y)=>guestFullName(x).localeCompare(guestFullName(y),"es")), detail: definition.detail };
@@ -2215,9 +2232,37 @@
   }
 
   function renderAdminMovements() {
-    const entries = allPointEntries().slice(-20).reverse();
-    return `<section class="section-card admin-movements"><div class="card-title-row"><div><p class="eyebrow">Auditoría</p><h4>Últimos movimientos</h4></div><span class="badge">${entries.length}</span></div>${entries.length ? `<div class="admin-movement-list">${entries.map(entry => `<article><span>${Number(entry.points || 0) >= 0 ? "+" : "−"}</span><div><strong>${escapeHTML(gameName(entry.gameId))}</strong><small>${escapeHTML(getTeam(entry.teamId).name)} · ${formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt)}</small>${entry.comment ? `<p>${escapeHTML(entry.comment)}</p>` : ""}</div><b>${Math.abs(Number(entry.points || 0))} pts</b></article>`).join("")}</div>` : `<p>Todavía no hay movimientos.</p>`}</section>`;
+    const entries = allPointEntries().slice(-12).reverse();
+
+    return `
+      <section class="section-card admin-movements admin-movements-compact">
+        <div class="card-title-row">
+          <div><p class="eyebrow">Auditoría</p><h4>Movimientos recientes</h4></div>
+          <span class="badge">${entries.length}</span>
+        </div>
+
+        ${entries.length
+          ? `<div class="admin-movement-list">
+              ${entries.map(entry => {
+                const points = Number(entry.points || 0);
+                const team = getTeam(entry.teamId);
+                const movementName = gameName(entry.gameId);
+
+                return `
+                  <article>
+                    <span>${points >= 0 ? "+" : "−"}</span>
+                    <div>
+                      <strong>${escapeHTML(team.name)} · ${escapeHTML(movementName)}</strong>
+                      <small>${escapeHTML(formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt))}</small>
+                    </div>
+                    <b>${Math.abs(points)} pts</b>
+                  </article>`;
+              }).join("")}
+            </div>`
+          : `<p class="admin-movement-empty">Todavía no hay movimientos.</p>`}
+      </section>`;
   }
+
 
   function renderAdmin() {
     if (!state.adminUnlocked) {
@@ -2262,6 +2307,13 @@
       const rsvp = state.rsvps[guest.id];
       return hasCompletedRsvp(rsvp) && rsvp.attendance === "si" && ["combi", "micro"].includes(rsvp.transport);
     }).length;
+    const restrictionsCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return hasCompletedRsvp(rsvp) && (
+        rsvp.dietChoice === "si" ||
+        Boolean(String(rsvp.diet || "").trim())
+      );
+    }).length;
     const transportInfoOpen = isTriviaGameOpen("transport-info");
     const giftsSectionOpen = isTriviaGameOpen("gifts-section");
     const socialMessageCount = dedupeSocialMessages(state.socialMessages || []).length;
@@ -2291,6 +2343,7 @@
         <button type="button" class="admin-stat-button" data-admin-list="declined"><span>−</span><div><small>No asisten</small><strong>${declinedCount}</strong><em>Ver</em></div></button>
         <button type="button" class="admin-stat-button" data-admin-list="unanswered"><span>?</span><div><small>Pendientes</small><strong>${unansweredCount}</strong><em>Ver</em></div></button>
         <button type="button" class="admin-stat-button admin-combi-stat" data-admin-list="micro"><span>🚌</span><div><small>Micro</small><strong>${combiCount}</strong><em>Ver</em></div></button>
+        <button type="button" class="admin-stat-button admin-restrictions-stat" data-admin-list="restrictions"><span>🍽</span><div><small>Restricciones</small><strong>${restrictionsCount}</strong><em>Ver detalle</em></div></button>
       </section>
       ${renderAdminPeopleModal()}
 

@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32424 · Fondo bordado minimalista en portada ===== */
+/* ===== v32425 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32424');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32425');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32424 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32425 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32424');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32425');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32424 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32425 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32424');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32425');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32424 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32425 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32424 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32425 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32424 · Inicio minimalista ===== */
+/* ===== v32425 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32424 · Navegación en menú hamburguesa ===== */
+/* ===== v32425 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32424 · UX universal 30–70 años ===== */
+/* ===== v32425 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32424 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32425 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32424 · Ajustes UX solicitados ===== */
+/* ===== v32425 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32424 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32425 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32424 · Reset seguro de datos de prueba ===== */
+/* ===== v32425 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32424 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32425 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32424 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32425 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32424 · Estados reales de guardado ===== */
+/* ===== v32425 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32424 · Guardado rápido ===== */
+/* ===== v32425 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32424 · Seguridad de Administración ===== */
+/* ===== v32425 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32424 · Mejoras integrales
+   v32425 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3134,7 +3134,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Optimización móvil, historial y vistas compactas
+   v32425 · Optimización móvil, historial y vistas compactas
    ============================================================ */
 .guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
 
@@ -3167,7 +3167,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · compactación móvil y refinamiento visual
+   v32425 · compactación móvil y refinamiento visual
    ============================================================ */
 
 /* Barra superior: inicial + nombre + casita + menú */
@@ -3499,7 +3499,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Ranking vertical y ajustes de espaciado
+   v32425 · Ranking vertical y ajustes de espaciado
    ============================================================ */
 
 /* Cuenta regresiva sin fecha fija */
@@ -3713,7 +3713,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Ranking ultra compacto y alineado
+   v32425 · Ranking ultra compacto y alineado
    ============================================================ */
 
 .ranking-summary-ultra {
@@ -3943,7 +3943,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Ranking corregido con clases aisladas
+   v32425 · Ranking corregido con clases aisladas
    ============================================================ */
 
 .vf-ranking-head {
@@ -4172,7 +4172,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Ranking equilibrado, menú sutil e invitados compactos
+   v32425 · Ranking equilibrado, menú sutil e invitados compactos
    ============================================================ */
 
 /* Botón hamburguesa apenas más chico */
@@ -4518,7 +4518,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Acciones del ranking al pie
+   v32425 · Acciones del ranking al pie
    ============================================================ */
 
 .vf18-ranking-title h3 {
@@ -4565,7 +4565,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Menú, Mi equipo, Social y Regalos
+   v32425 · Menú, Mi equipo, Social y Regalos
    ============================================================ */
 .menu-nav-clean{gap:8px!important}.menu-nav-clean .menu-group{gap:3px!important}.menu-nav-clean .menu-group+.menu-group{margin-top:5px;padding-top:10px;border-top:1px solid rgba(132,104,68,.15)}.menu-nav-clean .menu-group-admin{margin-top:5px!important;padding-top:10px!important}.menu-nav-clean .menu-group>p{display:none!important}
 .team-ranking-summary-button{display:grid!important;grid-template-columns:23px auto auto!important;gap:7px!important;align-items:center!important;width:auto!important;min-width:156px!important;min-height:43px!important;padding:7px 9px!important;border-radius:13px!important}.team-ranking-summary-icon{display:grid!important;place-items:center!important}.team-ranking-summary-icon .ui-icon{width:18px!important;height:18px!important}.team-ranking-summary-label{display:block!important;color:#fff!important;font-size:11px!important;font-weight:900!important}.team-ranking-summary-data{display:flex!important;align-items:center!important;gap:5px!important;padding-left:7px;border-left:1px solid rgba(255,255,255,.23)}.team-ranking-summary-data b,.team-ranking-summary-data em{display:block!important;color:#fff!important;font-style:normal;white-space:nowrap}.team-ranking-summary-data b{font-size:10px}.team-ranking-summary-data em{min-width:23px;padding:3px 5px;border-radius:999px;background:rgba(255,255,255,.16);font-size:9px;font-weight:900}
@@ -4574,7 +4574,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Coherencia tipográfica, RSVP y Admin compacto
+   v32425 · Coherencia tipográfica, RSVP y Admin compacto
    ============================================================ */
 
 #view .section-head {
@@ -4833,7 +4833,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Menú inferior persistente
+   v32425 · Menú inferior persistente
    ============================================================ */
 
 #mainScreen {
@@ -5168,7 +5168,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Refinamiento de navegación y asistencia
+   v32425 · Refinamiento de navegación y asistencia
    ============================================================ */
 
 /* Hamburguesa superior: exactamente tan compacta como Inicio */
@@ -5486,7 +5486,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32424 · Ajustes de Inicio, Social, RSVP y Ranking
+   v32425 · Ajustes de Inicio, Social, RSVP y Ranking
    ============================================================ */
 
 /* Sin botón Inicio superior: hamburguesa ocupa el único acceso circular */
@@ -5629,5 +5629,197 @@ body.admin-modal-open { overflow:hidden; }
 
   .social-reply-body p {
     font-size: 11.5px !important;
+  }
+}
+
+
+/* ============================================================
+   v32425 · Dashboard de restricciones y auditoría compacta
+   ============================================================ */
+
+/* Dashboard: seis indicadores en 3 x 2, un poco más legibles */
+.admin-attendance-summary {
+  grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  gap: 7px !important;
+}
+
+.admin-attendance-summary .admin-stat-button {
+  min-height: 72px !important;
+  grid-template-columns: 35px minmax(0,1fr) !important;
+  gap: 8px !important;
+  padding: 9px !important;
+  border-radius: 14px !important;
+}
+
+.admin-attendance-summary .admin-stat-button > span {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  font-size: 17px !important;
+}
+
+.admin-attendance-summary .admin-stat-button small {
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+}
+
+.admin-attendance-summary .admin-stat-button strong {
+  margin-top: 1px !important;
+  font-size: 23px !important;
+  line-height: 1 !important;
+}
+
+.admin-attendance-summary .admin-stat-button em {
+  margin-top: 2px !important;
+  font-size: 8px !important;
+}
+
+.admin-restrictions-stat > span {
+  background: rgba(116,51,68,.09) !important;
+  color: #743344 !important;
+}
+
+/* Modal: detalle de la restricción más visible */
+.admin-person-row small {
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+.admin-people-dialog {
+  padding: 18px !important;
+}
+
+.admin-people-head h4 {
+  font-size: 25px !important;
+}
+
+.admin-people-list {
+  gap: 6px !important;
+  margin: 12px 0 !important;
+}
+
+.admin-person-row {
+  grid-template-columns: 36px minmax(0,1fr) !important;
+  gap: 9px !important;
+  padding: 9px !important;
+  border-radius: 12px !important;
+}
+
+.admin-person-row > span {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+}
+
+.admin-person-row .ui-icon {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+/* Auditoría resumida */
+.admin-movements-compact {
+  margin-top: 8px !important;
+  padding: 11px !important;
+}
+
+.admin-movements-compact .card-title-row h4 {
+  margin: 1px 0 0 !important;
+  font-size: 17px !important;
+}
+
+.admin-movements-compact .badge {
+  min-width: 24px !important;
+  padding: 3px 6px !important;
+  font-size: 8px !important;
+}
+
+.admin-movements-compact .admin-movement-list {
+  gap: 4px !important;
+  margin-top: 7px !important;
+}
+
+.admin-movements-compact .admin-movement-list article {
+  min-height: 38px !important;
+  grid-template-columns: 24px minmax(0,1fr) auto !important;
+  gap: 7px !important;
+  padding: 5px 7px !important;
+  border-radius: 10px !important;
+}
+
+.admin-movements-compact .admin-movement-list article > span {
+  width: 23px !important;
+  height: 23px !important;
+  border-radius: 7px !important;
+  font-size: 10px !important;
+}
+
+.admin-movements-compact .admin-movement-list strong {
+  overflow: hidden;
+  font-size: 9.5px !important;
+  line-height: 1.1 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-movements-compact .admin-movement-list small {
+  margin-top: 1px !important;
+  font-size: 7px !important;
+  line-height: 1 !important;
+}
+
+.admin-movements-compact .admin-movement-list article > b {
+  font-size: 10px !important;
+}
+
+.admin-movement-empty {
+  margin: 7px 0 0 !important;
+  color: var(--muted);
+  font-size: 9px !important;
+}
+
+/* Sin apodos en Mi equipo e Invitados */
+.guest-pill.without-alias .guest-pill-copy {
+  align-content: center !important;
+}
+
+.guest-pill.without-alias .guest-pill-copy > strong {
+  margin-bottom: 0 !important;
+}
+
+.guest-pill.without-alias:not(.has-challenges) {
+  min-height: 45px !important;
+}
+
+@media(max-width:560px) {
+  .admin-attendance-summary {
+    grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .admin-attendance-summary .admin-stat-button {
+    min-height: 69px !important;
+    grid-template-columns: 31px minmax(0,1fr) !important;
+    gap: 6px !important;
+    padding: 7px !important;
+  }
+
+  .admin-attendance-summary .admin-stat-button > span {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 15px !important;
+  }
+
+  .admin-attendance-summary .admin-stat-button small {
+    font-size: 8px !important;
+  }
+
+  .admin-attendance-summary .admin-stat-button strong {
+    font-size: 21px !important;
+  }
+}
+
+@media(max-width:370px) {
+  .admin-attendance-summary {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
   }
 }
