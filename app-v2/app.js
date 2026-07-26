@@ -260,7 +260,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32417",
+      appVersion: "32418",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -492,7 +492,31 @@
   }
 
   function handleBrowserNavigation(event) {
+    closeMenu();
+
+    const activeGuest = currentGuest || getGuestById(state.currentGuestId);
+
+    if (activeGuest && currentRoute !== "inicio") {
+      const homeState = {
+        screen: "app",
+        route: "inicio",
+        guestId: activeGuest.id
+      };
+
+      history.pushState(
+        homeState,
+        "",
+        `${basePageUrl()}#inicio`
+      );
+
+      applyGuestShell(activeGuest);
+      selectedTeamViewId = null;
+      navigate("inicio", { historyMode: "none", fromHistory: true });
+      return;
+    }
+
     const destination = event.state || { screen: "login" };
+
     if (destination.screen !== "app") {
       showLandingFromHistory();
       return;
@@ -505,7 +529,7 @@
     }
 
     applyGuestShell(guest);
-    navigate(destination.route || "inicio", { historyMode: "none", fromHistory: true });
+    navigate("inicio", { historyMode: "none", fromHistory: true });
   }
 
   function fillGuestSuggestions() {
@@ -794,7 +818,7 @@
       else button.removeAttribute("aria-current");
     });
 
-    const historyMode = options.historyMode || "push";
+    const historyMode = options.historyMode || "replace";
     if (currentGuest && historyMode !== "none") {
       const historyState = { screen: "app", route, guestId: currentGuest.id };
       const url = `${basePageUrl()}#${encodeURIComponent(route)}`;
@@ -1709,44 +1733,49 @@
     const ranking = calculateRanking();
 
     return `
-      <section class="vf-ranking-head section-card">
-        <div class="vf-ranking-title">
-          <p class="eyebrow">Competencia</p>
-          <h3>Ranking de equipos</h3>
-        </div>
-        <div class="vf-ranking-actions">
-          <button id="refreshRanking" type="button" class="vf-ranking-action vf-ranking-refresh">
-            ${uiIcon("sync")}<span>Actualizar</span>
-          </button>
-          <button type="button" data-go="puntos" class="vf-ranking-action vf-ranking-points">
-            ${uiIcon("star")}<span>Sumá puntos</span>
-          </button>
-        </div>
-      </section>
+      <section class="vf18-ranking-card section-card">
+        <div class="vf18-ranking-head">
+          <div class="vf18-ranking-title">
+            <p class="eyebrow">Competencia</p>
+            <h3>Ranking de equipos</h3>
+          </div>
 
-      <section class="vf-ranking-list" aria-label="Tabla de posiciones">
-        ${ranking.map(vfRankRow).join("")}
+          <div class="vf18-ranking-actions">
+            <button id="refreshRanking" type="button" class="vf18-ranking-action vf18-ranking-refresh">
+              <span class="ranking-button-icon">${uiIcon("sync")}</span>
+              <span>Actualizar</span>
+            </button>
+            <button type="button" data-go="puntos" class="vf18-ranking-action vf18-ranking-points">
+              <span class="ranking-button-icon">${uiIcon("star")}</span>
+              <span>Sumá puntos</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="vf18-ranking-list" aria-label="Tabla de posiciones">
+          ${ranking.map(vf18RankRow).join("")}
+        </div>
       </section>`;
   }
 
-  function vfRankRow(row, index) {
+  function vf18RankRow(row, index) {
     const team = getTeam(row.id);
     const ownTeam = currentGuest?.team === team.id;
 
     return `
       <button
         type="button"
-        class="vf-rank-row ${ownTeam ? "is-my-team" : ""} ${index === 0 ? "is-first" : ""}"
+        class="vf18-rank-row ${ownTeam ? "is-my-team" : ""} ${index === 0 ? "is-first" : ""}"
         data-team-open="${team.id}"
-        style="--vf-team-accent:${team.accent}"
+        style="--vf18-team-accent:${team.accent}"
         aria-label="${index + 1}. ${escapeHTML(team.name)}, ${row.total} puntos">
-        <span class="vf-rank-position">${index + 1}</span>
-        <span class="vf-rank-logo">${teamLogo(team, "vf-rank-team-logo")}</span>
-        <span class="vf-rank-name">
+        <span class="vf18-rank-position">${index + 1}</span>
+        <span class="vf18-rank-logo">${teamLogo(team, "vf18-rank-team-logo")}</span>
+        <span class="vf18-rank-name">
           <strong>${escapeHTML(team.name)}</strong>
           ${ownTeam ? `<small>Tu equipo</small>` : ""}
         </span>
-        <span class="vf-rank-score">
+        <span class="vf18-rank-score">
           <b>${row.total}</b>
           <small>pts</small>
         </span>
