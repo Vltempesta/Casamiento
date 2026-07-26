@@ -260,7 +260,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32415",
+      appVersion: "32416",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1708,11 +1708,26 @@
   function renderRanking() {
     const ranking = calculateRanking();
     return `
-      <section class="ranking-summary-card section-card">
-        <div><p class="eyebrow">Competencia</p><h3>Ranking de equipos</h3><p>Se actualiza con los desafíos, juegos, bonus y penalizaciones.</p></div>
-        <div class="ranking-action-buttons"><button id="refreshRanking" type="button" class="ranking-refresh-button"><span class="ranking-button-icon">${uiIcon("sync")}</span><span>Actualizar</span></button><button type="button" data-go="puntos" class="ranking-points-button"><span class="ranking-button-icon">${uiIcon("star")}</span><span>Sumá puntos</span></button></div>
+      <section class="ranking-summary-card ranking-summary-ultra section-card">
+        <div class="ranking-summary-copy">
+          <p class="eyebrow">Competencia</p>
+          <h3>Ranking de equipos</h3>
+          <p>Desafíos, juegos, bonus y penalizaciones.</p>
+        </div>
+        <div class="ranking-action-buttons ranking-action-buttons-ultra">
+          <button id="refreshRanking" type="button" class="ranking-refresh-button">
+            <span class="ranking-button-icon">${uiIcon("sync")}</span>
+            <span>Actualizar</span>
+          </button>
+          <button type="button" data-go="puntos" class="ranking-points-button">
+            <span class="ranking-button-icon">${uiIcon("star")}</span>
+            <span>Sumá puntos</span>
+          </button>
+        </div>
       </section>
-      <section class="ranking-list ranking-list-compact">${ranking.map(rankRow).join("")}</section>`;
+      <section class="ranking-list ranking-list-compact ranking-list-ultra">
+        ${ranking.map(rankRow).join("")}
+      </section>`;
   }
 
   function rankRow(row, index) {
@@ -1721,11 +1736,11 @@
     const leading = index === 0 && Number(row.total || 0) > 0;
     return `
       <button type="button"
-        class="rank-item rank-item-button rank-item-compact ${ownTeam ? "is-my-team" : ""} ${leading ? "is-leading" : ""}"
+        class="rank-item rank-item-button rank-item-compact rank-item-ultra ${ownTeam ? "is-my-team" : ""} ${leading ? "is-leading" : ""}"
         data-team-open="${team.id}"
         style="--local-accent:${team.accent}"
         aria-label="Abrir equipo ${escapeHTML(team.name)}">
-        <span class="rank-pos">${leading ? "♛" : index + 1}</span>
+        <span class="rank-pos">${index + 1}</span>
         <span class="rank-logo-wrap">${teamLogo(team,"rank-team-logo")}</span>
         <span class="rank-team-copy">
           <strong>${escapeHTML(team.name)}</strong>
