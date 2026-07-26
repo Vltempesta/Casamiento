@@ -261,7 +261,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32425",
+      appVersion: "32426",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1063,7 +1063,7 @@
 
     let primaryAction;
     if (!rsvpDone) {
-      primaryAction = { tone: "pending", icon: "mail", kicker: "Tu próximo paso", title: "Confirmá tu asistencia", text: `Respondé antes del ${deadline} e indicá traslado o restricciones.`, button: "Confirmar asistencia", attr: 'data-go="asistencia"' };
+      primaryAction = { tone: "pending", icon: "mail", kicker: "Tu próximo paso", title: "Confirmá tu asistencia", text: `Respondé antes del ${deadline}.`, button: "Confirmar asistencia", attr: 'data-go="asistencia"' };
     } else if (eventDay) {
       primaryAction = { tone: "today", icon: "sparkle", kicker: "Hoy es el gran día", title: "Todo listo para celebrar", text: "Revisá la información clave antes de salir.", button: "Ver lo esencial", attr: 'data-scroll="homeEssential"' };
     } else if (nearEvent) {
@@ -1328,13 +1328,13 @@
             </div>
           </fieldset>
 
-          <label>Traslado / micro
-            <select name="transport">
-              ${option("", "Seleccionar", savedTransport)}
-              ${option("particular", "De forma particular", savedTransport)}
-              ${option("combi", "Necesito información del micro", savedTransport)}
-            </select>
-          </label>
+          <fieldset class="choice-field transport-choice-field">
+            <legend>Traslado / micro</legend>
+            <div class="choice-group choice-group-two">
+              ${choicePill("transport", "particular", "Voy de forma particular", savedTransport, true)}
+              ${choicePill("transport", "combi", "Me interesa el micro", savedTransport, true)}
+            </div>
+          </fieldset>
 
           <fieldset class="choice-field diet-choice-field">
             <legend>¿Tenés restricciones alimentarias?</legend>
@@ -1688,11 +1688,12 @@
 
   function renderPointsHub() {
     const team = getTeam(currentGuest.team);
-    const activePlayers = teamSizeForPoints(team.id);
     const rsvp = state.rsvps[currentGuest.id];
     const rsvpDone = isCompetitionGuest(currentGuest) && hasFinalRsvp(rsvp);
-    const rsvpDoneCount = completedRsvpMembers(team.id).filter(guest => hasFinalRsvp(state.rsvps[guest.id])).length;
     const myPoints = calculateRanking().find(row => row.id === team.id)?.total || 0;
+    const musicOpen = isTriviaGameOpen("trivia-music");
+    const triviaOpen = isTriviaGameOpen("trivia-couple");
+    const surpriseOpen = isTriviaGameOpen("trivia-surprise");
     const musicDone = Boolean(triviaSubmission("music-selection"));
     const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
     const currentGamesDone = rsvpDone && musicDone && triviaDone;
@@ -1705,15 +1706,58 @@
         <span><b>${myPoints}</b><small>puntos</small></span>
       </section>
       <section class="points-compact-list section-card">
-        ${pointsAction({icon:"✉️",title:"Confirmar asistencia",text:rsvpDone?"Respuesta definitiva guardada.":"Primero respondé por sí o por no.",done:rsvpDone,route:"asistencia",progressText:`${rsvpDoneCount}/${activePlayers} definieron`,editable:true})}
+        ${pointsAction({
+          icon:"✉️",
+          title:"Confirmar asistencia",
+          text:rsvpDone ? "Respuesta definitiva guardada." : "Primero respondé por sí o por no.",
+          done:rsvpDone,
+          route:"asistencia",
+          editable:true
+        })}
         ${rsvpDone ? `
-          ${pointsAction({icon:"🎵",title:"Elegir canciones",text:musicDone?"Propuesta guardada.":"Elegí dos canciones.",done:musicDone,route:"musica",progressText:"Juego musical",editable:true})}
-          ${pointsAction({icon:"❓",title:"Trivia Vani y Fede",text:triviaDone?"Resultado cerrado.":"Una sola oportunidad.",done:triviaDone,route:"trivia-pareja",progressText:triviaDone?"Resultado final":"Hasta 100 puntos",editable:false})}
-          ${pointsAction({icon:"🎁",title:"Juego sorpresa",text:"Se revelará más adelante.",done:false,route:"sorpresa",progressText:"Bloqueado",editable:false})}
+          ${pointsAction({
+            icon:"🎵",
+            title:"Elegir canciones",
+            text:musicOpen
+              ? (musicDone ? "Propuesta guardada." : "Elegí dos canciones.")
+              : "Se habilitará más adelante.",
+            done:musicDone,
+            route:"musica",
+            progressText:musicOpen ? "Juego musical" : "Bloqueado",
+            editable:true,
+            locked:!musicOpen
+          })}
+          ${pointsAction({
+            icon:"❓",
+            title:"Trivia Vani y Fede",
+            text:triviaOpen
+              ? (triviaDone ? "Resultado cerrado." : "Una sola oportunidad.")
+              : "Se habilitará más adelante.",
+            done:triviaDone,
+            route:"trivia-pareja",
+            progressText:triviaOpen ? (triviaDone ? "Resultado final" : "Hasta 100 puntos") : "Bloqueado",
+            editable:false,
+            locked:!triviaOpen
+          })}
+          ${pointsAction({
+            icon:"🎁",
+            title:"Juego sorpresa",
+            text:surpriseOpen ? "Ya podés participar." : "Se revelará más adelante.",
+            done:false,
+            route:"sorpresa",
+            progressText:surpriseOpen ? "Disponible" : "Bloqueado",
+            editable:false,
+            locked:!surpriseOpen
+          })}
         ` : `
           <div class="points-rsvp-lock">${uiIcon("lock")}<div><strong>Primero, asistencia</strong><p>Al responder por sí o por no se habilitarán las canciones, la trivia y las próximas actividades.</p></div></div>
         `}
       </section>
+
+      <div class="points-coming-soon-note">
+        ${uiIcon("lock")}
+        <span>Más juegos y actividades se irán habilitando más adelante.</span>
+      </div>
 
       ${currentGamesDone ? `
         <section class="points-social-cta section-card">
@@ -1726,9 +1770,28 @@
         </section>` : ""}`;
   }
 
-  function pointsAction({ icon, title, text, done, route, progressText = "", editable = true }) {
+  function pointsAction({ icon, title, text, done, route, progressText = "", editable = true, locked = false }) {
     const label = done ? (editable ? "Ver / editar" : "Ver") : "Ver";
-    return `<article class="points-action ${done ? "done" : ""}"><span class="points-action-icon">${icon}</span><div class="points-action-copy"><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p><small>${escapeHTML(progressText)}</small></div><div class="points-action-end">${done ? `<span class="points-complete-badge">${uiIcon("checkCircle")}<b>Hecho</b></span>` : ""}<button type="button" data-go="${escapeHTML(route)}">${label}</button></div></article>`;
+    const progress = progressText
+      ? `<small>${escapeHTML(progressText)}</small>`
+      : "";
+    const action = locked
+      ? `<span class="points-locked-state">${uiIcon("lock")}<b>Bloqueado</b></span>`
+      : `<button type="button" data-go="${escapeHTML(route)}">${label}</button>`;
+
+    return `
+      <article class="points-action ${done ? "done" : ""} ${locked ? "is-locked" : ""}">
+        <span class="points-action-icon">${icon}</span>
+        <div class="points-action-copy">
+          <strong>${escapeHTML(title)}</strong>
+          <p>${escapeHTML(text)}</p>
+          ${progress}
+        </div>
+        <div class="points-action-end">
+          ${done ? `<span class="points-complete-badge">${uiIcon("checkCircle")}<b>Hecho</b></span>` : ""}
+          ${action}
+        </div>
+      </article>`;
   }
 
   function pointsHubStyles() {
