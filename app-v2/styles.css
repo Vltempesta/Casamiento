@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32413 · Fondo bordado minimalista en portada ===== */
+/* ===== v32414 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32413');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32414');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32413 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32414 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32413');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32414');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32413 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32414 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32413');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32414');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32413 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32414 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32413 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32414 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32413 · Inicio minimalista ===== */
+/* ===== v32414 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32413 · Navegación en menú hamburguesa ===== */
+/* ===== v32414 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32413 · UX universal 30–70 años ===== */
+/* ===== v32414 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32413 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32414 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32413 · Ajustes UX solicitados ===== */
+/* ===== v32414 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32413 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32414 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32413 · Reset seguro de datos de prueba ===== */
+/* ===== v32414 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32413 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32414 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32413 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32414 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32413 · Estados reales de guardado ===== */
+/* ===== v32414 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32413 · Guardado rápido ===== */
+/* ===== v32414 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32413 · Seguridad de Administración ===== */
+/* ===== v32414 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32413 · Mejoras integrales
+   v32414 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3134,7 +3134,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32413 · Optimización móvil, historial y vistas compactas
+   v32414 · Optimización móvil, historial y vistas compactas
    ============================================================ */
 .guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
 
@@ -3163,4 +3163,336 @@ body.admin-modal-open { overflow:hidden; }
   .team-member-list{grid-template-columns:1fr}.team-members-card{padding:12px}.team-members-card h4{font-size:20px}
   .guest-pill{min-height:auto!important}.guest-pill.has-challenges{grid-template-columns:42px minmax(0,1fr)!important}.guest-pill-copy>strong{font-size:15px}.guest-pill-copy>small{font-size:11px}
   .ranking-summary-card{grid-template-columns:1fr;padding:13px}.ranking-summary-card h3{font-size:24px}.ranking-summary-card .ranking-action-buttons{display:grid;grid-template-columns:1fr 1fr}.ranking-summary-card .ranking-action-buttons button{width:100%;justify-content:center;font-size:12px}.rank-item-compact{grid-template-columns:27px 34px minmax(0,1fr) auto!important;min-height:48px;padding:6px 8px!important}.rank-item-compact .rank-team-logo{width:32px!important;height:32px!important}.rank-item-compact>strong{font-size:13px}.rank-item-compact .rank-points b{font-size:16px}
+}
+
+
+/* ============================================================
+   v32414 · compactación móvil y refinamiento visual
+   ============================================================ */
+
+/* Barra superior: inicial + nombre + casita + menú */
+#mainScreen .topbar {
+  gap: 10px;
+}
+#mainScreen .topbar-person {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#mainScreen .topbar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#mainScreen .topbar-home {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(132,104,68,.18);
+  border-radius: 50%;
+  background: rgba(255,253,248,.72);
+  color: var(--ink);
+  box-shadow: none;
+}
+#mainScreen .topbar-home svg {
+  width: 21px;
+  height: 21px;
+}
+#mainScreen .topbar-actions {
+  gap: 7px;
+}
+
+/* Banda sonora más compacta */
+.music-game-compact {
+  scroll-margin-top: 95px;
+}
+.music-game-compact .trivia-game-content > p {
+  margin: 5px 0 11px;
+  font-size: 12px;
+}
+.music-game-compact .trivia-form {
+  gap: 9px;
+}
+.music-game-compact .trivia-form label {
+  gap: 4px;
+  font-size: 11px;
+}
+.music-game-compact .trivia-form input {
+  min-height: 42px;
+}
+.music-game-compact .trivia-form textarea {
+  min-height: 62px;
+}
+.music-game-compact .trivia-form-footer {
+  margin-top: 3px;
+}
+
+/* Ranking: 6 equipos visibles en una grilla baja */
+.ranking-summary-card {
+  padding: 12px 14px !important;
+  gap: 10px !important;
+}
+.ranking-summary-card h3 {
+  margin: 1px 0 2px !important;
+  font-size: 21px !important;
+}
+.ranking-summary-card p {
+  margin: 0 !important;
+  font-size: 10px !important;
+}
+.ranking-action-buttons {
+  gap: 6px !important;
+}
+.ranking-action-buttons button {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  border-radius: 11px !important;
+  font-size: 10px !important;
+  box-shadow: none !important;
+}
+.ranking-button-icon {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 7px !important;
+}
+.ranking-button-icon .ui-icon {
+  width: 14px !important;
+  height: 14px !important;
+}
+.ranking-list-compact {
+  display: grid !important;
+  grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  gap: 7px !important;
+  margin-top: 8px !important;
+}
+.rank-item-compact {
+  min-width: 0 !important;
+  min-height: 54px !important;
+  display: grid !important;
+  grid-template-columns: 22px 29px minmax(0,1fr) auto !important;
+  gap: 5px !important;
+  align-items: center !important;
+  padding: 7px 8px !important;
+  border-radius: 13px !important;
+}
+.rank-item-compact .rank-pos {
+  font-size: 13px !important;
+}
+.rank-item-compact .rank-team-logo {
+  width: 28px !important;
+  height: 28px !important;
+}
+.rank-item-compact > strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-item-compact > strong small {
+  display: none !important;
+}
+.rank-item-compact .rank-points b {
+  font-size: 15px !important;
+}
+.rank-item-compact .rank-points small {
+  font-size: 7px !important;
+}
+
+/* Invitados: iniciales, menos altura y menos espacio */
+.guest-map {
+  gap: 10px !important;
+}
+.guest-map .team-column {
+  padding: 12px !important;
+}
+.guest-map .team-heading {
+  margin-bottom: 2px !important;
+  font-size: 17px !important;
+}
+.guest-map .team-heading-logo {
+  width: 31px !important;
+  height: 31px !important;
+}
+.guest-list {
+  gap: 7px !important;
+}
+.guest-pill {
+  min-height: 55px !important;
+  grid-template-columns: 35px minmax(0,1fr) !important;
+  gap: 8px !important;
+  padding: 8px !important;
+  border-radius: 13px !important;
+}
+.guest-pill-avatar {
+  width: 34px !important;
+  height: 34px !important;
+}
+.guest-person-initial {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(54,85,111,.16);
+  border-radius: 50%;
+  background: linear-gradient(145deg,rgba(54,85,111,.11),rgba(255,255,255,.52));
+  color: #36556f;
+  font-family: var(--font-title);
+  font-size: 17px;
+  font-weight: 900;
+}
+.guest-person-initial.is-captain {
+  border-color: rgba(201,170,114,.5);
+  background: linear-gradient(145deg,rgba(201,170,114,.22),rgba(255,255,255,.55));
+  color: #8d642d;
+}
+.guest-pill-copy > strong {
+  font-size: 13px !important;
+}
+.guest-pill-copy > small {
+  font-size: 10px !important;
+}
+.captain-label,
+.declined-label {
+  margin-top: 2px !important;
+  padding: 2px 5px !important;
+  font-size: 7px !important;
+}
+
+/* Administración más compacto */
+.admin-title-row .section-head h3 {
+  font-size: 25px !important;
+}
+.admin-title-row .section-head p:not(.eyebrow) {
+  font-size: 11px !important;
+}
+.admin-sync-card {
+  padding: 12px 14px !important;
+  gap: 9px !important;
+}
+.admin-sync-card p {
+  font-size: 10px !important;
+}
+.admin-attendance-summary {
+  gap: 8px !important;
+}
+.admin-attendance-summary .admin-stat-button {
+  grid-template-columns: 37px minmax(0,1fr) !important;
+  gap: 8px !important;
+  padding: 11px !important;
+  border-radius: 15px !important;
+}
+.admin-attendance-summary .admin-stat-button > span {
+  width: 35px !important;
+  height: 35px !important;
+  border-radius: 10px !important;
+  font-size: 17px !important;
+}
+.admin-attendance-summary .admin-stat-button strong {
+  font-size: 22px !important;
+}
+.admin-attendance-summary .admin-stat-button p,
+.admin-attendance-summary .admin-stat-button em {
+  font-size: 9px !important;
+}
+.admin-score-card {
+  gap: 13px !important;
+  margin-top: 10px !important;
+  padding: 16px !important;
+}
+.admin-score-heading h4 {
+  font-size: 22px !important;
+}
+.admin-team-option {
+  min-height: 78px !important;
+  padding: 8px 5px !important;
+}
+.admin-team-logo {
+  width: 37px !important;
+  height: 37px !important;
+}
+.admin-sign-picker span {
+  min-height: 41px !important;
+}
+.admin-points-input input {
+  height: 47px !important;
+  font-size: 18px !important;
+}
+.admin-comment-label textarea {
+  min-height: 62px !important;
+}
+.admin-score-submit {
+  min-height: 43px !important;
+}
+.admin-official-export,
+.admin-game-controls,
+.admin-test-reset-panel,
+.admin-reset-panel,
+.admin-movements-card {
+  padding: 15px !important;
+}
+.admin-game-toggle {
+  padding: 10px !important;
+}
+.admin-test-reset-copy h4,
+.admin-game-controls h4,
+.admin-reset-panel h4 {
+  font-size: 20px !important;
+}
+
+/* Mobile */
+@media(max-width:700px) {
+  #mainScreen .topbar {
+    padding: 9px 10px !important;
+  }
+  #mainScreen .topbar-initial {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  #mainScreen .topbar-home {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+  #mainScreen .menu-toggle {
+    min-height: 38px !important;
+    padding: 7px 11px !important;
+  }
+  .ranking-summary-card {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+  .ranking-action-buttons {
+    width: 100%;
+  }
+  .ranking-action-buttons button {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+  .ranking-list-compact {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+  .rank-item-compact {
+    grid-template-columns: 18px 25px minmax(0,1fr) auto !important;
+    min-height: 49px !important;
+    padding: 6px !important;
+  }
+  .rank-item-compact .rank-team-logo {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .rank-item-compact > strong {
+    font-size: 10px !important;
+  }
+  .rank-item-compact .rank-points b {
+    font-size: 13px !important;
+  }
+  .guest-map {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-team-picker {
+    grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  }
 }

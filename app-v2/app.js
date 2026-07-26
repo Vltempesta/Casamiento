@@ -260,7 +260,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32413",
+      appVersion: "32414",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -772,6 +772,12 @@
     if (route === "ficha" || route === "juegos" || route === "info") route = "inicio";
     if (route === "torneo") route = "puntos";
 
+    const gameRoutes = ["musica", "trivia-pareja", "sorpresa", "trivia"];
+    if (currentGuest && gameRoutes.includes(route) && !hasFinalRsvp(state.rsvps[currentGuest.id])) {
+      toast("Primero confirmá tu asistencia por sí o por no.");
+      route = "asistencia";
+    }
+
     const triviaTargets = { musica: "music-game", "trivia-pareja": "couple-trivia-game", sorpresa: "surprise-game" };
     if (triviaTargets[route]) {
       triviaFocusTarget = triviaTargets[route];
@@ -973,7 +979,7 @@
   function renderHome() {
     const team = getTeam(currentGuest.team);
     const rsvp = state.rsvps[currentGuest.id];
-    const rsvpDone = hasCompletedRsvp(rsvp);
+    const rsvpDone = hasFinalRsvp(rsvp);
     const locationOpen = isUnlocked("location");
     const menuOpen = isUnlocked("menu");
     const rank = calculateRanking();
@@ -1003,9 +1009,16 @@
 
     return `
       ${homeStyles()}
-      <section id="homeCountdown" class="home-countdown home-countdown-compact" aria-label="Cuenta regresiva para el casamiento">
-        <span id="countdownLabel" class="home-countdown-label">Faltan</span>
-        <div class="home-countdown-values"><span><strong id="countdownDays">—</strong><small>días</small></span><i>:</i><span><strong id="countdownHours">—</strong><small>horas</small></span><i>:</i><span><strong id="countdownMinutes">—</strong><small>min</small></span></div>
+      <section id="homeCountdown" class="home-countdown-v2" aria-label="Cuenta regresiva para el casamiento">
+        <div class="home-countdown-copy">
+          <span id="countdownLabel">Faltan</span>
+          <strong>24 · 10 · 2026</strong>
+        </div>
+        <div class="home-countdown-values-v2">
+          <span><strong id="countdownDays">—</strong><small>días</small></span>
+          <span><strong id="countdownHours">—</strong><small>horas</small></span>
+          <span><strong id="countdownMinutes">—</strong><small>min</small></span>
+        </div>
       </section>
 
       <section class="home-welcome home-welcome-compact" style="--local-accent:${team.accent}">
@@ -1027,7 +1040,7 @@
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("calendar")}</span><div><small>Fecha</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Próximamente compartiremos toda la información.</p></div></article>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("dress")}</span><div><small>Vestimenta</small><strong>Elegante festivo</strong><p>Habrá pasto: elegí calzado cómodo.</p></div></article>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("dress")}</span><div><small>Vestimenta</small><strong>Elegante sport</strong><p>Habrá pasto: elegí calzado cómodo.</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Menú</small><strong>${menuOpen ? "Menú habilitado" : "Próximamente"}</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Cargá tus restricciones en Asistencia."}</p></div></article>
         </div>
       </section>
@@ -1044,18 +1057,18 @@
 
   function homeStyles() {
     return `<style>
-      .home-kicker{margin:0;color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
-      .home-countdown-compact{padding:15px 20px}.home-countdown-compact .home-countdown-date{display:none}
-      .home-welcome-compact{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.72));box-shadow:0 8px 22px rgba(76,51,22,.06)}
-      .home-welcome-compact .home-team-logo{width:58px;height:58px;flex:0 0 auto}.home-welcome-compact h3{font-size:clamp(22px,4vw,31px);line-height:1.08}
-      .home-rsvp-confirmed{width:max-content;display:flex;align-items:center;gap:7px;margin:9px 0 0;padding:7px 11px;border:1px solid rgba(74,125,79,.2);border-radius:999px;background:rgba(74,125,79,.08);color:#426f47;box-shadow:none;font-size:12px;font-weight:900}.home-rsvp-confirmed .ui-icon{width:17px;height:17px}
-      .home-primary-action{display:grid;grid-template-columns:43px minmax(0,1fr) auto;gap:13px;align-items:center;margin-top:10px;padding:15px 16px;border:1px solid rgba(183,137,69,.28);border-radius:19px;background:rgba(255,253,248,.84);box-shadow:0 7px 18px rgba(76,51,22,.045)}
-      .home-primary-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:rgba(122,49,64,.08);color:#743344}.home-primary-icon .ui-icon{width:22px;height:22px}.home-primary-copy small{color:var(--gold-deep);font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.home-primary-copy h3{margin:2px 0 3px;font-size:20px}.home-primary-copy p{margin:0;font-size:12px;line-height:1.35}.home-primary-action button{min-height:40px;padding:9px 14px;white-space:nowrap}
-      .home-essential{margin-top:20px;scroll-margin-top:86px}.home-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}.home-section-heading h3{margin:2px 0 0;font-size:28px}.home-calendar-link{min-height:38px;display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(255,253,248,.72);color:var(--ink);font-size:12px;font-weight:850;text-decoration:none}.home-calendar-link .ui-icon{width:17px;height:17px}
-      .home-essential-card{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));overflow:hidden;border:1px solid var(--line);border-radius:21px;background:rgba(255,253,248,.76)}.home-essential-row{display:grid;grid-template-columns:35px minmax(0,1fr);gap:9px;align-items:start;padding:13px 12px;border-right:1px solid var(--line)}.home-essential-row:last-child{border-right:0}.home-essential-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:rgba(201,170,114,.12);color:var(--gold-deep)}.home-essential-icon .ui-icon{width:18px;height:18px}.home-essential-row small,.home-essential-row strong{display:block}.home-essential-row small{font-size:9px;text-transform:uppercase;letter-spacing:.06em}.home-essential-row strong{margin:2px 0;font-size:13px;line-height:1.2}.home-essential-row p{margin:0;font-size:10.5px;line-height:1.3}
-      .home-team-mini{display:grid;grid-template-columns:42px minmax(0,1fr) auto auto 40px;gap:10px;align-items:center;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:17px;background:rgba(255,253,248,.78)}.home-team-mini-logo{width:40px;height:40px}.home-team-mini-name small,.home-team-mini-name strong,.home-team-mini-stat small,.home-team-mini-stat b{display:block}.home-team-mini-name small,.home-team-mini-stat small{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.home-team-mini-name strong{font-size:15px}.home-team-mini-stat{text-align:center;min-width:44px}.home-team-mini-stat b{font-size:17px}.home-team-mini button{width:38px;height:38px;display:grid;place-items:center;padding:0;border-radius:12px;background:#36556f;color:#fff}.home-team-mini button .ui-icon{width:19px;height:19px}
+      .home-kicker{margin:0;color:var(--gold-deep);font-size:9px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+      .home-countdown-v2{display:grid;grid-template-columns:minmax(120px,.7fr) minmax(0,1.3fr);gap:14px;align-items:center;padding:14px 16px;border:1px solid rgba(201,170,114,.32);border-radius:22px;background:linear-gradient(135deg,rgba(255,253,248,.96),rgba(239,228,209,.78));box-shadow:0 10px 24px rgba(76,51,22,.06)}
+      .home-countdown-copy{padding-right:14px;border-right:1px solid rgba(132,104,68,.16)}.home-countdown-copy span,.home-countdown-copy strong{display:block}.home-countdown-copy span{color:#743344;font-size:10px;font-weight:950;letter-spacing:.18em;text-transform:uppercase}.home-countdown-copy strong{margin-top:4px;color:var(--ink);font-family:var(--font-title);font-size:19px;letter-spacing:.04em}
+      .home-countdown-values-v2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-countdown-values-v2>span{display:grid;place-items:center;min-height:58px;padding:6px;border:1px solid rgba(132,104,68,.12);border-radius:15px;background:rgba(255,255,255,.45)}.home-countdown-values-v2 strong{font-family:var(--font-title);font-size:27px;line-height:1;color:#243954}.home-countdown-values-v2 small{margin-top:2px;color:var(--muted);font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+      .home-welcome-compact{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.72));box-shadow:0 7px 18px rgba(76,51,22,.05)}.home-welcome-compact .home-team-logo{width:43px;height:43px;flex:0 0 auto}.home-welcome-compact h3{font-size:clamp(19px,4vw,27px);line-height:1.08}
+      .home-rsvp-confirmed{width:max-content;display:flex;align-items:center;gap:6px;margin:7px 0 0;padding:6px 9px;border:1px solid rgba(74,125,79,.2);border-radius:999px;background:rgba(74,125,79,.08);color:#426f47;box-shadow:none;font-size:11px;font-weight:900}.home-rsvp-confirmed .ui-icon{width:15px;height:15px}
+      .home-primary-action{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:8px;padding:12px 13px;border:1px solid rgba(183,137,69,.25);border-radius:17px;background:rgba(255,253,248,.84);box-shadow:0 6px 16px rgba(76,51,22,.04)}.home-primary-icon{width:37px;height:37px;display:grid;place-items:center;border-radius:12px;background:rgba(122,49,64,.08);color:#743344}.home-primary-icon .ui-icon{width:19px;height:19px}.home-primary-copy small{color:var(--gold-deep);font-size:8px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.home-primary-copy h3{margin:1px 0 2px;font-size:18px}.home-primary-copy p{margin:0;font-size:11px;line-height:1.3}.home-primary-action button{min-height:36px;padding:8px 12px;white-space:nowrap}
+      .home-essential{margin-top:15px;scroll-margin-top:82px}.home-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}.home-section-heading h3{margin:1px 0 0;font-size:24px}.home-calendar-link{min-height:33px;display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:rgba(255,253,248,.72);color:var(--ink);font-size:10px;font-weight:850;text-decoration:none}.home-calendar-link .ui-icon{width:15px;height:15px}
+      .home-essential-card{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));overflow:hidden;border:1px solid var(--line);border-radius:18px;background:rgba(255,253,248,.76)}.home-essential-row{display:grid;grid-template-columns:30px minmax(0,1fr);gap:7px;align-items:start;padding:10px 9px;border-right:1px solid var(--line)}.home-essential-row:last-child{border-right:0}.home-essential-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:rgba(201,170,114,.12);color:var(--gold-deep)}.home-essential-icon .ui-icon{width:16px;height:16px}.home-essential-row small,.home-essential-row strong{display:block}.home-essential-row small{font-size:8px;text-transform:uppercase;letter-spacing:.06em}.home-essential-row strong{margin:1px 0;font-size:12px;line-height:1.17}.home-essential-row p{margin:0;font-size:9.5px;line-height:1.25}
+      .home-team-mini{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto 32px;gap:7px;align-items:center;margin-top:9px;padding:7px 9px;border:1px solid var(--line);border-radius:14px;background:rgba(255,253,248,.78)}.home-team-mini-logo{width:32px;height:32px}.home-team-mini-name small,.home-team-mini-name strong,.home-team-mini-stat small,.home-team-mini-stat b{display:block}.home-team-mini-name small,.home-team-mini-stat small{font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.home-team-mini-name strong{font-size:13px}.home-team-mini-stat{text-align:center;min-width:31px}.home-team-mini-stat b{font-size:14px}.home-team-mini button{width:30px;height:30px;display:grid;place-items:center;padding:0;border-radius:9px;background:#36556f;color:#fff}.home-team-mini button .ui-icon{width:16px;height:16px}
       @media(max-width:900px){.home-essential-card{grid-template-columns:repeat(2,minmax(0,1fr))}.home-essential-row{border-bottom:1px solid var(--line)}.home-essential-row:nth-child(2n){border-right:0}.home-essential-row:last-child{grid-column:1/-1;border-bottom:0}}
-      @media(max-width:560px){.home-countdown-compact{padding:13px 15px}.home-welcome-compact{padding:12px 14px;gap:11px}.home-welcome-compact .home-team-logo{width:46px;height:46px}.home-welcome-compact h3{font-size:21px}.home-primary-action{grid-template-columns:38px minmax(0,1fr);padding:13px}.home-primary-icon{width:38px;height:38px}.home-primary-copy h3{font-size:18px}.home-primary-action button{grid-column:1/-1;width:100%;min-height:42px}.home-essential{margin-top:17px}.home-section-heading h3{font-size:25px}.home-essential-card{grid-template-columns:1fr}.home-essential-row,.home-essential-row:nth-child(2n),.home-essential-row:last-child{grid-column:auto;border-right:0;border-bottom:1px solid var(--line);padding:11px 12px}.home-essential-row:last-child{border-bottom:0}.home-team-mini{grid-template-columns:38px minmax(0,1fr) auto auto 36px;padding:9px;gap:7px}.home-team-mini-logo{width:36px;height:36px}.home-team-mini-name strong{font-size:14px}.home-team-mini-stat{min-width:37px}.home-team-mini-stat b{font-size:15px}.home-team-mini button{width:34px;height:34px}}
+      @media(max-width:560px){.home-countdown-v2{grid-template-columns:95px minmax(0,1fr);gap:10px;padding:11px 12px}.home-countdown-copy{padding-right:9px}.home-countdown-copy strong{font-size:15px}.home-countdown-values-v2{gap:5px}.home-countdown-values-v2>span{min-height:49px;border-radius:12px}.home-countdown-values-v2 strong{font-size:23px}.home-welcome-compact{padding:9px 11px}.home-welcome-compact .home-team-logo{width:38px;height:38px}.home-welcome-compact h3{font-size:18px}.home-primary-action{grid-template-columns:34px minmax(0,1fr);padding:10px}.home-primary-icon{width:34px;height:34px}.home-primary-copy h3{font-size:16px}.home-primary-action button{grid-column:1/-1;width:100%;min-height:36px}.home-essential{margin-top:13px}.home-section-heading h3{font-size:21px}.home-essential-card{grid-template-columns:1fr}.home-essential-row,.home-essential-row:nth-child(2n),.home-essential-row:last-child{grid-column:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px}.home-essential-row:last-child{border-bottom:0}.home-team-mini{grid-template-columns:31px minmax(0,1fr) auto auto 29px;padding:6px 8px;gap:5px}.home-team-mini-logo{width:29px;height:29px}.home-team-mini-name strong{font-size:12px}.home-team-mini-stat{min-width:28px}.home-team-mini-stat b{font-size:13px}.home-team-mini button{width:28px;height:28px}}
     </style>`;
   }
 
@@ -1131,26 +1144,25 @@
     const open = isTriviaGameOpen("transport-info");
     return `
       ${transportStyles()}
-      ${sectionHeader("casamiento", "Traslado", "La ida y la vuelta también forman parte de la experiencia.")}
+      ${sectionHeader("casamiento", "Traslado", "")}
       <section class="transport-hero section-card ${open ? "is-open" : "is-locked"}">
         <div class="transport-illustration">${uiIcon("bus")}</div>
-        <div class="transport-copy"><span class="transport-status">${open ? "Información habilitada" : "Próximamente"}</span><h3>${open ? "Información del micro" : "El destino sigue siendo secreto"}</h3><p>${open ? "Estamos organizando el traslado para que puedan disfrutar sin preocuparse por el viaje." : "No se preocupen: nosotros nos ocupamos de que lleguen cómodos y vuelvan seguros. Cuando esté todo definido, los horarios y el punto exacto aparecerán en esta misma sección."}</p></div>
+        <div class="transport-copy"><span class="transport-status">${open ? "Información habilitada" : "Próximamente"}</span><h3>${open ? "Información del micro" : "El destino sigue siendo secreto"}</h3><p>${open ? "Acá vas a encontrar todos los datos para la ida y el regreso." : "Nos ocupamos de que lleguen cómodos y vuelvan seguros. Los horarios y el punto exacto se compartirán más adelante."}</p></div>
       </section>
       ${open ? `
         <section class="transport-grid">
-          <article class="section-card"><span>${uiIcon("pin")}</span><div><small>Punto de encuentro</small><strong>Obelisco</strong><p>La ubicación exacta y la referencia para identificar el micro se publicarán acá.</p></div></article>
-          <article class="section-card"><span>${uiIcon("calendar")}</span><div><small>Horario de ida</small><strong>A confirmar</strong><p>Se informará con anticipación para que todos puedan organizarse.</p></div></article>
-          <article class="section-card"><span>${uiIcon("bus")}</span><div><small>Regreso</small><strong>03:00 hs</strong><p>El micro regresará al punto de origen al finalizar la fiesta.</p></div></article>
-        </section>
-        <section class="transport-note section-card">${uiIcon("checkCircle")}<div><strong>Nos ocupamos de todo</strong><p>El destino continuará siendo secreto hasta el momento indicado, pero el traslado estará organizado para la ida y la vuelta.</p></div></section>
-      ` : `
-        <section class="transport-preview section-card"><div>${uiIcon("lock")}</div><div><strong>La información detallada todavía está bajo llave</strong><p>Más adelante vas a encontrar acá el horario, el punto exacto, cómo reconocer el micro y todas las recomendaciones necesarias.</p></div></section>
+          <article class="section-card"><span>${uiIcon("pin")}</span><div><small>Punto</small><strong>Obelisco</strong><p>Referencia exacta próximamente.</p></div></article>
+          <article class="section-card"><span>${uiIcon("calendar")}</span><div><small>Ida</small><strong>A confirmar</strong><p>Se informará con anticipación.</p></div></article>
+          <article class="section-card"><span>${uiIcon("bus")}</span><div><small>Regreso</small><strong>03:00 hs</strong><p>Al finalizar la fiesta.</p></div></article>
+        </section>` : `
+        <section class="transport-preview section-card"><div>${uiIcon("lock")}</div><div><strong>Información bajo llave</strong><p>Más adelante aparecerán acá horarios, punto de encuentro y recomendaciones.</p></div></section>
       `}`;
   }
 
   function transportStyles() {
     return `<style>
-      .transport-hero{display:grid;grid-template-columns:112px minmax(0,1fr);gap:23px;align-items:center;padding:27px;background:linear-gradient(135deg,rgba(201,170,114,.13),rgba(255,253,248,.90))}.transport-illustration{width:96px;height:96px;display:grid;place-items:center;border:1px solid rgba(116,51,68,.18);border-radius:27px;background:rgba(116,51,68,.07);color:#743344}.transport-illustration .ui-icon{width:48px;height:48px}.transport-status{display:inline-flex;padding:6px 10px;border-radius:999px;background:rgba(201,170,114,.14);color:var(--gold-deep);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-copy h3{margin:8px 0;font-size:clamp(28px,4vw,43px)}.transport-copy p{margin:0}.transport-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.transport-grid article{display:grid;grid-template-columns:45px minmax(0,1fr);gap:13px}.transport-grid article>span{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:rgba(201,170,114,.13);color:#8a6129}.transport-grid .ui-icon{width:22px;height:22px}.transport-grid small,.transport-grid strong{display:block}.transport-grid strong{margin:3px 0 5px;font-size:20px}.transport-grid p{margin:0;font-size:13px}.transport-note,.transport-preview{display:flex;align-items:flex-start;gap:14px}.transport-note>.ui-icon{width:26px;height:26px;color:#426f47}.transport-preview{border-style:dashed}.transport-preview>div:first-child{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:rgba(132,104,68,.08)}@media(max-width:720px){.transport-hero{grid-template-columns:72px minmax(0,1fr);padding:20px}.transport-illustration{width:66px;height:66px}.transport-grid{grid-template-columns:1fr}}
+      .transport-hero{display:grid;grid-template-columns:75px minmax(0,1fr);gap:15px;align-items:center;padding:17px;background:linear-gradient(135deg,rgba(201,170,114,.12),rgba(255,253,248,.90))}.transport-illustration{width:68px;height:68px;display:grid;place-items:center;border:1px solid rgba(116,51,68,.16);border-radius:20px;background:rgba(116,51,68,.06);color:#743344}.transport-illustration .ui-icon{width:34px;height:34px}.transport-status{display:inline-flex;padding:4px 8px;border-radius:999px;background:rgba(201,170,114,.14);color:var(--gold-deep);font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-copy h3{margin:5px 0 4px;font-size:clamp(22px,4vw,32px)}.transport-copy p{margin:0;font-size:12px;line-height:1.35}.transport-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.transport-grid article{display:grid;grid-template-columns:35px minmax(0,1fr);gap:9px;padding:12px}.transport-grid article>span{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:rgba(201,170,114,.13);color:#8a6129}.transport-grid .ui-icon{width:18px;height:18px}.transport-grid small,.transport-grid strong{display:block}.transport-grid strong{margin:2px 0 3px;font-size:16px}.transport-grid p{margin:0;font-size:10px}.transport-preview{display:flex;align-items:center;gap:10px;padding:13px;border-style:dashed}.transport-preview>div:first-child{width:37px;height:37px;display:grid;place-items:center;border-radius:11px;background:rgba(132,104,68,.08)}.transport-preview strong{display:block}.transport-preview p{margin:2px 0 0;font-size:11px}
+      @media(max-width:650px){.transport-hero{grid-template-columns:58px minmax(0,1fr);padding:14px}.transport-illustration{width:54px;height:54px;border-radius:16px}.transport-illustration .ui-icon{width:28px;height:28px}.transport-grid{grid-template-columns:1fr}.transport-grid article{padding:10px}}
     </style>`;
   }
 
@@ -1185,70 +1197,42 @@
     if (hasSaved && !editing) {
       return `
         ${rsvpStyles()}
-        ${sectionHeader("confirmación", "Asistencia registrada", "Tu respuesta quedó guardada. Podés revisarla y cambiarla cuando quieras desde esta misma sección.")}
-        <section class="section-card form-card rsvp-thank-card">
-          <div class="rsvp-thank-grid">
-            <div>
-              <div class="rsvp-okmark">✓</div>
-              <h4 class="rsvp-thank-title">${rsvpThanksTitle(saved)}</h4>
-              <p class="rsvp-thank-lead">${rsvpThanksText(saved)}</p>
-
-              <div class="rsvp-summary-grid">
-                ${summaryLine("Nombre", `${saved.firstName || currentGuest.firstName} ${saved.lastName || currentGuest.lastName}`.trim())}
-                ${summaryLine("Mail", saved.email || "Sin cargar")}
-                ${summaryLine("Teléfono", saved.phone || "Sin cargar")}
-                ${summaryLine("Asistencia", attendanceLabel(saved.attendance))}
-                ${summaryLine("Traslado / micro", transportLabel(saved.transport))}
-                ${summaryLine("Restricciones", saved.diet || "Sin restricciones cargadas")}
-                ${summaryLine("Comentario", saved.comment || "Sin comentario cargado", true)}
-              </div>
-
-              <div class="rsvp-actions-row">
-                <button id="editRsvp" type="button">Editar mi respuesta</button>
-                <a class="rsvp-calendar-link" href="${calendarUrl}" type="text/calendar">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
-              </div>
-
-              <p class="form-note">Última edición: ${formatDateLabel(saved.updatedAt)}</p>
-            </div>
-
-            <aside class="rsvp-side-note">
-              <h4>¿Necesitás cambiar algo?</h4>
-              <p>Podés editar tu respuesta y volver a enviarla. La app va a guardar la nueva versión y mostrará siempre la última actualización.</p>
-              <p>Si cambian tus restricciones alimentarias, traslado o asistencia, actualizalo acá para poder organizar todo mejor.</p>
-            </aside>
+        ${sectionHeader("confirmación", "Asistencia registrada", "")}
+        <section class="section-card rsvp-confirmed-compact">
+          <div class="rsvp-confirmed-head">
+            <span class="rsvp-okmark">✓</span>
+            <div><h4>Respuesta guardada</h4><p>Podés actualizarla cuando lo necesites.</p></div>
+          </div>
+          <div class="rsvp-summary-grid">
+            ${summaryLine("Asistencia", attendanceLabel(saved.attendance))}
+            ${summaryLine("Traslado / micro", transportLabel(saved.transport))}
+            ${summaryLine("Restricciones", saved.diet || "Sin restricciones")}
+            ${summaryLine("Comentario", saved.comment || "Sin comentario", true)}
+          </div>
+          <div class="rsvp-actions-row">
+            <button id="editRsvp" type="button">Editar respuesta</button>
+            <a class="rsvp-calendar-link" href="${calendarUrl}" type="text/calendar">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
           </div>
         </section>
-
-        <section class="rsvp-next-challenge section-card">
-          <div class="rsvp-next-icon">${uiIcon("star")}</div>
-          <div>
-            <p class="eyebrow">Tu próximo desafío</p>
-            <h4>Ayudá al equipo ${escapeHTML(getTeam(currentGuest.team).name)} a sumar puntos</h4>
-            <p>Ya registraste tu respuesta. Ahora podés descubrir los juegos y próximas misiones.</p>
-          </div>
-          <button type="button" data-go="puntos">Ir a Sumá puntos</button>
-        </section>`;
+        ${hasFinalRsvp(saved) ? `
+          <section class="rsvp-next-challenge section-card">
+            <div class="rsvp-next-icon">${uiIcon("star")}</div>
+            <div><h4>Ya podés participar</h4><p>Las canciones, la trivia y las próximas misiones están disponibles.</p></div>
+            <button type="button" data-go="puntos">Ver desafíos</button>
+          </section>` : ""}
+      `;
     }
 
     return `
       ${rsvpStyles()}
       ${sectionHeader("confirmación", hasSaved ? "Editar asistencia" : "Confirmar asistencia", `Responder antes del ${deadlineLabel}.`)}
-      <section class="calendar-strip">
-        <div>
-          <strong>📅 AGENDALO!</strong>
-          <p>Abrí el evento con el calendario de tu celular para guardar la fecha y el horario.</p>
-        </div>
-        <a href="${calendarUrl}" type="text/calendar">Agregar a mi calendario</a>
-      </section>
-
-      <form id="rsvpForm" class="section-card form-card">
-        ${hasSaved ? `<div class="warning-ribbon">Estás editando una respuesta ya registrada. Al guardar, se enviará una nueva actualización.</div>` : ""}
+      <form id="rsvpForm" class="section-card form-card rsvp-form-compact">
+        ${hasSaved ? `<div class="warning-ribbon">Estás editando una respuesta ya registrada.</div>` : ""}
         <div class="form-grid">
           ${field("firstName", "Nombre", saved.firstName || currentGuest.firstName, "text", true)}
           ${field("lastName", "Apellido", saved.lastName || currentGuest.lastName, "text", true)}
           ${field("email", "Mail", saved.email || currentGuest.email || "", "email", true)}
           ${field("phone", "Teléfono", saved.phone || "", "tel", false)}
-
           <fieldset class="choice-field">
             <legend>Confirmo asistencia</legend>
             <div class="choice-group">
@@ -1257,7 +1241,6 @@
               ${choicePill("attendance", "a-confirmar", "A confirmar", saved.attendance, true)}
             </div>
           </fieldset>
-
           <label>Traslado / micro
             <select name="transport">
               ${option("", "Seleccionar", savedTransport)}
@@ -1266,42 +1249,33 @@
             </select>
           </label>
         </div>
-
         <label>Restricciones alimentarias / alergias
-          <textarea name="diet" placeholder="Ej: vegetariano, celíaco, sin lactosa, alergia a frutos secos...">${escapeHTML(saved.diet || "")}</textarea>
+          <textarea name="diet" placeholder="Ej: vegetariano, celíaco, sin lactosa...">${escapeHTML(saved.diet || "")}</textarea>
         </label>
-        <label>Comentario para los novios
+        <label>Comentario
           <textarea name="comment" placeholder="Algo que necesitemos saber...">${escapeHTML(saved.comment || "")}</textarea>
         </label>
-        <div class="form-actions">
+        <div class="form-actions rsvp-form-actions">
           <button type="submit">${hasSaved ? "Guardar cambios" : "Guardar asistencia"}</button>
-          ${hasSaved ? `<button id="cancelRsvpEdit" type="button" class="ghost-button">Cancelar edición</button>` : ""}
-          <span class="form-note">${hasSaved ? `Última edición: ${formatDateLabel(saved.updatedAt)}` : "Todavía no registrado."}</span>
+          ${hasSaved ? `<button id="cancelRsvpEdit" type="button" class="ghost-button">Cancelar</button>` : ""}
+          <a class="rsvp-calendar-link rsvp-calendar-link-small" href="${calendarUrl}" type="text/calendar">${uiIcon("calendarPlus")}<span>Agendalo</span></a>
         </div>
       </form>`;
   }
 
+
   function rsvpStyles() {
     return `<style>
-      .calendar-strip{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid rgba(122,49,64,.18);border-radius:22px;padding:18px 20px;margin:0 0 20px;background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(239,228,209,.78));box-shadow:0 8px 22px rgba(76,51,22,.05)}
-      .calendar-strip strong{display:block;color:#7a3140;font-weight:950;letter-spacing:.05em}.calendar-strip p{margin:4px 0 0;color:var(--muted);font-weight:650}
-      .calendar-strip a,.rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;min-height:46px;text-decoration:none;border-radius:999px;border:1px solid #6f2f3f;padding:12px 18px;background:#743344;color:#fffaf0!important;font-weight:900;white-space:nowrap;box-shadow:0 7px 16px rgba(116,51,68,.14)}
-      .calendar-strip a:hover,.rsvp-calendar-link:hover{background:#652c3b;color:#fff!important}
-      .choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--ink);font-weight:900;margin:0 0 10px}
-      .choice-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-weight:900;text-align:center;padding:14px 12px;transition:.18s ease}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.12)}
-      .rsvp-thank-card{padding:28px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.84))}.rsvp-thank-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:24px;align-items:stretch}
-      .rsvp-okmark{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:34px;font-weight:1000;margin-bottom:16px}
-      .rsvp-thank-title{font-family:var(--font-title);font-size:clamp(28px,4vw,40px);line-height:1.05;margin:0 0 10px;color:var(--ink)}.rsvp-thank-lead{color:var(--muted);font-weight:650;font-size:16px;line-height:1.5;max-width:760px}
-      .rsvp-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px}.rsvp-summary-grid .wide{grid-column:1/-1}.summary-item{border:1px solid rgba(132,104,68,.16);border-radius:16px;padding:15px;background:rgba(255,255,255,.48)}.summary-item strong{display:block;color:#7a3140;font-size:11px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px}.summary-item p{margin:0;color:var(--ink);font-weight:750;word-break:break-word}
-      .rsvp-side-note{border:1px solid rgba(132,104,68,.17);border-radius:21px;padding:21px;background:rgba(255,255,255,.38)}.rsvp-side-note h4{font-family:var(--font-title);color:var(--ink);font-size:23px;margin:0 0 10px}.rsvp-side-note p{color:var(--muted);font-weight:650;line-height:1.5}
-      .rsvp-actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
-      .rsvp-actions-row .rsvp-calendar-link{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 18px!important;border:1px solid #6f2f3f!important;border-radius:999px;background:#743344!important;color:#fffaf0!important;text-decoration:none!important;font-weight:900!important;box-shadow:0 7px 16px rgba(116,51,68,.16)!important}
-      .rsvp-actions-row .rsvp-calendar-link:hover{background:#652c3b!important;color:#fff!important}.rsvp-calendar-link .ui-icon{width:18px;height:18px}
-      .rsvp-next-challenge{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:17px;align-items:center;margin-top:15px;padding:20px 22px;border-color:rgba(201,170,114,.42);background:linear-gradient(135deg,rgba(201,170,114,.13),rgba(255,253,248,.88))}
-      .rsvp-next-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:15px;background:rgba(201,170,114,.17);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:25px;height:25px}.rsvp-next-challenge h4{margin:4px 0 5px;font-size:21px}.rsvp-next-challenge p:not(.eyebrow){margin:0;font-size:14px}.rsvp-next-challenge button{white-space:nowrap}
-      @media(max-width:850px){.calendar-strip{align-items:flex-start;flex-direction:column}.calendar-strip a{width:100%}.choice-group{grid-template-columns:1fr}.rsvp-thank-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link{width:100%}.rsvp-actions-row>button{width:100%}.rsvp-next-challenge{grid-template-columns:46px minmax(0,1fr)}.rsvp-next-icon{width:44px;height:44px}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
+      .rsvp-form-compact{padding:17px}.rsvp-form-compact .form-grid{gap:11px}.rsvp-form-compact label{gap:5px}.rsvp-form-compact input,.rsvp-form-compact select{min-height:43px}.rsvp-form-compact textarea{min-height:70px}.choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--ink);font-weight:900;margin:0 0 7px}.choice-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:43px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
+      .rsvp-confirmed-compact{padding:17px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.80))}.rsvp-confirmed-head{display:flex;align-items:center;gap:11px}.rsvp-confirmed-head h4{margin:0 0 2px;font-size:21px}.rsvp-confirmed-head p{margin:0;font-size:12px}.rsvp-okmark{width:41px;height:41px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:22px;font-weight:1000}
+      .rsvp-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px}.rsvp-summary-grid .wide{grid-column:1/-1}.summary-item{border:1px solid rgba(132,104,68,.14);border-radius:13px;padding:10px 11px;background:rgba(255,255,255,.44)}.summary-item strong{display:block;color:#7a3140;font-size:9px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.summary-item p{margin:0;color:var(--ink);font-size:12px;font-weight:750;word-break:break-word}
+      .rsvp-actions-row,.rsvp-form-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:13px}.rsvp-actions-row button,.rsvp-form-actions button{min-height:38px;padding:8px 13px}
+      .rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:8px 12px;border:1px solid rgba(54,85,111,.25);border-radius:999px;background:rgba(54,85,111,.07);color:#36556f!important;text-decoration:none;font-size:11px;font-weight:900;box-shadow:none}.rsvp-calendar-link .ui-icon{width:16px;height:16px}.rsvp-calendar-link-small{margin-left:auto}
+      .rsvp-next-challenge{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:11px;align-items:center;margin-top:10px;padding:13px 15px;border-color:rgba(201,170,114,.35);background:linear-gradient(135deg,rgba(201,170,114,.10),rgba(255,253,248,.86))}.rsvp-next-icon{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.15);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:20px;height:20px}.rsvp-next-challenge h4{margin:0 0 2px;font-size:17px}.rsvp-next-challenge p{margin:0;font-size:11px}.rsvp-next-challenge button{min-height:37px;padding:8px 12px;white-space:nowrap}
+      @media(max-width:650px){.choice-group{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
     </style>`;
   }
+
 
   function choicePill(name, value, label, selected, required = false) {
     return `<label class="choice-pill"><input type="radio" name="${escapeHTML(name)}" value="${escapeHTML(value)}" ${value === selected ? "checked" : ""} ${required ? "required" : ""}><span>${escapeHTML(label)}</span></label>`;
@@ -1315,6 +1289,10 @@
 
   function hasCompletedRsvp(row) {
     return Boolean(row && row.updatedAt && row.attendance);
+  }
+
+  function hasFinalRsvp(row) {
+    return Boolean(row && row.updatedAt && ["si", "no"].includes(row.attendance));
   }
 
   function hasCompletedProfile(row) {
@@ -1568,29 +1546,39 @@
     const visibleRole = guest.roleVisible || guest.displayRelation || guest.relation || guest.role || "invitado";
     const aliasText = guest.alias ? `${guest.alias} · ${visibleRole}` : visibleRole;
     const progress = guestChallengeProgress(guest);
-    const icon = captain ? `<span class="guest-person-icon is-captain">👑</span>` : options.minimalIcon ? `<span class="guest-person-icon">${uiIcon("person")}</span>` : teamLogo(getTeam(guest.team), "guest-pill-logo");
+    const initial = String(guest.firstName || guest.lastName || "?").trim().charAt(0).toUpperCase();
+    const icon = `<span class="guest-person-initial ${captain ? "is-captain" : ""}">${escapeHTML(initial)}</span>`;
     const challengeStatus = options.showChallenges ? `<div class="guest-challenge-status"><span><b>${progress.completed}/${progress.total}</b><em>desafíos</em></span><i><em style="width:${Math.round((progress.completed / Math.max(progress.total,1)) * 100)}%"></em></i></div>` : "";
     return `<div class="guest-pill ${captain ? "captain-pill" : ""} ${declined ? "is-declined" : ""} ${options.showChallenges ? "has-challenges" : ""}"><span class="guest-pill-avatar">${icon}</span><div class="guest-pill-copy"><strong>${escapeHTML(guestFullName(guest))}</strong><small>${escapeHTML(aliasText)}</small>${captain ? `<span class="captain-label">Capitán</span>` : ""}${declined ? `<span class="declined-label">No asiste</span>` : ""}${challengeStatus}</div></div>`;
   }
+
 
   function renderPointsHub() {
     const team = getTeam(currentGuest.team);
     const activePlayers = teamSizeForPoints(team.id);
     const rsvp = state.rsvps[currentGuest.id];
-    const rsvpDone = isCompetitionGuest(currentGuest) && hasCompletedRsvp(rsvp);
-    const rsvpDoneCount = completedRsvpMembers(team.id).length;
+    const rsvpDone = isCompetitionGuest(currentGuest) && hasFinalRsvp(rsvp);
+    const rsvpDoneCount = completedRsvpMembers(team.id).filter(guest => hasFinalRsvp(state.rsvps[guest.id])).length;
     const myPoints = calculateRanking().find(row => row.id === team.id)?.total || 0;
     const musicDone = Boolean(triviaSubmission("music-selection"));
     const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
 
     return `
       ${pointsHubStyles()}
-      <section class="points-compact-head section-card" style="--local-accent:${team.accent}">${teamLogo(team,"points-compact-logo")}<div><p class="eyebrow">Sumá puntos</p><h3>Qué podés hacer ahora</h3></div><span><b>${myPoints}</b><small>puntos</small></span></section>
+      <section class="points-compact-head section-card" style="--local-accent:${team.accent}">
+        ${teamLogo(team,"points-compact-logo")}
+        <div><p class="eyebrow">Sumá puntos</p><h3>Qué podés hacer ahora</h3><p>Mientras esperamos las confirmaciones, ya podés preparar tu aporte para el equipo.</p></div>
+        <span><b>${myPoints}</b><small>puntos</small></span>
+      </section>
       <section class="points-compact-list section-card">
-        ${pointsAction({icon:"✉️",title:"Confirmar asistencia",text:rsvpDone?"Respuesta registrada.":"Respondé antes del 31/08.",done:rsvpDone,route:"asistencia",progressText:`${rsvpDoneCount}/${activePlayers} confirmaron`,editable:true})}
-        ${pointsAction({icon:"🎵",title:"Elegir canciones",text:musicDone?"Propuesta guardada.":"Elegí dos canciones.",done:musicDone,route:"musica",progressText:"Juego musical",editable:true})}
-        ${pointsAction({icon:"❓",title:"Trivia Vani y Fede",text:triviaDone?"Resultado cerrado.":"Una sola oportunidad.",done:triviaDone,route:"trivia-pareja",progressText:triviaDone?"Resultado final":"Hasta 100 puntos",editable:false})}
-        ${pointsAction({icon:"🎁",title:"Juego sorpresa",text:"Se revelará más adelante.",done:false,route:"sorpresa",progressText:"Bloqueado",editable:false})}
+        ${pointsAction({icon:"✉️",title:"Confirmar asistencia",text:rsvpDone?"Respuesta definitiva registrada.":"Primero respondé por sí o por no.",done:rsvpDone,route:"asistencia",progressText:`${rsvpDoneCount}/${activePlayers} definieron`,editable:true})}
+        ${rsvpDone ? `
+          ${pointsAction({icon:"🎵",title:"Elegir canciones",text:musicDone?"Propuesta guardada.":"Elegí dos canciones.",done:musicDone,route:"musica",progressText:"Juego musical",editable:true})}
+          ${pointsAction({icon:"❓",title:"Trivia Vani y Fede",text:triviaDone?"Resultado cerrado.":"Una sola oportunidad.",done:triviaDone,route:"trivia-pareja",progressText:triviaDone?"Resultado final":"Hasta 100 puntos",editable:false})}
+          ${pointsAction({icon:"🎁",title:"Juego sorpresa",text:"Se revelará más adelante.",done:false,route:"sorpresa",progressText:"Bloqueado",editable:false})}
+        ` : `
+          <div class="points-rsvp-lock">${uiIcon("lock")}<div><strong>Primero, asistencia</strong><p>Al responder por sí o por no se habilitarán las canciones, la trivia y las próximas actividades.</p></div></div>
+        `}
       </section>`;
   }
 
@@ -1601,11 +1589,13 @@
 
   function pointsHubStyles() {
     return `<style>
-      .points-compact-head{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:13px;align-items:center;padding:16px 18px}.points-compact-logo{width:50px;height:50px}.points-compact-head h3{margin:3px 0 0;font-size:25px}.points-compact-head>span{text-align:center}.points-compact-head>span b,.points-compact-head>span small{display:block}.points-compact-head>span b{font-size:23px}.points-compact-head>span small{font-size:9px;text-transform:uppercase;color:var(--muted)}
-      .points-compact-list{padding:10px}.points-action{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:11px;align-items:center;padding:12px;border:1px solid rgba(132,104,68,.13);border-radius:16px;background:rgba(255,255,255,.34);margin:7px 0}.points-action.done{border-color:rgba(74,125,79,.22);background:rgba(74,125,79,.055)}.points-action-icon{font-size:25px;text-align:center}.points-action-copy strong{font-size:15px}.points-action-copy p{margin:2px 0;font-size:11.5px;line-height:1.3}.points-action-copy small{color:var(--gold-deep);font-size:10px;font-weight:900}.points-action-end{display:flex;align-items:center;gap:7px}.points-action-end button{min-height:37px;padding:8px 12px}.points-complete-badge{display:inline-flex;align-items:center;gap:4px;color:#426f47;font-size:10px;font-weight:900}.points-complete-badge .ui-icon{width:17px;height:17px}
-      @media(max-width:570px){.points-compact-head{grid-template-columns:44px minmax(0,1fr) auto;padding:13px}.points-compact-logo{width:42px;height:42px}.points-compact-head h3{font-size:21px}.points-action{grid-template-columns:36px minmax(0,1fr);padding:11px}.points-action-icon{font-size:22px}.points-action-end{grid-column:2;justify-content:space-between}.points-action-end button{min-width:91px}.points-action-copy strong{font-size:14px}}
+      .points-compact-head{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:11px;align-items:center;padding:13px 15px}.points-compact-logo{width:46px;height:46px}.points-compact-head h3{margin:2px 0;font-size:22px}.points-compact-head p:not(.eyebrow){margin:0;max-width:620px;font-size:10.5px;line-height:1.3}.points-compact-head>span{text-align:center}.points-compact-head>span b,.points-compact-head>span small{display:block}.points-compact-head>span b{font-size:21px}.points-compact-head>span small{font-size:8px;text-transform:uppercase;color:var(--muted)}
+      .points-compact-list{padding:8px}.points-action{display:grid;grid-template-columns:37px minmax(0,1fr) auto;gap:9px;align-items:center;padding:10px;border:1px solid rgba(132,104,68,.13);border-radius:14px;background:rgba(255,255,255,.34);margin:6px 0}.points-action.done{border-color:rgba(74,125,79,.22);background:rgba(74,125,79,.055)}.points-action-icon{font-size:22px;text-align:center}.points-action-copy strong{font-size:14px}.points-action-copy p{margin:1px 0;font-size:10.5px;line-height:1.25}.points-action-copy small{color:var(--gold-deep);font-size:9px;font-weight:900}.points-action-end{display:flex;align-items:center;gap:6px}.points-action-end button{min-height:34px;padding:7px 10px}.points-complete-badge{display:inline-flex;align-items:center;gap:4px;color:#426f47;font-size:9px;font-weight:900}.points-complete-badge .ui-icon{width:15px;height:15px}
+      .points-rsvp-lock{display:flex;align-items:flex-start;gap:10px;margin:7px 0;padding:12px;border:1px dashed rgba(116,51,68,.24);border-radius:14px;background:rgba(116,51,68,.045)}.points-rsvp-lock>.ui-icon{width:21px;height:21px;color:#743344;flex:0 0 auto}.points-rsvp-lock strong{display:block;margin-bottom:2px}.points-rsvp-lock p{margin:0;font-size:11px;line-height:1.35}
+      @media(max-width:570px){.points-compact-head{grid-template-columns:40px minmax(0,1fr) auto;padding:11px}.points-compact-logo{width:38px;height:38px}.points-compact-head h3{font-size:19px}.points-action{grid-template-columns:32px minmax(0,1fr);padding:9px}.points-action-icon{font-size:20px}.points-action-end{grid-column:2;justify-content:space-between}.points-action-end button{min-width:84px}.points-action-copy strong{font-size:13px}}
     </style>`;
   }
+
 
   function renderTournament() {
     const open = isUnlocked("tournament");
@@ -1664,8 +1654,25 @@
 
   function renderMusicGame(open, saved, team) {
     if (!open) return renderLockedTriviaCard("01","La banda sonora","Dos canciones tendrán una misión especial.","trivia-music","music-game");
-    return `<article id="music-game" class="trivia-game-card is-open"><div class="trivia-game-number">01</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status open">${saved?"Completado":"Disponible"}</span><h4>La banda sonora</h4></div>${uiIcon("music","trivia-main-icon")}</div><p>Elegí una canción que te gustaría escuchar en la boda y otra que represente la entrada del equipo ${escapeHTML(team.name)}.</p><div class="trivia-points-rule">${uiIcon("star")}<span>Completar este juego suma <strong>${rsvpPointsForTeam(team.id)} puntos</strong> para tu equipo, una sola vez.</span></div><div class="trivia-secret-note">No te vamos a contar todavía cómo se usarán. Elegí pensando en energía, identidad y ganas de entrar con todo.</div><form id="musicGameForm" class="trivia-form"><label>Canción para la boda<input name="weddingSong" type="text" value="${escapeHTML(saved?.weddingSong||"")}" placeholder="Tema y artista" required></label><label>Canción para la entrada del equipo<input name="teamEntranceSong" type="text" value="${escapeHTML(saved?.teamEntranceSong||"")}" placeholder="Tema y artista" required></label><label>¿Por qué la elegirías? <span>(opcional)</span><textarea name="reason" placeholder="Contanos qué tiene de especial...">${escapeHTML(saved?.reason||"")}</textarea></label><div class="trivia-form-footer"><button type="submit">${saved?"Actualizar canciones":"Enviar mis canciones"}</button>${saved?`<span class="trivia-saved">${uiIcon("checkCircle")} Propuesta guardada</span>`:""}</div></form></div></article>`;
+    return `
+      <article id="music-game" class="trivia-game-card is-open music-game-compact">
+        <div class="trivia-game-number">01</div>
+        <div class="trivia-game-content">
+          <div class="trivia-game-heading">
+            <div><span class="trivia-status open">${saved ? "Completado" : "Disponible"}</span><h4>La banda sonora</h4></div>
+            ${uiIcon("music","trivia-main-icon")}
+          </div>
+          <p>Elegí una canción para la boda y otra para la entrada del equipo ${escapeHTML(team.name)}.</p>
+          <form id="musicGameForm" class="trivia-form">
+            <label>Canción para la boda<input name="weddingSong" type="text" value="${escapeHTML(saved?.weddingSong||"")}" placeholder="Tema y artista" required></label>
+            <label>Canción para la entrada del equipo<input name="teamEntranceSong" type="text" value="${escapeHTML(saved?.teamEntranceSong||"")}" placeholder="Tema y artista" required></label>
+            <label>Motivo <span>(opcional)</span><textarea name="reason" placeholder="¿Por qué la elegiste?">${escapeHTML(saved?.reason||"")}</textarea></label>
+            <div class="trivia-form-footer"><button type="submit">${saved?"Actualizar canciones":"Enviar canciones"}</button>${saved?`<span class="trivia-saved">${uiIcon("checkCircle")} Guardado</span>`:""}</div>
+          </form>
+        </div>
+      </article>`;
   }
+
 
   function renderCoupleTrivia(open, saved) {
     if (!open) return renderLockedTriviaCard("02","¿Cuánto sabés de los novios?","Preguntas, recuerdos y algunas trampas.","trivia-couple","couple-trivia-game");
@@ -1865,42 +1872,6 @@
       </section>
       ${renderAdminPeopleModal()}
 
-      <section class="section-card admin-official-export">
-        <div class="admin-official-export-icon">${uiIcon("download")}</div>
-        <div>
-          <p class="eyebrow">Lista oficial</p>
-          <h4>Exportar confirmados para el salón</h4>
-          <p>Descarga solamente quienes confirmaron que asisten, con contacto, traslado, restricciones alimenticias, comentarios y preferencias disponibles.</p>
-        </div>
-        <button id="exportOfficialGuests" type="button">${uiIcon("download")}<span>Exportar CSV</span></button>
-      </section>
-
-      <section class="section-card admin-game-controls admin-transport-control">
-        <div class="admin-game-controls-head"><div><p class="eyebrow">Casamiento</p><h4>Información de traslado</h4><p>Habilitá esta sección cuando quieras mostrar los datos del micro a todos los invitados.</p></div></div>
-        <div class="admin-game-toggle-list"><label class="admin-game-toggle ${transportInfoOpen ? "is-open" : ""}"><span><strong>Traslado en micro</strong><small>Mostrar u ocultar horarios, punto de encuentro y regreso.</small></span><input type="checkbox" data-unlock-key="transport-info" ${transportInfoOpen ? "checked" : ""}><i aria-hidden="true"></i><b>${transportInfoOpen ? "Habilitado" : "Oculto"}</b></label></div>
-      </section>
-
-      <section class="section-card admin-game-controls">
-        <div class="admin-game-controls-head">
-          <div><p class="eyebrow">Juegos</p><h4>Bloquear o liberar</h4><p>Los cambios se aplican a todos los invitados al actualizar los datos.</p></div>
-        </div>
-        <div class="admin-game-toggle-list">
-          ${[
-            { key: "trivia-music", title: "La banda sonora", text: "Canción para la boda y entrada del equipo." },
-            { key: "trivia-couple", title: "Trivia Vani y Fede", text: "Trivia de una sola oportunidad." },
-            { key: "trivia-surprise", title: "Juego sorpresa", text: "Tercera misión secreta." }
-          ].map(game => {
-            const open = isTriviaGameOpen(game.key);
-            return `<label class="admin-game-toggle ${open ? "is-open" : ""}">
-              <span><strong>${escapeHTML(game.title)}</strong><small>${escapeHTML(game.text)}</small></span>
-              <input type="checkbox" data-unlock-key="${game.key}" ${open ? "checked" : ""}>
-              <i aria-hidden="true"></i>
-              <b>${open ? "Liberado" : "Bloqueado"}</b>
-            </label>`;
-          }).join("")}
-        </div>
-      </section>
-
       <form id="scoreForm" class="section-card admin-score-card">
         <div class="admin-score-heading">
           <div>
@@ -1957,6 +1928,44 @@
 
         <button id="scoreSubmit" type="submit" class="admin-score-submit" disabled>Seleccioná un equipo y una cantidad</button>
       </form>
+
+      <section class="section-card admin-official-export">
+        <div class="admin-official-export-icon">${uiIcon("download")}</div>
+        <div>
+          <p class="eyebrow">Lista oficial</p>
+          <h4>Exportar confirmados para el salón</h4>
+          <p>Descarga solamente quienes confirmaron que asisten, con contacto, traslado, restricciones alimenticias, comentarios y preferencias disponibles.</p>
+        </div>
+        <button id="exportOfficialGuests" type="button">${uiIcon("download")}<span>Exportar CSV</span></button>
+      </section>
+
+      <section class="section-card admin-game-controls admin-transport-control">
+        <div class="admin-game-controls-head"><div><p class="eyebrow">Casamiento</p><h4>Información de traslado</h4><p>Habilitá esta sección cuando quieras mostrar los datos del micro a todos los invitados.</p></div></div>
+        <div class="admin-game-toggle-list"><label class="admin-game-toggle ${transportInfoOpen ? "is-open" : ""}"><span><strong>Traslado en micro</strong><small>Mostrar u ocultar horarios, punto de encuentro y regreso.</small></span><input type="checkbox" data-unlock-key="transport-info" ${transportInfoOpen ? "checked" : ""}><i aria-hidden="true"></i><b>${transportInfoOpen ? "Habilitado" : "Oculto"}</b></label></div>
+      </section>
+
+      <section class="section-card admin-game-controls">
+        <div class="admin-game-controls-head">
+          <div><p class="eyebrow">Juegos</p><h4>Bloquear o liberar</h4><p>Los cambios se aplican a todos los invitados al actualizar los datos.</p></div>
+        </div>
+        <div class="admin-game-toggle-list">
+          ${[
+            { key: "trivia-music", title: "La banda sonora", text: "Canción para la boda y entrada del equipo." },
+            { key: "trivia-couple", title: "Trivia Vani y Fede", text: "Trivia de una sola oportunidad." },
+            { key: "trivia-surprise", title: "Juego sorpresa", text: "Tercera misión secreta." }
+          ].map(game => {
+            const open = isTriviaGameOpen(game.key);
+            return `<label class="admin-game-toggle ${open ? "is-open" : ""}">
+              <span><strong>${escapeHTML(game.title)}</strong><small>${escapeHTML(game.text)}</small></span>
+              <input type="checkbox" data-unlock-key="${game.key}" ${open ? "checked" : ""}>
+              <i aria-hidden="true"></i>
+              <b>${open ? "Liberado" : "Bloqueado"}</b>
+            </label>`;
+          }).join("")}
+        </div>
+      </section>
+
+
 
       ${resetButtonStyles()}
 
