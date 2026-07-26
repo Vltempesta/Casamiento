@@ -260,7 +260,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32418",
+      appVersion: "32419",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1739,21 +1739,21 @@
             <p class="eyebrow">Competencia</p>
             <h3>Ranking de equipos</h3>
           </div>
-
-          <div class="vf18-ranking-actions">
-            <button id="refreshRanking" type="button" class="vf18-ranking-action vf18-ranking-refresh">
-              <span class="ranking-button-icon">${uiIcon("sync")}</span>
-              <span>Actualizar</span>
-            </button>
-            <button type="button" data-go="puntos" class="vf18-ranking-action vf18-ranking-points">
-              <span class="ranking-button-icon">${uiIcon("star")}</span>
-              <span>Sumá puntos</span>
-            </button>
-          </div>
         </div>
 
         <div class="vf18-ranking-list" aria-label="Tabla de posiciones">
           ${ranking.map(vf18RankRow).join("")}
+        </div>
+
+        <div class="vf18-ranking-actions vf18-ranking-actions-bottom">
+          <button id="refreshRanking" type="button" class="vf18-ranking-action vf18-ranking-refresh">
+            <span class="ranking-button-icon">${uiIcon("sync")}</span>
+            <span>Actualizar</span>
+          </button>
+          <button type="button" data-go="puntos" class="vf18-ranking-action vf18-ranking-points">
+            <span class="ranking-button-icon">${uiIcon("star")}</span>
+            <span>Sumá puntos</span>
+          </button>
         </div>
       </section>`;
   }
