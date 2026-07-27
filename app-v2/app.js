@@ -266,7 +266,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32441",
+      appVersion: "32442",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -625,27 +625,7 @@
 
   function handleBrowserNavigation(event) {
     closeMenu();
-
-    const activeGuest = currentGuest || getGuestById(state.currentGuestId);
-
-    if (activeGuest && currentRoute !== "inicio") {
-      const homeState = {
-        screen: "app",
-        route: "inicio",
-        guestId: activeGuest.id
-      };
-
-      history.pushState(
-        homeState,
-        "",
-        `${basePageUrl()}#inicio`
-      );
-
-      applyGuestShell(activeGuest);
-      selectedTeamViewId = null;
-      navigate("inicio", { historyMode: "none", fromHistory: true });
-      return;
-    }
+    setNotificationPanelOpen(false);
 
     const destination = event.state || { screen: "login" };
 
@@ -654,15 +634,27 @@
       return;
     }
 
-    const guest = getGuestById(destination.guestId || state.currentGuestId);
+    const guest = getGuestById(
+      destination.guestId || state.currentGuestId
+    );
+
     if (!guest || !isCompetitionGuest(guest)) {
       showLandingFromHistory();
       return;
     }
 
     applyGuestShell(guest);
-    navigate("inicio", { historyMode: "none", fromHistory: true });
+    selectedTeamViewId = null;
+
+    navigate(
+      destination.route || "inicio",
+      {
+        historyMode: "none",
+        fromHistory: true
+      }
+    );
   }
+
 
   function fillGuestSuggestions() {
     const input = $("#guestName");
@@ -964,7 +956,7 @@
     if (route === "ficha" || route === "juegos" || route === "info") route = "inicio";
     if (route === "torneo") route = "puntos";
 
-    const gameRoutes = ["musica", "trivia-pareja", "trivia-quien", "sorpresa", "trivia"];
+    const gameRoutes = ["musica", "trivia-pareja", "trivia-quien", "trivia"];
     if (currentGuest && gameRoutes.includes(route) && !hasFinalRsvp(state.rsvps[currentGuest.id])) {
       toast("Primero confirmá tu asistencia por sí o por no.");
       route = "asistencia";
@@ -973,8 +965,7 @@
     const triviaTargets = {
       musica: "music-game",
       "trivia-pareja": "couple-trivia-game",
-      "trivia-quien": "who-is-who-game",
-      sorpresa: "surprise-game"
+      "trivia-quien": "who-is-who-game"
     };
     if (triviaTargets[route]) {
       triviaFocusTarget = triviaTargets[route];
@@ -991,7 +982,7 @@
       else button.removeAttribute("aria-current");
     });
 
-    const historyMode = options.historyMode || "replace";
+    const historyMode = options.historyMode || "push";
     if (currentGuest && historyMode !== "none") {
       const historyState = { screen: "app", route, guestId: currentGuest.id };
       const url = `${basePageUrl()}#${encodeURIComponent(route)}`;
@@ -1156,7 +1147,6 @@
     "trivia-music": true,
     "trivia-couple": true,
     "trivia-who": true,
-    "trivia-surprise": false,
     "transport-info": false,
     "gifts-section": false
   };
@@ -1263,8 +1253,7 @@
   const GAME_NOTIFICATION_DEFINITIONS = [
     { key: "trivia-music", title: "La banda sonora", route: "puntos" },
     { key: "trivia-couple", title: "¿Cuánto conocés a los novios?", route: "puntos" },
-    { key: "trivia-who", title: "¿Quién es quién?", route: "puntos" },
-    { key: "trivia-surprise", title: "Juego sorpresa", route: "puntos" }
+    { key: "trivia-who", title: "¿Quién es quién?", route: "puntos" }
   ];
 
   function currentNotificationState() {
@@ -1722,7 +1711,16 @@
                 <p>Solís, Provincia de Buenos Aires</p>
               </div>
             </button>
-          ` : ""}
+          ` : `
+            <article class="home-essential-row home-essential-location home-essential-location-locked">
+              <span class="home-essential-icon">${uiIcon("lock")}</span>
+              <div>
+                <small>Lugar</small>
+                <strong>¡Lugar secreto!</strong>
+                <p>La ubicación se habilitará más adelante.</p>
+              </div>
+            </article>
+          `}
 
           <button type="button" class="home-essential-row home-essential-link home-essential-transport" data-go="traslado">
             <span class="home-essential-icon">${uiIcon("bus")}</span>
@@ -1989,16 +1987,16 @@
           <fieldset class="choice-field attendance-choice-field">
             <legend>Confirmo asistencia</legend>
             <div class="choice-group choice-group-two">
-              ${choicePill("attendance", "si", "Sí, voy", saved.attendance, true)}
-              ${choicePill("attendance", "no", "No puedo asistir", saved.attendance, true)}
+              ${choicePill("attendance", "si", "Sí, voy!", saved.attendance, true)}
+              ${choicePill("attendance", "no", "No podré asistir", saved.attendance, true)}
             </div>
           </fieldset>
 
           <fieldset class="choice-field transport-choice-field">
-            <legend>Traslado / micro</legend>
+            <legend>Traslado</legend>
             <div class="choice-group choice-group-two">
-              ${choicePill("transport", "particular", "Voy de forma particular", savedTransport, true)}
-              ${choicePill("transport", "combi", "Me interesa el micro", savedTransport, true)}
+              ${choicePillIcon("transport", "particular", "Particular", "car", savedTransport, true)}
+              ${choicePillIcon("transport", "combi", "Micro / Combi", "bus", savedTransport, true)}
             </div>
           </fieldset>
 
@@ -2048,6 +2046,30 @@
 
   function choicePill(name, value, label, selected, required = false) {
     return `<label class="choice-pill"><input type="radio" name="${escapeHTML(name)}" value="${escapeHTML(value)}" ${value === selected ? "checked" : ""} ${required ? "required" : ""}><span>${escapeHTML(label)}</span></label>`;
+  }
+
+
+  function choicePillIcon(
+    name,
+    value,
+    label,
+    icon,
+    selected,
+    required = false
+  ) {
+    return `
+      <label class="choice-pill choice-pill-with-icon">
+        <input
+          type="radio"
+          name="${escapeHTML(name)}"
+          value="${escapeHTML(value)}"
+          ${value === selected ? "checked" : ""}
+          ${required ? "required" : ""}>
+        <span>
+          <i>${uiIcon(icon)}</i>
+          <b>${escapeHTML(label)}</b>
+        </span>
+      </label>`;
   }
 
   function summaryLine(label, value, wide = false) {
@@ -2482,10 +2504,11 @@
     const rsvp = state.rsvps[currentGuest.id];
     const rsvpDone = isCompetitionGuest(currentGuest) && hasFinalRsvp(rsvp);
     const myPoints = calculateRanking().find(row => row.id === team.id)?.total || 0;
+    const activityPoints = rsvpPointsForTeam(team.id);
     const musicOpen = isTriviaGameOpen("trivia-music");
     const triviaOpen = isTriviaGameOpen("trivia-couple");
     const whoTriviaOpen = isTriviaGameOpen("trivia-who");
-    const surpriseOpen = isTriviaGameOpen("trivia-surprise");
+    const travelOpen = isSectionOpen("en-viaje");
     const musicDone = Boolean(triviaSubmission("music-selection"));
     const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
     const whoTriviaDone = Boolean(triviaSubmission("who-is-who-trivia-test"));
@@ -2514,9 +2537,12 @@
         ${pointsAction({
           icon:"✉️",
           title:"Confirmar asistencia",
-          text:rsvpDone ? "Respuesta definitiva guardada." : "Primero respondé por sí o por no.",
+          text:rsvpDone
+            ? `Respuesta guardada. Sumaste ${activityPoints} puntos.`
+            : `Respondé por sí o por no y sumá ${activityPoints} puntos.`,
           done:rsvpDone,
           route:"asistencia",
+          progressText:`${activityPoints} puntos`,
           editable:true
         })}
         ${rsvpDone ? `
@@ -2524,11 +2550,15 @@
             icon:"🎵",
             title:"Elegir canciones",
             text:musicOpen
-              ? (musicDone ? "Propuesta guardada." : "Elegí dos canciones.")
+              ? (
+                  musicDone
+                    ? `Propuesta guardada. Sumaste ${activityPoints} puntos.`
+                    : `Elegí dos canciones y sumá ${activityPoints} puntos.`
+                )
               : "Se habilitará más adelante.",
             done:musicDone,
             route:"musica",
-            progressText:musicOpen ? "Juego musical" : "Bloqueado",
+            progressText:musicOpen ? `${activityPoints} puntos` : "Bloqueado",
             editable:true,
             locked:!musicOpen
           })}
@@ -2556,19 +2586,19 @@
             editable:false,
             locked:!whoTriviaOpen
           })}
-          ${pointsAction({
-            icon:"🎁",
-            title:"Juego sorpresa",
-            text:surpriseOpen ? "Ya podés participar." : "Se revelará más adelante.",
-            done:false,
-            route:"sorpresa",
-            progressText:surpriseOpen ? "Disponible" : "Bloqueado",
-            editable:false,
-            locked:!surpriseOpen
-          })}
         ` : `
           <div class="points-rsvp-lock">${uiIcon("lock")}<div><strong>Primero, asistencia</strong><p>Al responder por sí o por no se habilitarán las canciones, la trivia y las próximas actividades.</p></div></div>
         `}
+
+        ${travelOpen ? pointsAction({
+          icon:"🚌",
+          title:"En viaje",
+          text:"Consignas, playlist y actividades según tu forma de traslado.",
+          done:false,
+          route:"en-viaje",
+          progressText:"Actividad especial",
+          editable:false
+        }) : ""}
       </section>
 
       <div class="points-coming-soon-note">
@@ -2671,7 +2701,6 @@
     const musicOpen = isTriviaGameOpen("trivia-music");
     const coupleOpen = isTriviaGameOpen("trivia-couple");
     const whoOpen = isTriviaGameOpen("trivia-who");
-    const surpriseOpen = isTriviaGameOpen("trivia-surprise");
     const musicSaved = triviaSubmission("music-selection");
     const triviaSaved = triviaSubmission("couple-trivia-test");
     const whoSaved = triviaSubmission("who-is-who-trivia-test");
@@ -2690,7 +2719,6 @@
         ${renderMusicGame(musicOpen, musicSaved, team)}
         ${renderCoupleTrivia(coupleOpen, triviaSaved)}
         ${renderWhoIsWhoTrivia(whoOpen, whoSaved)}
-        ${renderSurpriseGame(surpriseOpen)}
       </section>`;
   }
 
@@ -2883,11 +2911,6 @@
   }
 
 
-  function renderSurpriseGame(open) {
-    if (!open) return renderLockedTriviaCard("04","Juego sorpresa","La tercera misión sigue bajo llave.","trivia-surprise","surprise-game");
-    return `<article id="surprise-game" class="trivia-game-card is-open surprise-open"><div class="trivia-game-number">04</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status open">Liberado</span><h4>Una nueva misión se acerca</h4></div>${uiIcon("gift","trivia-main-icon")}</div><p>El candado fue abierto. La consigna completa aparecerá acá cuando esté lista para jugar.</p><div class="trivia-secret-note">Por ahora, mantenete atento y no le cuentes nada a los otros equipos.</div></div></article>`;
-  }
-
   function renderLockedTriviaCard(number, title, text, key, elementId = "") {
     return `<article ${elementId?`id="${elementId}"`:""} class="trivia-game-card is-locked"><div class="trivia-game-number">${number}</div><div class="trivia-game-content"><div class="trivia-game-heading"><div><span class="trivia-status locked">Bloqueado</span><h4>${escapeHTML(title)}</h4></div>${uiIcon("lock","trivia-main-icon")}</div><p>${escapeHTML(text)}</p><small>Se habilitará cuando Vani y Fede liberen este juego.</small></div></article>`;
   }
@@ -2982,10 +3005,8 @@
     const ownTeam = currentGuest?.team === team.id;
 
     return `
-      <button
-        type="button"
+      <article
         class="vf18-rank-row ${ownTeam ? "is-my-team" : ""} ${index === 0 ? "is-first" : ""}"
-        data-team-open="${team.id}"
         style="--vf18-team-accent:${team.accent}"
         aria-label="${index + 1}. ${escapeHTML(team.name)}, ${row.total} puntos">
         <span class="vf18-rank-position">${index + 1}</span>
@@ -2998,7 +3019,7 @@
           <b>${row.total}</b>
           <small>pts</small>
         </span>
-      </button>`;
+      </article>`;
   }
 
 
@@ -3355,44 +3376,73 @@
 
   function renderTravel() {
     const rsvp = state.rsvps[currentGuest.id] || {};
-    const suggestedMode = ["combi", "micro"].includes(rsvp.transport) ? "micro" : "auto";
-    if (!["micro", "auto"].includes(travelMode)) travelMode = suggestedMode;
+    const selectedTransport = String(rsvp.transport || "");
+    const mode = ["combi", "micro"].includes(selectedTransport)
+      ? "micro"
+      : selectedTransport === "particular"
+        ? "auto"
+        : "";
 
-    const microActive = travelMode === "micro";
+    if (!mode) {
+      return `
+        ${travelStyles()}
+        ${sectionHeader("día del casamiento", "En viaje", "La experiencia se adapta a la forma de traslado que elegiste.")}
+        <section class="travel-choice-required section-card">
+          <span>${uiIcon("bus")}</span>
+          <div>
+            <p class="eyebrow">Falta elegir el traslado</p>
+            <h3>Confirmá cómo vas a viajar</h3>
+            <p>Cuando selecciones Particular o Micro / Combi en Asistencia, esta sección mostrará automáticamente tu experiencia correspondiente.</p>
+            <button type="button" data-go="asistencia">Ir a Asistencia</button>
+          </div>
+        </section>`;
+    }
+
+    const microMode = mode === "micro";
 
     return `
       ${travelStyles()}
       ${sectionHeader("día del casamiento", "En viaje", "Consignas y contenidos para disfrutar desde que empieza el recorrido.")}
 
-      <section class="travel-mode-selector section-card">
-        <button type="button" data-travel-mode="micro" class="${microActive ? "active" : ""}">
-          ${uiIcon("bus")}<span>MICRO</span>
-        </button>
-        <button type="button" data-travel-mode="auto" class="${!microActive ? "active" : ""}">
-          ${uiIcon("car")}<span>AUTO</span>
-        </button>
+      <section class="travel-selected-mode section-card ${microMode ? "is-micro" : "is-auto"}">
+        <span>${uiIcon(microMode ? "bus" : "car")}</span>
+        <div>
+          <small>Tu opción de traslado</small>
+          <strong>${microMode ? "Micro / Combi" : "Particular"}</strong>
+        </div>
       </section>
 
-      ${microActive ? `
+      ${microMode ? `
         <section class="travel-hero section-card">
           <span>${uiIcon("bus")}</span>
-          <div><p class="eyebrow">Modo micro</p><h3>La competencia empieza en el viaje</h3><p>Acá aparecerán las consignas especiales para el micro, la playlist compartida y las trivias relámpago.</p></div>
+          <div>
+            <p class="eyebrow">Modo micro</p>
+            <h3>La competencia empieza en el viaje</h3>
+            <p>Acá aparecerán las consignas especiales para el micro, la playlist compartida y las trivias relámpago.</p>
+          </div>
         </section>
         <section class="travel-content-grid">
           ${travelPlaceholder("music", "Playlist del micro", "Canciones para entrar en clima desde la salida.")}
           ${travelPlaceholder("question", "Trivias del camino", "Preguntas rápidas para sumar puntos en equipo.")}
           ${travelPlaceholder("star", "Consignas especiales", "Desafíos que se revelarán durante el recorrido.")}
-        </section>` : `
+        </section>
+      ` : `
         <section class="travel-hero section-card travel-auto-hero">
           <span>${uiIcon("car")}</span>
-          <div><p class="eyebrow">Modo auto</p><h3>También hay desafíos para el camino</h3><p>Acá aparecerán la información para llegar, la playlist y las consignas pensadas para quienes viajan de forma particular.</p></div>
+          <div>
+            <p class="eyebrow">Modo auto</p>
+            <h3>También hay desafíos para el camino</h3>
+            <p>Acá aparecerán la información para llegar, la playlist y las consignas pensadas para quienes viajan de forma particular.</p>
+          </div>
         </section>
         <section class="travel-content-grid">
           ${travelPlaceholder("pin", "Cómo llegar", "La ubicación se habilitará el día de la boda.")}
           ${travelPlaceholder("music", "Playlist del viaje", "La música oficial para acompañar el recorrido.")}
           ${travelPlaceholder("star", "Desafíos desde el auto", "Consignas que podrán completar antes de llegar.")}
-        </section>`}`;
+        </section>
+      `}`;
   }
+
 
   function travelPlaceholder(icon, title, text) {
     return `
@@ -3416,6 +3466,9 @@
 
     return `
       ${rulesStyles()}
+      <button type="button" class="rules-back-to-points" data-go="puntos">
+        ${uiIcon("arrowLeft")}<span>Volver a Sumá puntos</span>
+      </button>
       ${sectionHeader("competencia", "Reglas", "Cómo se suman y restan puntos durante toda la experiencia.")}
 
       <section class="rules-intro section-card">
@@ -3896,8 +3949,7 @@
           ${[
             { key: "trivia-music", title: "La banda sonora", text: "Canción para la boda y entrada del equipo." },
             { key: "trivia-couple", title: "¿Cuánto conocés a los novios?", text: "Cinco preguntas de opción múltiple." },
-            { key: "trivia-who", title: "¿Quién es quién?", text: "Cinco preguntas Vani o Fede." },
-            { key: "trivia-surprise", title: "Juego sorpresa", text: "Próxima misión secreta." }
+            { key: "trivia-who", title: "¿Quién es quién?", text: "Cinco preguntas Vani o Fede." }
           ].map(game => {
             const open = isTriviaGameOpen(game.key);
             return `<label class="admin-game-toggle ${open ? "is-open" : ""}">
@@ -3983,12 +4035,6 @@
     }
     if (route === "inicio") startHomeCountdown();
 
-    $$('[data-team-open]').forEach(button => button.addEventListener("click", () => {
-      selectedTeamViewId = button.dataset.teamOpen;
-      teamCommunityTab = "mine";
-      navigate("equipo");
-    }));
-
     $$('[data-go]').forEach(button => button.addEventListener("click", () => {
       if (button.dataset.go === "equipo") {
         selectedTeamViewId = currentGuest?.team || null;
@@ -4039,24 +4085,31 @@
       });
     }
 
-    if (route === "en-viaje") {
-      $$("[data-travel-mode]").forEach(button => {
-        button.addEventListener("click", () => {
-          travelMode = button.dataset.travelMode;
-          renderCurrentRoute();
-        });
-      });
-    }
-
     if (route === "ranking") {
       $("#refreshRanking")?.addEventListener("click", async event => {
         const button = event.currentTarget;
+        const original = button.innerHTML;
+
         button.disabled = true;
         button.classList.add("is-loading");
         button.innerHTML = `<span class="ranking-button-icon">${uiIcon("sync")}</span><span>Actualizando…</span>`;
-        const updated = await syncFromSheets(false);
-        if (updated) toast("Ranking actualizado con los últimos puntajes.");
-        else toast("No se pudo actualizar. Se muestran los últimos datos disponibles.");
+
+        const [updated] = await Promise.all([
+          syncFromSheets(false),
+          new Promise(resolve => window.setTimeout(resolve, 650))
+        ]);
+
+        if (button.isConnected) {
+          button.disabled = false;
+          button.classList.remove("is-loading");
+          button.innerHTML = original;
+        }
+
+        if (updated) {
+          toast("Ranking actualizado con los últimos puntajes.");
+        } else {
+          toast("No se pudo actualizar. Se muestran los últimos datos disponibles.");
+        }
       });
     }
 
@@ -4518,8 +4571,23 @@
 
       $("#refreshSocial")?.addEventListener("click", async event => {
         const button = event.currentTarget;
+        const original = button.innerHTML;
+
         button.disabled = true;
-        const updated = await syncFromSheets(false);
+        button.classList.add("is-loading");
+        button.innerHTML = `${uiIcon("sync")}<span>Actualizando…</span>`;
+
+        const [updated] = await Promise.all([
+          syncFromSheets(false),
+          new Promise(resolve => window.setTimeout(resolve, 650))
+        ]);
+
+        if (button.isConnected) {
+          button.disabled = false;
+          button.classList.remove("is-loading");
+          button.innerHTML = original;
+        }
+
         if (updated) toast("Mensajes actualizados.");
         else toast("No se pudieron actualizar los mensajes.");
       });
