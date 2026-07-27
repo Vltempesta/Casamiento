@@ -153,7 +153,7 @@ h1 {
   content: "";
   position: absolute;
   inset: 12px;
-  border: 1px solid rgba(132,104,68,.14);
+  border: 1px dashed rgba(132,104,68,.14);
   border-radius: 20px;
   pointer-events: none;
 }
@@ -661,7 +661,7 @@ th { color: var(--gold-deep); font-size: 12px; text-transform: uppercase; letter
 }
 .team-logo::after{
   inset: 12.5%;
-  border: 2px solid color-mix(in srgb, var(--logo-accent) 88%, white 12%);
+  border: 2px dotted color-mix(in srgb, var(--logo-accent) 88%, white 12%);
   opacity:.9;
 }
 .team-logo img{
@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32433 · Fondo bordado minimalista en portada ===== */
+/* ===== v32434 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32433');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32434');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32433 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32434 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32433');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32434');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32433 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32434 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32433');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32434');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32433 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32434 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32433 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32434 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32433 · Inicio minimalista ===== */
+/* ===== v32434 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32433 · Navegación en menú hamburguesa ===== */
+/* ===== v32434 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32433 · UX universal 30–70 años ===== */
+/* ===== v32434 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32433 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32434 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32433 · Ajustes UX solicitados ===== */
+/* ===== v32434 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32433 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32434 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32433 · Reset seguro de datos de prueba ===== */
+/* ===== v32434 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32433 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32434 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32433 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32434 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32433 · Estados reales de guardado ===== */
+/* ===== v32434 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32433 · Guardado rápido ===== */
+/* ===== v32434 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32433 · Seguridad de Administración ===== */
+/* ===== v32434 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32433 · Mejoras integrales
+   v32434 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3134,7 +3134,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Optimización móvil, historial y vistas compactas
+   v32434 · Optimización móvil, historial y vistas compactas
    ============================================================ */
 .guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
 
@@ -3167,7 +3167,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · compactación móvil y refinamiento visual
+   v32434 · compactación móvil y refinamiento visual
    ============================================================ */
 
 /* Barra superior: inicial + nombre + casita + menú */
@@ -3499,7 +3499,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Ranking vertical y ajustes de espaciado
+   v32434 · Ranking vertical y ajustes de espaciado
    ============================================================ */
 
 /* Cuenta regresiva sin fecha fija */
@@ -3713,7 +3713,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Ranking ultra compacto y alineado
+   v32434 · Ranking ultra compacto y alineado
    ============================================================ */
 
 .ranking-summary-ultra {
@@ -3943,7 +3943,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Ranking corregido con clases aisladas
+   v32434 · Ranking corregido con clases aisladas
    ============================================================ */
 
 .vf-ranking-head {
@@ -4172,7 +4172,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Ranking equilibrado, menú sutil e invitados compactos
+   v32434 · Ranking equilibrado, menú sutil e invitados compactos
    ============================================================ */
 
 /* Botón hamburguesa apenas más chico */
@@ -4208,7 +4208,7 @@ body.admin-modal-open { overflow:hidden; }
   gap: 10px;
   align-items: center;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(119,93,55,.17);
+  border-bottom: 1px dashed rgba(119,93,55,.17);
 }
 .vf18-ranking-title {
   min-width: 0;
@@ -4518,7 +4518,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Acciones del ranking al pie
+   v32434 · Acciones del ranking al pie
    ============================================================ */
 
 .vf18-ranking-title h3 {
@@ -4536,7 +4536,7 @@ body.admin-modal-open { overflow:hidden; }
   gap: 8px !important;
   margin-top: 10px !important;
   padding-top: 10px !important;
-  border-top: 1px solid rgba(119,93,55,.17) !important;
+  border-top: 1px dashed rgba(119,93,55,.17) !important;
 }
 
 .vf18-ranking-actions-bottom .vf18-ranking-action {
@@ -4565,7 +4565,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Menú, Mi equipo, Social y Regalos
+   v32434 · Menú, Mi equipo, Social y Regalos
    ============================================================ */
 .menu-nav-clean{gap:8px!important}.menu-nav-clean .menu-group{gap:3px!important}.menu-nav-clean .menu-group+.menu-group{margin-top:5px;padding-top:10px;border-top:1px solid rgba(132,104,68,.15)}.menu-nav-clean .menu-group-admin{margin-top:5px!important;padding-top:10px!important}.menu-nav-clean .menu-group>p{display:none!important}
 .team-ranking-summary-button{display:grid!important;grid-template-columns:23px auto auto!important;gap:7px!important;align-items:center!important;width:auto!important;min-width:156px!important;min-height:43px!important;padding:7px 9px!important;border-radius:13px!important}.team-ranking-summary-icon{display:grid!important;place-items:center!important}.team-ranking-summary-icon .ui-icon{width:18px!important;height:18px!important}.team-ranking-summary-label{display:block!important;color:#fff!important;font-size:11px!important;font-weight:900!important}.team-ranking-summary-data{display:flex!important;align-items:center!important;gap:5px!important;padding-left:7px;border-left:1px solid rgba(255,255,255,.23)}.team-ranking-summary-data b,.team-ranking-summary-data em{display:block!important;color:#fff!important;font-style:normal;white-space:nowrap}.team-ranking-summary-data b{font-size:10px}.team-ranking-summary-data em{min-width:23px;padding:3px 5px;border-radius:999px;background:rgba(255,255,255,.16);font-size:9px;font-weight:900}
@@ -4574,7 +4574,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Coherencia tipográfica, RSVP y Admin compacto
+   v32434 · Coherencia tipográfica, RSVP y Admin compacto
    ============================================================ */
 
 #view .section-head {
@@ -4833,7 +4833,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Menú inferior persistente
+   v32434 · Menú inferior persistente
    ============================================================ */
 
 #mainScreen {
@@ -5168,7 +5168,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Refinamiento de navegación y asistencia
+   v32434 · Refinamiento de navegación y asistencia
    ============================================================ */
 
 /* Hamburguesa superior: exactamente tan compacta como Inicio */
@@ -5486,7 +5486,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Ajustes de Inicio, Social, RSVP y Ranking
+   v32434 · Ajustes de Inicio, Social, RSVP y Ranking
    ============================================================ */
 
 /* Sin botón Inicio superior: hamburguesa ocupa el único acceso circular */
@@ -5634,7 +5634,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Dashboard de restricciones y auditoría compacta
+   v32434 · Dashboard de restricciones y auditoría compacta
    ============================================================ */
 
 /* Dashboard: seis indicadores en 3 x 2, un poco más legibles */
@@ -5826,7 +5826,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Últimos retoques de Inicio, RSVP y Sumá puntos
+   v32434 · Últimos retoques de Inicio, RSVP y Sumá puntos
    ============================================================ */
 
 /* CTA principal pendiente: bordó oscuro, blanco y dorado */
@@ -5948,7 +5948,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Doble trivia
+   v32434 · Doble trivia
    ============================================================ */
 
 .trivia-who-card {
@@ -6014,7 +6014,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Likes, destacados y dashboard Admin
+   v32434 · Likes, destacados y dashboard Admin
    ============================================================ */
 
 /* Botón Me gusta */
@@ -6266,7 +6266,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Inicio, traslados, En viaje, Reglas y bloqueos
+   v32434 · Inicio, traslados, En viaje, Reglas y bloqueos
    ============================================================ */
 
 .home-countdown-v2{min-height:50px!important;padding:7px 11px!important;border-radius:14px!important}
@@ -6294,7 +6294,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Ubicación, cronograma y cabecera de equipo
+   v32434 · Ubicación, cronograma y cabecera de equipo
    ============================================================ */
 
 #mainScreen .topbar-person {
@@ -6436,7 +6436,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32433 · Notificaciones, regalos y refinamientos
+   v32434 · Notificaciones, regalos y refinamientos
    ============================================================ */
 
 /* Topbar nuevamente con inicial */
@@ -6802,7 +6802,7 @@ body.admin-modal-open { overflow:hidden; }
   min-height: 132px;
   margin: 11px 0;
   padding: 18px;
-  border: 1px solid rgba(116,51,68,.25);
+  border: 1px dashed rgba(116,51,68,.25);
   border-radius: 13px;
   background: rgba(116,51,68,.035);
   color: #743344;
@@ -7096,362 +7096,5 @@ body.admin-modal-open { overflow:hidden; }
   .admin-attendance-summary .admin-stat-button {
     height: 68px !important;
     min-height: 68px !important;
-  }
-}
-
-
-/* ============================================================
-   v32433 · Limpieza visual y restauración de tarjetas
-   ============================================================ */
-
-/* Quitar marcos decorativos internos y círculos punteados */
-.login-card::before,
-.hero-card::after,
-.section-card::after {
-  display: none !important;
-}
-
-.team-logo::after {
-  display: none !important;
-}
-
-/* Evitar cualquier borde discontinuo residual */
-* {
-  border-style: solid;
-}
-
-/* ------------------------------------------------------------
-   Inicio · Lo esencial como en el diseño anterior
-   ------------------------------------------------------------ */
-.home-essential {
-  margin-top: 14px !important;
-}
-
-.home-section-heading {
-  margin-bottom: 7px !important;
-}
-
-.home-section-heading .home-kicker {
-  margin: 0 !important;
-  color: #b6853f !important;
-  font-size: 8px !important;
-  font-weight: 950 !important;
-  letter-spacing: .10em !important;
-  text-transform: uppercase !important;
-}
-
-.home-section-heading h3 {
-  margin: 2px 0 0 !important;
-  color: var(--ink) !important;
-  font-size: 26px !important;
-  line-height: 1 !important;
-}
-
-.home-essential-card {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  overflow: hidden !important;
-  border: 1px solid rgba(132,104,68,.18) !important;
-  border-radius: 20px !important;
-  background: rgba(255,253,248,.82) !important;
-  box-shadow: 0 8px 22px rgba(76,51,22,.055) !important;
-}
-
-.home-essential-row,
-.home-essential-row:nth-child(2n),
-.home-essential-row:last-child,
-.home-essential-link {
-  appearance: none !important;
-  width: 100% !important;
-  min-height: 70px !important;
-  display: grid !important;
-  grid-template-columns: 36px minmax(0,1fr) !important;
-  gap: 9px !important;
-  align-items: center !important;
-  padding: 9px 12px !important;
-  margin: 0 !important;
-  border: 0 !important;
-  border-right: 0 !important;
-  border-bottom: 1px solid rgba(132,104,68,.16) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  color: var(--ink) !important;
-  font: inherit !important;
-  text-align: left !important;
-  box-shadow: none !important;
-}
-
-.home-essential-row:last-child,
-.home-essential-link:last-child {
-  border-bottom: 0 !important;
-}
-
-.home-essential-link:hover,
-.home-essential-link:focus-visible {
-  transform: none !important;
-  background: transparent !important;
-}
-
-.home-essential-icon {
-  width: 34px !important;
-  height: 34px !important;
-  display: grid !important;
-  place-items: center !important;
-  border-radius: 11px !important;
-  box-shadow: none !important;
-}
-
-.home-essential-icon .ui-icon {
-  width: 17px !important;
-  height: 17px !important;
-}
-
-.home-essential-row > div {
-  min-width: 0 !important;
-}
-
-.home-essential-row small,
-.home-essential-row strong {
-  display: block !important;
-}
-
-.home-essential-row small {
-  margin: 0 !important;
-  color: #9d9991 !important;
-  font-size: 8px !important;
-  font-weight: 700 !important;
-  letter-spacing: .06em !important;
-  line-height: 1.05 !important;
-  text-transform: uppercase !important;
-}
-
-.home-essential-row strong {
-  margin: 2px 0 1px !important;
-  color: #243b56 !important;
-  font-size: 14px !important;
-  font-weight: 900 !important;
-  line-height: 1.08 !important;
-}
-
-.home-essential-row p {
-  margin: 0 !important;
-  color: #6e6a64 !important;
-  font-size: 9px !important;
-  font-weight: 700 !important;
-  line-height: 1.25 !important;
-}
-
-/* Colores suaves de los iconos, sin destacar filas completas */
-.home-essential-row:nth-child(1) .home-essential-icon {
-  color: #b17b2e !important;
-  background: rgba(201,170,114,.13) !important;
-}
-
-.home-essential-row:nth-child(2) .home-essential-icon {
-  color: #8f3648 !important;
-  background: rgba(143,54,72,.08) !important;
-}
-
-.home-essential-row:nth-child(3) .home-essential-icon {
-  color: #496f69 !important;
-  background: rgba(73,111,105,.09) !important;
-}
-
-.home-essential-row:nth-child(4) .home-essential-icon {
-  color: #9a6e2f !important;
-  background: rgba(154,110,47,.10) !important;
-}
-
-.home-essential-row:nth-child(5) .home-essential-icon {
-  color: #b17b2e !important;
-  background: rgba(201,170,114,.13) !important;
-}
-
-.home-essential-row:nth-child(6) .home-essential-icon {
-  color: #b17b2e !important;
-  background: rgba(201,170,114,.13) !important;
-}
-
-/* ------------------------------------------------------------
-   Mi equipo · diseño anterior compacto
-   ------------------------------------------------------------ */
-.team-summary-compact {
-  display: grid !important;
-  grid-template-columns: 54px minmax(0,1fr) 116px !important;
-  gap: 10px !important;
-  align-items: center !important;
-  padding: 11px 12px !important;
-  border-color: color-mix(in srgb,var(--local-accent) 20%,var(--line)) !important;
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb,var(--local-accent) 5%,#fff),
-      rgba(255,253,248,.92)
-    ) !important;
-}
-
-.team-summary-logo {
-  width: 52px !important;
-  height: 52px !important;
-}
-
-.team-summary-copy {
-  min-width: 0 !important;
-}
-
-.team-summary-copy .eyebrow {
-  margin: 0 !important;
-  font-size: 7px !important;
-}
-
-.team-summary-copy h3 {
-  margin: 1px 0 2px !important;
-  font-size: 22px !important;
-  line-height: 1 !important;
-}
-
-.team-summary-copy small {
-  display: block !important;
-  overflow: hidden !important;
-  color: var(--muted) !important;
-  font-size: 8.5px !important;
-  line-height: 1.2 !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
-
-.team-ranking-summary-button {
-  width: 116px !important;
-  min-width: 116px !important;
-  min-height: 48px !important;
-  display: grid !important;
-  grid-template-columns: 22px minmax(0,1fr) auto !important;
-  gap: 5px !important;
-  align-items: center !important;
-  padding: 7px 8px !important;
-  border: 0 !important;
-  border-radius: 13px !important;
-  background: linear-gradient(145deg,#456884,#2f526e) !important;
-  color: #fff !important;
-  box-shadow: 0 6px 13px rgba(47,82,110,.17) !important;
-}
-
-.team-ranking-summary-icon {
-  display: grid !important;
-  place-items: center !important;
-}
-
-.team-ranking-summary-icon .ui-icon {
-  width: 18px !important;
-  height: 18px !important;
-}
-
-.team-ranking-summary-label {
-  display: block !important;
-  color: rgba(255,255,255,.78) !important;
-  font-size: 8px !important;
-  font-weight: 850 !important;
-  text-align: left !important;
-}
-
-.team-ranking-summary-data {
-  display: grid !important;
-  justify-items: end !important;
-}
-
-.team-ranking-summary-data b,
-.team-ranking-summary-data em {
-  display: block !important;
-}
-
-.team-ranking-summary-data b {
-  font-size: 10px !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-}
-
-.team-ranking-summary-data em {
-  margin-top: 2px !important;
-  color: #e5c77d !important;
-  font-size: 9px !important;
-  font-style: normal !important;
-  font-weight: 950 !important;
-}
-
-/* Quitar estilos residuales del diseño reemplazado */
-.team-overview-card,
-.team-overview-main,
-.team-overview-logo,
-.team-overview-copy,
-.team-overview-rank {
-  all: unset;
-}
-
-@media(max-width:600px) {
-  .home-section-heading h3 {
-    font-size: 25px !important;
-  }
-
-  .home-essential-row,
-  .home-essential-row:nth-child(2n),
-  .home-essential-row:last-child,
-  .home-essential-link {
-    min-height: 70px !important;
-    padding: 9px 12px !important;
-  }
-
-  .team-summary-compact {
-    grid-template-columns: 47px minmax(0,1fr) 104px !important;
-    gap: 8px !important;
-    padding: 9px 10px !important;
-  }
-
-  .team-summary-logo {
-    width: 45px !important;
-    height: 45px !important;
-  }
-
-  .team-summary-copy h3 {
-    font-size: 19px !important;
-  }
-
-  .team-summary-copy small {
-    font-size: 7.5px !important;
-  }
-
-  .team-ranking-summary-button {
-    width: 104px !important;
-    min-width: 104px !important;
-    min-height: 45px !important;
-    grid-template-columns: 19px minmax(0,1fr) auto !important;
-    padding: 6px 7px !important;
-  }
-
-  .team-ranking-summary-label {
-    font-size: 7px !important;
-  }
-
-  .team-ranking-summary-data b {
-    font-size: 9px !important;
-  }
-}
-
-@media(max-width:390px) {
-  .team-summary-compact {
-    grid-template-columns: 43px minmax(0,1fr) 94px !important;
-  }
-
-  .team-summary-logo {
-    width: 41px !important;
-    height: 41px !important;
-  }
-
-  .team-ranking-summary-button {
-    width: 94px !important;
-    min-width: 94px !important;
-  }
-
-  .team-ranking-summary-label {
-    display: none !important;
   }
 }
