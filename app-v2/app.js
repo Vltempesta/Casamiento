@@ -21,6 +21,7 @@
   let silentSyncTimer = null;
   let countdownTimer = null;
   let selectedTeamViewId = null;
+  let teamCommunityTab = "mine";
   let expandedGuestTeamId = null;
   let travelMode = null;
   let triviaFocusTarget = null;
@@ -265,7 +266,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32439",
+      appVersion: "32440",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -823,6 +824,10 @@
         item.dataset.notificationType,
         item.dataset.notificationKey
       );
+      if (item.dataset.notificationTab === "all") {
+        teamCommunityTab = "all";
+      }
+
       updateNotificationUi();
       setNotificationPanelOpen(false);
       navigate(item.dataset.notificationRoute);
@@ -1193,17 +1198,39 @@
 
   function updateSectionNavigationState() {
     $$("[data-route]").forEach(button => {
-      const locked = !isSectionOpen(button.dataset.route);
-      button.classList.toggle("is-section-locked", locked);
-      if (locked) {
+      const route = button.dataset.route;
+      const hiddenByLock = !isSectionOpen(route);
+
+      button.classList.remove("is-section-locked");
+      button.classList.toggle("hidden", hiddenByLock);
+
+      if (hiddenByLock) {
         button.setAttribute(
           "aria-label",
-          `${sectionDefinition(button.dataset.route)?.title || button.dataset.route}: bloqueada`
+          `${sectionDefinition(route)?.title || route}: oculta`
         );
       } else {
         button.removeAttribute("aria-label");
       }
     });
+
+    $$(".menu-group").forEach(group => {
+      const hasVisibleButton = Boolean(
+        group.querySelector("button[data-route]:not(.hidden)")
+      );
+      group.classList.toggle("hidden", !hasVisibleButton);
+    });
+
+    const bottomNav = $(".bottom-nav");
+    if (bottomNav) {
+      const visibleItems = bottomNav.querySelectorAll(
+        "button[data-route]:not(.hidden)"
+      ).length;
+      bottomNav.style.setProperty(
+        "--bottom-count",
+        String(Math.max(1, visibleItems))
+      );
+    }
   }
 
   function renderLockedSection(route) {
@@ -1239,11 +1266,16 @@
   ];
 
   function currentNotificationState() {
+    const openSectionKeys = SECTION_DEFINITIONS
+      .filter(section => isSectionOpen(section.route))
+      .map(section => section.key);
+
     if (!currentGuest?.id) {
       return {
         initialized: false,
         socialSeenAt: 0,
-        seenUnlockKeys: []
+        seenUnlockKeys: [],
+        seenSectionKeys: openSectionKeys
       };
     }
 
@@ -1253,7 +1285,10 @@
       socialSeenAt: Number(existing?.socialSeenAt || 0),
       seenUnlockKeys: Array.isArray(existing?.seenUnlockKeys)
         ? [...existing.seenUnlockKeys]
-        : []
+        : [],
+      seenSectionKeys: Array.isArray(existing?.seenSectionKeys)
+        ? [...existing.seenSectionKeys]
+        : openSectionKeys
     };
   }
 
@@ -1265,7 +1300,8 @@
       [currentGuest.id]: {
         initialized: Boolean(record.initialized),
         socialSeenAt: Number(record.socialSeenAt || 0),
-        seenUnlockKeys: Array.from(new Set(record.seenUnlockKeys || []))
+        seenUnlockKeys: Array.from(new Set(record.seenUnlockKeys || [])),
+        seenSectionKeys: Array.from(new Set(record.seenSectionKeys || []))
       }
     };
     saveState();
@@ -1291,6 +1327,9 @@
     record.seenUnlockKeys = GAME_NOTIFICATION_DEFINITIONS
       .filter(game => isTriviaGameOpen(game.key))
       .map(game => game.key);
+    record.seenSectionKeys = SECTION_DEFINITIONS
+      .filter(section => isSectionOpen(section.route))
+      .map(section => section.key);
 
     saveCurrentNotificationState(record);
   }
@@ -1334,7 +1373,26 @@
         text: game.title
       }));
 
-    return [...gameItems, ...socialItems];
+    const sectionItems = SECTION_DEFINITIONS
+      .filter(section =>
+        isSectionOpen(section.route) &&
+        !record.seenSectionKeys.includes(section.key)
+      )
+      .map(section => ({
+        type: "section",
+        route: section.route === "invitados"
+          ? "equipo"
+          : section.route,
+        tab: section.route === "invitados"
+          ? "all"
+          : "",
+        key: section.key,
+        icon: "sparkle",
+        title: "Nueva sección disponible",
+        text: section.title
+      }));
+
+    return [...sectionItems, ...gameItems, ...socialItems];
   }
 
   function markNotificationsForRoute(route) {
@@ -1357,11 +1415,32 @@
       const openKeys = GAME_NOTIFICATION_DEFINITIONS
         .filter(game => isTriviaGameOpen(game.key))
         .map(game => game.key);
-      const nextKeys = Array.from(new Set([...record.seenUnlockKeys, ...openKeys]));
+      const nextKeys = Array.from(
+        new Set([...record.seenUnlockKeys, ...openKeys])
+      );
       if (nextKeys.length !== record.seenUnlockKeys.length) {
         record.seenUnlockKeys = nextKeys;
         changed = true;
       }
+    }
+
+    const sectionRoute =
+      route === "invitados"
+        ? "invitados"
+        : route === "equipo" && teamCommunityTab === "all"
+          ? "invitados"
+          : route;
+    const section = sectionDefinition(sectionRoute);
+
+    if (
+      section &&
+      isSectionOpen(section.route) &&
+      !record.seenSectionKeys.includes(section.key)
+    ) {
+      record.seenSectionKeys = Array.from(
+        new Set([...record.seenSectionKeys, section.key])
+      );
+      changed = true;
     }
 
     if (changed) saveCurrentNotificationState(record);
@@ -1374,9 +1453,18 @@
     if (!record.initialized) return;
 
     if (type === "social") {
-      record.socialSeenAt = Math.max(record.socialSeenAt, latestVisibleSocialTime());
+      record.socialSeenAt = Math.max(
+        record.socialSeenAt,
+        latestVisibleSocialTime()
+      );
     } else if (type === "game" && key) {
-      record.seenUnlockKeys = Array.from(new Set([...record.seenUnlockKeys, key]));
+      record.seenUnlockKeys = Array.from(
+        new Set([...record.seenUnlockKeys, key])
+      );
+    } else if (type === "section" && key) {
+      record.seenSectionKeys = Array.from(
+        new Set([...record.seenSectionKeys, key])
+      );
     }
 
     saveCurrentNotificationState(record);
@@ -1410,6 +1498,7 @@
             class="notification-item"
             data-notification-type="${escapeHTML(item.type)}"
             data-notification-key="${escapeHTML(item.key || "")}"
+            data-notification-tab="${escapeHTML(item.tab || "")}"
             data-notification-route="${escapeHTML(item.route)}">
             <span>${uiIcon(item.icon)}</span>
             <div>
@@ -1591,14 +1680,16 @@
             </div>
           </article>
 
-          <button type="button" class="home-essential-row home-essential-link home-essential-location" data-go="ubicacion">
-            <span class="home-essential-icon">${uiIcon("pin")}</span>
-            <div>
-              <small>Lugar</small>
-              <strong>${locationOpen ? 'Estancia "Los Candiles"' : "Ubicación reservada"}</strong>
-              <p>${locationOpen ? "Solís, Provincia de Buenos Aires" : "Ingresá para consultar cuándo se habilita."}</p>
-            </div>
-          </button>
+          ${locationOpen ? `
+            <button type="button" class="home-essential-row home-essential-link home-essential-location" data-go="ubicacion">
+              <span class="home-essential-icon">${uiIcon("pin")}</span>
+              <div>
+                <small>Lugar</small>
+                <strong>Estancia "Los Candiles"</strong>
+                <p>Solís, Provincia de Buenos Aires</p>
+              </div>
+            </button>
+          ` : ""}
 
           <button type="button" class="home-essential-row home-essential-link home-essential-transport" data-go="traslado">
             <span class="home-essential-icon">${uiIcon("bus")}</span>
@@ -1628,15 +1719,17 @@
           </button>
         </div>
 
-        <button type="button" class="home-gifts-feature" data-go="regalos">
-          <span class="home-gifts-feature-icon">${uiIcon("gift")}</span>
-          <span class="home-gifts-feature-copy">
-            <small>Regalos</small>
-            <strong>${giftsOpen ? "Nuestro mejor regalo es tu presencia 🥂" : "Se habilitará más adelante"}</strong>
-            <em>${giftsOpen ? "Ver opciones para ayudarnos con nuestra Luna de Miel" : "Próximamente vas a encontrar acá toda la información"}</em>
-          </span>
-          <b aria-hidden="true">›</b>
-        </button>
+        ${giftsOpen ? `
+          <button type="button" class="home-gifts-feature" data-go="regalos">
+            <span class="home-gifts-feature-icon">${uiIcon("gift")}</span>
+            <span class="home-gifts-feature-copy">
+              <small>Regalos</small>
+              <strong>Nuestro mejor regalo es tu presencia 🥂</strong>
+              <em>Ver opciones para ayudarnos con nuestra Luna de Miel</em>
+            </span>
+            <b aria-hidden="true">›</b>
+          </button>
+        ` : ""}
       </section>
 
     `;
@@ -2189,6 +2282,9 @@
   }
 
   function renderTeam() {
+    const guestsSectionOpen = isSectionOpen("invitados");
+    if (!guestsSectionOpen) teamCommunityTab = "mine";
+
     const selectedTeamId = selectedTeamViewId || currentGuest.team;
     const team = getTeam(selectedTeamId);
     const members = DATA.guests
@@ -2214,14 +2310,49 @@
       });
     const activePlayers = members.length;
     const confirmed = completedRsvpMembers(team.id).length;
-    const percent = Math.min(100, Math.round((confirmed / Math.max(activePlayers, 1)) * 100));
+    const percent = Math.min(
+      100,
+      Math.round((confirmed / Math.max(activePlayers, 1)) * 100)
+    );
     const ranking = calculateRanking();
     const rankingIndex = ranking.findIndex(row => row.id === team.id);
     const teamPoints = ranking.find(row => row.id === team.id)?.total || 0;
-    const teamPosition = ranking.some(row => Number(row.total || 0) !== 0) ? `${rankingIndex + 1}º` : "—";
+    const teamPosition = ranking.some(row => Number(row.total || 0) !== 0)
+      ? `${rankingIndex + 1}º`
+      : "—";
+
+    const tabs = guestsSectionOpen
+      ? `
+        <section class="team-community-tabs section-card">
+          <button
+            type="button"
+            data-team-community-tab="mine"
+            class="${teamCommunityTab === "mine" ? "active" : ""}">
+            ${uiIcon("team")}<span>Mi equipo</span>
+          </button>
+          <button
+            type="button"
+            data-team-community-tab="all"
+            class="${teamCommunityTab === "all" ? "active" : ""}">
+            ${uiIcon("guests")}<span>Todos los equipos</span>
+          </button>
+        </section>`
+      : "";
+
+    if (teamCommunityTab === "all" && guestsSectionOpen) {
+      return `
+        ${captainGuestStyles()}
+        ${guestAccordionStyles()}
+        ${teamCommunityStyles()}
+        ${tabs}
+        ${renderAllTeamsAccordion()}`;
+    }
 
     return `
       ${captainGuestStyles()}
+      ${teamCommunityStyles()}
+      ${tabs}
+
       <section class="team-summary-compact section-card" style="--local-accent:${team.accent}">
         <div class="team-summary-head">
           ${teamLogo(team, "team-summary-logo")}
@@ -2251,16 +2382,45 @@
           </span>
         </button>
       </section>
+
       <section class="team-attendance-mini section-card">
         <span>${uiIcon("calendar")}</span>
-        <div><strong>${confirmed} de ${activePlayers} confirmaron asistencia</strong><i><em style="width:${percent}%"></em></i></div>
+        <div>
+          <strong>${confirmed} de ${activePlayers} confirmaron asistencia</strong>
+          <i><em style="width:${percent}%"></em></i>
+        </div>
         <b>${percent}%</b>
       </section>
+
       <section class="section-card team-members-card">
-        <div class="card-title-row"><h4>Integrantes y desafíos</h4><span class="badge">${members.length}</span></div>
-        <div class="guest-list team-member-list">${members.map(guest => guestPill(guest, { minimalIcon: true, showChallenges: true, hideAlias: true })).join("")}</div>
+        <div class="card-title-row">
+          <h4>Integrantes y desafíos</h4>
+          <span class="badge">${members.length}</span>
+        </div>
+        <div class="guest-list team-member-list">
+          ${members.map(guest =>
+            guestPill(
+              guest,
+              {
+                minimalIcon: true,
+                showChallenges: true,
+                hideAlias: true
+              }
+            )
+          ).join("")}
+        </div>
       </section>`;
   }
+
+  function teamCommunityStyles() {
+    return `<style>
+      .team-community-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;padding:6px}
+      .team-community-tabs button{min-height:39px;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 9px;border:0;border-radius:11px;background:transparent;color:var(--muted);box-shadow:none;font-size:9px;font-weight:900}
+      .team-community-tabs button.active{background:#31536e;color:#fff}
+      .team-community-tabs .ui-icon{width:16px;height:16px}
+    </style>`;
+  }
+
 
   function captainGuestStyles() {
     return `<style>
@@ -2305,6 +2465,18 @@
         <div><p class="eyebrow">Sumá puntos</p><h3>Qué podés hacer ahora</h3><p>Mientras esperamos las confirmaciones, ya podés preparar tu aporte para el equipo.</p></div>
         <span><b>${myPoints}</b><small>puntos</small></span>
       </section>
+
+      ${isSectionOpen("reglas") ? `
+        <button type="button" class="points-rules-entry section-card" data-go="reglas">
+          <span>${uiIcon("rules")}</span>
+          <div>
+            <strong>Cómo funciona la competencia</strong>
+            <small>Consultá las reglas y todas las formas de sumar o restar puntos.</small>
+          </div>
+          <b aria-hidden="true">›</b>
+        </button>
+      ` : ""}
+
       <section class="points-compact-list section-card">
         ${pointsAction({
           icon:"✉️",
@@ -2819,7 +2991,11 @@
   }
 
   function renderGuests() {
-    const open = isUnlocked("guestMap");
+    teamCommunityTab = "all";
+    return renderTeam();
+  }
+
+  function renderAllTeamsAccordion() {
     if (expandedGuestTeamId === null) {
       expandedGuestTeamId = currentGuest?.team || "";
     }
@@ -2827,21 +3003,28 @@
     const grouped = Object.values(DATA.teams).map(team => ({
       team,
       guests: DATA.guests
-        .filter(guest => guest.team === team.id && isCompetitionGuest(guest))
+        .filter(guest =>
+          guest.team === team.id &&
+          isCompetitionGuest(guest)
+        )
         .sort(sortGuestsForDisplay)
     }));
 
     return `
-      ${captainGuestStyles()}
-      ${guestAccordionStyles()}
-      ${sectionHeader("comunidad", "Invitados", "Tocá un equipo para desplegar sus integrantes.")}
-      ${open ? "" : lockedNotice("guestMap")}
+      <div class="section-head team-all-head">
+        <p class="eyebrow">Comunidad</p>
+        <h3>Todos los equipos</h3>
+        <p>Tocá un equipo para desplegar sus integrantes.</p>
+      </div>
 
       <section class="guest-team-accordion">
         ${grouped.map(group => {
           const expanded = expandedGuestTeamId === group.team.id;
+
           return `
-            <article class="guest-team-accordion-card section-card" style="--local-accent:${group.team.accent}">
+            <article
+              class="guest-team-accordion-card section-card"
+              style="--local-accent:${group.team.accent}">
               <button
                 type="button"
                 class="guest-team-toggle"
@@ -2859,7 +3042,13 @@
                 <p>${escapeHTML(group.team.group)}</p>
                 <div class="guest-list">
                   ${group.guests.map(guest =>
-                    guestPill(guest, { minimalIcon: true, hideAlias: true })
+                    guestPill(
+                      guest,
+                      {
+                        minimalIcon: true,
+                        hideAlias: true
+                      }
+                    )
                   ).join("")}
                 </div>
               </div>
@@ -3763,11 +3952,15 @@
 
     $$('[data-team-open]').forEach(button => button.addEventListener("click", () => {
       selectedTeamViewId = button.dataset.teamOpen;
+      teamCommunityTab = "mine";
       navigate("equipo");
     }));
 
     $$('[data-go]').forEach(button => button.addEventListener("click", () => {
-      if (button.dataset.go === "equipo") selectedTeamViewId = currentGuest?.team || null;
+      if (button.dataset.go === "equipo") {
+        selectedTeamViewId = currentGuest?.team || null;
+        teamCommunityTab = "mine";
+      }
       navigate(button.dataset.go);
     }));
     $$('[data-scroll]').forEach(button => button.addEventListener("click", () => {
@@ -3775,11 +3968,28 @@
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
 
-    if (route === "invitados") {
+    if (["equipo", "invitados"].includes(route)) {
+      $$("[data-team-community-tab]").forEach(button => {
+        button.addEventListener("click", () => {
+          teamCommunityTab = button.dataset.teamCommunityTab === "all"
+            ? "all"
+            : "mine";
+
+          if (currentRoute !== "equipo") {
+            navigate("equipo");
+          } else {
+            renderCurrentRoute();
+          }
+        });
+      });
+
       $$("[data-guest-team-toggle]").forEach(button => {
         button.addEventListener("click", () => {
           const teamId = button.dataset.guestTeamToggle;
-          expandedGuestTeamId = expandedGuestTeamId === teamId ? "" : teamId;
+          expandedGuestTeamId =
+            expandedGuestTeamId === teamId
+              ? ""
+              : teamId;
           renderCurrentRoute();
         });
       });
