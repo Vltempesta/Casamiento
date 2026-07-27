@@ -266,7 +266,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32440",
+      appVersion: "32441",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -610,6 +610,8 @@
     $("#mainScreen").classList.remove("hidden");
     $("#welcomeTitle").textContent = guest.firstName || guestFullName(guest);
     $("#welcomeInitial").textContent = (guest.firstName || guest.lastName || "V").charAt(0).toUpperCase();
+
+    migrateSectionNotificationBaselineBeforeSync();
     updateNotificationUi();
   }
 
@@ -1266,29 +1268,28 @@
   ];
 
   function currentNotificationState() {
-    const openSectionKeys = SECTION_DEFINITIONS
-      .filter(section => isSectionOpen(section.route))
-      .map(section => section.key);
-
     if (!currentGuest?.id) {
       return {
         initialized: false,
+        sectionBaselineInitialized: false,
         socialSeenAt: 0,
         seenUnlockKeys: [],
-        seenSectionKeys: openSectionKeys
+        seenSectionKeys: []
       };
     }
 
     const existing = state.notificationsByGuest?.[currentGuest.id];
+
     return {
       initialized: Boolean(existing?.initialized),
+      sectionBaselineInitialized: Array.isArray(existing?.seenSectionKeys),
       socialSeenAt: Number(existing?.socialSeenAt || 0),
       seenUnlockKeys: Array.isArray(existing?.seenUnlockKeys)
         ? [...existing.seenUnlockKeys]
         : [],
       seenSectionKeys: Array.isArray(existing?.seenSectionKeys)
         ? [...existing.seenSectionKeys]
-        : openSectionKeys
+        : []
     };
   }
 
@@ -1316,22 +1317,50 @@
     );
   }
 
+  function currentOpenSectionKeys() {
+    return SECTION_DEFINITIONS
+      .filter(section => isSectionOpen(section.route))
+      .map(section => section.key);
+  }
+
   function initializeCurrentNotifications() {
     if (!currentGuest?.id) return;
 
     const record = currentNotificationState();
-    if (record.initialized) return;
 
-    record.initialized = true;
-    record.socialSeenAt = latestVisibleSocialTime();
-    record.seenUnlockKeys = GAME_NOTIFICATION_DEFINITIONS
-      .filter(game => isTriviaGameOpen(game.key))
-      .map(game => game.key);
-    record.seenSectionKeys = SECTION_DEFINITIONS
-      .filter(section => isSectionOpen(section.route))
-      .map(section => section.key);
+    if (!record.initialized) {
+      record.initialized = true;
+      record.socialSeenAt = latestVisibleSocialTime();
+      record.seenUnlockKeys = GAME_NOTIFICATION_DEFINITIONS
+        .filter(game => isTriviaGameOpen(game.key))
+        .map(game => game.key);
+      record.seenSectionKeys = currentOpenSectionKeys();
+      record.sectionBaselineInitialized = true;
+      saveCurrentNotificationState(record);
+      return;
+    }
 
-    saveCurrentNotificationState(record);
+    if (!record.sectionBaselineInitialized) {
+      record.seenSectionKeys = currentOpenSectionKeys();
+      record.sectionBaselineInitialized = true;
+      saveCurrentNotificationState(record);
+    }
+  }
+
+  function migrateSectionNotificationBaselineBeforeSync() {
+    if (!currentGuest?.id) return;
+
+    const existing = state.notificationsByGuest?.[currentGuest.id];
+
+    if (
+      existing?.initialized &&
+      !Array.isArray(existing?.seenSectionKeys)
+    ) {
+      const record = currentNotificationState();
+      record.seenSectionKeys = currentOpenSectionKeys();
+      record.sectionBaselineInitialized = true;
+      saveCurrentNotificationState(record);
+    }
   }
 
   function notificationItems() {
@@ -1425,12 +1454,16 @@
     }
 
     const sectionRoute =
-      route === "invitados"
-        ? "invitados"
-        : route === "equipo" && teamCommunityTab === "all"
+      route === "admin"
+        ? ""
+        : route === "invitados"
           ? "invitados"
-          : route;
-    const section = sectionDefinition(sectionRoute);
+          : route === "equipo" && teamCommunityTab === "all"
+            ? "invitados"
+            : route;
+    const section = sectionRoute
+      ? sectionDefinition(sectionRoute)
+      : null;
 
     if (
       section &&
@@ -4824,6 +4857,10 @@
       const key = control.dataset.unlockKey;
       const open = control.checked;
 
+      // Guardamos qué secciones ya conocía este invitado antes del cambio.
+      // Así, la sección recién habilitada queda pendiente como notificación.
+      initializeCurrentNotifications();
+
       control.disabled = true;
       const saved = await postToSheets("saveUnlock", {
         key,
@@ -4842,6 +4879,10 @@
       state.manualUnlocks[key] = open;
       saveState();
       scheduleSilentSync();
+
+      updateSectionNavigationState();
+      updateNotificationUi();
+
       const sectionName = sectionLabelForKey(key);
       const isSectionKey = SECTION_DEFINITIONS.some(item => item.key === key);
       const featureMessage = isSectionKey
