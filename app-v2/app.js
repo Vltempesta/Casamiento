@@ -265,7 +265,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32437",
+      appVersion: "32438",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1574,15 +1574,66 @@
       </section>
 
       <section id="homeEssential" class="home-essential" aria-labelledby="homeEssentialTitle">
-        <div class="home-section-heading"><div><p class="home-kicker">Información práctica</p><h3 id="homeEssentialTitle">Lo esencial</h3></div></div>
-        <div class="home-essential-card">
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("calendar")}</span><div><small>Fecha</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div></article>
-          <button type="button" class="home-essential-row home-essential-link" data-go="ubicacion"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? "Estancia Los Candiles" : "Ubicación reservada"}</strong><p>${locationOpen ? "Solís, Provincia de Buenos Aires." : "Ingresá para consultar cuándo se habilita."}</p></div></button>
-          <button type="button" class="home-essential-row home-essential-link" data-go="traslado"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Indicá en Asistencia si te interesa el servicio.</p></div></button>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("dress")}</span><div><small>Vestimenta</small><strong>Elegante sport</strong><p>El evento es en césped. Sugerimos calzado cómodo y abrigo para la noche.</p></div></article>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("food")}</span><div><small>Menú</small><strong>${menuOpen ? "Menú habilitado" : "Próximamente"}</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Cargá tus restricciones en Asistencia."}</p></div></article>
-          <button type="button" class="home-essential-row home-essential-link" data-go="regalos"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Regalos</small><strong>${giftsOpen ? "Información disponible" : "Próximamente"}</strong><p>${giftsOpen ? "Ingresá a Regalos para ver la información." : "La sección se habilitará más adelante."}</p></div></button>
+        <div class="home-section-heading">
+          <div>
+            <p class="home-kicker">Información práctica</p>
+            <h3 id="homeEssentialTitle">Lo esencial</h3>
+          </div>
         </div>
+
+        <div class="home-essential-card">
+          <article class="home-essential-row home-essential-date">
+            <span class="home-essential-icon">${uiIcon("calendar")}</span>
+            <div>
+              <small>Fecha</small>
+              <strong>Sábado 24 de Octubre</strong>
+              <p>18:00 a 03:00</p>
+            </div>
+          </article>
+
+          <button type="button" class="home-essential-row home-essential-link home-essential-location" data-go="ubicacion">
+            <span class="home-essential-icon">${uiIcon("pin")}</span>
+            <div>
+              <small>Lugar</small>
+              <strong>${locationOpen ? 'Estancia "Los Candiles"' : "Ubicación reservada"}</strong>
+              <p>${locationOpen ? "Solís, Provincia de Buenos Aires" : "Ingresá para consultar cuándo se habilita."}</p>
+            </div>
+          </button>
+
+          <button type="button" class="home-essential-row home-essential-link home-essential-transport" data-go="traslado">
+            <span class="home-essential-icon">${uiIcon("bus")}</span>
+            <div>
+              <small>Traslado</small>
+              <strong>Micro / Combi</strong>
+            </div>
+          </button>
+
+          <article class="home-essential-row home-essential-dress">
+            <span class="home-essential-icon">${uiIcon("dress")}</span>
+            <div>
+              <small>Vestimenta</small>
+              <strong>Elegante sport</strong>
+            </div>
+          </article>
+
+          <button type="button" class="home-essential-row home-essential-link home-essential-diet" data-go="asistencia">
+            <span class="home-essential-icon">${uiIcon("food")}</span>
+            <div>
+              <small>Restricciones alimentarias</small>
+              <strong>Confirmar en la asistencia</strong>
+            </div>
+          </button>
+        </div>
+
+        <button type="button" class="home-gifts-feature" data-go="regalos">
+          <span class="home-gifts-feature-icon">${uiIcon("gift")}</span>
+          <span class="home-gifts-feature-copy">
+            <small>Regalos</small>
+            <strong>${giftsOpen ? "Nuestro mejor regalo es tu presencia 🥂" : "Se habilitará más adelante"}</strong>
+            <em>${giftsOpen ? "Ver opciones para ayudarnos con nuestra Luna de Miel" : "Próximamente vas a encontrar acá toda la información"}</em>
+          </span>
+          <b aria-hidden="true">›</b>
+        </button>
       </section>
 
     `;
