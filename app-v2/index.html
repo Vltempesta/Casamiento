@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=32431" />
+  <link rel="stylesheet" href="styles.css?v=32432" />
 </head>
 <body>
   <div class="scene" aria-hidden="true">
@@ -28,7 +28,7 @@
     <section id="loginScreen" class="login-screen">
       <div class="login-frame">
         <header class="login-brand">
-          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32431" alt="Sello de Vani y Fede" width="105" height="113" />
+          <img class="seal-image" src="assets/branding/vyf-seal.png?v=32432" alt="Sello de Vani y Fede" width="105" height="113" />
 
           <h1 class="couple-wordmark couple-wordmark--elegant" aria-label="Vani y Fede">
             <span>VANI</span>
@@ -78,15 +78,26 @@
     <section id="mainScreen" class="main-screen hidden">
       <header class="topbar">
         <div class="topbar-person" aria-label="Invitado actual">
-          <span id="welcomeTeamLogo" class="topbar-team-logo" aria-hidden="true"></span>
-          <span class="topbar-identity">
-            <span id="welcomeTitle" class="topbar-name">Invitado</span>
-            <span id="welcomeTeam" class="topbar-team-name">Equipo</span>
-          </span>
+          <span id="welcomeInitial" class="topbar-initial" aria-hidden="true">V</span>
+          <span id="welcomeTitle" class="topbar-name">Invitado</span>
         </div>
         <div class="topbar-actions">
           <span id="syncBadge" class="status-pill idle">Modo local</span>
           <button id="syncButton" class="ghost-button" type="button">Sincronizar</button>
+          <button
+            id="notificationButton"
+            class="notification-button"
+            type="button"
+            aria-label="Abrir notificaciones"
+            aria-controls="notificationPanel"
+            aria-expanded="false"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+              <path d="M10 21h4"/>
+            </svg>
+            <span id="notificationBadge" class="notification-badge hidden">0</span>
+          </button>
           <button
             id="menuButton"
             class="menu-toggle"
@@ -101,6 +112,17 @@
           </button>
         </div>
       </header>
+
+      <section id="notificationPanel" class="notification-panel hidden" aria-label="Notificaciones">
+        <div class="notification-panel-head">
+          <div>
+            <small>Novedades</small>
+            <strong>Notificaciones</strong>
+          </div>
+          <button id="notificationCloseButton" type="button" aria-label="Cerrar notificaciones">×</button>
+        </div>
+        <div id="notificationList" class="notification-list"></div>
+      </section>
 
       <div id="menuBackdrop" class="menu-backdrop hidden" aria-hidden="true"></div>
 
@@ -121,11 +143,11 @@
             <button data-route="ubicacion"><span class="menu-item-icon"><svg class="menu-icon-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>Ubicación</span></button>
             <button data-route="cronograma"><span class="menu-item-icon"><svg class="menu-icon-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/><path d="M7 3.5 5 5M17 3.5 19 5"/></svg></span><span>Cronograma</span></button>
             <button data-route="en-viaje"><span class="menu-item-icon"><svg class="menu-icon-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 9 6h6l5 12"/><path d="M8 18h8M10 14h4"/><path d="M12 3v3"/></svg></span><span>En viaje</span></button>
-            <button data-route="reglas"><span class="menu-item-icon"><svg class="menu-icon-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="m6.5 8 .5.5 1-1"/></svg></span><span>Reglas</span></button>
           </div>
 
           <div class="menu-group" aria-label="Competencia">
             <button data-route="puntos"><span class="menu-item-icon"><svg class="menu-icon-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 14.6 8.3 20.5 9.2 16.2 13.3 17.2 19.2 12 16.4 6.8 19.2 7.8 13.3 3.5 9.2 9.4 8.3 12 3Z"/></svg></span><span>Sumá puntos!</span></button>
+            <button data-route="reglas"><span class="menu-item-icon"><svg class="menu-icon-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="m6.5 8 .5.5 1-1"/></svg></span><span>Reglas</span></button>
             <button data-route="ranking"><span class="menu-item-icon"><svg class="menu-icon-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10h4v10"/><path d="M10 20V4h4v16"/><path d="M15 20v-7h4v7"/></svg></span><span>Ranking</span></button>
           </div>
 
@@ -193,8 +215,8 @@
 
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
-  <script src="config.js?v=32431"></script>
-  <script src="data.js?v=32431"></script>
-  <script src="app.js?v=32431"></script>
+  <script src="config.js?v=32432"></script>
+  <script src="data.js?v=32432"></script>
+  <script src="app.js?v=32432"></script>
 </body>
 </html>

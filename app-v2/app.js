@@ -21,6 +21,7 @@
   let silentSyncTimer = null;
   let countdownTimer = null;
   let selectedTeamViewId = null;
+  let expandedGuestTeamId = null;
   let travelMode = null;
   let triviaFocusTarget = null;
   let selectedGuestId = null;
@@ -39,6 +40,7 @@
     scoreEntries: [],
     socialMessages: [],
     socialLikes: {},
+    notificationsByGuest: {},
     manualUnlocks: {},
     dataResetAt: null,
     lastSyncAt: null,
@@ -263,7 +265,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32431",
+      appVersion: "32432",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -484,6 +486,11 @@
     state.lastSyncAt = new Date().toISOString();
     state.lastRemoteError = "";
     saveState();
+
+    if (currentGuest) {
+      initializeCurrentNotifications();
+      updateNotificationUi();
+    }
   }
 
   function dedupeScores(entries) {
@@ -540,6 +547,28 @@
       </article>`;
   }
 
+
+  async function copyText(value) {
+    const text = String(value || "");
+    if (!text) return false;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (_) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      return copied;
+    }
+  }
+
   function toast(message) {
     const host = $("#toastHost");
     const el = document.createElement("div");
@@ -579,12 +608,8 @@
     $("#loginScreen").classList.add("hidden");
     $("#mainScreen").classList.remove("hidden");
     $("#welcomeTitle").textContent = guest.firstName || guestFullName(guest);
-    $("#welcomeTeam").textContent = `Equipo ${team.name}`;
-
-    const logoHost = $("#welcomeTeamLogo");
-    if (logoHost) {
-      logoHost.innerHTML = teamLogo(team, "topbar-team-logo-image");
-    }
+    $("#welcomeInitial").textContent = (guest.firstName || guest.lastName || "V").charAt(0).toUpperCase();
+    updateNotificationUi();
   }
 
   function showLandingFromHistory() {
@@ -780,8 +805,40 @@
   }
 
   function bindShellEvents() {
+    $("#notificationButton")?.addEventListener("click", event => {
+      event.stopPropagation();
+      const panel = $("#notificationPanel");
+      setNotificationPanelOpen(panel?.classList.contains("hidden"));
+    });
+
+    $("#notificationCloseButton")?.addEventListener("click", () => {
+      setNotificationPanelOpen(false);
+    });
+
+    $("#notificationPanel")?.addEventListener("click", event => {
+      const item = event.target.closest("[data-notification-route]");
+      if (!item) return;
+
+      markSingleNotification(
+        item.dataset.notificationType,
+        item.dataset.notificationKey
+      );
+      updateNotificationUi();
+      setNotificationPanelOpen(false);
+      navigate(item.dataset.notificationRoute);
+    });
+
+    document.addEventListener("click", event => {
+      if (
+        event.target.closest("#notificationPanel") ||
+        event.target.closest("#notificationButton")
+      ) return;
+      setNotificationPanelOpen(false);
+    });
+
     $("#menuButton")?.addEventListener("click", () => {
       const isOpen = $("#mainMenu")?.classList.contains("open");
+      setNotificationPanelOpen(false);
       setMenuOpen(!isOpen);
     });
 
@@ -972,6 +1029,8 @@
       : (routes[currentRoute] || renderHome)();
 
     $("#view").innerHTML = html;
+    markNotificationsForRoute(currentRoute);
+    updateNotificationUi();
     bindViewEvents(currentRoute);
   }
 
@@ -1034,7 +1093,8 @@
       download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
       car: '<path d="M5 17h14l-1.5-6h-11L5 17Z"/><path d="m7 11 1.5-4h7L17 11"/><circle cx="8" cy="17" r="1.5"/><circle cx="16" cy="17" r="1.5"/><path d="M5 14H3M21 14h-2"/>',
       road: '<path d="M9 21 11 3h2l2 18"/><path d="M12 6v3M12 12v3M12 18v2"/>',
-      rules: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="m6.5 8 .5.5 1-1"/>'
+      rules: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="m6.5 8 .5.5 1-1"/>',
+      phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10 5h4M11 18.5h2"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
@@ -1167,6 +1227,204 @@
           <p>${escapeHTML(definition.text)}</p>
         </div>
       </section>`;
+  }
+
+
+
+  const GAME_NOTIFICATION_DEFINITIONS = [
+    { key: "trivia-music", title: "La banda sonora", route: "puntos" },
+    { key: "trivia-couple", title: "¿Cuánto conocés a los novios?", route: "puntos" },
+    { key: "trivia-who", title: "¿Quién es quién?", route: "puntos" },
+    { key: "trivia-surprise", title: "Juego sorpresa", route: "puntos" }
+  ];
+
+  function currentNotificationState() {
+    if (!currentGuest?.id) {
+      return {
+        initialized: false,
+        socialSeenAt: 0,
+        seenUnlockKeys: []
+      };
+    }
+
+    const existing = state.notificationsByGuest?.[currentGuest.id];
+    return {
+      initialized: Boolean(existing?.initialized),
+      socialSeenAt: Number(existing?.socialSeenAt || 0),
+      seenUnlockKeys: Array.isArray(existing?.seenUnlockKeys)
+        ? [...existing.seenUnlockKeys]
+        : []
+    };
+  }
+
+  function saveCurrentNotificationState(record) {
+    if (!currentGuest?.id) return;
+
+    state.notificationsByGuest = {
+      ...(state.notificationsByGuest || {}),
+      [currentGuest.id]: {
+        initialized: Boolean(record.initialized),
+        socialSeenAt: Number(record.socialSeenAt || 0),
+        seenUnlockKeys: Array.from(new Set(record.seenUnlockKeys || []))
+      }
+    };
+    saveState();
+  }
+
+  function latestVisibleSocialTime() {
+    return Math.max(
+      0,
+      ...dedupeSocialMessages(state.socialMessages || [])
+        .filter(message => message.guestId !== currentGuest?.id)
+        .map(socialMessageTime)
+    );
+  }
+
+  function initializeCurrentNotifications() {
+    if (!currentGuest?.id) return;
+
+    const record = currentNotificationState();
+    if (record.initialized) return;
+
+    record.initialized = true;
+    record.socialSeenAt = latestVisibleSocialTime();
+    record.seenUnlockKeys = GAME_NOTIFICATION_DEFINITIONS
+      .filter(game => isTriviaGameOpen(game.key))
+      .map(game => game.key);
+
+    saveCurrentNotificationState(record);
+  }
+
+  function notificationItems() {
+    if (!currentGuest?.id) return [];
+
+    const record = currentNotificationState();
+    if (!record.initialized) return [];
+
+    const socialItems = dedupeSocialMessages(state.socialMessages || [])
+      .filter(message =>
+        message.guestId !== currentGuest.id &&
+        socialMessageTime(message) > record.socialSeenAt
+      )
+      .sort((a, b) => socialMessageTime(b) - socialMessageTime(a))
+      .slice(0, 4)
+      .map(message => {
+        const author = socialAuthor(message);
+        return {
+          type: "social",
+          route: "social",
+          key: message.messageId,
+          icon: "chat",
+          title: message.parentId ? "Nueva respuesta en Social" : "Nuevo mensaje en Social",
+          text: `${author.name}: ${socialMessageExcerpt(message.message, 72)}`
+        };
+      });
+
+    const gameItems = GAME_NOTIFICATION_DEFINITIONS
+      .filter(game =>
+        isTriviaGameOpen(game.key) &&
+        !record.seenUnlockKeys.includes(game.key)
+      )
+      .map(game => ({
+        type: "game",
+        route: game.route,
+        key: game.key,
+        icon: "star",
+        title: "Nuevo juego desbloqueado",
+        text: game.title
+      }));
+
+    return [...gameItems, ...socialItems];
+  }
+
+  function markNotificationsForRoute(route) {
+    if (!currentGuest?.id) return;
+
+    const record = currentNotificationState();
+    if (!record.initialized) return;
+
+    let changed = false;
+
+    if (route === "social") {
+      const latest = latestVisibleSocialTime();
+      if (latest > record.socialSeenAt) {
+        record.socialSeenAt = latest;
+        changed = true;
+      }
+    }
+
+    if (["puntos", "trivia"].includes(route)) {
+      const openKeys = GAME_NOTIFICATION_DEFINITIONS
+        .filter(game => isTriviaGameOpen(game.key))
+        .map(game => game.key);
+      const nextKeys = Array.from(new Set([...record.seenUnlockKeys, ...openKeys]));
+      if (nextKeys.length !== record.seenUnlockKeys.length) {
+        record.seenUnlockKeys = nextKeys;
+        changed = true;
+      }
+    }
+
+    if (changed) saveCurrentNotificationState(record);
+  }
+
+  function markSingleNotification(type, key) {
+    if (!currentGuest?.id) return;
+
+    const record = currentNotificationState();
+    if (!record.initialized) return;
+
+    if (type === "social") {
+      record.socialSeenAt = Math.max(record.socialSeenAt, latestVisibleSocialTime());
+    } else if (type === "game" && key) {
+      record.seenUnlockKeys = Array.from(new Set([...record.seenUnlockKeys, key]));
+    }
+
+    saveCurrentNotificationState(record);
+  }
+
+  function setNotificationPanelOpen(open) {
+    const panel = $("#notificationPanel");
+    const button = $("#notificationButton");
+    if (!panel || !button) return;
+
+    panel.classList.toggle("hidden", !open);
+    button.setAttribute("aria-expanded", String(open));
+    button.classList.toggle("is-open", open);
+  }
+
+  function updateNotificationUi() {
+    const list = $("#notificationList");
+    const badge = $("#notificationBadge");
+    if (!list || !badge) return;
+
+    const items = notificationItems();
+    const count = items.length;
+
+    badge.textContent = count > 9 ? "9+" : String(count);
+    badge.classList.toggle("hidden", !count);
+
+    list.innerHTML = count
+      ? items.map(item => `
+          <button
+            type="button"
+            class="notification-item"
+            data-notification-type="${escapeHTML(item.type)}"
+            data-notification-key="${escapeHTML(item.key || "")}"
+            data-notification-route="${escapeHTML(item.route)}">
+            <span>${uiIcon(item.icon)}</span>
+            <div>
+              <strong>${escapeHTML(item.title)}</strong>
+              <small>${escapeHTML(item.text)}</small>
+            </div>
+            <b aria-hidden="true">›</b>
+          </button>
+        `).join("")
+      : `
+        <div class="notification-empty">
+          ${uiIcon("checkCircle")}
+          <strong>Estás al día</strong>
+          <small>No hay novedades pendientes.</small>
+        </div>`;
   }
 
 
@@ -1319,11 +1577,11 @@
         <div class="home-section-heading"><div><p class="home-kicker">Información práctica</p><h3 id="homeEssentialTitle">Lo esencial</h3></div></div>
         <div class="home-essential-card">
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("calendar")}</span><div><small>Fecha</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div></article>
-          <button type="button" class="home-essential-row home-essential-link" data-go="ubicacion"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? "Estancia Los Candiles" : "Ubicación reservada"}</strong><p>${locationOpen ? "Solís, Provincia de Buenos Aires." : "Ingresá para consultar cuándo se habilita."}</p></div><b aria-hidden="true">›</b></button>
+          <button type="button" class="home-essential-row home-essential-link" data-go="ubicacion"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? "Estancia Los Candiles" : "Ubicación reservada"}</strong><p>${locationOpen ? "Solís, Provincia de Buenos Aires." : "Ingresá para consultar cuándo se habilita."}</p></div></button>
+          <button type="button" class="home-essential-row home-essential-link" data-go="traslado"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Indicá en Asistencia si te interesa el servicio.</p></div></button>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("dress")}</span><div><small>Vestimenta</small><strong>Elegante sport</strong><p>El evento es en césped. Sugerimos calzado cómodo y abrigo para la noche.</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("food")}</span><div><small>Menú</small><strong>${menuOpen ? "Menú habilitado" : "Próximamente"}</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Cargá tus restricciones en Asistencia."}</p></div></article>
-          <button type="button" class="home-essential-row home-essential-link" data-go="traslado"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Indicá en Asistencia si te interesa el servicio.</p></div><b aria-hidden="true">›</b></button>
-          <button type="button" class="home-essential-row home-essential-link" data-go="regalos"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Regalos</small><strong>${giftsOpen ? "Información disponible" : "Próximamente"}</strong><p>${giftsOpen ? "Ingresá a Regalos para ver la información." : "La sección se habilitará más adelante."}</p></div><b aria-hidden="true">›</b></button>
+          <button type="button" class="home-essential-row home-essential-link" data-go="regalos"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Regalos</small><strong>${giftsOpen ? "Información disponible" : "Próximamente"}</strong><p>${giftsOpen ? "Ingresá a Regalos para ver la información." : "La sección se habilitará más adelante."}</p></div></button>
         </div>
       </section>
 
@@ -1910,13 +2168,20 @@
 
     return `
       ${captainGuestStyles()}
-      <section class="team-summary-compact section-card" style="--local-accent:${team.accent}">
-        ${teamLogo(team, "team-summary-logo")}
-        <div class="team-summary-copy"><p class="eyebrow">Mi equipo</p><h3>${escapeHTML(team.name)}</h3><small>Capitán: ${escapeHTML(team.captain)} · ${activePlayers} integrantes</small></div>
-        <button type="button" data-go="ranking" class="team-ranking-summary-button">
-          <span class="team-ranking-summary-icon">${uiIcon("ranking")}</span>
-          <span class="team-ranking-summary-label">Ranking</span>
-          <span class="team-ranking-summary-data"><b>${teamPoints} pts</b><em>${teamPosition}</em></span>
+      <section class="team-overview-card section-card" style="--local-accent:${team.accent}">
+        <div class="team-overview-main">
+          ${teamLogo(team, "team-overview-logo")}
+          <div class="team-overview-copy">
+            <p class="eyebrow">Mi equipo</p>
+            <h3>${escapeHTML(team.name)}</h3>
+            <small>Capitán: ${escapeHTML(team.captain)} · ${activePlayers} integrantes</small>
+          </div>
+        </div>
+
+        <button type="button" data-go="ranking" class="team-overview-rank">
+          <span>${uiIcon("ranking")}</span>
+          <div><b>${teamPoints}</b><small>puntos</small></div>
+          <em>${teamPosition}</em>
         </button>
       </section>
       <section class="team-attendance-mini section-card">
@@ -2372,49 +2637,38 @@
   function renderRankingSocialHighlights() {
     const highlights = socialEngagementPosts(3);
 
-    if (!highlights.length) {
-      return `
-        <section class="ranking-social-highlights section-card">
-          <div class="ranking-social-highlights-head">
-            <span>${uiIcon("heart")}</span>
-            <div>
-              <p class="eyebrow">Social</p>
-              <h4>Mensajes destacados</h4>
-            </div>
-          </div>
-          <p class="ranking-social-empty">Todavía no hay mensajes con likes o respuestas.</p>
-          <button type="button" data-go="social">Ir a Social</button>
-        </section>`;
-    }
-
     return `
-      <section class="ranking-social-highlights section-card">
-        <div class="ranking-social-highlights-head">
-          <span>${uiIcon("heart")}</span>
+      <section class="ranking-social-unified section-card">
+        <div class="ranking-social-unified-head">
+          <span>${uiIcon("chat")}</span>
           <div>
             <p class="eyebrow">Social</p>
             <h4>Mensajes destacados</h4>
+            <small>Lo más comentado y votado entre los equipos.</small>
           </div>
+          <button type="button" data-go="social">Ir a Social</button>
         </div>
 
-        <div class="ranking-social-highlight-list">
-          ${highlights.map((item, index) => {
-            const author = socialAuthor(item.post);
-            return `
-              <button type="button" class="ranking-social-highlight" data-go="social">
-                <span class="ranking-social-highlight-position">${index + 1}</span>
-                <span class="ranking-social-highlight-avatar">${escapeHTML(author.initial)}</span>
-                <span class="ranking-social-highlight-copy">
-                  <strong>${escapeHTML(author.name)} · ${escapeHTML(author.team.name)}</strong>
-                  <small>${escapeHTML(socialMessageExcerpt(item.post.message))}</small>
-                </span>
-                <span class="ranking-social-highlight-stats">
-                  <b>${uiIcon("heart")}${item.likes}</b>
-                  <b>${uiIcon("chat")}${item.replies}</b>
-                </span>
-              </button>`;
-          }).join("")}
-        </div>
+        ${highlights.length
+          ? `<div class="ranking-social-highlight-list">
+              ${highlights.map((item, index) => {
+                const author = socialAuthor(item.post);
+                return `
+                  <button type="button" class="ranking-social-highlight" data-go="social">
+                    <span class="ranking-social-highlight-position">${index + 1}</span>
+                    <span class="ranking-social-highlight-avatar">${escapeHTML(author.initial)}</span>
+                    <span class="ranking-social-highlight-copy">
+                      <strong>${escapeHTML(author.name)} · ${escapeHTML(author.team.name)}</strong>
+                      <small>${escapeHTML(socialMessageExcerpt(item.post.message))}</small>
+                    </span>
+                    <span class="ranking-social-highlight-stats">
+                      <b>${uiIcon("heart")}${item.likes}</b>
+                      <b>${uiIcon("chat")}${item.replies}</b>
+                    </span>
+                  </button>`;
+              }).join("")}
+            </div>`
+          : `<p class="ranking-social-empty">Todavía no hay mensajes con likes o respuestas.</p>`}
       </section>`;
   }
 
@@ -2447,12 +2701,6 @@
           </button>
         </div>
       </section>
-
-      <button type="button" class="ranking-social-card section-card" data-go="social">
-        <span>${uiIcon("chat")}</span>
-        <div><strong>Social</strong><small>Chateá con los demás equipos y contales quién va a ganar.</small></div>
-        <b aria-hidden="true">›</b>
-      </button>
 
       ${renderRankingSocialHighlights()}`;
   }
@@ -2505,8 +2753,69 @@
 
   function renderGuests() {
     const open = isUnlocked("guestMap");
-    const grouped = Object.values(DATA.teams).map(team => ({ team, guests: DATA.guests.filter(guest => guest.team === team.id && isCompetitionGuest(guest)).sort(sortGuestsForDisplay) }));
-    return `${captainGuestStyles()}${sectionHeader("comunidad", "Invitados", "")}${open?"":lockedNotice("guestMap")}<section class="guest-map">${grouped.map(group=>`<article class="section-card team-column" style="--local-accent:${group.team.accent}"><h4 class="team-heading">${teamLogo(group.team,"team-heading-logo")}<span>${group.team.name}</span></h4><small>${escapeHTML(group.team.group)}</small><div class="guest-list">${group.guests.map(guest=>guestPill(guest,{minimalIcon:true,hideAlias:true})).join("")}</div></article>`).join("")}</section>`;
+    if (expandedGuestTeamId === null) {
+      expandedGuestTeamId = currentGuest?.team || "";
+    }
+
+    const grouped = Object.values(DATA.teams).map(team => ({
+      team,
+      guests: DATA.guests
+        .filter(guest => guest.team === team.id && isCompetitionGuest(guest))
+        .sort(sortGuestsForDisplay)
+    }));
+
+    return `
+      ${captainGuestStyles()}
+      ${guestAccordionStyles()}
+      ${sectionHeader("comunidad", "Invitados", "Tocá un equipo para desplegar sus integrantes.")}
+      ${open ? "" : lockedNotice("guestMap")}
+
+      <section class="guest-team-accordion">
+        ${grouped.map(group => {
+          const expanded = expandedGuestTeamId === group.team.id;
+          return `
+            <article class="guest-team-accordion-card section-card" style="--local-accent:${group.team.accent}">
+              <button
+                type="button"
+                class="guest-team-toggle"
+                data-guest-team-toggle="${escapeHTML(group.team.id)}"
+                aria-expanded="${expanded ? "true" : "false"}">
+                ${teamLogo(group.team, "guest-team-toggle-logo")}
+                <span>
+                  <strong>${escapeHTML(group.team.name)}</strong>
+                  <small>${group.guests.length} integrantes</small>
+                </span>
+                <b>${expanded ? "−" : "+"}</b>
+              </button>
+
+              <div class="guest-team-panel ${expanded ? "" : "hidden"}">
+                <p>${escapeHTML(group.team.group)}</p>
+                <div class="guest-list">
+                  ${group.guests.map(guest =>
+                    guestPill(guest, { minimalIcon: true, hideAlias: true })
+                  ).join("")}
+                </div>
+              </div>
+            </article>`;
+        }).join("")}
+      </section>`;
+  }
+
+  function guestAccordionStyles() {
+    return `<style>
+      .guest-team-accordion{display:grid;gap:7px}
+      .guest-team-accordion-card{padding:6px 8px;border-color:color-mix(in srgb,var(--local-accent) 18%,var(--line))}
+      .guest-team-toggle{width:100%;display:grid;grid-template-columns:42px minmax(0,1fr) 28px;gap:9px;align-items:center;min-height:54px;padding:5px;border:0;background:transparent;color:var(--ink);text-align:left;box-shadow:none}
+      .guest-team-toggle-logo{width:40px;height:40px}
+      .guest-team-toggle span strong,.guest-team-toggle span small{display:block}
+      .guest-team-toggle span strong{font-size:15px}
+      .guest-team-toggle span small{margin-top:2px;color:var(--muted);font-size:9px}
+      .guest-team-toggle>b{width:26px;height:26px;display:grid;place-items:center;border-radius:9px;background:color-mix(in srgb,var(--local-accent) 9%,#fff);color:var(--local-accent);font-size:17px}
+      .guest-team-panel{padding:2px 4px 6px}
+      .guest-team-panel>p{margin:0 0 6px 48px;color:var(--muted);font-size:8px}
+      .guest-team-panel .guest-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+      @media(max-width:620px){.guest-team-panel .guest-list{grid-template-columns:1fr}.guest-team-toggle{grid-template-columns:38px minmax(0,1fr) 26px}.guest-team-toggle-logo{width:36px;height:36px}}
+    </style>`;
   }
 
 
@@ -2859,27 +3168,88 @@
     return `<style>
       .rules-intro{display:grid;grid-template-columns:54px minmax(0,1fr);gap:13px;align-items:center;padding:17px;background:linear-gradient(135deg,rgba(201,170,114,.11),rgba(255,253,248,.90));border-color:rgba(201,170,114,.26)}.rules-intro>span{width:51px;height:51px;display:grid;place-items:center;border-radius:15px;background:rgba(201,170,114,.15);color:#8b642c}.rules-intro .ui-icon{width:25px;height:25px}.rules-intro h3{margin:3px 0 5px;font-size:23px}.rules-intro p:not(.eyebrow){margin:0;font-size:11px;line-height:1.4}
       .rules-table-card{margin-top:8px;padding:9px}.rules-table-head,.rules-table-row{display:grid;grid-template-columns:minmax(130px,.9fr) 105px minmax(180px,1.5fr);gap:9px;align-items:center}.rules-table-head{padding:6px 9px;color:#8b642c;font-size:8px;font-weight:950;text-transform:uppercase;letter-spacing:.08em}.rules-table-row{min-height:52px;padding:8px 9px;border-top:1px solid rgba(132,104,68,.10)}.rules-table-row strong{font-size:11px}.rules-table-row b{color:#743344;font-size:11px}.rules-table-row p{margin:0;color:var(--muted);font-size:9px;line-height:1.3}.rules-note{margin:7px 2px 0;color:var(--muted);font-size:9px;text-align:center}
-      @media(max-width:650px){.rules-intro{grid-template-columns:42px minmax(0,1fr);padding:13px}.rules-intro>span{width:40px;height:40px}.rules-intro h3{font-size:19px}.rules-table-card{overflow-x:auto}.rules-table-head,.rules-table-row{min-width:570px}}
+      @media(max-width:650px){
+        .rules-intro{grid-template-columns:42px minmax(0,1fr);padding:13px}
+        .rules-intro>span{width:40px;height:40px}
+        .rules-intro h3{font-size:19px}
+        .rules-table-card{overflow:visible;padding:7px;background:transparent;border:0;box-shadow:none}
+        .rules-table-head{display:none}
+        .rules-table-row{min-width:0;grid-template-columns:minmax(0,1fr) auto;gap:5px 9px;min-height:0;margin-bottom:7px;padding:10px 11px;border:1px solid rgba(132,104,68,.12);border-radius:12px;background:rgba(255,253,248,.78)}
+        .rules-table-row strong{font-size:11px}
+        .rules-table-row b{text-align:right;font-size:10px}
+        .rules-table-row p{grid-column:1/-1;font-size:8.5px;line-height:1.35}
+      }
     </style>`;
   }
 
 
+  const GIFT_DETAILS = {
+    alias: "NOVIO.NOVIA.BODA",
+    cbu: "0000000000000000000000",
+    holder: "Nombre Apellido",
+    paymentUrl: ""
+  };
+
   function renderGifts() {
-    const open = isTriviaGameOpen("gifts-section");
+    const paymentEnabled = Boolean(GIFT_DETAILS.paymentUrl);
 
     return `
       ${giftStyles()}
       ${sectionHeader("casamiento", "Regalos", "")}
-      <section class="gift-placeholder section-card ${open ? "is-open" : "is-locked"}">
-        <span class="gift-placeholder-icon">${uiIcon(open ? "gift" : "lock")}</span>
+
+      <section class="gift-hero section-card">
+        <span>${uiIcon("gift")}</span>
         <div>
-          <p class="eyebrow">${open ? "Sección habilitada" : "Próximamente"}</p>
-          <h3>${open ? "Información de regalos" : "Esta sección todavía no está disponible"}</h3>
-          <p>${open
-            ? "El alias o CBU se incorporará acá cuando esté definido."
-            : "Cuando esté lista, vas a poder verla desde este mismo lugar."}</p>
+          <p class="eyebrow">Gracias por acompañarnos</p>
+          <h3>Nuestro mejor regalo es compartir este día con vos 🥂</h3>
+          <p>Tu presencia en el casamiento es lo más importante para nosotros.</p>
+          <p>Además, si querés hacernos un regalo y ayudarnos a seguir sumando aventuras en nuestra <strong>Luna de Miel</strong>, podés hacerlo de la manera que te resulte más cómoda.</p>
         </div>
-      </section>`;
+      </section>
+
+      <section class="gift-options">
+        <article class="gift-bank-card section-card">
+          <div class="gift-card-heading">
+            <span>${uiIcon("download")}</span>
+            <div><small>Opción 1</small><h4>Transferencia bancaria</h4></div>
+          </div>
+
+          ${giftDetailRow("Alias", GIFT_DETAILS.alias, "alias")}
+          ${giftDetailRow("CBU / CVU", GIFT_DETAILS.cbu, "cbu")}
+          ${giftDetailRow("Titular", GIFT_DETAILS.holder, "")}
+        </article>
+
+        <article class="gift-payment-card section-card">
+          <div class="gift-card-heading">
+            <span>${uiIcon("phone")}</span>
+            <div><small>Opción 2</small><h4>Mercado Pago / MODO</h4></div>
+          </div>
+
+          <p>También podés realizar el regalo escaneando nuestro código QR o ingresando desde el siguiente botón.</p>
+
+          <div class="gift-qr-placeholder">
+            ${uiIcon("gift")}
+            <strong>QR próximamente</strong>
+            <small>Acá aparecerá el código de pago.</small>
+          </div>
+
+          ${paymentEnabled
+            ? `<a href="${escapeHTML(GIFT_DETAILS.paymentUrl)}" target="_blank" rel="noopener">Hacer un regalo</a>`
+            : `<button type="button" disabled>Enlace próximamente</button>`}
+        </article>
+      </section>
+
+      <p class="gift-thanks">Gracias por acompañarnos y ser parte de este momento tan especial 🤍</p>`;
+  }
+
+  function giftDetailRow(label, value, copyKey) {
+    return `
+      <div class="gift-detail-row">
+        <div><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong></div>
+        ${copyKey
+          ? `<button type="button" data-copy-gift="${escapeHTML(copyKey)}">Copiar</button>`
+          : ""}
+      </div>`;
   }
 
 
@@ -3005,6 +3375,29 @@
     return `<div id="adminPeopleModal" class="admin-people-modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminPeopleTitle"><div class="admin-people-dialog"><div class="admin-people-head"><div><p class="eyebrow">Detalle</p><h4 id="adminPeopleTitle">Personas</h4><p id="adminPeopleCount"></p></div><button type="button" class="admin-people-close" data-admin-modal-close aria-label="Cerrar">×</button></div><div id="adminPeopleList" class="admin-people-list"></div><button type="button" class="ghost-button admin-people-done" data-admin-modal-close>Cerrar</button></div></div>`;
   }
 
+  function movementActor(entry) {
+    if (entry?.adminName) return entry.adminName;
+    if (entry?.guestName) return entry.guestName;
+
+    const commentParts = String(entry?.comment || "")
+      .split("·")
+      .map(part => part.trim())
+      .filter(Boolean);
+
+    if (commentParts.length > 1) {
+      const candidate = /puntos?$/i.test(commentParts[commentParts.length - 1])
+        ? commentParts[commentParts.length - 2]
+        : commentParts[commentParts.length - 1];
+
+      if (candidate && !/^(reset|limpieza|general)$/i.test(candidate)) {
+        return candidate;
+      }
+    }
+
+    return entry?.automatic ? "Sistema" : "Vani y Fede";
+  }
+
+
   function renderAdminMovements() {
     const entries = allPointEntries().slice(-12).reverse();
 
@@ -3021,13 +3414,14 @@
                 const points = Number(entry.points || 0);
                 const team = getTeam(entry.teamId);
                 const movementName = gameName(entry.gameId);
+                const actor = movementActor(entry);
 
                 return `
                   <article>
                     <span>${points >= 0 ? "+" : "−"}</span>
                     <div>
                       <strong>${escapeHTML(team.name)} · ${escapeHTML(movementName)}</strong>
-                      <small>${escapeHTML(formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt))}</small>
+                      <small>${escapeHTML(actor)} · ${escapeHTML(formatDateLabel(entry.timestamp || entry.submittedAt || entry.updatedAt))}</small>
                     </div>
                     <b>${Math.abs(points)} pts</b>
                   </article>`;
@@ -3114,8 +3508,8 @@
         <button type="button" class="admin-stat-button" data-admin-list="answered"><span>%</span><div><small>Respondieron</small><strong>${answeredCount}</strong><em>${answeredPercent}%</em></div></button>
         <button type="button" class="admin-stat-button" data-admin-list="declined"><span>−</span><div><small>No asisten</small><strong>${declinedCount}</strong><em>Ver</em></div></button>
         <button type="button" class="admin-stat-button" data-admin-list="unanswered"><span>?</span><div><small>Pendientes</small><strong>${unansweredCount}</strong><em>Ver</em></div></button>
-        <button type="button" class="admin-stat-button admin-combi-stat" data-admin-list="micro"><span>🚌</span><div><small>Micro</small><strong>${combiCount}</strong><em>Ver</em></div></button>
-        <button type="button" class="admin-stat-button admin-restrictions-stat" data-admin-list="restrictions"><span>🍽</span><div><small>Restricciones</small><strong>${restrictionsCount}</strong><em>Ver detalle</em></div></button>
+        <button type="button" class="admin-stat-button admin-combi-stat" data-admin-list="micro"><span>${uiIcon("bus")}</span><div><small>Micro</small><strong>${combiCount}</strong><em>Ver</em></div></button>
+        <button type="button" class="admin-stat-button admin-restrictions-stat" data-admin-list="restrictions"><span>${uiIcon("food")}</span><div><small>Restricciones</small><strong>${restrictionsCount}</strong><em>Ver detalle</em></div></button>
       </section>
       ${renderAdminPeopleModal()}
 
@@ -3313,6 +3707,27 @@
       const target = document.getElementById(button.dataset.scroll);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
+
+    if (route === "invitados") {
+      $$("[data-guest-team-toggle]").forEach(button => {
+        button.addEventListener("click", () => {
+          const teamId = button.dataset.guestTeamToggle;
+          expandedGuestTeamId = expandedGuestTeamId === teamId ? "" : teamId;
+          renderCurrentRoute();
+        });
+      });
+    }
+
+    if (route === "regalos") {
+      $$("[data-copy-gift]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const key = button.dataset.copyGift;
+          const value = GIFT_DETAILS[key] || "";
+          const copied = await copyText(value);
+          toast(copied ? `${key === "alias" ? "Alias" : "CBU"} copiado.` : "No se pudo copiar.");
+        });
+      });
+    }
 
     if (route === "en-viaje") {
       $$("[data-travel-mode]").forEach(button => {
