@@ -19,7 +19,13 @@
   let currentRoute = "inicio";
   let remoteStatus = "idle";
   let silentSyncTimer = null;
+  let unlockSyncInterval = null;
+  let unlockSyncInFlight = null;
+  let lastUnlockSyncAttemptAt = 0;
   let countdownTimer = null;
+
+  const UNLOCK_SYNC_INTERVAL_MS = 45000;
+  const UNLOCK_SYNC_MIN_GAP_MS = 12000;
   let selectedTeamViewId = null;
   let teamCommunityTab = "mine";
   let expandedGuestTeamId = null;
@@ -43,6 +49,8 @@
     socialLikes: {},
     notificationsByGuest: {},
     manualUnlocks: {},
+    unlockRevision: "",
+    lastUnlockSyncAt: null,
     dataResetAt: null,
     lastSyncAt: null,
     lastRemoteError: ""
@@ -237,6 +245,7 @@
       url.searchParams.set("action", action);
       url.searchParams.set("callback", callbackName);
       url.searchParams.set("token", CONFIG.PUBLIC_WRITE_TOKEN || "");
+      url.searchParams.set("_ts", `${Date.now()}_${Math.random().toString(36).slice(2)}`);
       Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
 
       const script = document.createElement("script");
@@ -266,7 +275,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32442",
+      appVersion: "32443",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -313,6 +322,153 @@
       silentSyncTimer = null;
       syncFromSheets(false);
     }, delay);
+  }
+
+
+  function normalizeUnlockSnapshot(value) {
+    if (!value || typeof value !== "object") return {};
+
+    return Object.fromEntries(
+      Object.entries(value).map(([key, open]) => [
+        key,
+        open === true || String(open).toUpperCase() === "TRUE"
+      ])
+    );
+  }
+
+  function unlockSnapshotsEqual(left = {}, right = {}) {
+    const leftKeys = Object.keys(left).sort();
+    const rightKeys = Object.keys(right).sort();
+
+    if (leftKeys.length !== rightKeys.length) return false;
+
+    return leftKeys.every((key, index) =>
+      key === rightKeys[index] &&
+      Boolean(left[key]) === Boolean(right[key])
+    );
+  }
+
+  function applyRemoteUnlockSnapshot(remote = {}, options = {}) {
+    if (
+      !Object.prototype.hasOwnProperty.call(remote, "manualUnlocks")
+    ) {
+      return false;
+    }
+
+    if (currentGuest) initializeCurrentNotifications();
+
+    const previous = normalizeUnlockSnapshot(state.manualUnlocks);
+    const next = normalizeUnlockSnapshot(remote.manualUnlocks);
+    const nextRevision = String(
+      remote.unlockRevision ||
+      remote.revision ||
+      ""
+    );
+
+    const changed =
+      !unlockSnapshotsEqual(previous, next) ||
+      (
+        nextRevision &&
+        nextRevision !== String(state.unlockRevision || "")
+      );
+
+    // El servidor es la única fuente de verdad.
+    state.manualUnlocks = next;
+    state.unlockRevision = nextRevision;
+    state.lastUnlockSyncAt =
+      remote.generatedAt ||
+      new Date().toISOString();
+
+    if (options.persist !== false) saveState();
+
+    if (currentGuest) {
+      updateSectionNavigationState();
+      updateNotificationUi();
+
+      if (changed && options.render !== false) {
+        renderCurrentRoute();
+      }
+    }
+
+    return changed;
+  }
+
+  async function syncUnlockState(options = {}) {
+    if (!isConfigured()) return false;
+
+    const force = Boolean(options.force);
+    const render = options.render !== false;
+    const now = Date.now();
+
+    if (
+      !force &&
+      now - lastUnlockSyncAttemptAt < UNLOCK_SYNC_MIN_GAP_MS
+    ) {
+      return false;
+    }
+
+    if (unlockSyncInFlight) return unlockSyncInFlight;
+
+    lastUnlockSyncAttemptAt = now;
+
+    unlockSyncInFlight = (async () => {
+      try {
+        let response;
+
+        try {
+          response = await jsonp("getUnlockState");
+        } catch (lightSyncError) {
+          // Compatibilidad hasta publicar el backend v32443.
+          response = await jsonp("getData");
+        }
+
+        applyRemoteUnlockSnapshot(
+          response?.data || {},
+          { render }
+        );
+
+        return true;
+      } catch (error) {
+        console.warn(
+          "No se pudo sincronizar la configuración global",
+          error
+        );
+        return false;
+      } finally {
+        unlockSyncInFlight = null;
+      }
+    })();
+
+    return unlockSyncInFlight;
+  }
+
+  function startUnlockAutoSync() {
+    if (unlockSyncInterval) {
+      window.clearInterval(unlockSyncInterval);
+    }
+
+    unlockSyncInterval = window.setInterval(() => {
+      if (
+        currentGuest &&
+        document.visibilityState === "visible" &&
+        navigator.onLine !== false
+      ) {
+        syncUnlockState({ render: true });
+      }
+    }, UNLOCK_SYNC_INTERVAL_MS);
+  }
+
+  function syncUnlocksWhenAppReturns() {
+    if (
+      currentGuest &&
+      document.visibilityState === "visible" &&
+      navigator.onLine !== false
+    ) {
+      syncUnlockState({
+        force: true,
+        render: true
+      });
+    }
   }
 
   async function saveAndVerifyRemote(action, payload, verifier) {
@@ -483,7 +639,22 @@
     if (remote.socialLikes && typeof remote.socialLikes === "object") {
       state.socialLikes = { ...remote.socialLikes };
     }
-    if (remote.manualUnlocks && typeof remote.manualUnlocks === "object") state.manualUnlocks = { ...state.manualUnlocks, ...remote.manualUnlocks };
+    if (
+      Object.prototype.hasOwnProperty.call(remote, "manualUnlocks")
+    ) {
+      applyRemoteUnlockSnapshot(
+        {
+          manualUnlocks: remote.manualUnlocks,
+          unlockRevision: remote.unlockRevision,
+          generatedAt: remote.generatedAt
+        },
+        {
+          persist: false,
+          render: false
+        }
+      );
+    }
+
     state.lastSyncAt = new Date().toISOString();
     state.lastRemoteError = "";
     saveState();
@@ -594,6 +765,14 @@
     configureNavigation();
     bindShellEvents();
     window.addEventListener("popstate", handleBrowserNavigation);
+    window.addEventListener("focus", syncUnlocksWhenAppReturns);
+    window.addEventListener("online", syncUnlocksWhenAppReturns);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        syncUnlocksWhenAppReturns();
+      }
+    });
+    startUnlockAutoSync();
 
     if (state.currentGuestId) {
       const guest = getGuestById(state.currentGuestId);
@@ -613,6 +792,13 @@
 
     migrateSectionNotificationBaselineBeforeSync();
     updateNotificationUi();
+
+    window.setTimeout(() => {
+      syncUnlockState({
+        force: true,
+        render: true
+      });
+    }, 0);
   }
 
   function showLandingFromHistory() {
@@ -991,6 +1177,17 @@
     }
 
     renderCurrentRoute();
+
+    if (
+      currentGuest &&
+      (
+        !state.lastUnlockSyncAt ||
+        Date.now() - Date.parse(state.lastUnlockSyncAt) >
+          UNLOCK_SYNC_MIN_GAP_MS
+      )
+    ) {
+      syncUnlockState({ render: true });
+    }
 
     window.requestAnimationFrame(() => {
       if (route === "trivia" && triviaFocusTarget) {
@@ -3841,6 +4038,11 @@
           <small>Base de datos</small>
           <strong>${remoteStatus === "online" ? "Datos al día" : remoteStatus === "connecting" ? "Sincronizando…" : remoteStatus === "error" ? "Error de conexión" : isConfigured() ? "Pendiente de sincronización" : "No configurado"}</strong>
           <p>${state.lastSyncAt ? `Última sincronización: ${formatDateLabel(state.lastSyncAt)}` : "Todavía no se registró una sincronización en este navegador."}</p>
+          <small class="admin-global-config-status">
+            ${state.lastUnlockSyncAt
+              ? `Configuración global: ${formatDateLabel(state.lastUnlockSyncAt)}`
+              : "Configuración global pendiente"}
+          </small>
         </div>
         <button id="syncNow" type="button">${uiIcon("sync")}<span>Sincronizar ahora</span></button>
       </section>
@@ -4925,12 +5127,10 @@
       const key = control.dataset.unlockKey;
       const open = control.checked;
 
-      // Guardamos qué secciones ya conocía este invitado antes del cambio.
-      // Así, la sección recién habilitada queda pendiente como notificación.
       initializeCurrentNotifications();
-
       control.disabled = true;
-      const saved = await postToSheets("saveUnlock", {
+
+      const saved = await writeToSheets("saveUnlock", {
         key,
         open,
         adminPassword: state.adminPassword,
@@ -4944,18 +5144,43 @@
         return;
       }
 
-      state.manualUnlocks[key] = open;
-      saveState();
-      scheduleSilentSync();
+      const serverUnlockState =
+        saved.details?.unlockState ||
+        saved.response?.data?.details?.unlockState ||
+        null;
+
+      if (serverUnlockState) {
+        applyRemoteUnlockSnapshot(
+          {
+            manualUnlocks: serverUnlockState.manualUnlocks,
+            unlockRevision: serverUnlockState.revision,
+            generatedAt: serverUnlockState.generatedAt
+          },
+          {
+            render: false
+          }
+        );
+      } else {
+        // Compatibilidad durante el despliegue.
+        state.manualUnlocks = {
+          ...state.manualUnlocks,
+          [key]: open
+        };
+        saveState();
+        await syncFromSheets(false);
+      }
 
       updateSectionNavigationState();
       updateNotificationUi();
 
       const sectionName = sectionLabelForKey(key);
-      const isSectionKey = SECTION_DEFINITIONS.some(item => item.key === key);
+      const isSectionKey = SECTION_DEFINITIONS.some(
+        item => item.key === key
+      );
       const featureMessage = isSectionKey
-        ? `${sectionName} ${open ? "habilitada" : "bloqueada"}.`
+        ? `${sectionName} ${open ? "habilitada" : "oculta"}.`
         : (open ? "Juego habilitado." : "Juego oculto.");
+
       toast(featureMessage);
       renderCurrentRoute();
     }));
