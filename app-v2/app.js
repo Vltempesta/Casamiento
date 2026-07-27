@@ -265,7 +265,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32438",
+      appVersion: "32439",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1605,6 +1605,7 @@
             <div>
               <small>Traslado</small>
               <strong>Micro / Combi</strong>
+              <p>Confirmá en la asistencia</p>
             </div>
           </button>
 
@@ -1613,14 +1614,16 @@
             <div>
               <small>Vestimenta</small>
               <strong>Elegante sport</strong>
+              <p>El lugar tiene mucho césped, ¡vení con calzado cómodo!</p>
             </div>
           </article>
 
           <button type="button" class="home-essential-row home-essential-link home-essential-diet" data-go="asistencia">
             <span class="home-essential-icon">${uiIcon("food")}</span>
             <div>
-              <small>Restricciones alimentarias</small>
-              <strong>Confirmar en la asistencia</strong>
+              <small>Información importante</small>
+              <strong>Restricciones alimentarias</strong>
+              <p>Confirmá en la asistencia</p>
             </div>
           </button>
         </div>
