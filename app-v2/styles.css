@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32435 · Fondo bordado minimalista en portada ===== */
+/* ===== v32436 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32435');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32436');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32435 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32436 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32435');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32436');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32435 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32436 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32435');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32436');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32435 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32436 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32435 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32436 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32435 · Inicio minimalista ===== */
+/* ===== v32436 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32435 · Navegación en menú hamburguesa ===== */
+/* ===== v32436 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32435 · UX universal 30–70 años ===== */
+/* ===== v32436 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32435 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32436 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32435 · Ajustes UX solicitados ===== */
+/* ===== v32436 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32435 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32436 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32435 · Reset seguro de datos de prueba ===== */
+/* ===== v32436 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32435 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32436 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32435 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32436 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32435 · Estados reales de guardado ===== */
+/* ===== v32436 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32435 · Guardado rápido ===== */
+/* ===== v32436 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32435 · Seguridad de Administración ===== */
+/* ===== v32436 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32435 · Mejoras integrales
+   v32436 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3134,7 +3134,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Optimización móvil, historial y vistas compactas
+   v32436 · Optimización móvil, historial y vistas compactas
    ============================================================ */
 .guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
 
@@ -3167,7 +3167,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · compactación móvil y refinamiento visual
+   v32436 · compactación móvil y refinamiento visual
    ============================================================ */
 
 /* Barra superior: inicial + nombre + casita + menú */
@@ -3499,7 +3499,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Ranking vertical y ajustes de espaciado
+   v32436 · Ranking vertical y ajustes de espaciado
    ============================================================ */
 
 /* Cuenta regresiva sin fecha fija */
@@ -3713,7 +3713,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Ranking ultra compacto y alineado
+   v32436 · Ranking ultra compacto y alineado
    ============================================================ */
 
 .ranking-summary-ultra {
@@ -3943,7 +3943,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Ranking corregido con clases aisladas
+   v32436 · Ranking corregido con clases aisladas
    ============================================================ */
 
 .vf-ranking-head {
@@ -4172,7 +4172,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Ranking equilibrado, menú sutil e invitados compactos
+   v32436 · Ranking equilibrado, menú sutil e invitados compactos
    ============================================================ */
 
 /* Botón hamburguesa apenas más chico */
@@ -4518,7 +4518,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Acciones del ranking al pie
+   v32436 · Acciones del ranking al pie
    ============================================================ */
 
 .vf18-ranking-title h3 {
@@ -4565,7 +4565,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Menú, Mi equipo, Social y Regalos
+   v32436 · Menú, Mi equipo, Social y Regalos
    ============================================================ */
 .menu-nav-clean{gap:8px!important}.menu-nav-clean .menu-group{gap:3px!important}.menu-nav-clean .menu-group+.menu-group{margin-top:5px;padding-top:10px;border-top:1px solid rgba(132,104,68,.15)}.menu-nav-clean .menu-group-admin{margin-top:5px!important;padding-top:10px!important}.menu-nav-clean .menu-group>p{display:none!important}
 .team-ranking-summary-button{display:grid!important;grid-template-columns:23px auto auto!important;gap:7px!important;align-items:center!important;width:auto!important;min-width:156px!important;min-height:43px!important;padding:7px 9px!important;border-radius:13px!important}.team-ranking-summary-icon{display:grid!important;place-items:center!important}.team-ranking-summary-icon .ui-icon{width:18px!important;height:18px!important}.team-ranking-summary-label{display:block!important;color:#fff!important;font-size:11px!important;font-weight:900!important}.team-ranking-summary-data{display:flex!important;align-items:center!important;gap:5px!important;padding-left:7px;border-left:1px solid rgba(255,255,255,.23)}.team-ranking-summary-data b,.team-ranking-summary-data em{display:block!important;color:#fff!important;font-style:normal;white-space:nowrap}.team-ranking-summary-data b{font-size:10px}.team-ranking-summary-data em{min-width:23px;padding:3px 5px;border-radius:999px;background:rgba(255,255,255,.16);font-size:9px;font-weight:900}
@@ -4574,7 +4574,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Coherencia tipográfica, RSVP y Admin compacto
+   v32436 · Coherencia tipográfica, RSVP y Admin compacto
    ============================================================ */
 
 #view .section-head {
@@ -4833,7 +4833,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Menú inferior persistente
+   v32436 · Menú inferior persistente
    ============================================================ */
 
 #mainScreen {
@@ -5168,7 +5168,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Refinamiento de navegación y asistencia
+   v32436 · Refinamiento de navegación y asistencia
    ============================================================ */
 
 /* Hamburguesa superior: exactamente tan compacta como Inicio */
@@ -5486,7 +5486,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Ajustes de Inicio, Social, RSVP y Ranking
+   v32436 · Ajustes de Inicio, Social, RSVP y Ranking
    ============================================================ */
 
 /* Sin botón Inicio superior: hamburguesa ocupa el único acceso circular */
@@ -5634,7 +5634,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Dashboard de restricciones y auditoría compacta
+   v32436 · Dashboard de restricciones y auditoría compacta
    ============================================================ */
 
 /* Dashboard: seis indicadores en 3 x 2, un poco más legibles */
@@ -5826,7 +5826,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Últimos retoques de Inicio, RSVP y Sumá puntos
+   v32436 · Últimos retoques de Inicio, RSVP y Sumá puntos
    ============================================================ */
 
 /* CTA principal pendiente: bordó oscuro, blanco y dorado */
@@ -5948,7 +5948,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Doble trivia
+   v32436 · Doble trivia
    ============================================================ */
 
 .trivia-who-card {
@@ -6014,7 +6014,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Likes, destacados y dashboard Admin
+   v32436 · Likes, destacados y dashboard Admin
    ============================================================ */
 
 /* Botón Me gusta */
@@ -6266,7 +6266,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Inicio, traslados, En viaje, Reglas y bloqueos
+   v32436 · Inicio, traslados, En viaje, Reglas y bloqueos
    ============================================================ */
 
 .home-countdown-v2{min-height:50px!important;padding:7px 11px!important;border-radius:14px!important}
@@ -6294,7 +6294,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Ubicación, cronograma y cabecera de equipo
+   v32436 · Ubicación, cronograma y cabecera de equipo
    ============================================================ */
 
 #mainScreen .topbar-person {
@@ -6436,7 +6436,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Notificaciones, regalos y refinamientos
+   v32436 · Notificaciones, regalos y refinamientos
    ============================================================ */
 
 /* Topbar nuevamente con inicial */
@@ -7101,7 +7101,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32435 · Diseño optimizado y restaurado
+   v32436 · Diseño optimizado y restaurado
    ============================================================ */
 
 /* Eliminar únicamente decoraciones internas punteadas */
@@ -7431,5 +7431,362 @@ body.admin-modal-open { overflow:hidden; }
 
   #view .team-ranking-summary-label {
     display: none !important;
+  }
+}
+
+
+/* ============================================================
+   v32436 · Tipografía uniforme e integrantes compactos
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Sistema tipográfico
+   - Textos y controles: Inter
+   - Títulos y encabezados: Cinzel
+   ------------------------------------------------------------ */
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--font-body) !important;
+}
+
+#mainScreen p,
+#mainScreen small,
+#mainScreen label,
+#mainScreen legend,
+#mainScreen input,
+#mainScreen textarea,
+#mainScreen select,
+#mainScreen button,
+#mainScreen time,
+#mainScreen .badge,
+#mainScreen .form-note,
+#mainScreen .status-pill,
+#mainScreen .topbar-name,
+#mainScreen .guest-pill-copy,
+#mainScreen .guest-challenge-status {
+  font-family: var(--font-body) !important;
+}
+
+#mainScreen h1,
+#mainScreen h2,
+#mainScreen h3,
+#mainScreen h4,
+#mainScreen .eyebrow,
+#mainScreen .home-kicker,
+#mainScreen .section-head h3,
+#mainScreen .team-summary-copy h3,
+#mainScreen .vf18-ranking-title h3 {
+  font-family: var(--font-title) !important;
+}
+
+#mainScreen strong,
+#mainScreen b,
+#mainScreen em {
+  font-style: normal;
+}
+
+/* ------------------------------------------------------------
+   Mi equipo · barra azul completa y estable
+   ------------------------------------------------------------ */
+#view .team-summary-compact {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  padding: 11px 12px !important;
+  border-color: color-mix(in srgb,var(--local-accent) 20%,var(--line)) !important;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb,var(--local-accent) 5%,#fff),
+      rgba(255,253,248,.92)
+    ) !important;
+}
+
+#view .team-summary-head {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 51px minmax(0,1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+#view .team-summary-logo {
+  width: 49px !important;
+  height: 49px !important;
+}
+
+#view .team-summary-copy {
+  min-width: 0 !important;
+}
+
+#view .team-summary-copy .eyebrow {
+  margin: 0 !important;
+  font-size: 7px !important;
+}
+
+#view .team-summary-copy h3 {
+  margin: 1px 0 2px !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+}
+
+#view .team-summary-copy small {
+  display: block !important;
+  overflow: hidden !important;
+  color: var(--muted) !important;
+  font-size: 8.5px !important;
+  line-height: 1.2 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#view .team-ranking-bluebar {
+  width: 100% !important;
+  min-height: 48px !important;
+  display: grid !important;
+  grid-template-columns: minmax(82px,1.35fr) repeat(3,minmax(54px,.72fr)) !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 13px !important;
+  background: linear-gradient(145deg,#4a708c,#31536e) !important;
+  color: #fff !important;
+  box-shadow: 0 7px 15px rgba(47,82,110,.18) !important;
+}
+
+#view .team-ranking-bluebar-title,
+#view .team-ranking-bluebar-stat {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 9px;
+}
+
+#view .team-ranking-bluebar-title {
+  gap: 7px;
+  justify-content: flex-start;
+}
+
+#view .team-ranking-bluebar-title .ui-icon {
+  width: 18px;
+  height: 18px;
+}
+
+#view .team-ranking-bluebar-title strong {
+  color: #fff !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+}
+
+#view .team-ranking-bluebar-stat {
+  display: grid;
+  place-content: center;
+  border-left: 1px solid rgba(255,255,255,.20);
+  text-align: center;
+}
+
+#view .team-ranking-bluebar-stat small {
+  display: block;
+  color: rgba(255,255,255,.70) !important;
+  font-size: 6.5px !important;
+  font-weight: 750 !important;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+#view .team-ranking-bluebar-stat b {
+  display: block;
+  margin-top: 3px;
+  color: #fff !important;
+  font-size: 11px !important;
+  line-height: 1;
+}
+
+#view .team-ranking-bluebar-stat:nth-child(2) b {
+  color: #e8ca80 !important;
+}
+
+/* Anular visualmente la estructura anterior sin afectar otros botones */
+#view .team-ranking-summary-button {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------
+   Integrantes de Mi equipo
+   ------------------------------------------------------------ */
+#view .team-member-list {
+  gap: 5px !important;
+}
+
+#view .team-member-list .guest-pill {
+  min-height: 47px !important;
+  grid-template-columns: 31px minmax(0,1fr) !important;
+  gap: 7px !important;
+  padding: 6px 7px !important;
+  border-radius: 11px !important;
+}
+
+#view .team-member-list .guest-pill-avatar {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+#view .team-member-list .guest-person-initial {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 14px !important;
+}
+
+#view .team-member-list .guest-pill-copy > strong {
+  font-size: 11.5px !important;
+  line-height: 1.08 !important;
+}
+
+#view .team-member-list .captain-label,
+#view .team-member-list .declined-label {
+  margin-top: 1px !important;
+  padding: 1px 4px !important;
+  font-size: 6px !important;
+}
+
+#view .team-member-list .guest-challenge-status {
+  margin-top: 4px !important;
+}
+
+#view .team-member-list .guest-challenge-status > span {
+  gap: 4px !important;
+  font-size: 7px !important;
+  line-height: 1 !important;
+}
+
+#view .team-member-list .guest-challenge-status > span b {
+  font-size: 8px !important;
+}
+
+#view .team-member-list .guest-challenge-status > span em {
+  font-size: 7px !important;
+}
+
+#view .team-member-list .guest-challenge-status > i {
+  height: 3px !important;
+  margin-top: 3px !important;
+}
+
+/* ------------------------------------------------------------
+   Invitados · integrantes desplegados más compactos
+   ------------------------------------------------------------ */
+#view .guest-team-panel .guest-list {
+  gap: 4px !important;
+}
+
+#view .guest-team-panel .guest-pill {
+  min-height: 40px !important;
+  grid-template-columns: 28px minmax(0,1fr) !important;
+  gap: 7px !important;
+  padding: 5px 7px !important;
+  border-radius: 10px !important;
+}
+
+#view .guest-team-panel .guest-pill-avatar {
+  width: 27px !important;
+  height: 27px !important;
+}
+
+#view .guest-team-panel .guest-person-initial {
+  width: 27px !important;
+  height: 27px !important;
+  font-size: 13px !important;
+}
+
+#view .guest-team-panel .guest-pill-copy > strong {
+  font-size: 11px !important;
+  line-height: 1.08 !important;
+}
+
+#view .guest-team-panel .captain-label,
+#view .guest-team-panel .declined-label {
+  margin-top: 1px !important;
+  padding: 1px 4px !important;
+  font-size: 6px !important;
+}
+
+/* Mantener títulos elegantes dentro de las tarjetas */
+#view .team-members-card h4,
+#view .guest-team-toggle strong,
+#view .ranking-social-unified h4,
+#view .gift-card-heading h4 {
+  font-family: var(--font-title) !important;
+}
+
+@media(max-width:600px) {
+  #view .team-summary-compact {
+    gap: 7px !important;
+    padding: 9px 10px !important;
+  }
+
+  #view .team-summary-head {
+    grid-template-columns: 44px minmax(0,1fr);
+    gap: 8px;
+  }
+
+  #view .team-summary-logo {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  #view .team-summary-copy h3 {
+    font-size: 19px !important;
+  }
+
+  #view .team-ranking-bluebar {
+    min-height: 45px !important;
+    grid-template-columns: minmax(72px,1.2fr) repeat(3,minmax(48px,.72fr)) !important;
+  }
+
+  #view .team-ranking-bluebar-title,
+  #view .team-ranking-bluebar-stat {
+    padding: 6px 5px;
+  }
+
+  #view .team-ranking-bluebar-title strong {
+    font-size: 9px !important;
+  }
+
+  #view .team-ranking-bluebar-stat small {
+    font-size: 5.8px !important;
+  }
+
+  #view .team-ranking-bluebar-stat b {
+    font-size: 10px !important;
+  }
+
+  #view .team-member-list {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media(max-width:390px) {
+  #view .team-ranking-bluebar {
+    grid-template-columns: 60px repeat(3,minmax(46px,1fr)) !important;
+  }
+
+  #view .team-ranking-bluebar-title {
+    justify-content: center;
+  }
+
+  #view .team-ranking-bluebar-title strong {
+    display: none;
+  }
+
+  #view .team-ranking-bluebar-title .ui-icon {
+    width: 17px;
+    height: 17px;
   }
 }

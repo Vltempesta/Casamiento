@@ -265,7 +265,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32435",
+      appVersion: "32436",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2169,18 +2169,31 @@
     return `
       ${captainGuestStyles()}
       <section class="team-summary-compact section-card" style="--local-accent:${team.accent}">
-        ${teamLogo(team, "team-summary-logo")}
-        <div class="team-summary-copy">
-          <p class="eyebrow">Mi equipo</p>
-          <h3>${escapeHTML(team.name)}</h3>
-          <small>Capitán: ${escapeHTML(team.captain)} · ${activePlayers} integrantes</small>
+        <div class="team-summary-head">
+          ${teamLogo(team, "team-summary-logo")}
+          <div class="team-summary-copy">
+            <p class="eyebrow">Mi equipo</p>
+            <h3>${escapeHTML(team.name)}</h3>
+            <small>Capitán: ${escapeHTML(team.captain)}</small>
+          </div>
         </div>
-        <button type="button" data-go="ranking" class="team-ranking-summary-button">
-          <span class="team-ranking-summary-icon">${uiIcon("ranking")}</span>
-          <span class="team-ranking-summary-label">Ranking</span>
-          <span class="team-ranking-summary-data">
-            <b>${teamPoints} pts</b>
-            <em>${teamPosition}</em>
+
+        <button type="button" data-go="ranking" class="team-ranking-bluebar">
+          <span class="team-ranking-bluebar-title">
+            ${uiIcon("ranking")}
+            <strong>Ranking</strong>
+          </span>
+          <span class="team-ranking-bluebar-stat">
+            <small>Posición</small>
+            <b>${teamPosition}</b>
+          </span>
+          <span class="team-ranking-bluebar-stat">
+            <small>Puntos</small>
+            <b>${teamPoints}</b>
+          </span>
+          <span class="team-ranking-bluebar-stat">
+            <small>Integrantes</small>
+            <b>${activePlayers}</b>
           </span>
         </button>
       </section>
