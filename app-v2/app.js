@@ -263,7 +263,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32430",
+      appVersion: "32431",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -579,7 +579,12 @@
     $("#loginScreen").classList.add("hidden");
     $("#mainScreen").classList.remove("hidden");
     $("#welcomeTitle").textContent = guest.firstName || guestFullName(guest);
-    $("#welcomeInitial").textContent = (guest.firstName || guest.lastName || "V").charAt(0).toUpperCase();
+    $("#welcomeTeam").textContent = `Equipo ${team.name}`;
+
+    const logoHost = $("#welcomeTeamLogo");
+    if (logoHost) {
+      logoHost.innerHTML = teamLogo(team, "topbar-team-logo-image");
+    }
   }
 
   function showLandingFromHistory() {
@@ -946,6 +951,8 @@
       inicio: renderHome,
       asistencia: renderRSVP,
       traslado: renderTransport,
+      ubicacion: renderLocation,
+      cronograma: renderSchedule,
       "en-viaje": renderTravel,
       reglas: renderRules,
       equipo: renderTeam,
@@ -1091,6 +1098,8 @@
   const SECTION_DEFINITIONS = [
     { route: "asistencia", key: "section-asistencia", title: "Asistencia", text: "Confirmación, traslado y restricciones.", defaultOpen: true },
     { route: "traslado", key: "transport-info", title: "Traslados", text: "Información de micros y viaje particular.", defaultOpen: true },
+    { route: "ubicacion", key: "location-section", title: "Ubicación", text: "Locación, mapa e indicaciones para llegar.", defaultOpen: false },
+    { route: "cronograma", key: "schedule-section", title: "Cronograma", text: "Horarios principales del casamiento.", defaultOpen: true },
     { route: "en-viaje", key: "travel-section", title: "En viaje", text: "Consignas, playlist y trivias del recorrido.", defaultOpen: false },
     { route: "reglas", key: "rules-section", title: "Reglas", text: "Cómo se suman y restan puntos.", defaultOpen: true },
     { route: "puntos", key: "section-puntos", title: "Sumá puntos", text: "Juegos y desafíos.", defaultOpen: true },
@@ -1258,7 +1267,7 @@
     const team = getTeam(currentGuest.team);
     const rsvp = state.rsvps[currentGuest.id];
     const rsvpDone = hasFinalRsvp(rsvp);
-    const locationOpen = isUnlocked("location");
+    const locationOpen = isSectionOpen("ubicacion");
     const menuOpen = isUnlocked("menu");
     const giftsOpen = isTriviaGameOpen("gifts-section");
     const rank = calculateRanking();
@@ -1310,11 +1319,11 @@
         <div class="home-section-heading"><div><p class="home-kicker">Información práctica</p><h3 id="homeEssentialTitle">Lo esencial</h3></div></div>
         <div class="home-essential-card">
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("calendar")}</span><div><small>Fecha</small><strong>Sábado 24 de octubre</strong><p>18:00 a 03:00</p></div></article>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? escapeHTML(DATA.couple.placeName) : "Ubicación reservada"}</strong><p>${locationOpen ? escapeHTML(DATA.couple.placeArea) : "Se revelará más cerca de la fecha."}</p></div></article>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("dress")}</span><div><small>Vestimenta</small><strong>Elegante sport</strong><p>Habrá pasto: elegí calzado cómodo.</p></div></article>
+          <button type="button" class="home-essential-row home-essential-link" data-go="ubicacion"><span class="home-essential-icon">${uiIcon("pin")}</span><div><small>Lugar</small><strong>${locationOpen ? "Estancia Los Candiles" : "Ubicación reservada"}</strong><p>${locationOpen ? "Solís, Provincia de Buenos Aires." : "Ingresá para consultar cuándo se habilita."}</p></div><b aria-hidden="true">›</b></button>
+          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("dress")}</span><div><small>Vestimenta</small><strong>Elegante sport</strong><p>El evento es en césped. Sugerimos calzado cómodo y abrigo para la noche.</p></div></article>
           <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("food")}</span><div><small>Menú</small><strong>${menuOpen ? "Menú habilitado" : "Próximamente"}</strong><p>${menuOpen ? "Recepción, cena, postre y trasnoche." : "Cargá tus restricciones en Asistencia."}</p></div></article>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Indicá en Asistencia si te interesa el servicio.</p></div></article>
-          <article class="home-essential-row"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Regalos</small><strong>${giftsOpen ? "Información disponible" : "Próximamente"}</strong><p>${giftsOpen ? "Ingresá a Regalos para ver la información." : "La sección se habilitará más adelante."}</p></div></article>
+          <button type="button" class="home-essential-row home-essential-link" data-go="traslado"><span class="home-essential-icon">${uiIcon("bus")}</span><div><small>Traslado</small><strong>Traslado en micro</strong><p>Indicá en Asistencia si te interesa el servicio.</p></div><b aria-hidden="true">›</b></button>
+          <button type="button" class="home-essential-row home-essential-link" data-go="regalos"><span class="home-essential-icon">${uiIcon("gift")}</span><div><small>Regalos</small><strong>${giftsOpen ? "Información disponible" : "Próximamente"}</strong><p>${giftsOpen ? "Ingresá a Regalos para ver la información." : "La sección se habilitará más adelante."}</p></div><b aria-hidden="true">›</b></button>
         </div>
       </section>
 
@@ -2669,6 +2678,79 @@
       .social-reply-form{margin-top:8px;padding:8px;border:1px solid rgba(54,85,111,.13);border-radius:11px;background:rgba(54,85,111,.035)}.social-reply-form textarea{width:100%;min-height:56px;padding:8px 9px;border-radius:9px;resize:vertical}.social-reply-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}.social-reply-form button{min-height:30px;padding:6px 9px;font-size:9px}
       .social-replies{display:grid;gap:6px;margin:9px 0 0 19px;padding-left:9px;border-left:1px solid color-mix(in srgb,var(--social-accent) 30%,var(--line))}.social-reply{display:grid;grid-template-columns:30px minmax(0,1fr);gap:7px;align-items:start;padding:7px;border-radius:10px;background:rgba(255,255,255,.38)}.social-reply-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.social-reply-meta strong{font-size:10px}.social-reply-meta span{display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:7px}.social-reply-meta time{margin-left:auto;color:var(--muted);font-size:7px}.social-reply-body p{margin:4px 0 0;font-size:10px;line-height:1.4;white-space:pre-wrap;word-break:break-word}.social-empty{display:grid;place-items:center;min-height:160px;text-align:center}.social-empty>.ui-icon{width:29px;height:29px;color:#36556f}.social-empty strong{margin-top:7px}.social-empty p{margin:4px 0 0;font-size:10px}
       @media(max-width:600px){.social-title-row{align-items:center}.social-title-row .section-head p:not(.eyebrow){display:none}.social-refresh-button span{display:none}.social-refresh-button{width:33px;padding:6px}.social-composer{grid-template-columns:34px minmax(0,1fr);padding:10px}.social-avatar{width:34px;height:34px;font-size:15px}.social-author{grid-template-columns:34px minmax(0,1fr)}.social-post{padding:10px}.social-post-text{font-size:11px}.social-replies{margin-left:10px;padding-left:7px}}
+    </style>`;
+  }
+
+
+  function renderLocation() {
+    const mapsUrl = "https://share.google/JBRF4p4QiJy3muAa7";
+
+    return `
+      ${locationStyles()}
+      ${sectionHeader("casamiento", "Ubicación", "La locación y el acceso para llegar sin vueltas.")}
+
+      <section class="location-hero section-card">
+        <span>${uiIcon("pin")}</span>
+        <div>
+          <p class="eyebrow">Lugar</p>
+          <h3>Estancia Los Candiles</h3>
+          <p>Solís, Provincia de Buenos Aires.</p>
+          <a href="${mapsUrl}" target="_blank" rel="noopener">
+            ${uiIcon("pin")}<span>Abrir en Google Maps</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="location-note section-card">
+        ${uiIcon("car")}
+        <div>
+          <strong>Viajando de forma particular</strong>
+          <p>Usá el acceso a Maps para abrir la ruta desde tu ubicación. El día del evento también compartiremos cualquier indicación adicional necesaria.</p>
+        </div>
+      </section>`;
+  }
+
+  function locationStyles() {
+    return `<style>
+      .location-hero{display:grid;grid-template-columns:60px minmax(0,1fr);gap:15px;align-items:center;padding:20px;border-color:rgba(116,51,68,.21);background:radial-gradient(circle at 90% 4%,rgba(201,170,114,.17),transparent 34%),linear-gradient(135deg,rgba(116,51,68,.075),rgba(255,253,248,.92))}
+      .location-hero>span{width:58px;height:58px;display:grid;place-items:center;border-radius:18px;background:#743344;color:#fffaf2}.location-hero>span .ui-icon{width:29px;height:29px}.location-hero h3{margin:3px 0 4px;font-size:28px}.location-hero p:not(.eyebrow){margin:0;color:var(--muted);font-size:11px}.location-hero a{width:max-content;display:inline-flex;align-items:center;gap:7px;min-height:38px;margin-top:11px;padding:8px 12px;border-radius:11px;background:linear-gradient(145deg,#ddb96f,#bc8d3e);color:#3f1a22;font-size:10px;font-weight:900;text-decoration:none}.location-hero a .ui-icon{width:16px;height:16px}
+      .location-note{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:start;margin-top:8px;padding:13px}.location-note>.ui-icon{width:24px;height:24px;color:#36556f}.location-note strong{display:block;font-size:13px}.location-note p{margin:3px 0 0;color:var(--muted);font-size:9px;line-height:1.4}
+      @media(max-width:600px){.location-hero{grid-template-columns:45px minmax(0,1fr);padding:15px}.location-hero>span{width:43px;height:43px}.location-hero h3{font-size:22px}.location-hero a{width:100%;justify-content:center}}
+    </style>`;
+  }
+
+  function renderSchedule() {
+    const schedule = [
+      { time: "18:00", title: "Llegada", detail: "Recepción de invitados." },
+      { time: "18:30", title: "Ceremonia", detail: "El momento más esperado." },
+      { time: "19:00", title: "Recepción + evento sorpresa", detail: "Comienza la experiencia." },
+      { time: "21:00", title: "Cena y fiesta", detail: "A comer, brindar y bailar." },
+      { time: "03:00", title: "Fin :)", detail: "Regreso y cierre de la celebración." }
+    ];
+
+    return `
+      ${scheduleStyles()}
+      ${sectionHeader("24 de octubre", "Cronograma", "Los momentos principales para que no te pierdas nada.")}
+
+      <section class="schedule-card section-card">
+        ${schedule.map((item, index) => `
+          <article class="schedule-row ${index === schedule.length - 1 ? "is-last" : ""}">
+            <time>${escapeHTML(item.time)}</time>
+            <span><i></i></span>
+            <div>
+              <strong>${escapeHTML(item.title)}</strong>
+              <p>${escapeHTML(item.detail)}</p>
+            </div>
+          </article>
+        `).join("")}
+      </section>`;
+  }
+
+  function scheduleStyles() {
+    return `<style>
+      .schedule-card{padding:11px 15px;background:linear-gradient(145deg,rgba(255,253,248,.93),rgba(239,228,209,.72))}
+      .schedule-row{display:grid;grid-template-columns:61px 24px minmax(0,1fr);gap:9px;align-items:stretch;min-height:69px}.schedule-row time{padding-top:15px;color:#743344;font-family:var(--font-title);font-size:17px;font-weight:900;text-align:right}.schedule-row>span{position:relative;display:flex;justify-content:center}.schedule-row>span::after{content:"";position:absolute;top:31px;bottom:-1px;width:2px;background:linear-gradient(#c9aa72,rgba(201,170,114,.25))}.schedule-row.is-last>span::after{display:none}.schedule-row>span i{position:relative;z-index:1;width:13px;height:13px;margin-top:18px;border:3px solid #fffaf2;border-radius:50%;background:#743344;box-shadow:0 0 0 2px rgba(116,51,68,.17)}.schedule-row>div{align-self:start;margin-top:9px;padding:9px 12px;border:1px solid rgba(132,104,68,.11);border-radius:12px;background:rgba(255,255,255,.44)}.schedule-row strong{display:block;font-size:14px}.schedule-row p{margin:3px 0 0;color:var(--muted);font-size:9px}
+      @media(max-width:500px){.schedule-card{padding:8px}.schedule-row{grid-template-columns:52px 20px minmax(0,1fr);gap:6px}.schedule-row time{font-size:15px}.schedule-row>div{padding:8px 10px}}
     </style>`;
   }
 
