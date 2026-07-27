@@ -21,6 +21,7 @@
   let silentSyncTimer = null;
   let countdownTimer = null;
   let selectedTeamViewId = null;
+  let travelMode = null;
   let triviaFocusTarget = null;
   let selectedGuestId = null;
   let suggestionMatches = [];
@@ -262,7 +263,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32429",
+      appVersion: "32430",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -942,14 +943,31 @@
 
   function renderCurrentRoute() {
     const routes = {
-      inicio: renderHome, asistencia: renderRSVP, traslado: renderTransport, equipo: renderTeam,
-      puntos: renderPointsHub, trivia: renderTriviaHub, ranking: renderRanking, invitados: renderGuests,
-      social: renderSocial, regalos: renderGifts, admin: renderAdmin
+      inicio: renderHome,
+      asistencia: renderRSVP,
+      traslado: renderTransport,
+      "en-viaje": renderTravel,
+      reglas: renderRules,
+      equipo: renderTeam,
+      puntos: renderPointsHub,
+      trivia: renderTriviaHub,
+      ranking: renderRanking,
+      invitados: renderGuests,
+      social: renderSocial,
+      regalos: renderGifts,
+      admin: renderAdmin
     };
-    const html = (routes[currentRoute] || renderHome)();
+
+    updateSectionNavigationState();
+
+    const html = !isSectionOpen(currentRoute)
+      ? renderLockedSection(currentRoute)
+      : (routes[currentRoute] || renderHome)();
+
     $("#view").innerHTML = html;
     bindViewEvents(currentRoute);
   }
+
 
   function sectionHeader(kicker, title, text) {
     return `
@@ -1006,7 +1024,10 @@
       question: '<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2"/><path d="M12 17h.01"/>',
       chat: '<path d="M4 5h11a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4H9l-5 4v-4a4 4 0 0 1-2-3.5V9a4 4 0 0 1 2-4Z"/><path d="M7 9h7M7 12h4"/>',
       person: '<circle cx="12" cy="8" r="3"/><path d="M5.5 20c.6-4.3 2.8-6.5 6.5-6.5s5.9 2.2 6.5 6.5"/>',
-      download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>'
+      download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+      car: '<path d="M5 17h14l-1.5-6h-11L5 17Z"/><path d="m7 11 1.5-4h7L17 11"/><circle cx="8" cy="17" r="1.5"/><circle cx="16" cy="17" r="1.5"/><path d="M5 14H3M21 14h-2"/>',
+      road: '<path d="M9 21 11 3h2l2 18"/><path d="M12 6v3M12 12v3M12 18v2"/>',
+      rules: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="m6.5 8 .5.5 1-1"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
@@ -1065,6 +1086,80 @@
     "transport-info": false,
     "gifts-section": false
   };
+
+
+  const SECTION_DEFINITIONS = [
+    { route: "asistencia", key: "section-asistencia", title: "Asistencia", text: "Confirmación, traslado y restricciones.", defaultOpen: true },
+    { route: "traslado", key: "transport-info", title: "Traslados", text: "Información de micros y viaje particular.", defaultOpen: true },
+    { route: "en-viaje", key: "travel-section", title: "En viaje", text: "Consignas, playlist y trivias del recorrido.", defaultOpen: false },
+    { route: "reglas", key: "rules-section", title: "Reglas", text: "Cómo se suman y restan puntos.", defaultOpen: true },
+    { route: "puntos", key: "section-puntos", title: "Sumá puntos", text: "Juegos y desafíos.", defaultOpen: true },
+    { route: "ranking", key: "section-ranking", title: "Ranking", text: "Tabla de posiciones.", defaultOpen: true },
+    { route: "equipo", key: "section-equipo", title: "Mi equipo", text: "Integrantes y progreso.", defaultOpen: true },
+    { route: "invitados", key: "section-invitados", title: "Invitados", text: "Mapa de equipos.", defaultOpen: true },
+    { route: "social", key: "section-social", title: "Social", text: "Mensajes, likes y respuestas.", defaultOpen: true },
+    { route: "regalos", key: "gifts-section", title: "Regalos", text: "Información de regalos.", defaultOpen: false }
+  ];
+
+  function sectionDefinition(route) {
+    const normalizedRoute = route === "trivia" ? "puntos" : route;
+    return SECTION_DEFINITIONS.find(item => item.route === normalizedRoute) || null;
+  }
+
+  function isSectionOpen(route) {
+    if (["inicio", "admin"].includes(route)) return true;
+    const definition = sectionDefinition(route);
+    if (!definition) return true;
+
+    if (Object.prototype.hasOwnProperty.call(state.manualUnlocks || {}, definition.key)) {
+      return state.manualUnlocks[definition.key] === true ||
+        String(state.manualUnlocks[definition.key]).toUpperCase() === "TRUE";
+    }
+    return definition.defaultOpen;
+  }
+
+  function sectionLabelForKey(key) {
+    return SECTION_DEFINITIONS.find(item => item.key === key)?.title || "Sección";
+  }
+
+  function updateSectionNavigationState() {
+    $$("[data-route]").forEach(button => {
+      const locked = !isSectionOpen(button.dataset.route);
+      button.classList.toggle("is-section-locked", locked);
+      if (locked) {
+        button.setAttribute(
+          "aria-label",
+          `${sectionDefinition(button.dataset.route)?.title || button.dataset.route}: bloqueada`
+        );
+      } else {
+        button.removeAttribute("aria-label");
+      }
+    });
+  }
+
+  function renderLockedSection(route) {
+    const definition = sectionDefinition(route) || {
+      title: "Sección",
+      text: "Este contenido se habilitará más adelante."
+    };
+
+    return `
+      <style>
+        .section-locked-page{display:grid;grid-template-columns:56px minmax(0,1fr);gap:14px;align-items:center;min-height:150px;padding:20px;background:linear-gradient(135deg,rgba(116,51,68,.055),rgba(255,253,248,.90));border-color:rgba(116,51,68,.17)}
+        .section-locked-page>span{width:52px;height:52px;display:grid;place-items:center;border-radius:16px;background:rgba(116,51,68,.09);color:#743344}
+        .section-locked-page .ui-icon{width:25px;height:25px}.section-locked-page h3{margin:3px 0 5px;font-size:25px}.section-locked-page p:not(.eyebrow){margin:0;color:var(--muted);font-size:11px}
+      </style>
+      ${sectionHeader("próximamente", definition.title, "")}
+      <section class="section-card section-locked-page">
+        <span>${uiIcon("lock")}</span>
+        <div>
+          <p class="eyebrow">Contenido bloqueado</p>
+          <h3>Se habilitará más adelante</h3>
+          <p>${escapeHTML(definition.text)}</p>
+        </div>
+      </section>`;
+  }
+
 
   const SAMPLE_COUPLE_QUESTIONS = [
     {
@@ -1203,11 +1298,6 @@
         </div>
       </section>
 
-      <section class="home-welcome home-welcome-compact" style="--local-accent:${team.accent}">
-        ${teamLogo(team, "home-team-logo")}
-        <h3>Bienvenido al equipo ${escapeHTML(team.name)}!</h3>
-      </section>
-
       ${rsvpDone ? `<button class="home-rsvp-confirmed" type="button" data-go="asistencia">${uiIcon("checkCircle")}<span>${rsvp.attendance === "si" ? "Asistencia confirmada" : "Respuesta guardada"}</span></button>` : ""}
 
       <section class="home-primary-action home-primary-action--${primaryAction.tone}">
@@ -1316,28 +1406,39 @@
   }
 
   function renderTransport() {
-    const open = isTriviaGameOpen("transport-info");
-
     return `
       ${transportStyles()}
-      ${sectionHeader("casamiento", "Traslado", "")}
-      <section class="transport-hero section-card ${open ? "is-open" : "is-locked"}">
-        <div class="transport-illustration">${uiIcon("bus")}</div>
-        <div class="transport-copy">
-          <span class="transport-status">${open ? "Información habilitada" : "Próximamente"}</span>
-          <h3>${open ? "Información del micro" : "El destino sigue siendo secreto"}</h3>
-          <p>${open
-            ? "Acá vas a encontrar todos los datos para la ida y el regreso. En Asistencia podés avisarnos si te interesa usar este servicio."
-            : "Nos ocupamos de que lleguen cómodos y vuelvan seguros. En Asistencia podés avisarnos si te interesa este servicio. Los horarios y el punto exacto se compartirán más adelante."}</p>
+      ${sectionHeader("casamiento", "Traslados", "Elegí cómo querés llegar a la celebración.")}
+
+      <section class="transport-experience section-card">
+        <span class="transport-experience-icon">${uiIcon("bus")}</span>
+        <div>
+          <p class="eyebrow">Experiencia completa</p>
+          <h3>¡Te recomendamos viajar en micro!</h3>
+          <p>Además de viajar cómodo y seguro, vas a poder participar de las consignas del recorrido y sumar <strong>20 puntos extra</strong> para tu equipo.</p>
+          <button type="button" data-go="asistencia">Elegir micro en Asistencia</button>
         </div>
       </section>
 
-      ${open ? `
-        <section class="transport-grid">
-          <article class="section-card"><span>${uiIcon("pin")}</span><div><small>Punto</small><strong>Obelisco</strong><p>Referencia exacta próximamente.</p></div></article>
-          <article class="section-card"><span>${uiIcon("calendar")}</span><div><small>Ida</small><strong>A confirmar</strong><p>Se informará con anticipación.</p></div></article>
-          <article class="section-card"><span>${uiIcon("bus")}</span><div><small>Regreso</small><strong>03:00 hs</strong><p>Al finalizar la fiesta.</p></div></article>
-        </section>` : ""}`;
+      <section class="transport-options-grid">
+        <article class="section-card transport-option-card">
+          <span>${uiIcon("car")}</span>
+          <div>
+            <small>Viaje particular</small>
+            <strong>La ubicación se habilitará el día de la boda</strong>
+            <p>Ese día vas a encontrar la locación y las indicaciones necesarias dentro de la aplicación.</p>
+          </div>
+        </article>
+
+        <article class="section-card transport-option-card transport-stay-card">
+          <span>${uiIcon("pin")}</span>
+          <div>
+            <small>Alojamiento</small>
+            <strong>¿Te interesa hospedarte por la zona?</strong>
+            <p>Contactá a los novios cuando quieras y te orientamos con opciones cercanas.</p>
+          </div>
+        </article>
+      </section>`;
   }
 
 
@@ -1536,6 +1637,20 @@
           comment: `Confirmación de asistencia · ${guest.firstName || guest.id}`,
           automatic: true
         });
+
+        if (
+          row.attendance === "si" &&
+          ["combi", "micro"].includes(row.transport)
+        ) {
+          entries.push({
+            timestamp: row.updatedAt,
+            gameId: "auto-micro-transport",
+            teamId: team.id,
+            points: 20,
+            comment: `Bonus por viajar en micro · ${guest.firstName || guest.id}`,
+            automatic: true
+          });
+        }
       });
     });
 
@@ -2370,6 +2485,7 @@
   function gameName(id) {
     if (id === "auto-rsvp") return "Confirmación de asistencia";
     if (id === "auto-music-selection") return "Juego musical";
+    if (id === "auto-micro-transport") return "Bonus por viajar en micro";
     if (id === "auto-couple-trivia") return "¿Cuánto conocés a los novios?";
     if (id === "auto-who-is-who-trivia") return "¿Quién es quién?";
     if (id === "discrecional-fede-vani") return "Puntos a discreción";
@@ -2553,6 +2669,115 @@
       .social-reply-form{margin-top:8px;padding:8px;border:1px solid rgba(54,85,111,.13);border-radius:11px;background:rgba(54,85,111,.035)}.social-reply-form textarea{width:100%;min-height:56px;padding:8px 9px;border-radius:9px;resize:vertical}.social-reply-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}.social-reply-form button{min-height:30px;padding:6px 9px;font-size:9px}
       .social-replies{display:grid;gap:6px;margin:9px 0 0 19px;padding-left:9px;border-left:1px solid color-mix(in srgb,var(--social-accent) 30%,var(--line))}.social-reply{display:grid;grid-template-columns:30px minmax(0,1fr);gap:7px;align-items:start;padding:7px;border-radius:10px;background:rgba(255,255,255,.38)}.social-reply-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.social-reply-meta strong{font-size:10px}.social-reply-meta span{display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:7px}.social-reply-meta time{margin-left:auto;color:var(--muted);font-size:7px}.social-reply-body p{margin:4px 0 0;font-size:10px;line-height:1.4;white-space:pre-wrap;word-break:break-word}.social-empty{display:grid;place-items:center;min-height:160px;text-align:center}.social-empty>.ui-icon{width:29px;height:29px;color:#36556f}.social-empty strong{margin-top:7px}.social-empty p{margin:4px 0 0;font-size:10px}
       @media(max-width:600px){.social-title-row{align-items:center}.social-title-row .section-head p:not(.eyebrow){display:none}.social-refresh-button span{display:none}.social-refresh-button{width:33px;padding:6px}.social-composer{grid-template-columns:34px minmax(0,1fr);padding:10px}.social-avatar{width:34px;height:34px;font-size:15px}.social-author{grid-template-columns:34px minmax(0,1fr)}.social-post{padding:10px}.social-post-text{font-size:11px}.social-replies{margin-left:10px;padding-left:7px}}
+    </style>`;
+  }
+
+
+  function renderTravel() {
+    const rsvp = state.rsvps[currentGuest.id] || {};
+    const suggestedMode = ["combi", "micro"].includes(rsvp.transport) ? "micro" : "auto";
+    if (!["micro", "auto"].includes(travelMode)) travelMode = suggestedMode;
+
+    const microActive = travelMode === "micro";
+
+    return `
+      ${travelStyles()}
+      ${sectionHeader("día del casamiento", "En viaje", "Consignas y contenidos para disfrutar desde que empieza el recorrido.")}
+
+      <section class="travel-mode-selector section-card">
+        <button type="button" data-travel-mode="micro" class="${microActive ? "active" : ""}">
+          ${uiIcon("bus")}<span>MICRO</span>
+        </button>
+        <button type="button" data-travel-mode="auto" class="${!microActive ? "active" : ""}">
+          ${uiIcon("car")}<span>AUTO</span>
+        </button>
+      </section>
+
+      ${microActive ? `
+        <section class="travel-hero section-card">
+          <span>${uiIcon("bus")}</span>
+          <div><p class="eyebrow">Modo micro</p><h3>La competencia empieza en el viaje</h3><p>Acá aparecerán las consignas especiales para el micro, la playlist compartida y las trivias relámpago.</p></div>
+        </section>
+        <section class="travel-content-grid">
+          ${travelPlaceholder("music", "Playlist del micro", "Canciones para entrar en clima desde la salida.")}
+          ${travelPlaceholder("question", "Trivias del camino", "Preguntas rápidas para sumar puntos en equipo.")}
+          ${travelPlaceholder("star", "Consignas especiales", "Desafíos que se revelarán durante el recorrido.")}
+        </section>` : `
+        <section class="travel-hero section-card travel-auto-hero">
+          <span>${uiIcon("car")}</span>
+          <div><p class="eyebrow">Modo auto</p><h3>También hay desafíos para el camino</h3><p>Acá aparecerán la información para llegar, la playlist y las consignas pensadas para quienes viajan de forma particular.</p></div>
+        </section>
+        <section class="travel-content-grid">
+          ${travelPlaceholder("pin", "Cómo llegar", "La ubicación se habilitará el día de la boda.")}
+          ${travelPlaceholder("music", "Playlist del viaje", "La música oficial para acompañar el recorrido.")}
+          ${travelPlaceholder("star", "Desafíos desde el auto", "Consignas que podrán completar antes de llegar.")}
+        </section>`}`;
+  }
+
+  function travelPlaceholder(icon, title, text) {
+    return `
+      <article class="section-card travel-placeholder">
+        <span>${uiIcon(icon)}</span>
+        <div><small>Próximamente</small><strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p></div>
+      </article>`;
+  }
+
+  function travelStyles() {
+    return `<style>
+      .travel-mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:7px}.travel-mode-selector button{min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(132,104,68,.13);border-radius:12px;background:rgba(255,255,255,.40);color:var(--muted);box-shadow:none;font-size:11px}.travel-mode-selector button.active{border-color:#743344;background:#743344;color:#fffaf2}.travel-mode-selector .ui-icon{width:18px;height:18px}
+      .travel-hero{display:grid;grid-template-columns:52px minmax(0,1fr);gap:13px;align-items:center;margin-top:8px;padding:17px;background:linear-gradient(135deg,rgba(54,85,111,.09),rgba(255,253,248,.88));border-color:rgba(54,85,111,.18)}.travel-hero>span{width:50px;height:50px;display:grid;place-items:center;border-radius:15px;background:rgba(54,85,111,.10);color:#36556f}.travel-hero .ui-icon{width:25px;height:25px}.travel-hero h3{margin:3px 0 5px;font-size:23px}.travel-hero p:not(.eyebrow){margin:0;font-size:11px}.travel-auto-hero{background:linear-gradient(135deg,rgba(116,51,68,.07),rgba(255,253,248,.88));border-color:rgba(116,51,68,.17)}.travel-auto-hero>span{background:rgba(116,51,68,.09);color:#743344}
+      .travel-content-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}.travel-placeholder{display:grid;grid-template-columns:35px minmax(0,1fr);gap:8px;align-items:start;padding:11px;opacity:.75}.travel-placeholder>span{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:rgba(132,104,68,.08);color:#8b6939}.travel-placeholder .ui-icon{width:17px;height:17px}.travel-placeholder small,.travel-placeholder strong{display:block}.travel-placeholder small{color:#9b7139;font-size:7px;font-weight:900;text-transform:uppercase}.travel-placeholder strong{margin-top:2px;font-size:11px}.travel-placeholder p{margin:3px 0 0;font-size:8px;line-height:1.3}
+      @media(max-width:650px){.travel-content-grid{grid-template-columns:1fr}.travel-hero{grid-template-columns:43px minmax(0,1fr);padding:13px}.travel-hero>span{width:41px;height:41px}.travel-hero h3{font-size:19px}}
+    </style>`;
+  }
+
+  function renderRules() {
+    const teamPoints = rsvpPointsForTeam(currentGuest.team);
+
+    return `
+      ${rulesStyles()}
+      ${sectionHeader("competencia", "Reglas", "Cómo se suman y restan puntos durante toda la experiencia.")}
+
+      <section class="rules-intro section-card">
+        <span>${uiIcon("ranking")}</span>
+        <div>
+          <p class="eyebrow">¿Por qué competir?</p>
+          <h3>Seis equipos, una sola celebración</h3>
+          <p>La competencia está pensada para que todos participen, se conozcan y lleguen a la fiesta con ganas de jugar. Los puntos son grupales y las acciones previas están equilibradas según la cantidad de integrantes de cada equipo.</p>
+        </div>
+      </section>
+
+      <section class="section-card rules-table-card">
+        <div class="rules-table-head">
+          <span>Acción</span><span>Puntos</span><span>Cómo funciona</span>
+        </div>
+
+        ${rulesRow("Confirmar asistencia", `+${teamPoints}`, "Respuesta definitiva por sí o por no. El valor está equilibrado por equipo.")}
+        ${rulesRow("Elegir canciones", `+${teamPoints}`, "Completar la propuesta musical para la boda y la entrada del equipo.")}
+        ${rulesRow("Viajar en micro", "+20", "Bonus adicional para quienes seleccionen el micro en Asistencia.")}
+        ${rulesRow("Trivia de los novios", "+20 por acierto", "Cinco preguntas, con un máximo de 100 puntos.")}
+        ${rulesRow("Trivia Vani o Fede", "+20 por acierto", "Cinco preguntas, con un máximo de 100 puntos.")}
+        ${rulesRow("Próximos desafíos", "Según consigna", "Cada actividad indicará cuántos puntos entrega.")}
+        ${rulesRow("Bonus o penalizaciones", "+ / −", "Vani y Fede podrán sumar o restar puntos por juegos, actitud o incumplimiento de consignas.")}
+      </section>
+
+      <p class="rules-note">Los puntos se acreditan al equipo. No existe un ranking individual.</p>`;
+  }
+
+  function rulesRow(action, points, detail) {
+    return `
+      <div class="rules-table-row">
+        <strong>${escapeHTML(action)}</strong>
+        <b>${escapeHTML(points)}</b>
+        <p>${escapeHTML(detail)}</p>
+      </div>`;
+  }
+
+  function rulesStyles() {
+    return `<style>
+      .rules-intro{display:grid;grid-template-columns:54px minmax(0,1fr);gap:13px;align-items:center;padding:17px;background:linear-gradient(135deg,rgba(201,170,114,.11),rgba(255,253,248,.90));border-color:rgba(201,170,114,.26)}.rules-intro>span{width:51px;height:51px;display:grid;place-items:center;border-radius:15px;background:rgba(201,170,114,.15);color:#8b642c}.rules-intro .ui-icon{width:25px;height:25px}.rules-intro h3{margin:3px 0 5px;font-size:23px}.rules-intro p:not(.eyebrow){margin:0;font-size:11px;line-height:1.4}
+      .rules-table-card{margin-top:8px;padding:9px}.rules-table-head,.rules-table-row{display:grid;grid-template-columns:minmax(130px,.9fr) 105px minmax(180px,1.5fr);gap:9px;align-items:center}.rules-table-head{padding:6px 9px;color:#8b642c;font-size:8px;font-weight:950;text-transform:uppercase;letter-spacing:.08em}.rules-table-row{min-height:52px;padding:8px 9px;border-top:1px solid rgba(132,104,68,.10)}.rules-table-row strong{font-size:11px}.rules-table-row b{color:#743344;font-size:11px}.rules-table-row p{margin:0;color:var(--muted);font-size:9px;line-height:1.3}.rules-note{margin:7px 2px 0;color:var(--muted);font-size:9px;text-align:center}
+      @media(max-width:650px){.rules-intro{grid-template-columns:42px minmax(0,1fr);padding:13px}.rules-intro>span{width:40px;height:40px}.rules-intro h3{font-size:19px}.rules-table-card{overflow-x:auto}.rules-table-head,.rules-table-row{min-width:570px}}
     </style>`;
   }
 
@@ -2781,8 +3006,6 @@
         Boolean(String(rsvp.diet || "").trim())
       );
     }).length;
-    const transportInfoOpen = isTriviaGameOpen("transport-info");
-    const giftsSectionOpen = isTriviaGameOpen("gifts-section");
     const socialMessageCount = dedupeSocialMessages(state.socialMessages || []).length;
 
     return `
@@ -2882,18 +3105,21 @@
       </section>
 
       <section class="section-card admin-game-controls admin-section-controls">
-        <div class="admin-game-controls-head"><div><p class="eyebrow">Secciones</p><h4>Visibilidad</h4></div></div>
-        <div class="admin-game-toggle-list admin-two-toggle-list">
-          <label class="admin-game-toggle ${transportInfoOpen ? "is-open" : ""}">
-            <span><strong>Traslado</strong><small>Datos del micro.</small></span>
-            <input type="checkbox" data-unlock-key="transport-info" ${transportInfoOpen ? "checked" : ""}>
-            <i aria-hidden="true"></i><b>${transportInfoOpen ? "Visible" : "Oculto"}</b>
-          </label>
-          <label class="admin-game-toggle ${giftsSectionOpen ? "is-open" : ""}">
-            <span><strong>Regalos</strong><small>Sección del alias o CBU.</small></span>
-            <input type="checkbox" data-unlock-key="gifts-section" ${giftsSectionOpen ? "checked" : ""}>
-            <i aria-hidden="true"></i><b>${giftsSectionOpen ? "Visible" : "Oculto"}</b>
-          </label>
+        <div class="admin-game-controls-head">
+          <div><p class="eyebrow">Secciones</p><h4>Bloquear o habilitar</h4></div>
+        </div>
+        <p class="admin-section-note">Inicio y Administración permanecen siempre disponibles.</p>
+        <div class="admin-game-toggle-list admin-section-toggle-grid">
+          ${SECTION_DEFINITIONS.map(section => {
+            const open = isSectionOpen(section.route);
+            return `
+              <label class="admin-game-toggle ${open ? "is-open" : ""}">
+                <span><strong>${escapeHTML(section.title)}</strong><small>${escapeHTML(section.text)}</small></span>
+                <input type="checkbox" data-unlock-key="${escapeHTML(section.key)}" ${open ? "checked" : ""}>
+                <i aria-hidden="true"></i>
+                <b>${open ? "Visible" : "Bloqueada"}</b>
+              </label>`;
+          }).join("")}
         </div>
       </section>
 
@@ -3005,6 +3231,15 @@
       const target = document.getElementById(button.dataset.scroll);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
+
+    if (route === "en-viaje") {
+      $$("[data-travel-mode]").forEach(button => {
+        button.addEventListener("click", () => {
+          travelMode = button.dataset.travelMode;
+          renderCurrentRoute();
+        });
+      });
+    }
 
     if (route === "ranking") {
       $("#refreshRanking")?.addEventListener("click", async event => {
@@ -3833,11 +4068,11 @@
       state.manualUnlocks[key] = open;
       saveState();
       scheduleSilentSync();
-      const featureMessage = key === "transport-info"
-        ? (open ? "Información de traslado habilitada." : "Información de traslado oculta.")
-        : key === "gifts-section"
-          ? (open ? "Sección Regalos habilitada." : "Sección Regalos oculta.")
-          : (open ? "Juego habilitado." : "Juego oculto.");
+      const sectionName = sectionLabelForKey(key);
+      const isSectionKey = SECTION_DEFINITIONS.some(item => item.key === key);
+      const featureMessage = isSectionKey
+        ? `${sectionName} ${open ? "habilitada" : "bloqueada"}.`
+        : (open ? "Juego habilitado." : "Juego oculto.");
       toast(featureMessage);
       renderCurrentRoute();
     }));
