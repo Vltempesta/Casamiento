@@ -31,6 +31,7 @@
   let selectedTeamViewId = null;
   let teamCommunityTab = "mine";
   let expandedGuestTeamId = null;
+  let musicEditMode = false;
   let travelMode = null;
   let triviaFocusTarget = null;
   let selectedGuestId = null;
@@ -95,7 +96,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32445"
+        appVersion: CONFIG.APP_VERSION || "32446"
       })
     );
   }
@@ -288,7 +289,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32445",
+      appVersion: "32446",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1978,54 +1979,114 @@
     const rsvp = state.rsvps[currentGuest.id];
     const rsvpDone = hasFinalRsvp(rsvp);
     const locationOpen = isSectionOpen("ubicacion");
-    const menuOpen = isUnlocked("menu");
     const giftsOpen = isTriviaGameOpen("gifts-section");
+    const musicDone = Boolean(triviaSubmission("music-selection"));
+    const coupleTriviaDone = Boolean(
+      triviaSubmission("couple-trivia-test")
+    );
+    const whoTriviaDone = Boolean(
+      triviaSubmission("who-is-who-trivia-test")
+    );
+    const challengesDone =
+      musicDone &&
+      coupleTriviaDone &&
+      whoTriviaDone;
+
     const rank = calculateRanking();
-    const myRank = rank.findIndex(row => row.id === team.id) + 1;
-    const myPoints = rank.find(row => row.id === team.id)?.total || 0;
-    const rankingStarted = rank.some(row => Number(row.total || 0) !== 0);
-    const visibleRank = rankingStarted ? myRank : "—";
-    const deadline = CONFIG.RSVP_DEADLINE_LABEL || "31 de agosto de 2026";
+    const deadline =
+      CONFIG.RSVP_DEADLINE_LABEL ||
+      "31 de agosto de 2026";
 
     const now = new Date();
     const eventDate = new Date(DATA.couple.eventDate);
-    const daysToEvent = Math.ceil((eventDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
-    const eventDay = now.getFullYear() === eventDate.getFullYear() && now.getMonth() === eventDate.getMonth() && now.getDate() === eventDate.getDate();
-    const nearEvent = !eventDay && daysToEvent > 0 && daysToEvent <= 30;
+    const daysToEvent = Math.ceil(
+      (eventDate.getTime() - now.getTime()) /
+      (24 * 60 * 60 * 1000)
+    );
+    const eventDay =
+      now.getFullYear() === eventDate.getFullYear() &&
+      now.getMonth() === eventDate.getMonth() &&
+      now.getDate() === eventDate.getDate();
+    const nearEvent =
+      !eventDay &&
+      daysToEvent > 0 &&
+      daysToEvent <= 30;
 
-    let primaryAction;
+    let primaryAction = null;
+
     if (!rsvpDone) {
-      primaryAction = { tone: "pending", icon: "calendarCheck", kicker: "Tu próximo paso", title: "Confirmá tu asistencia", text: `Respondé antes del ${deadline}.`, button: "Confirmar asistencia", attr: 'data-go="asistencia"' };
+      primaryAction = {
+        tone: "pending",
+        icon: "calendarCheck",
+        kicker: "Tu próximo paso",
+        title: "Confirmá tu asistencia",
+        text: `Respondé antes del ${deadline}.`,
+        button: "Confirmar asistencia",
+        attr: 'data-go="asistencia"'
+      };
     } else if (eventDay) {
-      primaryAction = { tone: "today", icon: "sparkle", kicker: "Hoy es el gran día", title: "Todo listo para celebrar", text: "Revisá la información clave antes de salir.", button: "Ver lo esencial", attr: 'data-scroll="homeEssential"' };
+      primaryAction = {
+        tone: "today",
+        icon: "sparkle",
+        kicker: "Hoy es el gran día",
+        title: "Todo listo para celebrar",
+        text: "Revisá la información clave antes de salir.",
+        button: "Ver lo esencial",
+        attr: 'data-scroll="homeEssential"'
+      };
     } else if (nearEvent) {
-      primaryAction = { tone: "soon", icon: "hourglass", kicker: "Falta poco", title: `${daysToEvent} ${daysToEvent === 1 ? "día" : "días"} para el casamiento`, text: "Revisá horario, traslado y vestimenta.", button: "Ver lo esencial", attr: 'data-scroll="homeEssential"' };
-    } else {
-      primaryAction = { tone: "play", icon: "star", kicker: "Tu próximo desafío", title: "Sumá puntos para tu equipo", text: "Revisá las misiones disponibles.", button: "Ver desafíos", attr: 'data-go="puntos"' };
+      primaryAction = {
+        tone: "soon",
+        icon: "hourglass",
+        kicker: "Falta poco",
+        title: `${daysToEvent} ${
+          daysToEvent === 1 ? "día" : "días"
+        } para el casamiento`,
+        text: "Revisá horario, traslado y vestimenta.",
+        button: "Ver lo esencial",
+        attr: 'data-scroll="homeEssential"'
+      };
+    } else if (!challengesDone) {
+      primaryAction = {
+        tone: "play",
+        icon: "star",
+        kicker: "Tu próximo desafío",
+        title: "Sumá puntos para tu equipo",
+        text: "Revisá las misiones disponibles.",
+        button: "Ver desafíos",
+        attr: 'data-go="puntos"'
+      };
     }
 
     return `
       ${homeStyles()}
-      <section id="homeCountdown" class="home-countdown-v2" aria-label="Cuenta regresiva para el casamiento">
+      <section
+        id="homeCountdown"
+        class="home-countdown-v2"
+        aria-label="Cuenta regresiva para el casamiento">
         <div class="home-countdown-copy">
           <span id="countdownLabel">Faltan</span>
         </div>
         <div class="home-countdown-values-v2">
-          <span><strong id="countdownDays">—</strong><small>días</small></span>
-          <span><strong id="countdownHours">—</strong><small>horas</small></span>
-          <span><strong id="countdownMinutes">—</strong><small>min</small></span>
+          <span>
+            <strong id="countdownDays">—</strong>
+            <small>días</small>
+          </span>
+          <span>
+            <strong id="countdownHours">—</strong>
+            <small>horas</small>
+          </span>
+          <span>
+            <strong id="countdownMinutes">—</strong>
+            <small>min</small>
+          </span>
         </div>
       </section>
 
-      ${rsvpDone ? `<button class="home-rsvp-confirmed" type="button" data-go="asistencia">${uiIcon("checkCircle")}<span>${rsvp.attendance === "si" ? "Asistencia confirmada" : "Respuesta guardada"}</span></button>` : ""}
-
-      <section class="home-primary-action home-primary-action--${primaryAction.tone}">
-        <span class="home-primary-icon">${uiIcon(primaryAction.icon)}</span>
-        <div class="home-primary-copy"><small>${escapeHTML(primaryAction.kicker)}</small><h3>${escapeHTML(primaryAction.title)}</h3><p>${escapeHTML(primaryAction.text)}</p></div>
-        <button type="button" ${primaryAction.attr}>${escapeHTML(primaryAction.button)}</button>
-      </section>
-
-      <section id="homeEssential" class="home-essential" aria-labelledby="homeEssentialTitle">
+      <section
+        id="homeEssential"
+        class="home-essential"
+        aria-labelledby="homeEssentialTitle">
         <div class="home-section-heading">
           <div>
             <p class="home-kicker">Información práctica</p>
@@ -2035,7 +2096,9 @@
 
         <div class="home-essential-card">
           <article class="home-essential-row home-essential-date">
-            <span class="home-essential-icon">${uiIcon("calendar")}</span>
+            <span class="home-essential-icon">
+              ${uiIcon("calendar")}
+            </span>
             <div>
               <small>Fecha</small>
               <strong>Sábado 24 de Octubre</strong>
@@ -2044,8 +2107,13 @@
           </article>
 
           ${locationOpen ? `
-            <button type="button" class="home-essential-row home-essential-link home-essential-location" data-go="ubicacion">
-              <span class="home-essential-icon">${uiIcon("pin")}</span>
+            <button
+              type="button"
+              class="home-essential-row home-essential-link home-essential-location"
+              data-go="ubicacion">
+              <span class="home-essential-icon">
+                ${uiIcon("pin")}
+              </span>
               <div>
                 <small>Lugar</small>
                 <strong>Estancia "Los Candiles"</strong>
@@ -2053,8 +2121,11 @@
               </div>
             </button>
           ` : `
-            <article class="home-essential-row home-essential-location home-essential-location-locked">
-              <span class="home-essential-icon">${uiIcon("lock")}</span>
+            <article
+              class="home-essential-row home-essential-location home-essential-location-locked">
+              <span class="home-essential-icon">
+                ${uiIcon("lock")}
+              </span>
               <div>
                 <small>Lugar</small>
                 <strong>¡Lugar secreto!</strong>
@@ -2063,8 +2134,13 @@
             </article>
           `}
 
-          <button type="button" class="home-essential-row home-essential-link home-essential-transport" data-go="traslado">
-            <span class="home-essential-icon">${uiIcon("bus")}</span>
+          <button
+            type="button"
+            class="home-essential-row home-essential-link home-essential-transport"
+            data-go="traslado">
+            <span class="home-essential-icon">
+              ${uiIcon("bus")}
+            </span>
             <div>
               <small>Traslado</small>
               <strong>Micro / Combi</strong>
@@ -2073,16 +2149,26 @@
           </button>
 
           <article class="home-essential-row home-essential-dress">
-            <span class="home-essential-icon">${uiIcon("dress")}</span>
+            <span class="home-essential-icon">
+              ${uiIcon("dress")}
+            </span>
             <div>
               <small>Vestimenta</small>
               <strong>Elegante sport</strong>
-              <p>El lugar tiene mucho césped, ¡vení con calzado cómodo!</p>
+              <p>
+                El lugar tiene mucho césped,
+                ¡vení con calzado cómodo!
+              </p>
             </div>
           </article>
 
-          <button type="button" class="home-essential-row home-essential-link home-essential-diet" data-go="asistencia">
-            <span class="home-essential-icon">${uiIcon("food")}</span>
+          <button
+            type="button"
+            class="home-essential-row home-essential-link home-essential-diet"
+            data-go="asistencia">
+            <span class="home-essential-icon">
+              ${uiIcon("food")}
+            </span>
             <div>
               <small>Información importante</small>
               <strong>Restricciones alimentarias</strong>
@@ -2092,20 +2178,88 @@
         </div>
 
         ${giftsOpen ? `
-          <button type="button" class="home-gifts-feature" data-go="regalos">
-            <span class="home-gifts-feature-icon">${uiIcon("gift")}</span>
+          <button
+            type="button"
+            class="home-gifts-feature"
+            data-go="regalos">
+            <span class="home-gifts-feature-icon">
+              ${uiIcon("gift")}
+            </span>
             <span class="home-gifts-feature-copy">
               <small>Regalos</small>
-              <strong>Nuestro mejor regalo es tu presencia 🥂</strong>
-              <em>Ver opciones para ayudarnos con nuestra Luna de Miel</em>
+              <strong>
+                Nuestro mejor regalo es tu presencia 🥂
+              </strong>
+              <em>
+                Ver opciones para ayudarnos con nuestra Luna de Miel
+              </em>
             </span>
             <b aria-hidden="true">›</b>
           </button>
         ` : ""}
       </section>
 
+      ${primaryAction ? `
+        <section
+          class="home-primary-action home-primary-action--${primaryAction.tone}">
+          <span class="home-primary-icon">
+            ${uiIcon(primaryAction.icon)}
+          </span>
+          <div class="home-primary-copy">
+            <small>${escapeHTML(primaryAction.kicker)}</small>
+            <h3>${escapeHTML(primaryAction.title)}</h3>
+            <p>${escapeHTML(primaryAction.text)}</p>
+          </div>
+          <button type="button" ${primaryAction.attr}>
+            ${escapeHTML(primaryAction.button)}
+          </button>
+        </section>
+      ` : ""}
+
+      ${(rsvpDone || challengesDone) ? `
+        <section
+          class="home-completion-status-grid ${
+            rsvpDone && challengesDone
+              ? "has-two"
+              : "has-one"
+          }">
+          ${rsvpDone ? `
+            <button
+              class="home-rsvp-confirmed home-completion-status"
+              type="button"
+              data-go="asistencia">
+              ${uiIcon("checkCircle")}
+              <span>
+                ${
+                  rsvp.attendance === "si"
+                    ? "Asistencia confirmada"
+                    : "Respuesta guardada"
+                }
+              </span>
+            </button>
+          ` : ""}
+
+          ${challengesDone ? `
+            <button
+              class="home-rsvp-confirmed home-completion-status home-challenges-confirmed"
+              type="button"
+              data-go="puntos">
+              ${uiIcon("checkCircle")}
+              <span>Desafíos completados</span>
+            </button>
+          ` : ""}
+        </section>
+      ` : ""}
+
+      ${challengesDone ? `
+        <div class="home-more-challenges-note">
+          <span aria-hidden="true">🕒</span>
+          <strong>¡Próximamente llegarán más desafíos!</strong>
+        </div>
+      ` : ""}
     `;
   }
+
 
   function homeStyles() {
     return `<style>
@@ -2299,16 +2453,16 @@
           <button type="button" data-go="puntos">Ver desafíos</button>
         </section>
 
-        <section class="rsvp-related-links">
-          <button type="button" class="rsvp-related-card section-card" data-go="traslado">
+        <section class="rsvp-related-links rsvp-related-links-single">
+          <button
+            type="button"
+            class="rsvp-related-card section-card"
+            data-go="traslado">
             <span>${uiIcon("bus")}</span>
-            <div><strong>Traslados</strong><small>Consultá la información del servicio.</small></div>
-            <b aria-hidden="true">›</b>
-          </button>
-
-          <button type="button" class="rsvp-related-card section-card" data-go="regalos">
-            <span>${uiIcon("gift")}</span>
-            <div><strong>Regalos</strong><small>Ingresá a la sección de regalos.</small></div>
+            <div>
+              <strong>Traslados</strong>
+              <small>Consultá la información del servicio.</small>
+            </div>
             <b aria-hidden="true">›</b>
           </button>
         </section>`;
@@ -2942,9 +3096,15 @@
         }) : ""}
       </section>
 
-      <div class="points-coming-soon-note">
-        ${uiIcon("lock")}
-        <span>Más juegos y actividades se irán habilitando más adelante.</span>
+      <div class="points-coming-soon-note ${currentGamesDone ? "is-completed" : ""}">
+        <span aria-hidden="true">${currentGamesDone ? "🕒" : "🔒"}</span>
+        <strong>
+          ${
+            currentGamesDone
+              ? "¡Próximamente más desafíos!"
+              : "Más juegos y actividades se habilitarán más adelante."
+          }
+        </strong>
       </div>
 
       ${currentGamesDone ? `
@@ -3045,41 +3205,161 @@
     const musicSaved = triviaSubmission("music-selection");
     const triviaSaved = triviaSubmission("couple-trivia-test");
     const whoSaved = triviaSubmission("who-is-who-trivia-test");
+    const allDone = Boolean(
+      musicSaved &&
+      triviaSaved &&
+      whoSaved
+    );
 
     return `
       ${triviaHubStyles()}
-      ${sectionHeader("sumá puntos", "Juegos de Vani y Fede", "Elegí una misión, participá y ayudá a tu equipo.")}
-      <section class="trivia-prize-banner">
-        ${uiIcon("gift")}
-        <div>
-          <strong>Habrá premios especiales</strong>
-          <p>Participar, acertar y jugar en equipo puede tener recompensa.</p>
-        </div>
-      </section>
-      <section class="trivia-game-list">
+      ${sectionHeader(
+        "sumá puntos",
+        "Juegos de Vani y Fede",
+        "Elegí una misión, participá y ayudá a tu equipo."
+      )}
+
+      ${allDone ? "" : `
+        <section class="trivia-prize-banner">
+          ${uiIcon("gift")}
+          <div>
+            <strong>Habrá premios especiales</strong>
+            <p>
+              Participar, acertar y jugar en equipo
+              puede tener recompensa.
+            </p>
+          </div>
+        </section>
+      `}
+
+      <section
+        class="trivia-game-list ${
+          allDone ? "all-completed" : ""
+        }">
         ${renderMusicGame(musicOpen, musicSaved, team)}
         ${renderCoupleTrivia(coupleOpen, triviaSaved)}
         ${renderWhoIsWhoTrivia(whoOpen, whoSaved)}
-      </section>`;
+      </section>
+
+      ${allDone ? `
+        <section
+          id="trivia-upcoming-note"
+          class="trivia-upcoming-note">
+          <span aria-hidden="true">🕒</span>
+          <strong>¡Próximamente más desafíos!</strong>
+        </section>
+      ` : ""}
+    `;
   }
 
 
   function renderMusicGame(open, saved, team) {
-    if (!open) return renderLockedTriviaCard("01","La banda sonora","Dos canciones tendrán una misión especial.","trivia-music","music-game");
+    if (!open) {
+      return renderLockedTriviaCard(
+        "01",
+        "La banda sonora",
+        "Dos canciones tendrán una misión especial.",
+        "trivia-music",
+        "music-game"
+      );
+    }
+
+    if (saved && !musicEditMode) {
+      return `
+        <article
+          id="music-game"
+          class="trivia-game-card is-open is-completed is-compact-completed music-game-summary">
+          <div class="trivia-game-number">01</div>
+          <div class="trivia-game-content">
+            <div class="trivia-game-heading">
+              <div>
+                <span class="trivia-status completed">
+                  Completado
+                </span>
+                <h4>La banda sonora</h4>
+              </div>
+              ${uiIcon("checkCircle","trivia-main-icon")}
+            </div>
+
+            <div class="music-compact-values">
+              <span>
+                <small>Boda</small>
+                <strong>
+                  ${escapeHTML(saved.weddingSong || "Canción guardada")}
+                </strong>
+              </span>
+              <span>
+                <small>Equipo</small>
+                <strong>
+                  ${escapeHTML(saved.teamEntranceSong || "Canción guardada")}
+                </strong>
+              </span>
+            </div>
+
+            <button
+              id="editMusicGame"
+              type="button"
+              class="trivia-compact-edit">
+              Editar
+            </button>
+          </div>
+        </article>`;
+    }
+
     return `
-      <article id="music-game" class="trivia-game-card is-open music-game-compact">
+      <article
+        id="music-game"
+        class="trivia-game-card is-open music-game-compact">
         <div class="trivia-game-number">01</div>
         <div class="trivia-game-content">
           <div class="trivia-game-heading">
-            <div><span class="trivia-status open">${saved ? "Completado" : "Disponible"}</span><h4>La banda sonora</h4></div>
+            <div>
+              <span class="trivia-status open">
+                ${saved ? "Editando" : "Disponible"}
+              </span>
+              <h4>La banda sonora</h4>
+            </div>
             ${uiIcon("music","trivia-main-icon")}
           </div>
-          <p>Elegí una canción para la boda y otra para la entrada del equipo ${escapeHTML(team.name)}.</p>
+
+          <p>
+            Elegí una canción para la boda y otra para
+            la entrada del equipo ${escapeHTML(team.name)}.
+          </p>
+
           <form id="musicGameForm" class="trivia-form">
-            <label>Canción para la boda<input name="weddingSong" type="text" value="${escapeHTML(saved?.weddingSong||"")}" placeholder="Tema y artista" required></label>
-            <label>Canción para la entrada del equipo<input name="teamEntranceSong" type="text" value="${escapeHTML(saved?.teamEntranceSong||"")}" placeholder="Tema y artista" required></label>
-            <label>Motivo <span>(opcional)</span><textarea name="reason" placeholder="¿Por qué la elegiste?">${escapeHTML(saved?.reason||"")}</textarea></label>
-            <div class="trivia-form-footer"><button type="submit">${saved?"Actualizar canciones":"Enviar canciones"}</button>${saved?`<span class="trivia-saved">${uiIcon("checkCircle")} Guardado</span>`:""}</div>
+            <label>
+              Canción para la boda
+              <input
+                name="weddingSong"
+                type="text"
+                value="${escapeHTML(saved?.weddingSong || "")}"
+                placeholder="Tema y artista"
+                required>
+            </label>
+
+            <label>
+              Canción para la entrada del equipo
+              <input
+                name="teamEntranceSong"
+                type="text"
+                value="${escapeHTML(saved?.teamEntranceSong || "")}"
+                placeholder="Tema y artista"
+                required>
+            </label>
+
+            <label>
+              Motivo <span>(opcional)</span>
+              <textarea
+                name="reason"
+                placeholder="¿Por qué la elegiste?">${escapeHTML(saved?.reason || "")}</textarea>
+            </label>
+
+            <div class="trivia-form-footer">
+              <button type="submit">
+                ${saved ? "Guardar cambios" : "Enviar canciones"}
+              </button>
+            </div>
           </form>
         </div>
       </article>`;
@@ -3104,7 +3384,7 @@
       );
 
       return `
-        <article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card is-completed">
+        <article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card is-completed is-compact-completed">
           <div class="trivia-game-number">02</div>
           <div class="trivia-game-content">
             <div class="trivia-game-heading">
@@ -3114,8 +3394,9 @@
               </div>
               ${uiIcon("checkCircle","trivia-main-icon")}
             </div>
-            <p>Esta trivia se juega una sola vez. Tu participación ya quedó registrada.</p>
-            <div class="trivia-result trivia-result-final">
+            <div
+              id="couple-trivia-result"
+              class="trivia-result trivia-result-final">
               ${uiIcon("star")}
               <div>
                 <strong>${earnedPoints} puntos</strong>
@@ -3187,7 +3468,7 @@
       );
 
       return `
-        <article id="who-is-who-game" class="trivia-game-card is-open trivia-quiz-card trivia-who-card is-completed">
+        <article id="who-is-who-game" class="trivia-game-card is-open trivia-quiz-card trivia-who-card is-completed is-compact-completed">
           <div class="trivia-game-number">03</div>
           <div class="trivia-game-content">
             <div class="trivia-game-heading">
@@ -3197,8 +3478,9 @@
               </div>
               ${uiIcon("checkCircle","trivia-main-icon")}
             </div>
-            <p>Esta trivia se juega una sola vez. Tu resultado ya quedó registrado.</p>
-            <div class="trivia-result trivia-result-final">
+            <div
+              id="who-is-who-result"
+              class="trivia-result trivia-result-final">
               ${uiIcon("star")}
               <div>
                 <strong>${earnedPoints} puntos</strong>
@@ -4402,6 +4684,22 @@
     </style>`;
   }
 
+
+  function renderTriviaAndFocus(targetId) {
+    renderCurrentRoute();
+
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        document
+          .getElementById(targetId)
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+      }, 40);
+    });
+  }
+
   function bindViewEvents(route) {
     if (countdownTimer) {
       window.clearInterval(countdownTimer);
@@ -4706,6 +5004,11 @@
     }
 
     if (route === "trivia") {
+      $("#editMusicGame")?.addEventListener("click", () => {
+        musicEditMode = true;
+        renderTriviaAndFocus("music-game");
+      });
+
       $("#musicGameForm")?.addEventListener("submit", async event => {
         event.preventDefault();
         const form = event.currentTarget;
@@ -4752,9 +5055,13 @@
           ...savedRecord
         };
         saveState();
-        const earnedPoints = rsvpPointsForTeam(currentGuest.team);
-        toast(`Canciones guardadas. El equipo sumó ${earnedPoints} puntos.`);
-        renderCurrentRoute();
+        const earnedPoints =
+          rsvpPointsForTeam(currentGuest.team);
+        musicEditMode = false;
+        toast(
+          `Canciones guardadas. El equipo sumó ${earnedPoints} puntos.`
+        );
+        renderTriviaAndFocus("couple-trivia-game");
       });
 
       $("#coupleTriviaForm")?.addEventListener("submit", async event => {
@@ -4814,8 +5121,10 @@
         };
         saveState();
 
-        toast(`Trivia completada: ${bestScore * 20} puntos.`);
-        renderCurrentRoute();
+        toast(
+          `Trivia completada: ${bestScore * 20} puntos.`
+        );
+        renderTriviaAndFocus("couple-trivia-result");
       });
 
 
@@ -4885,8 +5194,10 @@
         };
         saveState();
 
-        toast(`Trivia completada: ${bestScore * 20} puntos.`);
-        renderCurrentRoute();
+        toast(
+          `Trivia completada: ${bestScore * 20} puntos.`
+        );
+        renderTriviaAndFocus("trivia-upcoming-note");
       });
     }
 
