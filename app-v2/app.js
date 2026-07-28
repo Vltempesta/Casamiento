@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32457";
+  const CURRENT_APP_VERSION = "32458";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -120,7 +120,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32457"
+        appVersion: CONFIG.APP_VERSION || "32458"
       })
     );
   }
@@ -672,7 +672,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32457",
+      appVersion: "32458",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2696,7 +2696,7 @@
       options: [
         "Viajar y descubrir lugares nuevos",
         "Correr maratones",
-        "Coleccionar autos clásicos",
+        "Realizar deportes",
         "Aprender instrumentos musicales"
       ],
       answer: "Viajar y descubrir lugares nuevos"
@@ -2714,7 +2714,7 @@
     },
     {
       id: "years",
-      question: "¿Cuántos años llevan juntos al llegar al casamiento?",
+      question: "¿Cuántos años llevan juntos actualmente?",
       options: [
         "9 años",
         "10 años",
@@ -2728,7 +2728,7 @@
   const WHO_IS_WHO_QUESTIONS = [
     {
       id: "lost-things",
-      question: "Cuando algo desaparece en casa, ¿quién suele haber perdido las llaves o el celular?",
+      question: "¿Quién suele olvidarse las llaves o el celular?",
       options: ["Vani", "Fede"],
       answer: "Vani"
     },
@@ -4016,6 +4016,51 @@
     const whoTriviaDone = Boolean(
       triviaSubmission("who-is-who-trivia-test")
     );
+    const musicSubmission =
+      triviaSubmission("music-selection");
+    const coupleSubmission =
+      triviaSubmission("couple-trivia-test");
+    const whoSubmission =
+      triviaSubmission("who-is-who-trivia-test");
+    const musicEarnedPoints = musicDone
+      ? Math.max(
+          0,
+          Number(
+            musicSubmission?.earnedPoints ??
+            activityPoints
+          )
+        )
+      : 0;
+    const coupleEarnedPoints = triviaDone
+      ? Math.max(
+          0,
+          Number(
+            coupleSubmission?.earnedPoints ??
+            (
+              Number(
+                coupleSubmission?.score ??
+                coupleSubmission?.bestScore ??
+                0
+              ) * 20
+            )
+          )
+        )
+      : 0;
+    const whoEarnedPoints = whoTriviaDone
+      ? Math.max(
+          0,
+          Number(
+            whoSubmission?.earnedPoints ??
+            (
+              Number(
+                whoSubmission?.score ??
+                whoSubmission?.bestScore ??
+                0
+              ) * 20
+            )
+          )
+        )
+      : 0;
     const currentGamesDone =
       rsvpDone &&
       musicDone &&
@@ -4082,24 +4127,25 @@
         </button>
       ` : ""}
 
-      <section class="points-rsvp-section section-card">
-        ${pointsAction({
-          icon:"✉️",
-          title:"Confirmar asistencia",
-          text:rsvpDone
-            ? `Respuesta guardada. Sumaste ${activityPoints} puntos.`
-            : `Respondé por sí o por no y sumá ${activityPoints} puntos.`,
-          done:rsvpDone,
-          route:"asistencia",
-          progressText:`${activityPoints} puntos`,
-          editable:true
-        })}
-      </section>
+      <div class="points-unified-challenges">
+        <section class="points-unified-challenge section-card">
+          ${pointsAction({
+            icon:"✉️",
+            title:"Confirmar asistencia",
+            text:rsvpDone
+              ? "Respuesta guardada"
+              : "Respondé por sí o por no",
+            done:rsvpDone,
+            route:"asistencia",
+            progressText:rsvpDone
+              ? `${activityPoints} puntos obtenidos`
+              : `${activityPoints} puntos`,
+            editable:true
+          })}
+        </section>
 
-      ${rsvpDone ? `
-        <div class="points-challenges-stack">
-          ${pointsChallengeCard({
-            number:"01",
+        <section class="points-unified-challenge section-card">
+          ${pointsAction({
             icon:"🎵",
             title:"La banda sonora",
             text:musicDone
@@ -4107,39 +4153,33 @@
               : "Elegí una canción para la boda y otra para tu equipo",
             done:musicDone,
             route:"musica",
-            progressText:musicOpen
-              ? `${activityPoints} puntos`
-              : "Bloqueado",
-            locked:!musicOpen,
-            actionLabel:musicDone
-              ? "Ver / editar"
-              : "Comenzar"
+            progressText:musicDone
+              ? `${musicEarnedPoints} puntos obtenidos`
+              : `${activityPoints} puntos`,
+            editable:true,
+            locked:!rsvpDone || !musicOpen
           })}
+        </section>
 
-          ${pointsChallengeCard({
-            number:"02",
+        <section class="points-unified-challenge section-card">
+          ${pointsAction({
             icon:"🎯",
             title:"¿Cuánto conocés a los novios?",
             text:triviaDone
               ? "Resultado final guardado"
-              : "Cinco preguntas sobre la historia de Vani y Fede",
+              : "Cinco preguntas sobre Vani y Fede",
             done:triviaDone,
             route:"trivia-pareja",
-            progressText:triviaOpen
-              ? (
-                  triviaDone
-                    ? "Resultado final"
-                    : "Hasta 100 puntos"
-                )
-              : "Bloqueado",
-            locked:!triviaOpen,
-            actionLabel:triviaDone
-              ? "Ver resultado"
-              : "Comenzar"
+            progressText:triviaDone
+              ? `${coupleEarnedPoints} puntos obtenidos`
+              : "Hasta 100 puntos",
+            editable:false,
+            locked:!rsvpDone || !triviaOpen
           })}
+        </section>
 
-          ${pointsChallengeCard({
-            number:"03",
+        <section class="points-unified-challenge section-card">
+          ${pointsAction({
             icon:"⚖️",
             title:"¿Quién es quién?",
             text:whoTriviaDone
@@ -4147,31 +4187,14 @@
               : "Cinco situaciones para elegir entre Vani o Fede",
             done:whoTriviaDone,
             route:"trivia-quien",
-            progressText:whoTriviaOpen
-              ? (
-                  whoTriviaDone
-                    ? "Resultado final"
-                    : "Hasta 100 puntos"
-                )
-              : "Bloqueado",
-            locked:!whoTriviaOpen,
-            actionLabel:whoTriviaDone
-              ? "Ver resultado"
-              : "Comenzar"
+            progressText:whoTriviaDone
+              ? `${whoEarnedPoints} puntos obtenidos`
+              : "Hasta 100 puntos",
+            editable:false,
+            locked:!rsvpDone || !whoTriviaOpen
           })}
-        </div>
-      ` : `
-        <div class="points-rsvp-lock">
-          ${uiIcon("lock")}
-          <div>
-            <strong>Primero, asistencia</strong>
-            <p>
-              Al responder por sí o por no
-              se habilitarán los tres desafíos.
-            </p>
-          </div>
-        </div>
-      `}
+        </section>
+      </div>
 
       ${travelOpen ? `
         <section class="points-travel-section section-card">
@@ -4399,34 +4422,8 @@
           : `Desafío ${activeNumber} de 3`,
         activeChallenge === "complete"
           ? "Tu progreso ya quedó registrado."
-          : "Cada actividad se completa por separado."
+          : ""
       )}
-
-      <nav
-        class="challenge-stepper section-card"
-        aria-label="Progreso de desafíos">
-        ${challengeStep({
-          number:"1",
-          title:"Canciones",
-          route:"musica",
-          active:activeChallenge === "music",
-          done:Boolean(musicSaved)
-        })}
-        ${challengeStep({
-          number:"2",
-          title:"Trivia",
-          route:"trivia-pareja",
-          active:activeChallenge === "couple",
-          done:Boolean(triviaSaved)
-        })}
-        ${challengeStep({
-          number:"3",
-          title:"Vani o Fede",
-          route:"trivia-quien",
-          active:activeChallenge === "who",
-          done:Boolean(whoSaved)
-        })}
-      </nav>
 
       <section class="trivia-single-stage">
         ${challengeContent}
