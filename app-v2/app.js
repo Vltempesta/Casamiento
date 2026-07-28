@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32464";
+  const CURRENT_APP_VERSION = "32466";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -56,6 +56,10 @@
   let selectedGuestId = null;
   let suggestionMatches = [];
   let activeSuggestionIndex = -1;
+  let rsvpDraft = null;
+  const gameDrafts = new Map();
+  const recentConfirmedGameWrites = new Map();
+  const RECENT_CONFIRMED_GAME_TTL_MS = 120000;
 
   const defaultState = {
     currentGuestId: null,
@@ -91,6 +95,260 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
+
+
+  function gameDraftKey(gameId) {
+    return `${currentGuest?.id || ""}::${gameId || ""}`;
+  }
+
+  function currentGameDraft(gameId) {
+    if (!currentGuest || !gameId) return null;
+
+    const draft = gameDrafts.get(
+      gameDraftKey(gameId)
+    );
+
+    return draft?.values || null;
+  }
+
+  function captureGameDraft(form, gameId) {
+    if (!form || !currentGuest || !gameId) {
+      return;
+    }
+
+    const values = Object.fromEntries(
+      new FormData(form).entries()
+    );
+
+    gameDrafts.set(
+      gameDraftKey(gameId),
+      {
+        guestId: currentGuest.id,
+        gameId,
+        values,
+        updatedAt: Date.now()
+      }
+    );
+
+    form.dataset.dirty = "true";
+  }
+
+  function clearGameDraft(gameId) {
+    if (!gameId) return;
+    gameDrafts.delete(gameDraftKey(gameId));
+  }
+
+  function bindGameDraft(form, gameId) {
+    if (!form || !gameId) return;
+
+    if (currentGameDraft(gameId)) {
+      form.dataset.dirty = "true";
+    }
+
+    const preserve = () => {
+      captureGameDraft(form, gameId);
+    };
+
+    form.addEventListener("input", preserve);
+    form.addEventListener("change", preserve);
+  }
+
+  function shouldPreserveActiveGameForm() {
+    if (
+      !["trivia", "puntos"].includes(currentRoute)
+    ) {
+      return false;
+    }
+
+    const forms = [
+      $("#musicGameForm"),
+      $("#coupleTriviaForm"),
+      $("#whoIsWhoTriviaForm"),
+      ...$$(".game-submit")
+    ].filter(Boolean);
+
+    return forms.some(form =>
+      form.dataset.dirty === "true" ||
+      form.contains(document.activeElement)
+    );
+  }
+
+  function rememberConfirmedGameWrite(
+    entry,
+    confirmed
+  ) {
+    const payload = entry?.payload || {};
+
+    if (
+      entry?.action !== "saveGameSubmission" ||
+      !payload.guestId ||
+      !payload.gameId
+    ) {
+      return;
+    }
+
+    const key =
+      `${payload.guestId}::${payload.gameId}`;
+
+    recentConfirmedGameWrites.set(
+      key,
+      {
+        record: {
+          ...confirmed,
+          pendingSync: false,
+          syncError: false,
+          recentlyConfirmed: true
+        },
+        expiresAt:
+          Date.now() +
+          RECENT_CONFIRMED_GAME_TTL_MS
+      }
+    );
+  }
+
+  function applyRecentConfirmedGames(
+    remoteGames = {}
+  ) {
+    const now = Date.now();
+
+    recentConfirmedGameWrites.forEach(
+      (entry, key) => {
+        const remoteRecord =
+          remoteGames?.[key] || null;
+        const localRecord =
+          entry?.record || {};
+        const localRequestId =
+          localRecord.requestId ||
+          localRecord.pendingRequestId ||
+          "";
+        const remoteRequestId =
+          remoteRecord?.requestId ||
+          remoteRecord?.pendingRequestId ||
+          "";
+
+        const localTime = Date.parse(
+          localRecord.updatedAt ||
+          localRecord.timestamp ||
+          0
+        ) || 0;
+
+        const remoteTime = Date.parse(
+          remoteRecord?.updatedAt ||
+          remoteRecord?.timestamp ||
+          0
+        ) || 0;
+
+        const serverConfirmed = Boolean(
+          remoteRecord &&
+          (
+            (
+              localRequestId &&
+              remoteRequestId ===
+                localRequestId
+            ) ||
+            (
+              localTime &&
+              remoteTime >= localTime
+            )
+          )
+        );
+
+        if (
+          serverConfirmed ||
+          Number(entry?.expiresAt || 0) <= now
+        ) {
+          recentConfirmedGameWrites.delete(key);
+          return;
+        }
+
+        state.gameSubmissions[key] = {
+          ...localRecord,
+          pendingSync: false,
+          syncError: false,
+          recentlyConfirmed: true
+        };
+      }
+    );
+  }
+
+  function currentRsvpDraft() {
+    if (
+      !rsvpDraft ||
+      !currentGuest ||
+      rsvpDraft.guestId !== currentGuest.id
+    ) {
+      return null;
+    }
+
+    return rsvpDraft.values || null;
+  }
+
+  function captureRsvpDraft(form) {
+    if (!form || !currentGuest) return;
+
+    const values = Object.fromEntries(
+      new FormData(form).entries()
+    );
+
+    const dietField =
+      form.querySelector(
+        'textarea[name="diet"]'
+      );
+
+    rsvpDraft = {
+      guestId: currentGuest.id,
+      values: {
+        firstName:
+          form.elements.firstName?.value || "",
+        lastName:
+          form.elements.lastName?.value || "",
+        email:
+          form.elements.email?.value || "",
+        phone:
+          form.elements.phone?.value || "",
+        attendance:
+          form.querySelector(
+            'input[name="attendance"]:checked'
+          )?.value || "",
+        transport:
+          form.querySelector(
+            'input[name="transport"]:checked'
+          )?.value || "",
+        dietChoice:
+          form.querySelector(
+            'input[name="dietChoice"]:checked'
+          )?.value || "",
+        diet:
+          dietField?.disabled
+            ? ""
+            : dietField?.value || "",
+        ...values
+      },
+      updatedAt: Date.now()
+    };
+
+    form.dataset.dirty = "true";
+  }
+
+  function clearRsvpDraft() {
+    rsvpDraft = null;
+  }
+
+  function shouldPreserveActiveForm() {
+    if (currentRoute === "asistencia") {
+      const form = $("#rsvpForm");
+
+      if (!form) return false;
+
+      return Boolean(
+        form.dataset.dirty === "true" ||
+        form.contains(document.activeElement)
+      );
+    }
+
+    return shouldPreserveActiveGameForm();
+  }
+
   function loadState() {
     try {
       const stored = JSON.parse(
@@ -120,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32464"
+        appVersion: CONFIG.APP_VERSION || "32466"
       })
     );
   }
@@ -280,7 +538,14 @@
     } else if (entry.action === "saveProfile") {
       state.profiles[payload.guestId] = confirmed;
     } else if (entry.action === "saveGameSubmission") {
-      state.gameSubmissions[`${payload.guestId}::${payload.gameId}`] = confirmed;
+      state.gameSubmissions[
+        `${payload.guestId}::${payload.gameId}`
+      ] = confirmed;
+
+      rememberConfirmedGameWrite(
+        entry,
+        confirmed
+      );
     } else if (entry.action === "saveSocialMessage") {
       state.socialMessages = dedupeSocialMessages([
         ...(state.socialMessages || []).filter(item => item.messageId !== payload.messageId),
@@ -685,7 +950,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32464",
+      appVersion: "32466",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -849,7 +1114,9 @@
       updateNotificationUi();
 
       if (changed && options.render !== false) {
-        renderCurrentRoute();
+        renderCurrentRoute({
+          preserveActiveForm: true
+        });
       }
     }
 
@@ -1119,13 +1386,20 @@
       state.dataResetAt
     );
 
+    const remoteGameSubmissions =
+      remote.gameSubmissions &&
+      typeof remote.gameSubmissions === "object"
+        ? remote.gameSubmissions
+        : {};
+
     state.gameSubmissions = mergeRecordsAfterReset(
       {},
-      remote.gameSubmissions &&
-        typeof remote.gameSubmissions === "object"
-        ? remote.gameSubmissions
-        : {},
+      remoteGameSubmissions,
       state.dataResetAt
+    );
+
+    applyRecentConfirmedGames(
+      remoteGameSubmissions
     );
 
     state.scoreEntries = Array.isArray(remote.scoreEntries)
@@ -1241,7 +1515,11 @@
           }`
         );
 
-        if (currentGuest) renderCurrentRoute();
+        if (currentGuest) {
+          renderCurrentRoute({
+            preserveActiveForm: true
+          });
+        }
         if (pendingWrites.length) {
           window.setTimeout(() => retryPendingWrites(), 120);
         }
@@ -2124,7 +2402,14 @@
     renderCurrentRoute();
   }
 
-  function renderCurrentRoute() {
+  function renderCurrentRoute(options = {}) {
+    if (
+      options.preserveActiveForm &&
+      shouldPreserveActiveForm()
+    ) {
+      return false;
+    }
+
     const routes = {
       inicio: renderHome,
       asistencia: renderRSVP,
@@ -2162,6 +2447,7 @@
     markNotificationsForRoute(currentRoute);
     updateNotificationUi();
     bindViewEvents(currentRoute);
+    return true;
   }
 
 
@@ -3259,6 +3545,13 @@
 
   function renderRSVP() {
     const saved = state.rsvps[currentGuest.id] || {};
+    const draft = currentRsvpDraft();
+    const formValues = draft
+      ? {
+          ...saved,
+          ...draft
+        }
+      : saved;
     const hasSaved = Boolean(saved && saved.updatedAt);
     const hasFinalSaved = hasCompletedRsvp(saved);
     const editing = Boolean(
@@ -3267,15 +3560,19 @@
       !hasFinalSaved
     );
     const deadlineLabel = "31 de agosto de 2026";
-    const savedTransport = ["combi", "micro"].includes(saved.transport)
+    const savedTransport = ["combi", "micro"].includes(formValues.transport)
       ? "combi"
-      : saved.transport === "auto"
+      : formValues.transport === "auto"
         ? "particular"
-        : saved.transport;
-    const savedDietChoice = saved.dietChoice ||
+        : formValues.transport;
+    const savedDietChoice = formValues.dietChoice ||
       (
         hasSaved
-          ? (String(saved.diet || "").trim() ? "si" : "no")
+          ? (
+              String(formValues.diet || "").trim()
+                ? "si"
+                : "no"
+            )
           : ""
       );
     const challengesDone = Boolean(
@@ -3326,7 +3623,7 @@
             ${summaryLine(
               "Restricciones",
               saved.dietChoice === "no" ||
-              !String(saved.diet || "").trim()
+              !String(formValues.diet || "").trim()
                 ? "No"
                 : saved.diet
             )}
@@ -3390,6 +3687,11 @@
       <form
         id="rsvpForm"
         class="section-card form-card rsvp-form-compact">
+        <div
+          class="rsvp-draft-protection"
+          aria-live="polite">
+          Tus datos se mantienen mientras completás el formulario.
+        </div>
         ${
           hasSaved
             ? `<div class="warning-ribbon">
@@ -3402,28 +3704,28 @@
           ${field(
             "firstName",
             "Nombre",
-            saved.firstName || currentGuest.firstName,
+            formValues.firstName || currentGuest.firstName,
             "text",
             true
           )}
           ${field(
             "lastName",
             "Apellido",
-            saved.lastName || currentGuest.lastName,
+            formValues.lastName || currentGuest.lastName,
             "text",
             true
           )}
           ${field(
             "email",
             "Mail",
-            saved.email || currentGuest.email || "",
+            formValues.email || currentGuest.email || "",
             "email",
             true
           )}
           ${field(
             "phone",
             "Teléfono",
-            saved.phone || "",
+            formValues.phone || "",
             "tel",
             false
           )}
@@ -3435,14 +3737,14 @@
                 "attendance",
                 "si",
                 "Sí, voy!",
-                saved.attendance,
+                formValues.attendance,
                 true
               )}
               ${choicePill(
                 "attendance",
                 "no",
                 "No podré asistir",
-                saved.attendance,
+                formValues.attendance,
                 true
               )}
             </div>
@@ -3508,7 +3810,7 @@
             placeholder="Ej: vegetariano, celíaco, sin lactosa..."
             ${savedDietChoice === "no" ? "disabled" : ""}
             ${savedDietChoice === "si" ? "required" : ""}
-          >${escapeHTML(saved.diet || "")}</textarea>
+          >${escapeHTML(formValues.diet || "")}</textarea>
           <small>
             ${
               savedDietChoice === "no"
@@ -4435,6 +4737,11 @@
     const open = isUnlocked(game.unlockKey);
     const key = `${currentGuest.id}::${game.id}`;
     const saved = state.gameSubmissions[key];
+    const draft = currentGameDraft(game.id);
+    const formAnswer =
+      draft?.answer ??
+      saved?.answer ??
+      "";
     return `
       <article class="game-card ${open ? "" : "locked-panel"}">
         <div class="game-top"><span class="badge">${escapeHTML(game.phase)}</span><span class="points">${game.maxPoints} pts</span></div>
@@ -4443,7 +4750,10 @@
         <small>${escapeHTML(game.type)}</small>
         ${open ? `
           <form class="game-submit" data-game-id="${escapeHTML(game.id)}">
-            <input name="answer" placeholder="Respuesta / evidencia / link / comentario" value="${escapeHTML(saved?.answer || "")}">
+            <input
+              name="answer"
+              placeholder="Respuesta / evidencia / link / comentario"
+              value="${escapeHTML(formAnswer)}">
             <button type="submit">Enviar</button>
           </form>
           ${saved ? `<small class="saved-note">Enviado: ${formatDateLabel(saved.updatedAt)}</small>` : ""}` : `<small>Se libera: ${formatDateLabel(DATA.unlocks[game.unlockKey]?.unlockAt)}</small>`}
@@ -4602,6 +4912,15 @@
 
 
   function renderMusicGame(open, saved, team) {
+    const draft =
+      currentGameDraft("music-selection");
+    const formValues = draft
+      ? {
+          ...(saved || {}),
+          ...draft
+        }
+      : (saved || {});
+
     if (!open) {
       return renderLockedTriviaCard(
         "01",
@@ -4685,12 +5004,15 @@
           </p>
 
           <form id="musicGameForm" class="trivia-form">
+            <div class="game-draft-protection">
+              Tus canciones se mantienen mientras completás el desafío.
+            </div>
             <label>
               Canción para la boda
               <input
                 name="weddingSong"
                 type="text"
-                value="${escapeHTML(saved?.weddingSong || "")}"
+                value="${escapeHTML(formValues.weddingSong || "")}"
                 placeholder="Tema y artista"
                 required>
             </label>
@@ -4700,7 +5022,7 @@
               <input
                 name="teamEntranceSong"
                 type="text"
-                value="${escapeHTML(saved?.teamEntranceSong || "")}"
+                value="${escapeHTML(formValues.teamEntranceSong || "")}"
                 placeholder="Tema y artista"
                 required>
             </label>
@@ -4709,7 +5031,7 @@
               Motivo <span>(opcional)</span>
               <textarea
                 name="reason"
-                placeholder="¿Por qué la elegiste?">${escapeHTML(saved?.reason || "")}</textarea>
+                placeholder="¿Por qué la elegiste?">${escapeHTML(formValues.reason || "")}</textarea>
             </label>
 
             <div class="trivia-form-footer">
@@ -4724,6 +5046,11 @@
 
 
   function renderCoupleTrivia(open, saved) {
+    const draft =
+      currentGameDraft(
+        "couple-trivia-test"
+      ) || {};
+
     if (!open) {
       return renderLockedTriviaCard(
         "02",
@@ -4793,6 +5120,9 @@
           </div>
 
           <form id="coupleTriviaForm" class="trivia-quiz-form">
+            <div class="game-draft-protection">
+              Tus respuestas se mantienen mientras completás la trivia.
+            </div>
             ${SAMPLE_COUPLE_QUESTIONS.map((item,index) => `
               <fieldset class="trivia-question">
                 <legend>
@@ -4802,7 +5132,16 @@
                 <div class="trivia-options">
                   ${item.options.map(option => `
                     <label>
-                      <input type="radio" name="${item.id}" value="${escapeHTML(option)}" required>
+                      <input
+                        type="radio"
+                        name="${item.id}"
+                        value="${escapeHTML(option)}"
+                        ${
+                          draft[item.id] === option
+                            ? "checked"
+                            : ""
+                        }
+                        required>
                       <span>${escapeHTML(option)}</span>
                     </label>
                   `).join("")}
@@ -4817,6 +5156,11 @@
 
 
   function renderWhoIsWhoTrivia(open, saved) {
+    const draft =
+      currentGameDraft(
+        "who-is-who-trivia-test"
+      ) || {};
+
     if (!open) {
       return renderLockedTriviaCard(
         "03",
@@ -4887,6 +5231,9 @@
           </div>
 
           <form id="whoIsWhoTriviaForm" class="trivia-quiz-form">
+            <div class="game-draft-protection">
+              Tus respuestas se mantienen mientras completás la trivia.
+            </div>
             ${WHO_IS_WHO_QUESTIONS.map((item,index) => `
               <fieldset class="trivia-question trivia-who-question">
                 <legend>
@@ -4896,7 +5243,16 @@
                 <div class="trivia-options trivia-binary-options">
                   ${item.options.map(option => `
                     <label>
-                      <input type="radio" name="${item.id}" value="${escapeHTML(option)}" required>
+                      <input
+                        type="radio"
+                        name="${item.id}"
+                        value="${escapeHTML(option)}"
+                        ${
+                          draft[item.id] === option
+                            ? "checked"
+                            : ""
+                        }
+                        required>
                       <span>${escapeHTML(option)}</span>
                     </label>
                   `).join("")}
@@ -6952,18 +7308,46 @@
         if (disabled) textarea.value = "";
       };
 
-      rsvpForm?.querySelectorAll('input[name="dietChoice"]').forEach(input => {
-        input.addEventListener("change", updateDietField);
+      rsvpForm?.querySelectorAll(
+        'input[name="dietChoice"]'
+      ).forEach(input => {
+        input.addEventListener(
+          "change",
+          updateDietField
+        );
       });
+
+      if (rsvpForm) {
+        if (currentRsvpDraft()) {
+          rsvpForm.dataset.dirty = "true";
+        }
+
+        const preserveDraft = () => {
+          captureRsvpDraft(rsvpForm);
+        };
+
+        rsvpForm.addEventListener(
+          "input",
+          preserveDraft
+        );
+
+        rsvpForm.addEventListener(
+          "change",
+          preserveDraft
+        );
+      }
+
       updateDietField();
 
       $("#editRsvp")?.addEventListener("click", () => {
+        clearRsvpDraft();
         state.rsvpEditMode = true;
         saveState();
         renderCurrentRoute();
       });
 
       $("#cancelRsvpEdit")?.addEventListener("click", () => {
+        clearRsvpDraft();
         state.rsvpEditMode = false;
         saveState();
         renderCurrentRoute();
@@ -7003,6 +7387,7 @@
           updatedAt: new Date().toISOString()
         };
 
+        clearRsvpDraft();
         state.rsvpEditMode = false;
         void queueOptimisticWrite(
           "saveRsvp",
@@ -7055,7 +7440,13 @@
     }
 
     if (route === "puntos") {
-      $$(".game-submit").forEach(form => form.addEventListener("submit", event => {
+      $$(".game-submit").forEach(form => {
+        bindGameDraft(
+          form,
+          form.dataset.gameId
+        );
+
+        form.addEventListener("submit", event => {
         event.preventDefault();
         const currentForm = event.currentTarget;
         const gameId = currentForm.dataset.gameId;
@@ -7068,6 +7459,8 @@
           updatedAt: new Date().toISOString()
         };
 
+        clearGameDraft(gameId);
+
         void queueOptimisticWrite(
           "saveGameSubmission",
           payload,
@@ -7077,10 +7470,24 @@
             beforeRender: () => toast("Respuesta recibida. Guardando…")
           }
         );
-      }));
+      });
+      });
     }
 
     if (route === "trivia") {
+      bindGameDraft(
+        $("#musicGameForm"),
+        "music-selection"
+      );
+      bindGameDraft(
+        $("#coupleTriviaForm"),
+        "couple-trivia-test"
+      );
+      bindGameDraft(
+        $("#whoIsWhoTriviaForm"),
+        "who-is-who-trivia-test"
+      );
+
       $$("[data-next-challenge]").forEach(button => {
         button.addEventListener("click", () => {
           navigate(button.dataset.nextChallenge);
@@ -7108,6 +7515,9 @@
         };
 
         musicEditMode = false;
+        clearGameDraft(
+          "music-selection"
+        );
 
         void queueOptimisticWrite(
           "saveGameSubmission",
@@ -7156,6 +7566,10 @@
           updatedAt: new Date().toISOString()
         };
 
+        clearGameDraft(
+          "couple-trivia-test"
+        );
+
         void queueOptimisticWrite(
           "saveGameSubmission",
           payload,
@@ -7203,6 +7617,10 @@
           teamId: currentGuest.team,
           updatedAt: new Date().toISOString()
         };
+
+        clearGameDraft(
+          "who-is-who-trivia-test"
+        );
 
         void queueOptimisticWrite(
           "saveGameSubmission",
@@ -8001,7 +8419,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32464 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32466 y volvé a intentar.`
           });
         }
       }
