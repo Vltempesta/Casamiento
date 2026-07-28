@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32460";
+  const CURRENT_APP_VERSION = "32461";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -120,7 +120,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32460"
+        appVersion: CONFIG.APP_VERSION || "32461"
       })
     );
   }
@@ -685,7 +685,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32460",
+      appVersion: "32461",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -7427,11 +7427,176 @@
     return overlay;
   }
 
-  function numericBackendVersion() {
-    return Number(
-      String(state.backendVersion || "")
-        .replace(/\D/g, "")
+  function setActionButtonState(
+    button,
+    actionState = "idle",
+    label = ""
+  ) {
+    if (!button) return;
+
+    if (!button.dataset.actionOriginalHtml) {
+      button.dataset.actionOriginalHtml =
+        button.innerHTML;
+      button.dataset.actionOriginalDisabled =
+        button.disabled ? "true" : "false";
+    }
+
+    button.classList.remove(
+      "is-action-running",
+      "is-action-success",
+      "is-action-error"
     );
+
+    if (actionState === "working") {
+      button.classList.add("is-action-running");
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+
+      if (label) {
+        button.innerHTML =
+          `<span class="action-button-text">${
+            escapeHTML(label)
+          }</span>`;
+      }
+      return;
+    }
+
+    button.removeAttribute("aria-busy");
+
+    if (
+      actionState === "success" ||
+      actionState === "error"
+    ) {
+      button.classList.add(
+        actionState === "success"
+          ? "is-action-success"
+          : "is-action-error"
+      );
+
+      if (label) {
+        button.innerHTML =
+          `<span class="action-button-text">${
+            escapeHTML(label)
+          }</span>`;
+      }
+
+      button.disabled = true;
+
+      window.setTimeout(() => {
+        if (!button.isConnected) return;
+        setActionButtonState(button, "idle");
+      }, 850);
+
+      return;
+    }
+
+    button.innerHTML =
+      button.dataset.actionOriginalHtml ||
+      button.innerHTML;
+
+    button.disabled =
+      button.dataset.actionOriginalDisabled ===
+      "true";
+
+    delete button.dataset.actionOriginalHtml;
+    delete button.dataset.actionOriginalDisabled;
+  }
+
+  async function requestGuestActivityReset(
+    adminPassword
+  ) {
+    if (!isConfigured()) {
+      throw new Error(
+        "La conexión con Google Sheets no está configurada."
+      );
+    }
+
+    if (navigator.onLine === false) {
+      throw new Error(
+        "No hay conexión a internet."
+      );
+    }
+
+    const envelope = buildRemoteEnvelope(
+      "resetGuestActivity",
+      {
+        adminPassword,
+        requestedAt: new Date().toISOString()
+      }
+    );
+
+    setRemoteStatus(
+      "connecting",
+      "Vaciando la base oficial"
+    );
+
+    const response = await jsonp(
+      "resetGuestActivity",
+      {
+        payload: JSON.stringify(envelope)
+      },
+      {
+        timeoutMs: 90000
+      }
+    );
+
+    const details =
+      response?.data?.details || {};
+
+    state.backendVersion =
+      response?.data?.backendVersion ||
+      response?.backendVersion ||
+      state.backendVersion;
+
+    if (details.verifiedEmpty !== true) {
+      const remaining = Object
+        .entries(details.remaining || {})
+        .filter(([, value]) => Number(value || 0) > 0)
+        .map(([sheet, value]) => `${sheet}: ${value}`)
+        .join(" · ");
+
+      throw new Error(
+        remaining
+          ? `Quedaron registros sin borrar: ${remaining}`
+          : "Google Sheets no confirmó que las hojas hayan quedado vacías."
+      );
+    }
+
+    return {
+      response,
+      details
+    };
+  }
+
+  async function syncWithAnimatedButton(button) {
+    setActionButtonState(
+      button,
+      "working",
+      "Actualizando…"
+    );
+
+    const [updated] = await Promise.all([
+      syncFromSheets(false),
+      new Promise(resolve => {
+        window.setTimeout(resolve, 650);
+      })
+    ]);
+
+    if (button?.isConnected) {
+      setActionButtonState(
+        button,
+        updated ? "success" : "error",
+        updated ? "Actualizado ✓" : "Error al actualizar"
+      );
+    }
+
+    toast(
+      updated
+        ? "Datos actualizados."
+        : "No se pudieron actualizar los datos."
+    );
+
+    return updated;
   }
 
   function bindAdminEvents() {
@@ -7492,46 +7657,79 @@
     });
 
 
-    $("#clearSocialMessages")?.addEventListener("click", async event => {
-      const button = event.currentTarget;
-      const currentMessages = dedupeSocialMessages(state.socialMessages || []);
+    $("#clearSocialMessages")?.addEventListener(
+      "click",
+      async event => {
+        const button = event.currentTarget;
+        const currentMessages =
+          dedupeSocialMessages(
+            state.socialMessages || []
+          );
 
-      if (!currentMessages.length) {
-        toast("La sección Social ya está vacía.");
-        return;
+        if (!currentMessages.length) {
+          toast(
+            "La sección Social ya está vacía."
+          );
+          return;
+        }
+
+        if (
+          !confirm(
+            "¿Vaciar todos los mensajes y respuestas de Social? Esta acción no se puede deshacer."
+          )
+        ) {
+          return;
+        }
+
+        setActionButtonState(
+          button,
+          "working",
+          "Vaciando Social…"
+        );
+
+        const result = await writeToSheets(
+          "clearSocialMessages",
+          {
+            adminPassword:
+              state.adminPassword,
+            timestamp:
+              new Date().toISOString()
+          },
+          {
+            timeoutMs: 60000
+          }
+        );
+
+        if (!result) {
+          setActionButtonState(
+            button,
+            "error",
+            "No se pudo vaciar"
+          );
+          toast(
+            "No se pudieron borrar los mensajes."
+          );
+          return;
+        }
+
+        state.socialMessages = [];
+        state.socialLikes = {};
+        saveState();
+
+        setActionButtonState(
+          button,
+          "success",
+          "Social vacío ✓"
+        );
+
+        toast(
+          "Se borraron todos los mensajes, respuestas y likes."
+        );
+
+        await syncFromSheets(false);
+        renderCurrentRoute();
       }
-
-      if (!confirm("¿Vaciar todos los mensajes y respuestas de Social? Esta acción no se puede deshacer.")) {
-        return;
-      }
-
-      const originalText = button.textContent;
-      button.disabled = true;
-      button.textContent = "Vaciando…";
-
-      const result = await writeToSheets("clearSocialMessages", {
-        adminPassword: state.adminPassword,
-        timestamp: new Date().toISOString()
-      });
-
-      if (!result) {
-        button.disabled = false;
-        button.textContent = originalText;
-        toast("No se pudieron borrar los mensajes.");
-        return;
-      }
-
-      state.socialMessages = [];
-      saveState();
-
-      await syncFromSheets(false);
-
-      state.socialMessages = [];
-      saveState();
-
-      toast("Se borraron todos los mensajes y respuestas.");
-      renderCurrentRoute();
-    });
+    );
 
 
     $("#adminLoginForm")?.addEventListener("submit", event => {
@@ -7660,31 +7858,11 @@
 
     $("#resetGuestActivity")?.addEventListener(
       "click",
-      async () => {
-        const requiredBackendVersion = 32460;
-        const detectedBackendVersion =
-          numericBackendVersion();
-
-        if (
-          !detectedBackendVersion ||
-          detectedBackendVersion <
-            requiredBackendVersion
-        ) {
-          showAdminResetOverlay({
-            state: "error",
-            title: "Backend sin actualizar",
-            text:
-              "El botón necesita que publiques Code.gs v32460 como una nueva versión del Web App.",
-            detail:
-              `Backend detectado: ${
-                state.backendVersion || "no disponible"
-              }`
-          });
-          return;
-        }
+      async event => {
+        const button = event.currentTarget;
 
         const firstConfirmation = confirm(
-          "¿Resetear toda la actividad de la app?\n\nSe borrarán:\n• Asistencias y traslados\n• Formularios personales\n• Canciones y trivias\n• Todos los puntos y la auditoría\n• Mensajes y likes de Social\n• Notificaciones vistas\n\nNo se borrarán los invitados, los candados ni la configuración."
+          "¿Resetear toda la actividad de la app?\n\nSe borrará directamente de Google Sheets:\n• Asistencias, traslados y restricciones\n• Formularios personales\n• Canciones y trivias\n• Todos los puntos y la auditoría\n• Mensajes y likes de Social\n• Notificaciones vistas\n\nNo se borrarán los invitados, los candados ni la configuración."
         );
 
         if (!firstConfirmation) return;
@@ -7701,163 +7879,293 @@
           return;
         }
 
-        const button = $("#resetGuestActivity");
-        const originalText =
-          button?.textContent ||
-          "Resetear toda la actividad";
-
-        if (button) {
-          button.disabled = true;
-          button.textContent = "Reseteando…";
-        }
+        setActionButtonState(
+          button,
+          "working",
+          "Borrando la data…"
+        );
 
         showAdminResetOverlay({
           state: "working",
-          title: "Reseteando la actividad",
+          title: "Borrando la data",
           text:
-            "Estamos limpiando asistencias, juegos, puntos y Social.",
+            "Estamos vaciando directamente las hojas de Google Sheets.",
           detail:
-            "No cierres esta pantalla. Puede demorar algunos segundos."
+            "No cierres esta pantalla. El proceso puede demorar hasta un minuto."
         });
 
         state.lastRemoteError = "";
 
-        const result = await writeToSheets(
-          "resetGuestActivity",
-          {
-            adminPassword: state.adminPassword,
-            requestedAt: new Date().toISOString()
-          },
-          {
-            allowPreview: true,
-            silent: true,
-            timeoutMs: 60000
-          }
-        );
+        try {
+          const result =
+            await requestGuestActivityReset(
+              state.adminPassword
+            );
 
-        if (!result) {
+          const cleared =
+            result.details?.cleared || {};
+
+          const totalCleared =
+            Number(
+              result.details?.totalCleared
+            ) ||
+            Object
+              .values(cleared)
+              .reduce(
+                (total, value) =>
+                  total + Number(value || 0),
+                0
+              );
+
+          pendingWrites = [];
+          activeWriteKeys.clear();
+          persistPendingWrites();
+
+          state.dataResetAt =
+            result.details?.record?.resetAt ||
+            new Date().toISOString();
+          state.rsvps = {};
+          state.profiles = {};
+          state.gameSubmissions = {};
+          state.scoreEntries = [];
+          state.serverRanking = [];
+          state.socialMessages = [];
+          state.socialLikes = {};
+          state.notificationsByGuest = {};
+          state.rsvpEditMode = false;
+          state.profileEditMode = false;
+          state.lastRemoteError = "";
+          state.lastSyncAt =
+            new Date().toISOString();
+
+          saveState();
+          setRemoteStatus(
+            "online",
+            "Base oficial vacía"
+          );
+
           document
-            .querySelector(".admin-reset-overlay")
+            .querySelector(
+              ".admin-reset-overlay"
+            )
             ?.remove();
 
-          if (button) {
-            button.disabled = false;
-            button.textContent = originalText;
-          }
+          setActionButtonState(
+            button,
+            "success",
+            "Data eliminada ✓"
+          );
+
+          showAdminResetOverlay({
+            state: "success",
+            title: "Data eliminada",
+            text:
+              "Las hojas de actividad de Google Sheets quedaron vacías.",
+            detail:
+              `${totalCleared} ${
+                totalCleared === 1
+                  ? "registro eliminado"
+                  : "registros eliminados"
+              }`,
+            autoClose: true
+          });
+
+          await syncFromSheets(false);
+          renderCurrentRoute();
+        } catch (error) {
+          console.error(
+            "Fallo del reset total",
+            error
+          );
+
+          state.lastRemoteError =
+            error?.message ||
+            "Error desconocido";
+          saveState();
+
+          document
+            .querySelector(
+              ".admin-reset-overlay"
+            )
+            ?.remove();
+
+          setActionButtonState(
+            button,
+            "error",
+            "No se pudo borrar"
+          );
 
           showAdminResetOverlay({
             state: "error",
-            title: "No se pudo completar el reset",
+            title: "No se pudo borrar la data",
             text:
-              "La base no confirmó la limpieza. No se modificó el estado visible de la app.",
+              "Google Sheets no confirmó el reset.",
             detail:
-              state.lastRemoteError ||
-              "Revisá que Code.gs v32460 esté implementado y volvé a intentar."
+              `${state.lastRemoteError} Publicá Code.gs v32461 y volvé a intentar.`
           });
-          return;
         }
-
-        const cleared =
-          result.details?.cleared || {};
-
-        const totalCleared = Object
-          .values(cleared)
-          .reduce(
-            (total, value) =>
-              total + Number(value || 0),
-            0
-          );
-
-        pendingWrites = [];
-        activeWriteKeys.clear();
-        persistPendingWrites();
-
-        state.dataResetAt =
-          result.details?.record?.resetAt ||
-          new Date().toISOString();
-        state.rsvps = {};
-        state.profiles = {};
-        state.gameSubmissions = {};
-        state.scoreEntries = [];
-        state.serverRanking = [];
-        state.socialMessages = [];
-        state.socialLikes = {};
-        state.notificationsByGuest = {};
-        state.rsvpEditMode = false;
-        state.profileEditMode = false;
-        state.lastRemoteError = "";
-        state.lastSyncAt = new Date().toISOString();
-
-        saveState();
-        setRemoteStatus("online", "Actividad reseteada");
-
-        document
-          .querySelector(".admin-reset-overlay")
-          ?.remove();
-
-        showAdminResetOverlay({
-          state: "success",
-          title: "Actividad reseteada",
-          text:
-            "Asistencias, juegos, puntos y Social quedaron vacíos.",
-          detail:
-            `${totalCleared} ${
-              totalCleared === 1
-                ? "registro eliminado"
-                : "registros eliminados"
-            }`,
-          autoClose: true
-        });
-
-        renderCurrentRoute();
-        scheduleSilentSync(1200);
       }
     );
 
-    $("#resetDiscretionaryPoints")?.addEventListener("click", async () => {
-      if (!confirm("¿Resetear solo los puntos discrecionales cargados por Fede y Vani? También se limpiarán esos movimientos de la vista pública. RSVP y datos de invitados no se modifican.")) return;
-      const timestamp = new Date().toISOString();
-      const hasDiscretionary = allPointEntries().some(entry => entry.gameId === "discrecional-fede-vani");
-      if (!hasDiscretionary) { toast("No hay puntos discrecionales para resetear."); return; }
-      const payload = {
-        gameId: "reset-discretionary-clear-marker",
-        teamId: "admin",
-        points: 0,
-        comment: "Limpieza de puntos discrecionales por Fede y Vani",
-        adminPassword: state.adminPassword,
-        adminName: "Fede y Vani",
-        timestamp
-      };
-      state.scoreEntries.push(payload);
-      state.scoreEntries = dedupeScores(state.scoreEntries);
-      saveState();
-      toast("Puntos discrecionales y movimientos anteriores limpiados.");
-      await postToSheets("saveScore", payload);
-      scheduleSilentSync();
-      renderCurrentRoute();
-    });
+    $("#resetDiscretionaryPoints")?.addEventListener(
+      "click",
+      async event => {
+        const button = event.currentTarget;
 
-    $("#resetAllPoints")?.addEventListener("click", async () => {
-      if (!confirm("¿Resetear TODOS los puntos actuales del ranking? También se limpiarán los movimientos anteriores de la vista pública. No borra RSVP ni datos de invitados.")) return;
-      const timestamp = new Date().toISOString();
-      if (!allPointEntries().length) { toast("El ranking ya está en cero."); return; }
-      const payload = {
-        gameId: "reset-total-clear-marker",
-        teamId: "admin",
-        points: 0,
-        comment: "Limpieza general de puntos por Fede y Vani",
-        adminPassword: state.adminPassword,
-        adminName: "Fede y Vani",
-        timestamp
-      };
-      state.scoreEntries.push(payload);
-      state.scoreEntries = dedupeScores(state.scoreEntries);
-      saveState();
-      toast("Todos los puntos y movimientos anteriores fueron limpiados.");
-      await postToSheets("saveScore", payload);
-      scheduleSilentSync();
-      renderCurrentRoute();
-    });
+        if (
+          !confirm(
+            "¿Resetear solo los puntos discrecionales cargados por Fede y Vani? También se limpiarán esos movimientos de la vista pública. RSVP y datos de invitados no se modifican."
+          )
+        ) {
+          return;
+        }
+
+        const timestamp =
+          new Date().toISOString();
+        const hasDiscretionary =
+          allPointEntries().some(
+            entry =>
+              entry.gameId ===
+              "discrecional-fede-vani"
+          );
+
+        if (!hasDiscretionary) {
+          toast(
+            "No hay puntos discrecionales para resetear."
+          );
+          return;
+        }
+
+        setActionButtonState(
+          button,
+          "working",
+          "Limpiando puntos…"
+        );
+
+        const payload = {
+          gameId:
+            "reset-discretionary-clear-marker",
+          teamId: "admin",
+          points: 0,
+          comment:
+            "Limpieza de puntos discrecionales por Fede y Vani",
+          adminPassword:
+            state.adminPassword,
+          adminName: "Fede y Vani",
+          timestamp
+        };
+
+        const saved =
+          await postToSheets(
+            "saveScore",
+            payload
+          );
+
+        if (!saved) {
+          setActionButtonState(
+            button,
+            "error",
+            "No se pudo limpiar"
+          );
+          return;
+        }
+
+        state.scoreEntries.push(payload);
+        state.scoreEntries =
+          dedupeScores(
+            state.scoreEntries
+          );
+        saveState();
+
+        setActionButtonState(
+          button,
+          "success",
+          "Puntos limpiados ✓"
+        );
+
+        toast(
+          "Puntos discrecionales y movimientos anteriores limpiados."
+        );
+        renderCurrentRoute();
+      }
+    );
+
+    $("#resetAllPoints")?.addEventListener(
+      "click",
+      async event => {
+        const button = event.currentTarget;
+
+        if (
+          !confirm(
+            "¿Resetear TODOS los puntos actuales del ranking? También se limpiarán los movimientos anteriores de la vista pública. No borra RSVP ni datos de invitados."
+          )
+        ) {
+          return;
+        }
+
+        const timestamp =
+          new Date().toISOString();
+
+        if (!allPointEntries().length) {
+          toast(
+            "El ranking ya está en cero."
+          );
+          return;
+        }
+
+        setActionButtonState(
+          button,
+          "working",
+          "Reseteando ranking…"
+        );
+
+        const payload = {
+          gameId:
+            "reset-total-clear-marker",
+          teamId: "admin",
+          points: 0,
+          comment:
+            "Limpieza general de puntos por Fede y Vani",
+          adminPassword:
+            state.adminPassword,
+          adminName: "Fede y Vani",
+          timestamp
+        };
+
+        const saved =
+          await postToSheets(
+            "saveScore",
+            payload
+          );
+
+        if (!saved) {
+          setActionButtonState(
+            button,
+            "error",
+            "No se pudo resetear"
+          );
+          return;
+        }
+
+        state.scoreEntries.push(payload);
+        state.scoreEntries =
+          dedupeScores(
+            state.scoreEntries
+          );
+        saveState();
+
+        setActionButtonState(
+          button,
+          "success",
+          "Ranking reseteado ✓"
+        );
+
+        toast(
+          "Todos los puntos y movimientos anteriores fueron limpiados."
+        );
+        renderCurrentRoute();
+      }
+    );
 
     $$("[data-unlock-key]").forEach(input => input.addEventListener("change", async event => {
       const control = event.currentTarget;
@@ -7866,6 +8174,14 @@
 
       initializeCurrentNotifications();
       control.disabled = true;
+
+      const toggleCard =
+        control.closest(
+          ".admin-game-toggle"
+        );
+      toggleCard?.classList.add(
+        "is-saving"
+      );
 
       const saved = await writeToSheets("saveUnlock", {
         key,
@@ -7877,6 +8193,9 @@
       if (!saved) {
         control.checked = !open;
         control.disabled = false;
+        toggleCard?.classList.remove(
+          "is-saving"
+        );
         toast("No se pudo guardar el cambio.");
         return;
       }
@@ -7922,16 +8241,57 @@
       renderCurrentRoute();
     }));
 
-    $("#setupSheets")?.addEventListener("click", async () => {
-      if (!isConfigured()) { toast("Falta configurar la conexión remota."); return; }
-      try {
-        await jsonp("setup", { adminPassword: state.adminPassword });
-        toast("Base inicializada.");
-        syncFromSheets(true);
-      } catch (error) {
-        toast(`No se pudo inicializar: ${error.message}`);
+    $("#setupSheets")?.addEventListener(
+      "click",
+      async event => {
+        const button = event.currentTarget;
+
+        if (!isConfigured()) {
+          toast(
+            "Falta configurar la conexión remota."
+          );
+          return;
+        }
+
+        setActionButtonState(
+          button,
+          "working",
+          "Inicializando…"
+        );
+
+        try {
+          await jsonp(
+            "setup",
+            {
+              adminPassword:
+                state.adminPassword
+            },
+            {
+              timeoutMs: 60000
+            }
+          );
+
+          setActionButtonState(
+            button,
+            "success",
+            "Base inicializada ✓"
+          );
+          toast("Base inicializada.");
+          await syncFromSheets(false);
+        } catch (error) {
+          setActionButtonState(
+            button,
+            "error",
+            "Error al inicializar"
+          );
+          toast(
+            `No se pudo inicializar: ${
+              error.message
+            }`
+          );
+        }
       }
-    });
+    );
 
     $("#exportOfficialGuests")?.addEventListener("click", async event => {
       const button = event.currentTarget;
@@ -7972,12 +8332,20 @@
 
     $("#syncNow")?.addEventListener(
       "click",
-      () => syncFromSheets(true)
+      event => {
+        void syncWithAnimatedButton(
+          event.currentTarget
+        );
+      }
     );
 
     $("#syncConfigNow")?.addEventListener(
       "click",
-      () => syncFromSheets(true)
+      event => {
+        void syncWithAnimatedButton(
+          event.currentTarget
+        );
+      }
     );
     $("#exportJson")?.addEventListener("click", () => downloadFile("convocatoria-vani-fede-datos.json", JSON.stringify(state, null, 2), "application/json"));
     $("#exportCsv")?.addEventListener("click", () => downloadFile("rsvp-vani-fede.csv", buildRsvpCsv(), "text/csv;charset=utf-8"));
