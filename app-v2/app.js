@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32454";
+  const CURRENT_APP_VERSION = "32455";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -120,7 +120,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32454"
+        appVersion: CONFIG.APP_VERSION || "32455"
       })
     );
   }
@@ -688,7 +688,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32454",
+      appVersion: "32455",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2686,79 +2686,89 @@
   const SAMPLE_COUPLE_QUESTIONS = [
     {
       id: "first-look",
-      question: "¿En qué lugar cruzaron miradas por primera vez?",
+      question: "¿Dónde empezó la historia de Vani y Fede?",
       options: [
-        "En una merienda con amigos.",
-        "En el comedor de su primer trabajo.",
-        "En un boliche a las 3 de la mañana.",
-        "En una plaza tomando unos mates."
+        "En el comedor de su primer trabajo",
+        "En una fiesta de amigos",
+        "En la facultad",
+        "En una sala de escape"
       ],
-      answer: "En el comedor de su primer trabajo."
+      answer: "En el comedor de su primer trabajo"
     },
     {
       id: "first-date",
-      question: "¿Dónde fue la esperada primera cita?",
+      question: "¿Cuál fue el plan de su primera cita?",
       options: [
-        "En el cine.",
-        "En un restaurante elegante.",
-        "Tomando una merienda.",
-        "En una plaza."
+        "Ir al cine",
+        "Salir a cenar",
+        "Tomar una merienda",
+        "Ir a una plaza"
       ],
-      answer: "En el cine."
+      answer: "Ir al cine"
     },
     {
       id: "shared-passion",
-      question: "Si pudieran armar las valijas hoy mismo, ¿cuál es la mayor pasión que comparten?",
+      question: "¿Qué pasión compartida fue protagonista de gran parte de sus años juntos?",
       options: [
-        "Viajar a cualquier rincón del mundo.",
-        "Trabajar hasta tarde.",
-        "Hacer deporte juntos.",
-        "Quedarse jugando juegos de mesa."
+        "Viajar y descubrir lugares nuevos",
+        "Correr maratones",
+        "Coleccionar autos clásicos",
+        "Aprender instrumentos musicales"
       ],
-      answer: "Viajar a cualquier rincón del mundo."
+      answer: "Viajar y descubrir lugares nuevos"
     },
     {
       id: "dog",
-      question: "¿Cómo se llama el integrante peludo de 4 patas que reina en la casa?",
-      options: ["Simba.", "Coco.", "Milo.", "Loki."],
-      answer: "Simba."
+      question: "¿Quién es el integrante de cuatro patas de la familia?",
+      options: [
+        "Simba",
+        "Coco",
+        "Milo",
+        "Loki"
+      ],
+      answer: "Simba"
     },
     {
       id: "years",
-      question: "¿Cuántos años de paciencia, amor y aventuras llevan juntos?",
-      options: ["9 años.", "10 años.", "11 años.", "12 años."],
-      answer: "11 años."
+      question: "¿Cuántos años llevan juntos al llegar al casamiento?",
+      options: [
+        "9 años",
+        "10 años",
+        "11 años",
+        "12 años"
+      ],
+      answer: "11 años"
     }
   ];
 
   const WHO_IS_WHO_QUESTIONS = [
     {
       id: "lost-things",
-      question: "¿Quién es más probable que pierda las llaves o el celular?",
+      question: "Cuando algo desaparece en casa, ¿quién suele haber perdido las llaves o el celular?",
       options: ["Vani", "Fede"],
       answer: "Vani"
     },
     {
       id: "movie-sleep",
-      question: "¿Quién es el primero en quedarse dormido en medio de una película?",
+      question: "En una noche de película, ¿quién tiene más chances de dormirse primero?",
       options: ["Vani", "Fede"],
       answer: "Fede"
     },
     {
       id: "exercise",
-      question: "Termina el día y llega la hora de moverse... ¿Quién es más probable que cumpla con la actividad física por la tarde?",
+      question: "Aunque el día haya sido largo, ¿quién suele cumplir igual con la actividad física?",
       options: ["Vani", "Fede"],
       answer: "Vani"
     },
     {
       id: "masterchef",
-      question: "¿Quién es el MasterChef oficial de la casa?",
+      question: "Cuando toca cocinar, ¿quién asume el rol de chef de la casa?",
       options: ["Vani", "Fede"],
       answer: "Fede"
     },
     {
       id: "organized",
-      question: "¿Quién es la persona más ordenada de la pareja?",
+      question: "¿Quién suele mantener todo más ordenado?",
       options: ["Vani", "Fede"],
       answer: "Vani"
     }
@@ -3246,7 +3256,11 @@
     const saved = state.rsvps[currentGuest.id] || {};
     const hasSaved = Boolean(saved && saved.updatedAt);
     const hasFinalSaved = hasCompletedRsvp(saved);
-    const editing = Boolean(state.rsvpEditMode || !hasSaved || !hasFinalSaved);
+    const editing = Boolean(
+      state.rsvpEditMode ||
+      !hasSaved ||
+      !hasFinalSaved
+    );
     const deadlineLabel = "31 de agosto de 2026";
     const savedTransport = ["combi", "micro"].includes(saved.transport)
       ? "combi"
@@ -3254,7 +3268,11 @@
         ? "particular"
         : saved.transport;
     const savedDietChoice = saved.dietChoice ||
-      (hasSaved ? (String(saved.diet || "").trim() ? "si" : "no") : "");
+      (
+        hasSaved
+          ? (String(saved.diet || "").trim() ? "si" : "no")
+          : ""
+      );
     const challengesDone = Boolean(
       triviaSubmission("music-selection") &&
       triviaSubmission("couple-trivia-test") &&
@@ -3262,92 +3280,223 @@
     );
 
     if (hasSaved && hasFinalSaved && !editing) {
+      const selectedTransport =
+        transportLabel(saved.transport) ||
+        "Sin definir";
+
       return `
         ${rsvpStyles()}
-        ${sectionHeader("confirmación", "Asistencia confirmada", "")}
+        ${sectionHeader(
+          "confirmación",
+          "Asistencia confirmada",
+          ""
+        )}
+
         <section class="section-card rsvp-confirmed-compact">
           <div class="rsvp-confirmed-head">
             <span class="rsvp-okmark">✓</span>
-            <div><h4>${saved.pendingSync ? "Guardando respuesta…" : "Respuesta guardada"}</h4><p>${saved.pendingSync ? "Ya la ves actualizada. La confirmación continúa en segundo plano." : "Podés actualizarla cuando lo necesites."}</p></div>
+            <div>
+              <h4>
+                ${
+                  saved.pendingSync
+                    ? "Guardando respuesta…"
+                    : "Respuesta guardada"
+                }
+              </h4>
+              <p>
+                ${
+                  saved.pendingSync
+                    ? "Ya la ves actualizada. La confirmación continúa en segundo plano."
+                    : "Podés actualizarla cuando lo necesites."
+                }
+              </p>
+            </div>
           </div>
-          <div class="rsvp-summary-grid">
-            ${summaryLine("Asistencia", attendanceLabel(saved.attendance))}
-            ${summaryLine("Traslado / micro", transportLabel(saved.transport))}
+
+          <div class="rsvp-summary-grid rsvp-summary-grid-unified">
+            ${summaryLine(
+              "Asistencia",
+              attendanceLabel(saved.attendance)
+            )}
             ${summaryLine(
               "Restricciones",
-              saved.dietChoice === "no" || !String(saved.diet || "").trim()
+              saved.dietChoice === "no" ||
+              !String(saved.diet || "").trim()
                 ? "No"
                 : saved.diet
             )}
           </div>
+
+          <button
+            type="button"
+            class="rsvp-transport-unified"
+            data-go="traslado">
+            <span class="rsvp-transport-unified-icon">
+              ${uiIcon("bus")}
+            </span>
+            <span class="rsvp-transport-unified-copy">
+              <small>Traslado elegido</small>
+              <strong>${escapeHTML(selectedTransport)}</strong>
+              <em>
+                Consultá horarios, puntos de salida e información
+                completa en la sección Traslados.
+              </em>
+            </span>
+            <b aria-hidden="true">Ver traslados ›</b>
+          </button>
+
           <div class="rsvp-actions-row">
-            <button id="editRsvp" type="button">Editar respuesta</button>
+            <button id="editRsvp" type="button">
+              Editar respuesta
+            </button>
           </div>
         </section>
 
         ${challengesDone ? "" : `
           <section class="rsvp-next-challenge section-card">
-            <div class="rsvp-next-icon">${uiIcon("star")}</div>
+            <div class="rsvp-next-icon">
+              ${uiIcon("star")}
+            </div>
             <div>
               <h4>Ya podés participar</h4>
-              <p>Las canciones, la trivia y las próximas misiones están disponibles.</p>
+              <p>
+                Las canciones y las dos trivias
+                ya están disponibles.
+              </p>
             </div>
-            <button type="button" data-go="puntos">Ver desafíos</button>
+            <button type="button" data-go="puntos">
+              Ver desafíos
+            </button>
           </section>
         `}
-
-        <section class="rsvp-related-links rsvp-related-links-single">
-          <button
-            type="button"
-            class="rsvp-related-card section-card"
-            data-go="traslado">
-            <span>${uiIcon("bus")}</span>
-            <div>
-              <strong>Traslados</strong>
-              <small>Consultá la información del servicio.</small>
-            </div>
-            <b aria-hidden="true">›</b>
-          </button>
-        </section>`;
+      `;
     }
 
     return `
       ${rsvpStyles()}
-      ${sectionHeader("confirmación", hasSaved ? "Editar asistencia" : "Confirmar asistencia", `Responder antes del ${deadlineLabel}.`)}
-      <form id="rsvpForm" class="section-card form-card rsvp-form-compact">
-        ${hasSaved ? `<div class="warning-ribbon">Completá una respuesta definitiva por sí o por no.</div>` : ""}
+      ${sectionHeader(
+        "confirmación",
+        hasSaved
+          ? "Editar asistencia"
+          : "Confirmar asistencia",
+        `Responder antes del ${deadlineLabel}.`
+      )}
+
+      <form
+        id="rsvpForm"
+        class="section-card form-card rsvp-form-compact">
+        ${
+          hasSaved
+            ? `<div class="warning-ribbon">
+                Completá una respuesta definitiva por sí o por no.
+              </div>`
+            : ""
+        }
+
         <div class="form-grid">
-          ${field("firstName", "Nombre", saved.firstName || currentGuest.firstName, "text", true)}
-          ${field("lastName", "Apellido", saved.lastName || currentGuest.lastName, "text", true)}
-          ${field("email", "Mail", saved.email || currentGuest.email || "", "email", true)}
-          ${field("phone", "Teléfono", saved.phone || "", "tel", false)}
+          ${field(
+            "firstName",
+            "Nombre",
+            saved.firstName || currentGuest.firstName,
+            "text",
+            true
+          )}
+          ${field(
+            "lastName",
+            "Apellido",
+            saved.lastName || currentGuest.lastName,
+            "text",
+            true
+          )}
+          ${field(
+            "email",
+            "Mail",
+            saved.email || currentGuest.email || "",
+            "email",
+            true
+          )}
+          ${field(
+            "phone",
+            "Teléfono",
+            saved.phone || "",
+            "tel",
+            false
+          )}
 
           <fieldset class="choice-field attendance-choice-field">
             <legend>Confirmo asistencia</legend>
             <div class="choice-group choice-group-two">
-              ${choicePill("attendance", "si", "Sí, voy!", saved.attendance, true)}
-              ${choicePill("attendance", "no", "No podré asistir", saved.attendance, true)}
+              ${choicePill(
+                "attendance",
+                "si",
+                "Sí, voy!",
+                saved.attendance,
+                true
+              )}
+              ${choicePill(
+                "attendance",
+                "no",
+                "No podré asistir",
+                saved.attendance,
+                true
+              )}
             </div>
           </fieldset>
 
           <fieldset class="choice-field transport-choice-field">
-            <legend>Traslado</legend>
+            <legend>¿Cómo pensás llegar?</legend>
             <div class="choice-group choice-group-two">
-              ${choicePillIcon("transport", "particular", "Particular", "car", savedTransport, true)}
-              ${choicePillIcon("transport", "combi", "Micro / Combi", "bus", savedTransport, true)}
+              ${choicePillIcon(
+                "transport",
+                "particular",
+                "Particular",
+                "car",
+                savedTransport,
+                true
+              )}
+              ${choicePillIcon(
+                "transport",
+                "combi",
+                "Micro / Combi",
+                "bus",
+                savedTransport,
+                true
+              )}
             </div>
+            <small class="transport-choice-help">
+              Después de confirmar, consultá horarios y puntos
+              de salida en la sección Traslados.
+            </small>
           </fieldset>
 
           <fieldset class="choice-field diet-choice-field">
             <legend>¿Tenés restricciones alimentarias?</legend>
             <div class="choice-group choice-group-two">
-              ${choicePill("dietChoice", "si", "Sí", savedDietChoice, true)}
-              ${choicePill("dietChoice", "no", "No", savedDietChoice, true)}
+              ${choicePill(
+                "dietChoice",
+                "si",
+                "Sí",
+                savedDietChoice,
+                true
+              )}
+              ${choicePill(
+                "dietChoice",
+                "no",
+                "No",
+                savedDietChoice,
+                true
+              )}
             </div>
           </fieldset>
         </div>
 
-        <label class="diet-detail-label ${savedDietChoice === "no" ? "is-disabled" : ""}" data-diet-detail>
+        <label
+          class="diet-detail-label ${
+            savedDietChoice === "no"
+              ? "is-disabled"
+              : ""
+          }"
+          data-diet-detail>
           <span>Detalle de restricciones / alergias</span>
           <textarea
             name="diet"
@@ -3355,14 +3504,36 @@
             ${savedDietChoice === "no" ? "disabled" : ""}
             ${savedDietChoice === "si" ? "required" : ""}
           >${escapeHTML(saved.diet || "")}</textarea>
-          <small>${savedDietChoice === "no" ? "No es necesario completar este campo." : "Completalo únicamente si marcaste Sí."}</small>
+          <small>
+            ${
+              savedDietChoice === "no"
+                ? "No es necesario completar este campo."
+                : "Completalo únicamente si marcaste Sí."
+            }
+          </small>
         </label>
 
         <div class="form-actions rsvp-form-actions">
-          <button type="submit">${hasSaved ? "Guardar cambios" : "Guardar asistencia"}</button>
-          ${hasSaved && hasFinalSaved ? `<button id="cancelRsvpEdit" type="button" class="ghost-button">Cancelar</button>` : ""}
+          <button type="submit">
+            ${
+              hasSaved
+                ? "Guardar cambios"
+                : "Guardar asistencia"
+            }
+          </button>
+          ${
+            hasSaved && hasFinalSaved
+              ? `<button
+                  id="cancelRsvpEdit"
+                  type="button"
+                  class="ghost-button">
+                  Cancelar
+                </button>`
+              : ""
+          }
         </div>
-      </form>`;
+      </form>
+    `;
   }
 
 
@@ -3840,59 +4011,94 @@
   function renderPointsHub() {
     const team = getTeam(currentGuest.team);
     const rsvp = state.rsvps[currentGuest.id];
-    const rsvpDone = isCompetitionGuest(currentGuest) && hasFinalRsvp(rsvp);
-    const myPoints = calculateRanking().find(row => row.id === team.id)?.total || 0;
+    const rsvpDone =
+      isCompetitionGuest(currentGuest) &&
+      hasFinalRsvp(rsvp);
+    const myPoints =
+      calculateRanking()
+        .find(row => row.id === team.id)
+        ?.total || 0;
     const activityPoints = rsvpPointsForTeam(team.id);
     const musicOpen = isTriviaGameOpen("trivia-music");
     const triviaOpen = isTriviaGameOpen("trivia-couple");
     const whoTriviaOpen = isTriviaGameOpen("trivia-who");
     const travelOpen = isSectionOpen("en-viaje");
-    const musicDone = Boolean(triviaSubmission("music-selection"));
-    const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
-    const whoTriviaDone = Boolean(triviaSubmission("who-is-who-trivia-test"));
-    const currentGamesDone = rsvpDone && musicDone && triviaDone && whoTriviaDone;
+    const musicDone = Boolean(
+      triviaSubmission("music-selection")
+    );
+    const triviaDone = Boolean(
+      triviaSubmission("couple-trivia-test")
+    );
+    const whoTriviaDone = Boolean(
+      triviaSubmission("who-is-who-trivia-test")
+    );
+    const currentGamesDone =
+      rsvpDone &&
+      musicDone &&
+      triviaDone &&
+      whoTriviaDone;
+
     const pointsTitle = currentGamesDone
       ? "¡Ya completaste los desafíos!"
       : "Qué podés hacer ahora";
     const pointsText = currentGamesDone
       ? "Mientras esperás a que lleguen nuevos, deciles a los demás grupos quién va a ganar."
-      : "Mientras esperamos las confirmaciones, ya podés preparar tu aporte para el equipo.";
+      : "Completá cada desafío por separado y ayudá a tu equipo.";
 
     return `
       ${pointsHubStyles()}
-      <section class="points-compact-head section-card ${currentGamesDone ? "is-completed" : ""}" style="--local-accent:${team.accent}">
+
+      <section
+        class="points-compact-head section-card ${
+          currentGamesDone
+            ? "is-completed"
+            : ""
+        }"
+        style="--local-accent:${team.accent}">
         ${teamLogo(team,"points-compact-logo")}
         <div>
           <p class="eyebrow">Sumá puntos</p>
           <h3>${escapeHTML(pointsTitle)}</h3>
           <p>${escapeHTML(pointsText)}</p>
         </div>
-        <span><b>${myPoints}</b><small>puntos</small></span>
+        <span>
+          <b>${myPoints}</b>
+          <small>puntos</small>
+        </span>
       </section>
 
       ${currentGamesDone ? `
-        <section class="points-social-cta points-social-cta--highlight section-card">
+        <section
+          class="points-social-cta points-social-cta--highlight section-card">
           <span>${uiIcon("chat")}</span>
           <div>
             <h4>Hablales a los otros equipos</h4>
             <p>Deciles quién va a ganar la competencia.</p>
           </div>
-          <button type="button" data-go="social">Ir a Social</button>
+          <button type="button" data-go="social">
+            Ir a Social
+          </button>
         </section>
       ` : ""}
 
       ${isSectionOpen("reglas") ? `
-        <button type="button" class="points-rules-entry section-card" data-go="reglas">
+        <button
+          type="button"
+          class="points-rules-entry section-card"
+          data-go="reglas">
           <span>${uiIcon("rules")}</span>
           <div>
             <strong>Cómo funciona la competencia</strong>
-            <small>Consultá las reglas y todas las formas de sumar o restar puntos.</small>
+            <small>
+              Consultá las reglas y todas las formas
+              de sumar o restar puntos.
+            </small>
           </div>
           <b aria-hidden="true">›</b>
         </button>
       ` : ""}
 
-      <section class="points-compact-list section-card">
+      <section class="points-rsvp-section section-card">
         ${pointsAction({
           icon:"✉️",
           title:"Confirmar asistencia",
@@ -3904,64 +4110,108 @@
           progressText:`${activityPoints} puntos`,
           editable:true
         })}
-        ${rsvpDone ? `
-          ${pointsAction({
-            icon:"🎵",
-            title:"Elegir canciones",
-            text:musicOpen
-              ? (
-                  musicDone
-                    ? `Propuesta guardada. Sumaste ${activityPoints} puntos.`
-                    : `Elegí dos canciones y sumá ${activityPoints} puntos.`
-                )
-              : "Se habilitará más adelante.",
-            done:musicDone,
-            route:"musica",
-            progressText:musicOpen ? `${activityPoints} puntos` : "Bloqueado",
-            editable:true,
-            locked:!musicOpen
-          })}
-          ${pointsAction({
-            icon:"🎯",
-            title:"¿Cuánto conocés a los novios?",
-            text:triviaOpen
-              ? (triviaDone ? "Resultado cerrado." : "Cinco preguntas de opción múltiple.")
-              : "Se habilitará más adelante.",
-            done:triviaDone,
-            route:"trivia-pareja",
-            progressText:triviaOpen ? (triviaDone ? "Resultado final" : "Hasta 100 puntos") : "Bloqueado",
-            editable:false,
-            locked:!triviaOpen
-          })}
-          ${pointsAction({
-            icon:"⚖️",
-            title:"¿Quién es quién?",
-            text:whoTriviaOpen
-              ? (whoTriviaDone ? "Resultado cerrado." : "Elegí entre Vani o Fede.")
-              : "Se habilitará más adelante.",
-            done:whoTriviaDone,
-            route:"trivia-quien",
-            progressText:whoTriviaOpen ? (whoTriviaDone ? "Resultado final" : "Hasta 100 puntos") : "Bloqueado",
-            editable:false,
-            locked:!whoTriviaOpen
-          })}
-        ` : `
-          <div class="points-rsvp-lock">${uiIcon("lock")}<div><strong>Primero, asistencia</strong><p>Al responder por sí o por no se habilitarán las canciones, la trivia y las próximas actividades.</p></div></div>
-        `}
-
-        ${travelOpen ? pointsAction({
-          icon:"🚌",
-          title:"En viaje",
-          text:"Consignas, playlist y actividades según tu forma de traslado.",
-          done:false,
-          route:"en-viaje",
-          progressText:"Actividad especial",
-          editable:false
-        }) : ""}
       </section>
 
-      <div class="points-coming-soon-note ${currentGamesDone ? "is-completed" : ""}">
-        <span aria-hidden="true">${currentGamesDone ? "🕒" : "🔒"}</span>
+      ${rsvpDone ? `
+        <div class="points-challenges-stack">
+          ${pointsChallengeCard({
+            number:"01",
+            icon:"🎵",
+            title:"La banda sonora",
+            text:musicDone
+              ? "Canciones enviadas"
+              : "Elegí una canción para la boda y otra para tu equipo",
+            done:musicDone,
+            route:"musica",
+            progressText:musicOpen
+              ? `${activityPoints} puntos`
+              : "Bloqueado",
+            locked:!musicOpen,
+            actionLabel:musicDone
+              ? "Ver / editar"
+              : "Comenzar"
+          })}
+
+          ${pointsChallengeCard({
+            number:"02",
+            icon:"🎯",
+            title:"¿Cuánto conocés a los novios?",
+            text:triviaDone
+              ? "Resultado final guardado"
+              : "Cinco preguntas sobre la historia de Vani y Fede",
+            done:triviaDone,
+            route:"trivia-pareja",
+            progressText:triviaOpen
+              ? (
+                  triviaDone
+                    ? "Resultado final"
+                    : "Hasta 100 puntos"
+                )
+              : "Bloqueado",
+            locked:!triviaOpen,
+            actionLabel:triviaDone
+              ? "Ver resultado"
+              : "Comenzar"
+          })}
+
+          ${pointsChallengeCard({
+            number:"03",
+            icon:"⚖️",
+            title:"¿Quién es quién?",
+            text:whoTriviaDone
+              ? "Resultado final guardado"
+              : "Cinco situaciones para elegir entre Vani o Fede",
+            done:whoTriviaDone,
+            route:"trivia-quien",
+            progressText:whoTriviaOpen
+              ? (
+                  whoTriviaDone
+                    ? "Resultado final"
+                    : "Hasta 100 puntos"
+                )
+              : "Bloqueado",
+            locked:!whoTriviaOpen,
+            actionLabel:whoTriviaDone
+              ? "Ver resultado"
+              : "Comenzar"
+          })}
+        </div>
+      ` : `
+        <div class="points-rsvp-lock">
+          ${uiIcon("lock")}
+          <div>
+            <strong>Primero, asistencia</strong>
+            <p>
+              Al responder por sí o por no
+              se habilitarán los tres desafíos.
+            </p>
+          </div>
+        </div>
+      `}
+
+      ${travelOpen ? `
+        <section class="points-travel-section section-card">
+          ${pointsAction({
+            icon:"🚌",
+            title:"En viaje",
+            text:"Consignas, playlist y actividades según tu forma de traslado.",
+            done:false,
+            route:"en-viaje",
+            progressText:"Actividad especial",
+            editable:false
+          })}
+        </section>
+      ` : ""}
+
+      <div
+        class="points-coming-soon-note ${
+          currentGamesDone
+            ? "is-completed"
+            : ""
+        }">
+        <span aria-hidden="true">
+          ${currentGamesDone ? "🕒" : "🔒"}
+        </span>
         <strong>
           ${
             currentGamesDone
@@ -3970,9 +4220,59 @@
           }
         </strong>
       </div>
-
-      `;
+    `;
   }
+
+  function pointsChallengeCard({
+    number,
+    icon,
+    title,
+    text,
+    done,
+    route,
+    progressText,
+    actionLabel,
+    locked = false
+  }) {
+    return `
+      <section
+        class="points-challenge-card section-card ${
+          done ? "is-done" : ""
+        } ${locked ? "is-locked" : ""}">
+        <span class="points-challenge-number">
+          ${escapeHTML(number)}
+        </span>
+        <span class="points-challenge-icon" aria-hidden="true">
+          ${icon}
+        </span>
+        <div class="points-challenge-copy">
+          <small>
+            ${
+              done
+                ? "Desafío completado"
+                : `Desafío ${escapeHTML(number)}`
+            }
+          </small>
+          <strong>${escapeHTML(title)}</strong>
+          <p>${escapeHTML(text)}</p>
+          <em>${escapeHTML(progressText || "")}</em>
+        </div>
+        ${
+          locked
+            ? `<span class="points-challenge-locked">
+                ${uiIcon("lock")}
+                Bloqueado
+              </span>`
+            : `<button
+                type="button"
+                data-go="${escapeHTML(route)}">
+                ${escapeHTML(actionLabel || "Ver")}
+              </button>`
+        }
+      </section>
+    `;
+  }
+
 
   function pointsAction({ icon, title, text, done, route, progressText = "", editable = true, locked = false }) {
     const label = done ? (editable ? "Ver / editar" : "Ver") : "Ver";
@@ -4061,50 +4361,170 @@
     const musicSaved = triviaSubmission("music-selection");
     const triviaSaved = triviaSubmission("couple-trivia-test");
     const whoSaved = triviaSubmission("who-is-who-trivia-test");
-    const allDone = Boolean(
-      musicSaved &&
-      triviaSaved &&
-      whoSaved
-    );
+
+    const routeByTarget = {
+      "music-game": "music",
+      "couple-trivia-game": "couple",
+      "who-is-who-game": "who"
+    };
+
+    let activeChallenge =
+      routeByTarget[triviaFocusTarget] || "";
+
+    if (!activeChallenge) {
+      activeChallenge = !musicSaved
+        ? "music"
+        : !triviaSaved
+          ? "couple"
+          : !whoSaved
+            ? "who"
+            : "complete";
+    }
+
+    const challengeContent = {
+      music: renderMusicGame(
+        musicOpen,
+        musicSaved,
+        team
+      ),
+      couple: renderCoupleTrivia(
+        coupleOpen,
+        triviaSaved
+      ),
+      who: renderWhoIsWhoTrivia(
+        whoOpen,
+        whoSaved
+      ),
+      complete: renderAllChallengesComplete()
+    }[activeChallenge];
+
+    const activeNumber = {
+      music: "1",
+      couple: "2",
+      who: "3",
+      complete: "3"
+    }[activeChallenge];
 
     return `
       ${triviaHubStyles()}
+
       ${sectionHeader(
         "sumá puntos",
-        "Juegos de Vani y Fede",
-        "Elegí una misión, participá y ayudá a tu equipo."
+        activeChallenge === "complete"
+          ? "Desafíos completados"
+          : `Desafío ${activeNumber} de 3`,
+        activeChallenge === "complete"
+          ? "Tu progreso ya quedó registrado."
+          : "Cada actividad se completa por separado."
       )}
 
-      ${allDone ? "" : `
-        <section class="trivia-prize-banner">
-          ${uiIcon("gift")}
-          <div>
-            <strong>Habrá premios especiales</strong>
-            <p>
-              Participar, acertar y jugar en equipo
-              puede tener recompensa.
-            </p>
-          </div>
-        </section>
-      `}
+      <nav
+        class="challenge-stepper section-card"
+        aria-label="Progreso de desafíos">
+        ${challengeStep({
+          number:"1",
+          title:"Canciones",
+          route:"musica",
+          active:activeChallenge === "music",
+          done:Boolean(musicSaved)
+        })}
+        ${challengeStep({
+          number:"2",
+          title:"Trivia",
+          route:"trivia-pareja",
+          active:activeChallenge === "couple",
+          done:Boolean(triviaSaved)
+        })}
+        ${challengeStep({
+          number:"3",
+          title:"Vani o Fede",
+          route:"trivia-quien",
+          active:activeChallenge === "who",
+          done:Boolean(whoSaved)
+        })}
+      </nav>
 
-      <section
-        class="trivia-game-list ${
-          allDone ? "all-completed" : ""
-        }">
-        ${renderMusicGame(musicOpen, musicSaved, team)}
-        ${renderCoupleTrivia(coupleOpen, triviaSaved)}
-        ${renderWhoIsWhoTrivia(whoOpen, whoSaved)}
+      <section class="trivia-single-stage">
+        ${challengeContent}
       </section>
+    `;
+  }
 
-      ${allDone ? `
-        <section
-          id="trivia-upcoming-note"
-          class="trivia-upcoming-note">
-          <span aria-hidden="true">🕒</span>
-          <strong>¡Próximamente más desafíos!</strong>
-        </section>
-      ` : ""}
+  function challengeStep({
+    number,
+    title,
+    route,
+    active,
+    done
+  }) {
+    return `
+      <button
+        type="button"
+        class="challenge-step ${
+          active ? "is-active" : ""
+        } ${done ? "is-done" : ""}"
+        data-next-challenge="${escapeHTML(route)}">
+        <span>
+          ${done ? "✓" : escapeHTML(number)}
+        </span>
+        <small>${escapeHTML(title)}</small>
+      </button>
+    `;
+  }
+
+  function renderChallengeNextCta({
+    id,
+    route,
+    eyebrow,
+    title,
+    text,
+    button,
+    final = false
+  }) {
+    return `
+      <section
+        id="${escapeHTML(id)}"
+        class="challenge-next-cta ${
+          final ? "is-final" : ""
+        }">
+        <span class="challenge-next-icon">
+          ${final
+            ? uiIcon("checkCircle")
+            : uiIcon("play")}
+        </span>
+        <div>
+          <small>${escapeHTML(eyebrow)}</small>
+          <strong>${escapeHTML(title)}</strong>
+          <p>${escapeHTML(text)}</p>
+        </div>
+        <button
+          type="button"
+          data-next-challenge="${escapeHTML(route)}">
+          ${escapeHTML(button)}
+        </button>
+      </section>
+    `;
+  }
+
+  function renderAllChallengesComplete() {
+    return `
+      <section
+        id="trivia-upcoming-note"
+        class="trivia-all-complete section-card">
+        <span>${uiIcon("checkCircle")}</span>
+        <div>
+          <p class="eyebrow">Todo listo</p>
+          <h3>¡Completaste los tres desafíos!</h3>
+          <p>
+            Tus respuestas ya están sumando para tu equipo.
+          </p>
+        </div>
+        <button
+          type="button"
+          data-next-challenge="puntos">
+          Volver a Sumá puntos
+        </button>
+      </section>
     `;
   }
 
@@ -4156,8 +4576,17 @@
               id="editMusicGame"
               type="button"
               class="trivia-compact-edit">
-              Editar
+              Editar canciones
             </button>
+
+            ${renderChallengeNextCta({
+              id:"music-next-challenge",
+              route:"trivia-pareja",
+              eyebrow:"Siguiente desafío",
+              title:"¿Cuánto conocés a los novios?",
+              text:"Respondé cinco preguntas y sumá hasta 100 puntos.",
+              button:"Ir al desafío 2"
+            })}
           </div>
         </article>`;
     }
@@ -4259,6 +4688,15 @@
                 <span>Resultado final obtenido para tu equipo</span>
               </div>
             </div>
+
+            ${renderChallengeNextCta({
+              id:"couple-next-challenge",
+              route:"trivia-quien",
+              eyebrow:"Último desafío",
+              title:"¿Quién es quién?",
+              text:"Elegí entre Vani o Fede en cinco situaciones.",
+              button:"Ir al desafío 3"
+            })}
           </div>
         </article>`;
     }
@@ -4343,6 +4781,16 @@
                 <span>Resultado final obtenido para tu equipo</span>
               </div>
             </div>
+
+            ${renderChallengeNextCta({
+              id:"all-challenges-next",
+              route:"puntos",
+              eyebrow:"Desafíos completados",
+              title:"¡Terminaste todo!",
+              text:"Volvé a Sumá puntos para ver tu progreso.",
+              button:"Ir a Sumá puntos",
+              final:true
+            })}
           </div>
         </article>`;
     }
@@ -5109,6 +5557,50 @@
     </style>`;
   }
 
+  function showSocialPublishSuccess(isReply = false) {
+    document
+      .querySelector(".social-publish-splash")
+      ?.remove();
+
+    const splash = document.createElement("div");
+    splash.className = "social-publish-splash";
+    splash.setAttribute("role", "status");
+    splash.setAttribute("aria-live", "assertive");
+    splash.innerHTML = `
+      <div class="social-publish-splash-inner">
+        <span class="social-publish-splash-check">
+          ${uiIcon("checkCircle")}
+        </span>
+        <small>Social · Vani &amp; Fede</small>
+        <strong>
+          ${
+            isReply
+              ? "¡Respuesta publicada!"
+              : "¡Mensaje publicado!"
+          }
+        </strong>
+        <p>
+          Ya aparece para los demás equipos
+        </p>
+      </div>
+    `;
+
+    document.body.appendChild(splash);
+
+    window.requestAnimationFrame(() => {
+      splash.classList.add("is-visible");
+    });
+
+    window.setTimeout(() => {
+      splash.classList.add("is-leaving");
+
+      window.setTimeout(() => {
+        splash.remove();
+      }, 260);
+    }, 950);
+  }
+
+
   async function submitSocialMessage(form, parentId = "") {
     const textarea = form.querySelector('textarea[name="message"]');
     const message = String(textarea?.value || "").trim();
@@ -5130,6 +5622,8 @@
     };
 
     form.reset();
+    showSocialPublishSuccess(Boolean(parentId));
+
     void queueOptimisticWrite(
       "saveSocialMessage",
       payload,
@@ -5990,6 +6484,12 @@
     }
 
     if (route === "trivia") {
+      $$("[data-next-challenge]").forEach(button => {
+        button.addEventListener("click", () => {
+          navigate(button.dataset.nextChallenge);
+        });
+      });
+
       $("#editMusicGame")?.addEventListener("click", () => {
         musicEditMode = true;
         renderTriviaAndFocus("music-game");
@@ -6018,7 +6518,12 @@
             beforeRender: () => toast("Canciones recibidas. Guardando…"),
             afterRender: () => {
               window.requestAnimationFrame(() => {
-                document.getElementById("couple-trivia-game")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                document
+                  .getElementById("music-next-challenge")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                  });
               });
             }
           }
@@ -6060,7 +6565,12 @@
             beforeRender: () => toast("Resultado calculado. Guardando…"),
             afterRender: () => {
               window.requestAnimationFrame(() => {
-                document.getElementById("couple-trivia-result")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                document
+                  .getElementById("couple-next-challenge")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                  });
               });
             }
           }
@@ -6102,9 +6612,13 @@
             successMessage: `Trivia confirmada: ${score * 20} puntos.`,
             beforeRender: () => toast("Resultado calculado. Guardando…"),
             afterRender: () => {
-              window.requestAnimationFrame(() => {
-                document.getElementById("trivia-upcoming-note")?.scrollIntoView({ behavior: "smooth", block: "center" });
-              });
+              toast("¡Completaste todos los desafíos!");
+
+              window.setTimeout(() => {
+                if (currentRoute === "trivia") {
+                  navigate("puntos");
+                }
+              }, 1100);
             }
           }
         );
