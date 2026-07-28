@@ -201,7 +201,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "morena",
       "firstName": "Morena",
-      "lastName": "",
+      "lastName": "Campolo",
       "email": "",
       "alias": "More",
       "relation": "Prima",
@@ -217,7 +217,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "tiziana",
       "firstName": "Tiziana",
-      "lastName": "",
+      "lastName": "Cardón Campolo",
       "email": "",
       "alias": "Tizi",
       "relation": "Prima",
@@ -489,8 +489,8 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "ezequiel",
-      "firstName": "Ezequiel",
-      "lastName": "",
+      "firstName": "Eze",
+      "lastName": "Becerrica",
       "email": "",
       "alias": "Eze",
       "relation": "Primo",
@@ -506,7 +506,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "nati",
       "firstName": "Nati",
-      "lastName": "",
+      "lastName": "Paola",
       "email": "",
       "alias": "Nati",
       "relation": "Prima",
@@ -1147,8 +1147,8 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "maggie",
-      "firstName": "Maggie",
-      "lastName": "",
+      "firstName": "Magalí",
+      "lastName": "Ramirez",
       "email": "",
       "alias": "Maggie",
       "relation": "Amiga",
