@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32456";
+  const CURRENT_APP_VERSION = "32457";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -76,7 +76,6 @@
     serverRanking: [],
     backendVersion: "",
     appSettings: {
-      mode: "production",
       loginPrivacyMode: false,
       forceWeddingDay: false
     },
@@ -121,7 +120,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32456"
+        appVersion: CONFIG.APP_VERSION || "32457"
       })
     );
   }
@@ -416,28 +415,22 @@
   }
 
 
-  function appMode() {
-    return state.appSettings?.mode === "test"
-      ? "test"
-      : "production";
-  }
-
-  function isTestMode() {
-    return appMode() === "test";
-  }
-
   function loginPrivacyEnabled() {
-    return Boolean(state.appSettings?.loginPrivacyMode);
+    return Boolean(
+      state.appSettings?.loginPrivacyMode
+    );
   }
 
   function applyRemoteAppSettings(settings = {}) {
     state.appSettings = {
-      mode: settings.mode === "test" ? "test" : "production",
-      loginPrivacyMode: Boolean(settings.loginPrivacyMode),
-      forceWeddingDay: Boolean(settings.forceWeddingDay)
+      loginPrivacyMode: Boolean(
+        settings.loginPrivacyMode
+      ),
+      forceWeddingDay: Boolean(
+        settings.forceWeddingDay
+      )
     };
 
-    document.body.classList.toggle("app-test-mode", isTestMode());
     updateLoginPrivacyUi();
   }
 
@@ -462,16 +455,6 @@
       panel?.classList.add("hidden");
       if (panel) panel.innerHTML = "";
     }
-  }
-
-  function renderGlobalModeBanner() {
-    if (!isTestMode()) return "";
-    return `
-      <div class="global-test-mode-banner" role="status">
-        <span aria-hidden="true">🧪</span>
-        <strong>Modo prueba</strong>
-        <small>Los datos están separados de Productivo.</small>
-      </div>`;
   }
 
   function isWeddingDayMode() {
@@ -689,11 +672,11 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32456",
+      appVersion: "32457",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
-      environment: appMode(),
+      environment: "production",
       ...payload
     };
   }
@@ -706,7 +689,8 @@
       "saveUnlock",
       "clearSocialMessages",
       "saveAppSettings",
-      "restoreBackupChunk"
+      "restoreBackupChunk",
+      "resetGuestActivity"
     ]);
 
     if (
@@ -2147,7 +2131,6 @@
         : (routes[currentRoute] || renderHome)();
 
     const html = `
-      ${renderGlobalModeBanner()}
       ${renderAdminPreviewBanner()}
       ${routeHtml}
     `;
@@ -5820,7 +5803,7 @@
     const payload = currentBackupPayload();
     const stamp = new Date().toISOString().slice(0, 10);
     downloadJsonFile(
-      `vani-fede-backup-${appMode()}-${stamp}.json`,
+      `vani-fede-backup-${stamp}.json`,
       payload
     );
     localStorage.setItem(LAST_BACKUP_KEY, payload.createdAt);
@@ -5865,7 +5848,7 @@
     }
 
     const word = prompt(
-      `Se restaurarán ${operations.length} registros dentro de ${isTestMode() ? "MODO PRUEBA" : "PRODUCTIVO"}. Escribí RESTAURAR para continuar.`
+      `Se restaurarán ${operations.length} registros en la base oficial. Escribí RESTAURAR para continuar.`
     );
     if (normalize(word) !== "restaurar") {
       toast("Restauración cancelada.");
@@ -5907,8 +5890,12 @@
         {
           adminPassword: state.adminPassword,
           settings: {
-            ...backup.appSettings,
-            mode: appMode()
+            loginPrivacyMode: Boolean(
+              backup.appSettings.loginPrivacyMode
+            ),
+            forceWeddingDay: Boolean(
+              backup.appSettings.forceWeddingDay
+            )
           }
         },
         { silent: true, allowPreview: true }
@@ -6208,14 +6195,6 @@
                 </b>
               </span>
               <span>
-                Entorno
-                <b>
-                  ${isTestMode()
-                    ? "PRUEBA"
-                    : "PRODUCTIVO"}
-                </b>
-              </span>
-              <span>
                 Pendientes
                 <b>${pendingWrites.length}</b>
               </span>
@@ -6229,44 +6208,7 @@
           </button>
         </section>
 
-        <section class="admin-stability-grid">
-          <article
-            class="section-card admin-mode-panel ${
-              isTestMode()
-                ? "is-test"
-                : "is-production"
-            }">
-            <div>
-              <p class="eyebrow">Entorno de datos</p>
-              <h4>
-                ${isTestMode()
-                  ? "Modo prueba"
-                  : "Modo productivo"}
-              </h4>
-              <p>
-                ${
-                  isTestMode()
-                    ? "Los datos de prueba están separados de los reales."
-                    : "Los invitados están usando la base oficial."
-                }
-              </p>
-            </div>
-            <div class="admin-mode-actions">
-              <button
-                type="button"
-                data-set-app-mode="test"
-                class="${isTestMode() ? "active" : ""}">
-                Prueba
-              </button>
-              <button
-                type="button"
-                data-set-app-mode="production"
-                class="${!isTestMode() ? "active" : ""}">
-                Productivo
-              </button>
-            </div>
-          </article>
-
+        <section class="admin-stability-grid admin-stability-grid-single">
           <article
             class="section-card admin-settings-panel">
             <div>
@@ -6495,7 +6437,7 @@
         </section>
 
         <section
-          class="section-card admin-test-reset-panel">
+          class="section-card admin-test-reset-panel admin-total-reset-panel">
           <div class="admin-test-reset-copy">
             <span
               class="admin-test-reset-icon"
@@ -6503,27 +6445,24 @@
               ↺
             </span>
             <div>
-              <p class="eyebrow">Modo de pruebas</p>
-              <h4>Resetear datos de prueba</h4>
+              <p class="eyebrow">Limpieza general</p>
+              <h4>Resetear toda la actividad</h4>
               <p>
-                Limpia RSVP, formularios y juegos.
+                Borra asistencias, formularios, juegos,
+                puntos, Social, likes y notificaciones.
               </p>
               <small>
-                No borra invitados ni puntos discrecionales.
+                No borra la base de invitados,
+                los candados ni la configuración.
               </small>
             </div>
           </div>
 
           <button
-            id="resetTestData"
+            id="resetGuestActivity"
             type="button"
-            class="admin-test-reset-button"
-            ${isTestMode() ? "" : "disabled"}>
-            ${
-              isTestMode()
-                ? "Resetear datos del modo prueba"
-                : "Disponible solo en modo prueba"
-            }
+            class="admin-test-reset-button danger-button">
+            Resetear toda la actividad
           </button>
         </section>
 
@@ -6591,14 +6530,6 @@
                 ${escapeHTML(
                   state.backendVersion || "pendiente"
                 )}
-              </b>
-            </span>
-            <span>
-              Entorno
-              <b>
-                ${isTestMode()
-                  ? "PRUEBA"
-                  : "PRODUCTIVO"}
               </b>
             </span>
             <span>
@@ -7354,36 +7285,6 @@
       });
     });
 
-    $$('[data-set-app-mode]').forEach(button => {
-      button.addEventListener("click", async () => {
-        const mode = button.dataset.setAppMode === "test" ? "test" : "production";
-        if (mode === appMode()) return;
-
-        const message = mode === "test"
-          ? "¿Cambiar a MODO PRUEBA? Los invitados que abran la app también verán el entorno de prueba hasta volver a Productivo."
-          : "¿Volver a PRODUCTIVO? Se mostrarán nuevamente los datos reales.";
-        if (!confirm(message)) return;
-
-        button.disabled = true;
-        const result = await writeToSheets("saveAppSettings", {
-          adminPassword: state.adminPassword,
-          settings: {
-            ...state.appSettings,
-            mode
-          }
-        }, { allowPreview: true });
-
-        if (!result) {
-          button.disabled = false;
-          return;
-        }
-
-        await syncFromSheets(false);
-        toast(mode === "test" ? "Modo prueba activado." : "Modo productivo activado.");
-        renderCurrentRoute();
-      });
-    });
-
     $$('[data-app-setting]').forEach(input => {
       input.addEventListener("change", async () => {
         const key = input.dataset.appSetting;
@@ -7582,63 +7483,85 @@
       renderCurrentRoute();
     });
 
-    $("#resetTestData")?.addEventListener("click", async () => {
-      if (!isTestMode()) {
-        toast("Cambiá a Modo prueba antes de resetear datos de prueba.");
-        return;
-      }
-      const firstConfirmation = confirm(
-        "¿Resetear los datos de prueba?\n\nSe limpiarán:\n• Confirmaciones RSVP\n• Formularios personales\n• Respuestas de juegos\n\nLos invitados y los puntos discrecionales no se borrarán."
-      );
-      if (!firstConfirmation) return;
+    $("#resetGuestActivity")?.addEventListener(
+      "click",
+      async () => {
+        const firstConfirmation = confirm(
+          "¿Resetear toda la actividad de la app?\n\nSe borrarán:\n• Asistencias y traslados\n• Formularios personales\n• Canciones y trivias\n• Todos los puntos y la auditoría\n• Mensajes y likes de Social\n• Notificaciones vistas\n\nNo se borrarán los invitados, los candados ni la configuración."
+        );
 
-      const confirmationWord = prompt('Para confirmar, escribí RESET');
-      if (normalize(confirmationWord) !== "reset") {
-        toast("Reset cancelado.");
-        return;
-      }
+        if (!firstConfirmation) return;
 
-      const button = $("#resetTestData");
-      const originalText = button?.textContent || "Resetear RSVP y formularios";
-      if (button) {
-        button.disabled = true;
-        button.textContent = "Reseteando…";
-      }
+        const confirmationWord = prompt(
+          'Para confirmar, escribí BORRAR TODO'
+        );
 
-      const timestamp = new Date().toISOString();
-      const markerPayload = {
-        guestId: "__vf_reset_test_data__",
-        teamId: "admin",
-        resetMarker: true,
-        resetScope: "test-data",
-        updatedAt: timestamp,
-        adminPassword: state.adminPassword,
-        comment: "Reset general de datos de prueba desde Admin"
-      };
-
-      const savedRemotely = await postToSheets("saveRsvp", markerPayload);
-
-      if (!savedRemotely) {
-        if (button) {
-          button.disabled = false;
-          button.textContent = originalText;
+        if (
+          normalize(confirmationWord) !==
+          "borrar todo"
+        ) {
+          toast("Reset cancelado.");
+          return;
         }
-        toast("No se pudo guardar el reset. No se borró nada.");
-        return;
+
+        const button = $("#resetGuestActivity");
+        const originalText =
+          button?.textContent ||
+          "Resetear toda la actividad";
+
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Reseteando…";
+        }
+
+        const result = await writeToSheets(
+          "resetGuestActivity",
+          {
+            adminPassword: state.adminPassword,
+            requestedAt: new Date().toISOString()
+          },
+          {
+            allowPreview: true
+          }
+        );
+
+        if (!result) {
+          if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+          }
+
+          toast(
+            "No se pudo completar el reset. No se borró nada."
+          );
+          return;
+        }
+
+        pendingWrites = [];
+        persistPendingWrites();
+
+        state.dataResetAt = new Date().toISOString();
+        state.rsvps = {};
+        state.profiles = {};
+        state.gameSubmissions = {};
+        state.scoreEntries = [];
+        state.serverRanking = [];
+        state.socialMessages = [];
+        state.socialLikes = {};
+        state.notificationsByGuest = {};
+        state.rsvpEditMode = false;
+        state.profileEditMode = false;
+
+        saveState();
+        await syncFromSheets(false);
+
+        toast(
+          "Toda la actividad fue reseteada correctamente."
+        );
+
+        renderCurrentRoute();
       }
-
-      state.dataResetAt = timestamp;
-      state.rsvps = {};
-      state.profiles = {};
-      state.gameSubmissions = {};
-      state.rsvpEditMode = false;
-      state.profileEditMode = false;
-      saveState();
-
-      scheduleSilentSync();
-      toast("Datos de prueba reseteados. Los testers ya pueden completar todo nuevamente.");
-      renderCurrentRoute();
-    });
+    );
 
     $("#resetDiscretionaryPoints")?.addEventListener("click", async () => {
       if (!confirm("¿Resetear solo los puntos discrecionales cargados por Fede y Vani? También se limpiarán esos movimientos de la vista pública. RSVP y datos de invitados no se modifican.")) return;
