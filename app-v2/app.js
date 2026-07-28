@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32455";
+  const CURRENT_APP_VERSION = "32456";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -44,6 +44,7 @@
   let adminPreviewActive = false;
   let adminPreviewOriginalGuest = null;
   let adminSimulateWeddingDay = false;
+  let adminSubsection = "dashboard";
   let appReloadingForUpdate = false;
   let serviceWorkerReloadTriggered = false;
   let selectedTeamViewId = null;
@@ -120,7 +121,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32455"
+        appVersion: CONFIG.APP_VERSION || "32456"
       })
     );
   }
@@ -688,7 +689,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32455",
+      appVersion: "32456",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -5926,281 +5927,858 @@
       return `
         ${adminAccessStyles()}
         <section class="admin-access-card section-card">
-          <div class="admin-access-icon">${uiIcon("lock")}</div>
+          <div class="admin-access-icon">
+            ${uiIcon("lock")}
+          </div>
           <div class="admin-access-copy">
             <p class="eyebrow">Acceso restringido</p>
             <h3>Administración</h3>
-            <p>Ingresá la contraseña para acceder al centro de mando.</p>
+            <p>
+              Ingresá la contraseña para acceder al centro de mando.
+            </p>
           </div>
-          <form id="adminLoginForm" class="admin-access-form" autocomplete="off">
-            <label for="adminPasswordInput">Contraseña</label>
+          <form
+            id="adminLoginForm"
+            class="admin-access-form"
+            autocomplete="off">
+            <label for="adminPasswordInput">
+              Contraseña
+            </label>
             <div class="admin-password-row">
-              <input id="adminPasswordInput" name="password" type="password"
-                     placeholder="Ingresá la contraseña"
-                     autocomplete="current-password" required>
+              <input
+                id="adminPasswordInput"
+                name="password"
+                type="password"
+                placeholder="Ingresá la contraseña"
+                autocomplete="current-password"
+                required>
               <button type="submit">Ingresar</button>
             </div>
-            <div id="adminLoginMessage" class="form-message"
-                 role="status" aria-live="polite"></div>
+            <div
+              id="adminLoginMessage"
+              class="form-message"
+              role="status"
+              aria-live="polite">
+            </div>
           </form>
-        </section>`;
+        </section>
+      `;
     }
 
-    const invitedGuests = DATA.guests.filter(isCompetitionGuest);
+    const invitedGuests =
+      DATA.guests.filter(isCompetitionGuest);
     const invitedCount = invitedGuests.length;
+
     const attendingCount = invitedGuests.filter(guest => {
       const rsvp = state.rsvps[guest.id];
-      return hasCompletedRsvp(rsvp) && rsvp.attendance === "si";
-    }).length;
-    const declinedCount = invitedGuests.filter(guest => {
-      const rsvp = state.rsvps[guest.id];
-      return hasCompletedRsvp(rsvp) && rsvp.attendance === "no";
-    }).length;
-    const answeredCount = invitedGuests.filter(guest => hasCompletedRsvp(state.rsvps[guest.id])).length;
-    const unansweredCount = Math.max(0, invitedCount - answeredCount);
-    const attendancePercent = invitedCount ? Math.round((attendingCount / invitedCount) * 100) : 0;
-    const answeredPercent = invitedCount ? Math.round((answeredCount / invitedCount) * 100) : 0;
-    const combiCount = invitedGuests.filter(guest => {
-      const rsvp = state.rsvps[guest.id];
-      return hasCompletedRsvp(rsvp) && rsvp.attendance === "si" && ["combi", "micro"].includes(rsvp.transport);
-    }).length;
-    const restrictionsCount = invitedGuests.filter(guest => {
-      const rsvp = state.rsvps[guest.id];
-      return hasCompletedRsvp(rsvp) && (
-        rsvp.dietChoice === "si" ||
-        Boolean(String(rsvp.diet || "").trim())
+      return (
+        hasCompletedRsvp(rsvp) &&
+        rsvp.attendance === "si"
       );
     }).length;
-    const socialMessageCount = dedupeSocialMessages(state.socialMessages || []).length;
 
-    return `
+    const declinedCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return (
+        hasCompletedRsvp(rsvp) &&
+        rsvp.attendance === "no"
+      );
+    }).length;
+
+    const answeredCount = invitedGuests.filter(
+      guest => hasCompletedRsvp(
+        state.rsvps[guest.id]
+      )
+    ).length;
+
+    const unansweredCount = Math.max(
+      0,
+      invitedCount - answeredCount
+    );
+
+    const answeredPercent = invitedCount
+      ? Math.round(
+          (answeredCount / invitedCount) * 100
+        )
+      : 0;
+
+    const combiCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return (
+        hasCompletedRsvp(rsvp) &&
+        rsvp.attendance === "si" &&
+        ["combi", "micro"].includes(rsvp.transport)
+      );
+    }).length;
+
+    const restrictionsCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return (
+        hasCompletedRsvp(rsvp) &&
+        (
+          rsvp.dietChoice === "si" ||
+          Boolean(String(rsvp.diet || "").trim())
+        )
+      );
+    }).length;
+
+    const socialMessageCount = dedupeSocialMessages(
+      state.socialMessages || []
+    ).length;
+
+    const adminHeader = `
       ${adminUxStyles()}
       <section class="admin-title-row">
         ${sectionHeader("admin", "Administración", "")}
-        <button id="lockAdminButton" type="button" class="admin-lock-button">
-          ${uiIcon("lock")}<span>Bloquear</span>
+        <button
+          id="lockAdminButton"
+          type="button"
+          class="admin-lock-button">
+          ${uiIcon("lock")}
+          <span>Bloquear</span>
+        </button>
+      </section>
+    `;
+
+    if (adminSubsection === "points") {
+      return `
+        ${adminHeader}
+
+        ${renderAdminSubsectionHeader({
+          icon: "star",
+          eyebrow: "Administración",
+          title: "Puntos y auditoría",
+          text: "Sumá o restá puntos y revisá los últimos movimientos."
+        })}
+
+        <form
+          id="scoreForm"
+          class="section-card admin-score-card">
+          <div class="admin-score-heading">
+            <div>
+              <p class="eyebrow">Ajuste discrecional</p>
+              <h4>Sumar o restar puntos</h4>
+              <p>
+                Carga rápida para bonus, penalizaciones
+                o actividades de la fiesta.
+              </p>
+            </div>
+            <span
+              id="adminScorePreview"
+              class="admin-score-preview">
+              Seleccioná un equipo
+            </span>
+          </div>
+
+          <input
+            type="hidden"
+            name="gameId"
+            value="discrecional-fede-vani">
+
+          <fieldset class="admin-score-fieldset">
+            <legend>1. Equipo</legend>
+            <div class="admin-team-picker">
+              ${Object.values(DATA.teams).map(team => `
+                <label
+                  class="admin-team-option"
+                  style="--local-accent:${team.accent}">
+                  <input
+                    type="radio"
+                    name="teamId"
+                    value="${team.id}"
+                    required>
+                  ${teamLogo(team, "admin-team-logo")}
+                  <span>${escapeHTML(team.name)}</span>
+                </label>
+              `).join("")}
+            </div>
+          </fieldset>
+
+          <fieldset class="admin-score-fieldset">
+            <legend>2. Movimiento</legend>
+            <div class="admin-sign-picker">
+              <label>
+                <input
+                  type="radio"
+                  name="scoreSign"
+                  value="1"
+                  checked>
+                <span>＋ Sumar</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="scoreSign"
+                  value="-1">
+                <span>− Restar</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="admin-score-fieldset">
+            <legend>3. Cantidad</legend>
+            <div class="admin-points-input">
+              <input
+                name="points"
+                type="number"
+                min="1"
+                step="1"
+                inputmode="numeric"
+                placeholder="Ej: 50"
+                required>
+              <span>puntos</span>
+            </div>
+
+            <div
+              class="admin-preset-row"
+              aria-label="Cantidades rápidas">
+              ${[10, 25, 50, 100].map(value => `
+                <button
+                  type="button"
+                  data-score-preset="${value}">
+                  ${value}
+                </button>
+              `).join("")}
+            </div>
+          </fieldset>
+
+          <label class="admin-comment-label">
+            Motivo <span>(opcional)</span>
+            <textarea
+              name="comment"
+              placeholder="Ej: ganó un juego, bonus por actitud o penalización..."></textarea>
+          </label>
+
+          <button
+            id="scoreSubmit"
+            type="submit"
+            class="admin-score-submit"
+            disabled>
+            Seleccioná un equipo y una cantidad
+          </button>
+        </form>
+
+        ${renderAdminMovements()}
+      `;
+    }
+
+    if (adminSubsection === "settings") {
+      return `
+        ${adminHeader}
+
+        ${renderAdminSubsectionHeader({
+          icon: "settings",
+          eyebrow: "Administración",
+          title: "Configuración",
+          text: "Secciones, juegos, respaldos, limpieza y ajustes globales."
+        })}
+
+        <section
+          class="section-card admin-config-global-card">
+          <span class="admin-config-global-icon">
+            ${uiIcon("sync")}
+          </span>
+          <div>
+            <p class="eyebrow">Configuración global</p>
+            <h4>
+              ${
+                state.lastUnlockSyncAt
+                  ? "Configuración sincronizada"
+                  : "Configuración pendiente"
+              }
+            </h4>
+            <p>
+              ${
+                state.lastUnlockSyncAt
+                  ? `Última actualización: ${formatDateLabel(state.lastUnlockSyncAt)}`
+                  : "Todavía no se recibió el estado global de secciones y juegos."
+              }
+            </p>
+            <div class="admin-version-grid">
+              <span>
+                Frontend
+                <b>v${CURRENT_APP_VERSION}</b>
+              </span>
+              <span>
+                Backend
+                <b>
+                  ${escapeHTML(
+                    state.backendVersion || "pendiente"
+                  )}
+                </b>
+              </span>
+              <span>
+                Entorno
+                <b>
+                  ${isTestMode()
+                    ? "PRUEBA"
+                    : "PRODUCTIVO"}
+                </b>
+              </span>
+              <span>
+                Pendientes
+                <b>${pendingWrites.length}</b>
+              </span>
+            </div>
+          </div>
+          <button
+            id="syncConfigNow"
+            type="button">
+            ${uiIcon("sync")}
+            <span>Sincronizar</span>
+          </button>
+        </section>
+
+        <section class="admin-stability-grid">
+          <article
+            class="section-card admin-mode-panel ${
+              isTestMode()
+                ? "is-test"
+                : "is-production"
+            }">
+            <div>
+              <p class="eyebrow">Entorno de datos</p>
+              <h4>
+                ${isTestMode()
+                  ? "Modo prueba"
+                  : "Modo productivo"}
+              </h4>
+              <p>
+                ${
+                  isTestMode()
+                    ? "Los datos de prueba están separados de los reales."
+                    : "Los invitados están usando la base oficial."
+                }
+              </p>
+            </div>
+            <div class="admin-mode-actions">
+              <button
+                type="button"
+                data-set-app-mode="test"
+                class="${isTestMode() ? "active" : ""}">
+                Prueba
+              </button>
+              <button
+                type="button"
+                data-set-app-mode="production"
+                class="${!isTestMode() ? "active" : ""}">
+                Productivo
+              </button>
+            </div>
+          </article>
+
+          <article
+            class="section-card admin-settings-panel">
+            <div>
+              <p class="eyebrow">
+                Seguridad y día del evento
+              </p>
+              <h4>Ajustes globales</h4>
+            </div>
+
+            <label class="admin-setting-toggle">
+              <span>
+                <strong>Ingreso privado</strong>
+                <small>
+                  Oculta sugerencias y exige nombre completo.
+                </small>
+              </span>
+              <input
+                type="checkbox"
+                data-app-setting="loginPrivacyMode"
+                ${
+                  state.appSettings?.loginPrivacyMode
+                    ? "checked"
+                    : ""
+                }>
+              <i></i>
+            </label>
+
+            <label class="admin-setting-toggle">
+              <span>
+                <strong>
+                  Forzar modo día del casamiento
+                </strong>
+                <small>
+                  Prioriza ubicación, cronograma y traslado.
+                </small>
+              </span>
+              <input
+                type="checkbox"
+                data-app-setting="forceWeddingDay"
+                ${
+                  state.appSettings?.forceWeddingDay
+                    ? "checked"
+                    : ""
+                }>
+              <i></i>
+            </label>
+          </article>
+        </section>
+
+        <section
+          class="section-card admin-backup-panel">
+          <div class="admin-backup-copy">
+            <span>${uiIcon("download")}</span>
+            <div>
+              <p class="eyebrow">Respaldo</p>
+              <h4>Backup completo</h4>
+              <p>
+                RSVP, juegos, puntos, Social,
+                candados y estados actuales.
+              </p>
+              <small>
+                Último backup en este navegador:
+                ${
+                  localStorage.getItem(LAST_BACKUP_KEY)
+                    ? formatDateLabel(
+                        localStorage.getItem(
+                          LAST_BACKUP_KEY
+                        )
+                      )
+                    : "todavía no realizado"
+                }
+              </small>
+            </div>
+          </div>
+
+          <div class="admin-backup-actions">
+            <button
+              id="downloadFullBackup"
+              type="button">
+              Descargar backup
+            </button>
+            <label class="admin-restore-label">
+              Restaurar backup
+              <input
+                id="restoreBackupInput"
+                type="file"
+                accept="application/json,.json">
+            </label>
+          </div>
+
+          <p
+            id="backupRestoreProgress"
+            class="admin-backup-progress">
+          </p>
+        </section>
+
+        <section
+          class="section-card admin-game-controls admin-section-controls">
+          <div class="admin-game-controls-head">
+            <div>
+              <p class="eyebrow">Secciones</p>
+              <h4>Bloquear o habilitar</h4>
+            </div>
+          </div>
+
+          <p class="admin-section-note">
+            Inicio y Administración permanecen
+            siempre disponibles.
+          </p>
+
+          <div
+            class="admin-game-toggle-list admin-section-toggle-grid">
+            ${SECTION_DEFINITIONS.map(section => {
+              const open = isSectionOpen(section.route);
+
+              return `
+                <label
+                  class="admin-game-toggle ${
+                    open ? "is-open" : ""
+                  }">
+                  <span>
+                    <strong>
+                      ${escapeHTML(section.title)}
+                    </strong>
+                    <small>
+                      ${escapeHTML(section.text)}
+                    </small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    data-unlock-key="${
+                      escapeHTML(section.key)
+                    }"
+                    ${open ? "checked" : ""}>
+                  <i aria-hidden="true"></i>
+                  <b>
+                    ${open ? "Visible" : "Bloqueada"}
+                  </b>
+                </label>
+              `;
+            }).join("")}
+          </div>
+        </section>
+
+        <section
+          class="section-card admin-game-controls">
+          <div class="admin-game-controls-head">
+            <div>
+              <p class="eyebrow">Juegos</p>
+              <h4>Disponibilidad</h4>
+            </div>
+          </div>
+
+          <div class="admin-game-toggle-list">
+            ${[
+              {
+                key: "trivia-music",
+                title: "La banda sonora",
+                text: "Canción para la boda y entrada del equipo."
+              },
+              {
+                key: "trivia-couple",
+                title: "¿Cuánto conocés a los novios?",
+                text: "Cinco preguntas de opción múltiple."
+              },
+              {
+                key: "trivia-who",
+                title: "¿Quién es quién?",
+                text: "Cinco preguntas Vani o Fede."
+              }
+            ].map(game => {
+              const open = isTriviaGameOpen(game.key);
+
+              return `
+                <label
+                  class="admin-game-toggle ${
+                    open ? "is-open" : ""
+                  }">
+                  <span>
+                    <strong>
+                      ${escapeHTML(game.title)}
+                    </strong>
+                    <small>
+                      ${escapeHTML(game.text)}
+                    </small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    data-unlock-key="${game.key}"
+                    ${open ? "checked" : ""}>
+                  <i aria-hidden="true"></i>
+                  <b>
+                    ${open ? "Liberado" : "Bloqueado"}
+                  </b>
+                </label>
+              `;
+            }).join("")}
+          </div>
+        </section>
+
+        ${resetButtonStyles()}
+
+        <section
+          class="section-card admin-social-reset-panel">
+          <span class="admin-social-reset-icon">
+            ${uiIcon("chat")}
+          </span>
+          <div>
+            <p class="eyebrow">Social</p>
+            <h4>Vaciar mensajes</h4>
+            <p>
+              ${socialMessageCount}
+              ${
+                socialMessageCount === 1
+                  ? "mensaje publicado"
+                  : "mensajes publicados"
+              }.
+            </p>
+          </div>
+          <button
+            id="clearSocialMessages"
+            type="button"
+            ${socialMessageCount ? "" : "disabled"}>
+            Vaciar Social
+          </button>
+        </section>
+
+        <section
+          class="section-card admin-test-reset-panel">
+          <div class="admin-test-reset-copy">
+            <span
+              class="admin-test-reset-icon"
+              aria-hidden="true">
+              ↺
+            </span>
+            <div>
+              <p class="eyebrow">Modo de pruebas</p>
+              <h4>Resetear datos de prueba</h4>
+              <p>
+                Limpia RSVP, formularios y juegos.
+              </p>
+              <small>
+                No borra invitados ni puntos discrecionales.
+              </small>
+            </div>
+          </div>
+
+          <button
+            id="resetTestData"
+            type="button"
+            class="admin-test-reset-button"
+            ${isTestMode() ? "" : "disabled"}>
+            ${
+              isTestMode()
+                ? "Resetear datos del modo prueba"
+                : "Disponible solo en modo prueba"
+            }
+          </button>
+        </section>
+
+        <section
+          class="section-card admin-reset-panel">
+          <h4>Reseteo de puntos</h4>
+          <p>
+            No borra asistencias ni invitados.
+          </p>
+          <div class="admin-reset-actions">
+            <button
+              id="resetDiscretionaryPoints"
+              type="button"
+              class="danger-button">
+              Resetear discrecionales
+            </button>
+            <button
+              id="resetAllPoints"
+              type="button"
+              class="danger-button">
+              Resetear todo el ranking
+            </button>
+          </div>
+        </section>
+      `;
+    }
+
+    return `
+      ${adminHeader}
+
+      <section class="admin-sync-card ${remoteStatus}">
+        <div class="admin-sync-indicator">
+          <span></span>
+        </div>
+        <div>
+          <small>Base de datos</small>
+          <strong>
+            ${
+              remoteStatus === "online"
+                ? "Datos al día"
+                : remoteStatus === "connecting"
+                  ? "Sincronizando…"
+                  : remoteStatus === "error"
+                    ? "Error de conexión"
+                    : isConfigured()
+                      ? "Pendiente de sincronización"
+                      : "No configurado"
+            }
+          </strong>
+          <p>
+            ${
+              state.lastSyncAt
+                ? `Última sincronización: ${formatDateLabel(state.lastSyncAt)}`
+                : "Todavía no se registró una sincronización en este navegador."
+            }
+          </p>
+          <div class="admin-version-grid">
+            <span>
+              Frontend
+              <b>v${CURRENT_APP_VERSION}</b>
+            </span>
+            <span>
+              Backend
+              <b>
+                ${escapeHTML(
+                  state.backendVersion || "pendiente"
+                )}
+              </b>
+            </span>
+            <span>
+              Entorno
+              <b>
+                ${isTestMode()
+                  ? "PRUEBA"
+                  : "PRODUCTIVO"}
+              </b>
+            </span>
+            <span>
+              Pendientes
+              <b>${pendingWrites.length}</b>
+            </span>
+          </div>
+        </div>
+        <button
+          id="syncNow"
+          type="button">
+          ${uiIcon("sync")}
+          <span>Sincronizar ahora</span>
         </button>
       </section>
 
-      <section class="admin-sync-card ${remoteStatus}">
-        <div class="admin-sync-indicator"><span></span></div>
-        <div>
-          <small>Base de datos</small>
-          <strong>${remoteStatus === "online" ? "Datos al día" : remoteStatus === "connecting" ? "Sincronizando…" : remoteStatus === "error" ? "Error de conexión" : isConfigured() ? "Pendiente de sincronización" : "No configurado"}</strong>
-          <p>${state.lastSyncAt ? `Última sincronización: ${formatDateLabel(state.lastSyncAt)}` : "Todavía no se registró una sincronización en este navegador."}</p>
-          <small class="admin-global-config-status">
-            ${state.lastUnlockSyncAt
-              ? `Configuración global: ${formatDateLabel(state.lastUnlockSyncAt)}`
-              : "Configuración global pendiente"}
-          </small>
-          <div class="admin-version-grid">
-            <span>Frontend <b>v${CURRENT_APP_VERSION}</b></span>
-            <span>Backend <b>${escapeHTML(state.backendVersion || "pendiente")}</b></span>
-            <span>Entorno <b>${isTestMode() ? "PRUEBA" : "PRODUCTIVO"}</b></span>
-            <span>Pendientes <b>${pendingWrites.length}</b></span>
-          </div>
-        </div>
-        <button id="syncNow" type="button">${uiIcon("sync")}<span>Sincronizar ahora</span></button>
-      </section>
-
-      <section class="admin-stability-grid">
-        <article class="section-card admin-mode-panel ${isTestMode() ? "is-test" : "is-production"}">
-          <div><p class="eyebrow">Entorno de datos</p><h4>${isTestMode() ? "Modo prueba" : "Modo productivo"}</h4><p>${isTestMode() ? "Los datos de prueba están separados de los reales." : "Los invitados están usando la base oficial."}</p></div>
-          <div class="admin-mode-actions">
-            <button type="button" data-set-app-mode="test" class="${isTestMode() ? "active" : ""}">Prueba</button>
-            <button type="button" data-set-app-mode="production" class="${!isTestMode() ? "active" : ""}">Productivo</button>
-          </div>
-        </article>
-
-        <article class="section-card admin-settings-panel">
-          <div><p class="eyebrow">Seguridad y día del evento</p><h4>Configuración global</h4></div>
-          <label class="admin-setting-toggle">
-            <span><strong>Ingreso privado</strong><small>Oculta sugerencias y exige nombre completo.</small></span>
-            <input type="checkbox" data-app-setting="loginPrivacyMode" ${state.appSettings?.loginPrivacyMode ? "checked" : ""}>
-            <i></i>
-          </label>
-          <label class="admin-setting-toggle">
-            <span><strong>Forzar modo día del casamiento</strong><small>Prioriza ubicación, cronograma y traslado en Inicio.</small></span>
-            <input type="checkbox" data-app-setting="forceWeddingDay" ${state.appSettings?.forceWeddingDay ? "checked" : ""}>
-            <i></i>
-          </label>
-        </article>
-      </section>
-
-      <section class="section-card admin-preview-panel">
-        <div><p class="eyebrow">Control de calidad</p><h4>Ver la app como invitado</h4><p>La vista es de solo lectura: no modifica asistencia, juegos ni mensajes.</p></div>
-        <div class="admin-preview-controls">
-          <select id="adminPreviewGuestSelect">
-            <option value="">Elegí un invitado…</option>
-            ${invitedGuests.slice().sort(sortGuestsForDisplay).map(guest => `<option value="${escapeHTML(guest.id)}">${escapeHTML(guestFullName(guest))} · ${escapeHTML(getTeam(guest.team).name)}</option>`).join("")}
-          </select>
-          <button id="startAdminPreview" type="button">Abrir vista previa</button>
-        </div>
-      </section>
-
-      <section class="section-card admin-backup-panel">
-        <div class="admin-backup-copy"><span>${uiIcon("download")}</span><div><p class="eyebrow">Respaldo</p><h4>Backup completo</h4><p>RSVP, juegos, puntos, Social, candados y estados actuales.</p><small>Último backup en este navegador: ${localStorage.getItem(LAST_BACKUP_KEY) ? formatDateLabel(localStorage.getItem(LAST_BACKUP_KEY)) : "todavía no realizado"}</small></div></div>
-        <div class="admin-backup-actions">
-          <button id="downloadFullBackup" type="button">Descargar backup</button>
-          <label class="admin-restore-label">Restaurar backup<input id="restoreBackupInput" type="file" accept="application/json,.json"></label>
-        </div>
-        <p id="backupRestoreProgress" class="admin-backup-progress"></p>
-      </section>
-
       <section class="admin-attendance-summary">
-        <button type="button" class="admin-stat-button" data-admin-list="attending"><span>✓</span><div><small>Asisten</small><strong>${attendingCount}</strong><em>Ver</em></div></button>
-        <button type="button" class="admin-stat-button" data-admin-list="answered"><span>%</span><div><small>Respondieron</small><strong>${answeredCount}</strong><em>${answeredPercent}%</em></div></button>
-        <button type="button" class="admin-stat-button" data-admin-list="declined"><span>−</span><div><small>No asisten</small><strong>${declinedCount}</strong><em>Ver</em></div></button>
-        <button type="button" class="admin-stat-button" data-admin-list="unanswered"><span>?</span><div><small>Pendientes</small><strong>${unansweredCount}</strong><em>Ver</em></div></button>
-        <button type="button" class="admin-stat-button admin-combi-stat" data-admin-list="micro"><span>${uiIcon("bus")}</span><div><small>Micro</small><strong>${combiCount}</strong><em>Ver</em></div></button>
-        <button type="button" class="admin-stat-button admin-restrictions-stat" data-admin-list="restrictions"><span>${uiIcon("food")}</span><div><small>Restricciones</small><strong>${restrictionsCount}</strong><em>Ver detalle</em></div></button>
+        <button
+          type="button"
+          class="admin-stat-button"
+          data-admin-list="attending">
+          <span>✓</span>
+          <div>
+            <small>Asisten</small>
+            <strong>${attendingCount}</strong>
+            <em>Ver</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="admin-stat-button"
+          data-admin-list="answered">
+          <span>%</span>
+          <div>
+            <small>Respondieron</small>
+            <strong>${answeredCount}</strong>
+            <em>${answeredPercent}%</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="admin-stat-button"
+          data-admin-list="declined">
+          <span>−</span>
+          <div>
+            <small>No asisten</small>
+            <strong>${declinedCount}</strong>
+            <em>Ver</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="admin-stat-button"
+          data-admin-list="unanswered">
+          <span>?</span>
+          <div>
+            <small>Pendientes</small>
+            <strong>${unansweredCount}</strong>
+            <em>Ver</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="admin-stat-button admin-combi-stat"
+          data-admin-list="micro">
+          <span>${uiIcon("bus")}</span>
+          <div>
+            <small>Micro</small>
+            <strong>${combiCount}</strong>
+            <em>Ver</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="admin-stat-button admin-restrictions-stat"
+          data-admin-list="restrictions">
+          <span>${uiIcon("food")}</span>
+          <div>
+            <small>Restricciones</small>
+            <strong>${restrictionsCount}</strong>
+            <em>Ver detalle</em>
+          </div>
+        </button>
       </section>
+
       ${renderAdminPeopleModal()}
 
-      <form id="scoreForm" class="section-card admin-score-card">
-        <div class="admin-score-heading">
-          <div>
-            <p class="eyebrow">Ajuste discrecional</p>
-            <h4>Sumar o restar puntos</h4>
-            <p>Carga rápida de puntos.</p>
-          </div>
-          <span id="adminScorePreview" class="admin-score-preview">Seleccioná un equipo</span>
+      <section class="admin-subsection-launchers">
+        <button
+          type="button"
+          class="admin-subsection-launcher admin-subsection-launcher-points"
+          data-admin-subsection="points">
+          <span class="admin-subsection-launcher-icon">
+            ${uiIcon("star")}
+          </span>
+          <span>
+            <small>Mini sección</small>
+            <strong>Sumar puntos</strong>
+            <em>
+              Ajustes discrecionales y auditoría de movimientos
+            </em>
+          </span>
+          <b aria-hidden="true">›</b>
+        </button>
+
+        <button
+          type="button"
+          class="admin-subsection-launcher admin-subsection-launcher-settings"
+          data-admin-subsection="settings">
+          <span class="admin-subsection-launcher-icon">
+            ${uiIcon("settings")}
+          </span>
+          <span>
+            <small>Mini sección</small>
+            <strong>Configuración</strong>
+            <em>
+              Secciones, juegos, backup, limpieza y resets
+            </em>
+          </span>
+          <b aria-hidden="true">›</b>
+        </button>
+      </section>
+
+      <section
+        class="section-card admin-official-export">
+        <div class="admin-official-export-icon">
+          ${uiIcon("download")}
         </div>
-
-        <input type="hidden" name="gameId" value="discrecional-fede-vani">
-
-        <fieldset class="admin-score-fieldset">
-          <legend>1. Equipo</legend>
-          <div class="admin-team-picker">
-            ${Object.values(DATA.teams).map(team => `
-              <label class="admin-team-option" style="--local-accent:${team.accent}">
-                <input type="radio" name="teamId" value="${team.id}" required>
-                ${teamLogo(team, "admin-team-logo")}
-                <span>${escapeHTML(team.name)}</span>
-              </label>`).join("")}
-          </div>
-        </fieldset>
-
-        <fieldset class="admin-score-fieldset">
-          <legend>2. Movimiento</legend>
-          <div class="admin-sign-picker">
-            <label>
-              <input type="radio" name="scoreSign" value="1" checked>
-              <span>＋ Sumar</span>
-            </label>
-            <label>
-              <input type="radio" name="scoreSign" value="-1">
-              <span>− Restar</span>
-            </label>
-          </div>
-        </fieldset>
-
-        <fieldset class="admin-score-fieldset">
-          <legend>3. Cantidad</legend>
-          <div class="admin-points-input">
-            <input name="points" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej: 50" required>
-            <span>puntos</span>
-          </div>
-          <div class="admin-preset-row" aria-label="Cantidades rápidas">
-            ${[10, 25, 50, 100].map(value => `<button type="button" data-score-preset="${value}">${value}</button>`).join("")}
-          </div>
-        </fieldset>
-
-        <label class="admin-comment-label">
-          Motivo <span>(opcional)</span>
-          <textarea name="comment" placeholder="Ej: ganó un juego, bonus por actitud o penalización..."></textarea>
-        </label>
-
-        <button id="scoreSubmit" type="submit" class="admin-score-submit" disabled>Seleccioná un equipo y una cantidad</button>
-      </form>
-
-      <section class="section-card admin-official-export">
-        <div class="admin-official-export-icon">${uiIcon("download")}</div>
         <div>
           <p class="eyebrow">Lista oficial</p>
           <h4>Exportar confirmados para el salón</h4>
-          <p>Confirmados con contacto, traslado y restricciones.</p>
+          <p>
+            Confirmados con contacto,
+            traslado y restricciones.
+          </p>
         </div>
-        <button id="exportOfficialGuests" type="button">${uiIcon("download")}<span>Exportar CSV</span></button>
+        <button
+          id="exportOfficialGuests"
+          type="button">
+          ${uiIcon("download")}
+          <span>Exportar CSV</span>
+        </button>
       </section>
-
-      <section class="section-card admin-game-controls admin-section-controls">
-        <div class="admin-game-controls-head">
-          <div><p class="eyebrow">Secciones</p><h4>Bloquear o habilitar</h4></div>
-        </div>
-        <p class="admin-section-note">Inicio y Administración permanecen siempre disponibles.</p>
-        <div class="admin-game-toggle-list admin-section-toggle-grid">
-          ${SECTION_DEFINITIONS.map(section => {
-            const open = isSectionOpen(section.route);
-            return `
-              <label class="admin-game-toggle ${open ? "is-open" : ""}">
-                <span><strong>${escapeHTML(section.title)}</strong><small>${escapeHTML(section.text)}</small></span>
-                <input type="checkbox" data-unlock-key="${escapeHTML(section.key)}" ${open ? "checked" : ""}>
-                <i aria-hidden="true"></i>
-                <b>${open ? "Visible" : "Bloqueada"}</b>
-              </label>`;
-          }).join("")}
-        </div>
-      </section>
-
-      <section class="section-card admin-game-controls">
-        <div class="admin-game-controls-head">
-          <div><p class="eyebrow">Juegos</p><h4>Disponibilidad</h4></div>
-        </div>
-        <div class="admin-game-toggle-list">
-          ${[
-            { key: "trivia-music", title: "La banda sonora", text: "Canción para la boda y entrada del equipo." },
-            { key: "trivia-couple", title: "¿Cuánto conocés a los novios?", text: "Cinco preguntas de opción múltiple." },
-            { key: "trivia-who", title: "¿Quién es quién?", text: "Cinco preguntas Vani o Fede." }
-          ].map(game => {
-            const open = isTriviaGameOpen(game.key);
-            return `<label class="admin-game-toggle ${open ? "is-open" : ""}">
-              <span><strong>${escapeHTML(game.title)}</strong><small>${escapeHTML(game.text)}</small></span>
-              <input type="checkbox" data-unlock-key="${game.key}" ${open ? "checked" : ""}>
-              <i aria-hidden="true"></i>
-              <b>${open ? "Liberado" : "Bloqueado"}</b>
-            </label>`;
-          }).join("")}
-        </div>
-      </section>
-
-
-
-      ${resetButtonStyles()}
-
-      <section class="section-card admin-social-reset-panel">
-        <span class="admin-social-reset-icon">${uiIcon("chat")}</span>
-        <div>
-          <p class="eyebrow">Social</p>
-          <h4>Vaciar mensajes</h4>
-          <p>${socialMessageCount} ${socialMessageCount === 1 ? "mensaje publicado" : "mensajes publicados"}.</p>
-        </div>
-        <button id="clearSocialMessages" type="button" ${socialMessageCount ? "" : "disabled"}>Vaciar Social</button>
-      </section>
-
-      <section class="section-card admin-test-reset-panel">
-        <div class="admin-test-reset-copy">
-          <span class="admin-test-reset-icon" aria-hidden="true">↺</span>
-          <div>
-            <p class="eyebrow">Modo de pruebas</p>
-            <h4>Resetear datos de prueba</h4>
-            <p>Limpia RSVP, formularios y juegos.</p>
-            <small>No borra invitados ni puntos discrecionales.</small>
-          </div>
-        </div>
-        <button id="resetTestData" type="button" class="admin-test-reset-button" ${isTestMode() ? "" : "disabled"}>${isTestMode() ? "Resetear datos del modo prueba" : "Disponible solo en modo prueba"}</button>
-      </section>
-
-      <section class="section-card admin-reset-panel">
-        <h4>Reseteo de puntos</h4>
-        <p>No borra asistencias ni invitados.</p>
-        <div class="admin-reset-actions">
-          <button id="resetDiscretionaryPoints" type="button" class="danger-button">Resetear discrecionales</button>
-          <button id="resetAllPoints" type="button" class="danger-button">Resetear todo el ranking</button>
-        </div>
-      </section>
-      ${renderAdminMovements()}`;
+    `;
   }
+
+  function renderAdminSubsectionHeader({
+    icon,
+    eyebrow,
+    title,
+    text
+  }) {
+    return `
+      <section class="admin-subsection-head section-card">
+        <button
+          type="button"
+          class="admin-subsection-back"
+          data-admin-subsection="dashboard">
+          ‹
+          <span>Volver al dashboard</span>
+        </button>
+
+        <span class="admin-subsection-head-icon">
+          ${uiIcon(icon)}
+        </span>
+
+        <div>
+          <p class="eyebrow">${escapeHTML(eyebrow)}</p>
+          <h3>${escapeHTML(title)}</h3>
+          <p>${escapeHTML(text)}</p>
+        </div>
+      </section>
+    `;
+  }
+
 
   function adminUxStyles() {
     return `<style>
@@ -6752,6 +7330,30 @@
 
   function bindAdminEvents() {
 
+    $$("[data-admin-subsection]").forEach(button => {
+      button.addEventListener("click", () => {
+        const requested =
+          button.dataset.adminSubsection || "dashboard";
+
+        adminSubsection = [
+          "dashboard",
+          "points",
+          "settings"
+        ].includes(requested)
+          ? requested
+          : "dashboard";
+
+        renderCurrentRoute();
+
+        window.requestAnimationFrame(() => {
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+          });
+        });
+      });
+    });
+
     $$('[data-set-app-mode]').forEach(button => {
       button.addEventListener("click", async () => {
         const mode = button.dataset.setAppMode === "test" ? "test" : "production";
@@ -6805,10 +7407,6 @@
         toast("Configuración global actualizada.");
         renderCurrentRoute();
       });
-    });
-
-    $("#startAdminPreview")?.addEventListener("click", () => {
-      startAdminGuestPreview($("#adminPreviewGuestSelect")?.value || "");
     });
 
     $("#downloadFullBackup")?.addEventListener("click", downloadFullBackup);
@@ -6880,6 +7478,7 @@
 
       state.adminPassword = password;
       state.adminUnlocked = true;
+      adminSubsection = "dashboard";
       toast("Centro de mando desbloqueado.");
       renderCurrentRoute();
     });
@@ -7192,11 +7791,20 @@
     $("#lockAdminButton")?.addEventListener("click", () => {
       state.adminUnlocked = false;
       state.adminPassword = "";
+      adminSubsection = "dashboard";
       toast("Administración bloqueada.");
       renderCurrentRoute();
     });
 
-    $("#syncNow")?.addEventListener("click", () => syncFromSheets(true));
+    $("#syncNow")?.addEventListener(
+      "click",
+      () => syncFromSheets(true)
+    );
+
+    $("#syncConfigNow")?.addEventListener(
+      "click",
+      () => syncFromSheets(true)
+    );
     $("#exportJson")?.addEventListener("click", () => downloadFile("convocatoria-vani-fede-datos.json", JSON.stringify(state, null, 2), "application/json"));
     $("#exportCsv")?.addEventListener("click", () => downloadFile("rsvp-vani-fede.csv", buildRsvpCsv(), "text/csv;charset=utf-8"));
     $("#resetLocal")?.addEventListener("click", () => {
