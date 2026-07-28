@@ -28,6 +28,7 @@
   const UNLOCK_SYNC_INTERVAL_MS = 30000;
   const UNLOCK_SYNC_MIN_GAP_MS = 4000;
   const FULL_SYNC_STALE_MS = 45000;
+  let deferredInstallPrompt = null;
   let selectedTeamViewId = null;
   let teamCommunityTab = "mine";
   let expandedGuestTeamId = null;
@@ -96,7 +97,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32447"
+        appVersion: CONFIG.APP_VERSION || "32448"
       })
     );
   }
@@ -289,7 +290,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32447",
+      appVersion: "32448",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -886,11 +887,106 @@
     return `${location.pathname}${location.search}`;
   }
 
+
+  function isAppInstalled() {
+    return Boolean(
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true
+    );
+  }
+
+  function updateInstallButtons() {
+    const canInstall =
+      Boolean(deferredInstallPrompt) &&
+      !isAppInstalled();
+
+    $$("[data-install-app]").forEach(button => {
+      button.classList.toggle("hidden", !canInstall);
+      button.hidden = !canInstall;
+    });
+
+    $(".menu-install-group")?.classList.toggle(
+      "hidden",
+      !canInstall
+    );
+  }
+
+  async function promptInstallApp() {
+    if (isAppInstalled()) {
+      toast("La app ya está instalada.");
+      return;
+    }
+
+    if (!deferredInstallPrompt) {
+      toast(
+        "En Chrome, abrí el menú ⋮ y elegí “Instalar app”."
+      );
+      return;
+    }
+
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+
+    deferredInstallPrompt = null;
+    updateInstallButtons();
+
+    if (choice.outcome === "accepted") {
+      toast("La app se está instalando.");
+    }
+  }
+
+  function configureInstallExperience() {
+    window.addEventListener(
+      "beforeinstallprompt",
+      event => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        updateInstallButtons();
+      }
+    );
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      updateInstallButtons();
+      toast("Vani & Fede quedó instalada.");
+    });
+
+    const displayMode = window.matchMedia(
+      "(display-mode: standalone)"
+    );
+
+    displayMode.addEventListener?.(
+      "change",
+      updateInstallButtons
+    );
+
+    updateInstallButtons();
+  }
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("./sw.js?v=32448", {
+          scope: "./"
+        })
+        .catch(error => {
+          console.warn(
+            "No se pudo registrar el Service Worker",
+            error
+          );
+        });
+    });
+  }
+
   function boot() {
     setRemoteStatus(isConfigured() ? "connecting" : "idle");
     history.replaceState({ screen: "login" }, "", basePageUrl());
     fillGuestSuggestions();
     configureNavigation();
+    configureInstallExperience();
+    registerServiceWorker();
     bindShellEvents();
     window.addEventListener("popstate", handleBrowserNavigation);
     window.addEventListener("focus", syncUnlocksWhenAppReturns);
@@ -1114,6 +1210,10 @@
   }
 
   function bindShellEvents() {
+    $$("[data-install-app]").forEach(button => {
+      button.addEventListener("click", promptInstallApp);
+    });
+
     $("#notificationButton")?.addEventListener("click", event => {
       event.stopPropagation();
       const panel = $("#notificationPanel");
