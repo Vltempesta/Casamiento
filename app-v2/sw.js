@@ -1,12 +1,12 @@
-const CACHE_NAME = "vani-fede-static-v32459";
+const CACHE_NAME = "vani-fede-static-v32460";
 
 const APP_SHELL = [
   "./index.html",
-  "./styles.css?v=32459",
-  "./app.js?v=32459",
-  "./config.js?v=32459",
-  "./manifest.webmanifest?v=32459",
-  "./assets/branding/vyf-seal.png?v=32459",
+  "./styles.css?v=32460",
+  "./app.js?v=32460",
+  "./config.js?v=32460",
+  "./manifest.webmanifest?v=32460",
+  "./assets/branding/vyf-seal.png?v=32460",
   "./icons/icon-32.png",
   "./icons/icon-48.png",
   "./icons/icon-96.png",

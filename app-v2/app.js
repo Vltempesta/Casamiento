@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32459";
+  const CURRENT_APP_VERSION = "32460";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -120,7 +120,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32459"
+        appVersion: CONFIG.APP_VERSION || "32460"
       })
     );
   }
@@ -685,7 +685,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32459",
+      appVersion: "32460",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2383,7 +2383,7 @@
 
 
   const GAME_NOTIFICATION_DEFINITIONS = [
-    { key: "trivia-music", title: "La banda sonora", route: "puntos" },
+    { key: "trivia-music", title: "Canciones favoritas", route: "puntos" },
     { key: "trivia-couple", title: "¿Cuánto conocés a los novios?", route: "puntos" },
     { key: "trivia-who", title: "¿Quién es quién?", route: "puntos" }
   ];
@@ -4024,6 +4024,16 @@
         .find(row => row.id === team.id)
         ?.total || 0;
     const activityPoints = rsvpPointsForTeam(team.id);
+    const microBonusPoints =
+      rsvpDone &&
+      rsvp.attendance === "si" &&
+      ["combi", "micro"].includes(rsvp.transport)
+        ? 20
+        : 0;
+    const rsvpTotalPoints =
+      rsvpDone
+        ? activityPoints + microBonusPoints
+        : 0;
     const musicOpen = isTriviaGameOpen("trivia-music");
     const triviaOpen = isTriviaGameOpen("trivia-couple");
     const whoTriviaOpen = isTriviaGameOpen("trivia-who");
@@ -4043,13 +4053,15 @@
       triviaSubmission("couple-trivia-test");
     const whoSubmission =
       triviaSubmission("who-is-who-trivia-test");
+    const storedMusicPoints = Number(
+      musicSubmission?.earnedPoints
+    );
     const musicEarnedPoints = musicDone
-      ? Math.max(
-          0,
-          Number(
-            musicSubmission?.earnedPoints ??
-            activityPoints
-          )
+      ? (
+          Number.isFinite(storedMusicPoints) &&
+          storedMusicPoints > 0
+            ? storedMusicPoints
+            : activityPoints
         )
       : 0;
     const coupleEarnedPoints = triviaDone
@@ -4154,13 +4166,20 @@
             icon:"✉️",
             title:"Confirmar asistencia",
             text:rsvpDone
-              ? "Respuesta guardada"
-              : "Respondé por sí o por no",
+              ? "Tu respuesta, traslado y restricciones quedaron guardados."
+              : "Confirmá si vas a asistir, cómo viajás y tus restricciones alimentarias.",
             done:rsvpDone,
             route:"asistencia",
             progressText:rsvpDone
-              ? `${activityPoints} puntos obtenidos`
-              : `${activityPoints} puntos`,
+              ? (
+                  microBonusPoints
+                    ? `${activityPoints} puntos por confirmar`
+                    : `${activityPoints} puntos obtenidos`
+                )
+              : `${activityPoints} puntos por completar`,
+            bonusText:microBonusPoints
+              ? `+${microBonusPoints} puntos extra por elegir micro · ${rsvpTotalPoints} puntos totales`
+              : "",
             editable:true
           })}
         </section>
@@ -4168,15 +4187,15 @@
         <section class="points-unified-challenge section-card">
           ${pointsAction({
             icon:"🎵",
-            title:"La banda sonora",
+            title:"Canciones favoritas",
             text:musicDone
-              ? "Canciones enviadas"
-              : "Elegí una canción para la boda y otra para tu equipo",
+              ? "Tus dos elecciones musicales quedaron guardadas para la boda y la entrada de tu equipo."
+              : "Elegí una canción favorita para la boda y otra para la entrada de tu equipo.",
             done:musicDone,
             route:"musica",
             progressText:musicDone
               ? `${musicEarnedPoints} puntos obtenidos`
-              : `${activityPoints} puntos`,
+              : `${activityPoints} puntos por completar`,
             editable:true,
             locked:!rsvpDone || !musicOpen
           })}
@@ -4187,8 +4206,8 @@
             icon:"🎯",
             title:"¿Cuánto conocés a los novios?",
             text:triviaDone
-              ? "Resultado final guardado"
-              : "Cinco preguntas sobre Vani y Fede",
+              ? "Ya respondiste las cinco preguntas sobre la historia y los gustos de Vani y Fede."
+              : "Respondé cinco preguntas sobre la historia, los viajes y los gustos de Vani y Fede.",
             done:triviaDone,
             route:"trivia-pareja",
             progressText:triviaDone
@@ -4204,8 +4223,8 @@
             icon:"⚖️",
             title:"¿Quién es quién?",
             text:whoTriviaDone
-              ? "Resultado final guardado"
-              : "Cinco situaciones para elegir entre Vani o Fede",
+              ? "Ya elegiste quién representa mejor cada una de las cinco situaciones."
+              : "Descubrí si cada costumbre o situación describe mejor a Vani o a Fede.",
             done:whoTriviaDone,
             route:"trivia-quien",
             progressText:whoTriviaDone
@@ -4302,25 +4321,76 @@
   }
 
 
-  function pointsAction({ icon, title, text, done, route, progressText = "", editable = true, locked = false }) {
-    const label = done ? (editable ? "Ver / editar" : "Ver") : "Ver";
-    const progress = progressText
-      ? `<small>${escapeHTML(progressText)}</small>`
-      : "";
+  function pointsAction({
+    icon,
+    title,
+    text,
+    done,
+    route,
+    progressText = "",
+    bonusText = "",
+    editable = true,
+    locked = false
+  }) {
+    const label = done
+      ? (editable ? "Ver / editar" : "")
+      : "Comenzar";
+
+    const progress =
+      progressText || bonusText
+        ? `<div class="points-action-points">
+            ${
+              progressText
+                ? `<small>${escapeHTML(progressText)}</small>`
+                : ""
+            }
+            ${
+              bonusText
+                ? `<span>${escapeHTML(bonusText)}</span>`
+                : ""
+            }
+          </div>`
+        : "";
+
     const action = locked
-      ? `<span class="points-locked-state">${uiIcon("lock")}<b>Bloqueado</b></span>`
-      : `<button type="button" data-go="${escapeHTML(route)}">${label}</button>`;
+      ? `<span class="points-locked-state">
+          ${uiIcon("lock")}
+          <b>Bloqueado</b>
+        </span>`
+      : label
+        ? `<button
+            type="button"
+            data-go="${escapeHTML(route)}">
+            ${escapeHTML(label)}
+          </button>`
+        : "";
 
     return `
-      <article class="points-action ${done ? "done" : ""} ${locked ? "is-locked" : ""}">
+      <article
+        class="points-action ${
+          done ? "done" : ""
+        } ${
+          locked ? "is-locked" : ""
+        } ${
+          action ? "has-action" : "without-action"
+        }">
         <span class="points-action-icon">${icon}</span>
+
         <div class="points-action-copy">
           <strong>${escapeHTML(title)}</strong>
           <p>${escapeHTML(text)}</p>
           ${progress}
         </div>
+
         <div class="points-action-end">
-          ${done ? `<span class="points-complete-badge">${uiIcon("checkCircle")}<b>Hecho</b></span>` : ""}
+          ${
+            done
+              ? `<span class="points-complete-badge">
+                  ${uiIcon("checkCircle")}
+                  <b>Hecho</b>
+                </span>`
+              : ""
+          }
           ${action}
         </div>
       </article>`;
@@ -4535,7 +4605,7 @@
     if (!open) {
       return renderLockedTriviaCard(
         "01",
-        "La banda sonora",
+        "Canciones favoritas",
         "Dos canciones tendrán una misión especial.",
         "trivia-music",
         "music-game"
@@ -4554,7 +4624,7 @@
                 <span class="trivia-status completed">
                   Completado
                 </span>
-                <h4>La banda sonora</h4>
+                <h4>Canciones favoritas</h4>
               </div>
               ${uiIcon("checkCircle","trivia-main-icon")}
             </div>
@@ -4604,7 +4674,7 @@
               <span class="trivia-status open">
                 ${saved ? "Editando" : "Disponible"}
               </span>
-              <h4>La banda sonora</h4>
+              <h4>Canciones favoritas</h4>
             </div>
             ${uiIcon("music","trivia-main-icon")}
           </div>
@@ -4991,7 +5061,7 @@
 
   function gameName(id) {
     if (id === "auto-rsvp") return "Confirmación de asistencia";
-    if (id === "auto-music-selection") return "Juego musical";
+    if (id === "auto-music-selection") return "Canciones favoritas";
     if (id === "auto-micro-transport") return "Bonus por viajar en micro";
     if (id === "auto-couple-trivia") return "¿Cuánto conocés a los novios?";
     if (id === "auto-who-is-who-trivia") return "¿Quién es quién?";
@@ -6384,7 +6454,7 @@
             ${[
               {
                 key: "trivia-music",
-                title: "La banda sonora",
+                title: "Canciones favoritas",
                 text: "Canción para la boda y entrada del equipo."
               },
               {
@@ -7025,23 +7095,26 @@
       $("#musicGameForm")?.addEventListener("submit", event => {
         event.preventDefault();
         const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+        const earnedPoints =
+          rsvpPointsForTeam(currentGuest.team);
+
         const payload = {
           ...values,
           gameId: "music-selection",
           guestId: currentGuest.id,
           teamId: currentGuest.team,
+          earnedPoints,
           updatedAt: new Date().toISOString()
         };
 
         musicEditMode = false;
-        const earnedPoints = rsvpPointsForTeam(currentGuest.team);
 
         void queueOptimisticWrite(
           "saveGameSubmission",
           payload,
           {
             writeKey: `game:${currentGuest.id}:music-selection`,
-            successMessage: `Canciones confirmadas. El equipo sumó ${earnedPoints} puntos.`,
+            successMessage: `Canciones favoritas confirmadas. El equipo sumó ${earnedPoints} puntos.`,
             beforeRender: () => toast("Canciones recibidas. Guardando…"),
             afterRender: () => {
               window.requestAnimationFrame(() => {
@@ -7588,7 +7661,7 @@
     $("#resetGuestActivity")?.addEventListener(
       "click",
       async () => {
-        const requiredBackendVersion = 32459;
+        const requiredBackendVersion = 32460;
         const detectedBackendVersion =
           numericBackendVersion();
 
@@ -7601,7 +7674,7 @@
             state: "error",
             title: "Backend sin actualizar",
             text:
-              "El botón necesita que publiques Code.gs v32459 como una nueva versión del Web App.",
+              "El botón necesita que publiques Code.gs v32460 como una nueva versión del Web App.",
             detail:
               `Backend detectado: ${
                 state.backendVersion || "no disponible"
@@ -7679,7 +7752,7 @@
               "La base no confirmó la limpieza. No se modificó el estado visible de la app.",
             detail:
               state.lastRemoteError ||
-              "Revisá que Code.gs v32459 esté implementado y volvé a intentar."
+              "Revisá que Code.gs v32460 esté implementado y volvé a intentar."
           });
           return;
         }
