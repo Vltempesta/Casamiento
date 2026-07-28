@@ -21,11 +21,13 @@
   let silentSyncTimer = null;
   let unlockSyncInterval = null;
   let unlockSyncInFlight = null;
+  let fullSyncInFlight = null;
   let lastUnlockSyncAttemptAt = 0;
   let countdownTimer = null;
 
-  const UNLOCK_SYNC_INTERVAL_MS = 45000;
-  const UNLOCK_SYNC_MIN_GAP_MS = 12000;
+  const UNLOCK_SYNC_INTERVAL_MS = 30000;
+  const UNLOCK_SYNC_MIN_GAP_MS = 4000;
+  const FULL_SYNC_STALE_MS = 45000;
   let selectedTeamViewId = null;
   let teamCommunityTab = "mine";
   let expandedGuestTeamId = null;
@@ -93,7 +95,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32444"
+        appVersion: CONFIG.APP_VERSION || "32445"
       })
     );
   }
@@ -286,7 +288,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32444",
+      appVersion: "32445",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -446,27 +448,14 @@
         try {
           response = await jsonp("getUnlockState");
         } catch (lightSyncError) {
-          // Compatibilidad hasta publicar el backend v32444.
           response = await jsonp("getData");
         }
 
-        const remote = response?.data || {};
-        const incomingRevision = String(
-          remote.serverRevision || ""
-        );
-        const needsFullSync = Boolean(
-          incomingRevision &&
-          incomingRevision !== String(state.serverRevision || "")
-        );
-
+        // Los candados se aplican apenas llega la respuesta liviana.
         applyRemoteUnlockSnapshot(
-          remote,
-          { render: render && !needsFullSync }
+          response?.data || {},
+          { render }
         );
-
-        if (needsFullSync) {
-          await syncFromSheets(false);
-        }
 
         return true;
       } catch (error) {
@@ -482,6 +471,7 @@
 
     return unlockSyncInFlight;
   }
+
 
   function startUnlockAutoSync() {
     if (unlockSyncInterval) {
@@ -501,16 +491,28 @@
 
   function syncUnlocksWhenAppReturns() {
     if (
-      currentGuest &&
-      document.visibilityState === "visible" &&
-      navigator.onLine !== false
+      !currentGuest ||
+      document.visibilityState !== "visible" ||
+      navigator.onLine === false
+    ) return;
+
+    void syncUnlockState({
+      force: true,
+      render: true
+    });
+
+    const lastFullSync = Date.parse(
+      state.lastSyncAt || ""
+    ) || 0;
+
+    if (
+      !state.remoteReady ||
+      Date.now() - lastFullSync > FULL_SYNC_STALE_MS
     ) {
-      syncUnlockState({
-        force: true,
-        render: true
-      });
+      void syncFromSheets(false);
     }
   }
+
 
   async function saveAndVerifyRemote(action, payload, verifier) {
     const result = await writeToSheets(action, payload);
@@ -755,32 +757,73 @@
   async function syncFromSheets(showToast = false) {
     if (!isConfigured()) {
       setRemoteStatus("idle");
-      if (showToast) toast("Falta configurar la conexión remota.");
-      return false;
-    }
-    setRemoteStatus("connecting");
-    try {
-      const payload = await jsonp("getData");
-      mergeRemoteData(payload.data || {});
-      setRemoteStatus("online", `Datos al día${state.lastSyncAt ? " · " + new Date(state.lastSyncAt).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) : ""}`);
-      if (showToast) toast("Datos actualizados.");
-      if (currentGuest) renderCurrentRoute();
-      return true;
-    } catch (error) {
-      state.lastRemoteError = error.message;
-      setRemoteStatus("error");
-
       if (showToast) {
-        toast(
-          state.remoteReady
-            ? "No se pudo actualizar. No se permiten cambios hasta recuperar la conexión."
-            : "No se pudo consultar la base oficial."
-        );
+        toast("Falta configurar la conexión remota.");
       }
-
       return false;
     }
+
+    if (fullSyncInFlight) {
+      const runningResult = await fullSyncInFlight;
+      if (showToast && runningResult) {
+        toast("Datos actualizados.");
+      }
+      return runningResult;
+    }
+
+    setRemoteStatus("connecting");
+
+    fullSyncInFlight = (async () => {
+      try {
+        const payload = await jsonp("getData");
+        mergeRemoteData(payload.data || {});
+
+        setRemoteStatus(
+          "online",
+          `Datos al día${
+            state.lastSyncAt
+              ? " · " + new Date(
+                  state.lastSyncAt
+                ).toLocaleTimeString(
+                  "es-AR",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  }
+                )
+              : ""
+          }`
+        );
+
+        if (currentGuest) renderCurrentRoute();
+        return true;
+      } catch (error) {
+        state.lastRemoteError = error.message;
+        setRemoteStatus("error");
+
+        if (showToast) {
+          toast(
+            state.remoteReady
+              ? "No se pudo actualizar. No se permiten cambios hasta recuperar la conexión."
+              : "No se pudo consultar la base oficial."
+          );
+        }
+
+        return false;
+      } finally {
+        fullSyncInFlight = null;
+      }
+    })();
+
+    const result = await fullSyncInFlight;
+
+    if (showToast && result) {
+      toast("Datos actualizados.");
+    }
+
+    return result;
   }
+
 
   function isUnlocked(key) {
     if (state.manualUnlocks[key] === true || state.manualUnlocks[key] === "TRUE") return true;
@@ -1592,14 +1635,7 @@
     void writeToSheets(
       "saveNotificationState",
       officialRecord
-    ).then(result => {
-      if (result) {
-        window.setTimeout(
-          () => syncFromSheets(false),
-          250
-        );
-      }
-    });
+    );
   }
 
   function latestVisibleSocialTime() {
