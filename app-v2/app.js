@@ -1,13 +1,18 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32453";
+  const CURRENT_APP_VERSION = "32454";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
+  const PENDING_WRITES_KEY = "vf_pending_writes_v1";
+  const LAST_BACKUP_KEY = "vf_last_backup_at";
   const ONLINE_COPY = {
     idle: "Conexión pendiente",
-    connecting: "Sincronizando",
-    online: "Datos al día",
+    connecting: "Consultando datos…",
+    saving: "Guardando cambios…",
+    online: "Datos actualizados",
+    saved: "Guardado correctamente",
+    retrying: "Reintentando…",
     local: "Modo local",
     error: "Sin conexión"
   };
@@ -32,6 +37,13 @@
   const FULL_SYNC_STALE_MS = 45000;
   let deferredInstallPrompt = null;
   let appUpdateCheckInFlight = null;
+  let activeWriteKeys = new Set();
+  let pendingWrites = loadPendingWrites();
+  let pendingRetryInFlight = false;
+  let saveIndicatorTimer = null;
+  let adminPreviewActive = false;
+  let adminPreviewOriginalGuest = null;
+  let adminSimulateWeddingDay = false;
   let appReloadingForUpdate = false;
   let serviceWorkerReloadTriggered = false;
   let selectedTeamViewId = null;
@@ -61,6 +73,12 @@
     unlockRevision: "",
     serverRevision: "",
     serverRanking: [],
+    backendVersion: "",
+    appSettings: {
+      mode: "production",
+      loginPrivacyMode: false,
+      forceWeddingDay: false
+    },
     remoteReady: false,
     lastUnlockSyncAt: null,
     dataResetAt: null,
@@ -102,8 +120,371 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32453"
+        appVersion: CONFIG.APP_VERSION || "32454"
       })
+    );
+  }
+
+
+  function loadPendingWrites() {
+    try {
+      const value = JSON.parse(
+        localStorage.getItem(PENDING_WRITES_KEY) || "[]"
+      );
+      return Array.isArray(value) ? value : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function persistPendingWrites() {
+    localStorage.setItem(
+      PENDING_WRITES_KEY,
+      JSON.stringify(pendingWrites)
+    );
+    updateSaveIndicator();
+  }
+
+  function newRequestId(action = "write") {
+    if (window.crypto?.randomUUID) {
+      return `${action}-${window.crypto.randomUUID()}`;
+    }
+    return `${action}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  function writeEntityKey(action, payload = {}) {
+    if (action === "saveRsvp" || action === "saveProfile") {
+      return `${action}:${payload.guestId || ""}`;
+    }
+    if (action === "saveGameSubmission") {
+      return `${action}:${payload.guestId || ""}:${payload.gameId || ""}`;
+    }
+    if (action === "saveSocialMessage") {
+      return `${action}:${payload.messageId || payload.requestId || ""}`;
+    }
+    if (action === "saveSocialLike") {
+      return `${action}:${payload.messageId || ""}:${payload.guestId || ""}`;
+    }
+    return `${action}:${payload.requestId || ""}`;
+  }
+
+  function setBackgroundSaveStatus(status, message = "") {
+    const element = $("#backgroundSaveStatus");
+    const text = $("#backgroundSaveText");
+    if (!element || !text) return;
+
+    if (saveIndicatorTimer) {
+      window.clearTimeout(saveIndicatorTimer);
+      saveIndicatorTimer = null;
+    }
+
+    element.className = `background-save-status ${status}`;
+    text.textContent = message || (
+      status === "saving"
+        ? "Guardando en segundo plano…"
+        : status === "saved"
+          ? "Guardado correctamente"
+          : status === "pending"
+            ? "Cambio pendiente de sincronizar"
+            : status === "error"
+              ? "No se pudo sincronizar"
+              : ""
+    );
+
+    if (status === "saved") {
+      saveIndicatorTimer = window.setTimeout(() => {
+        element.classList.add("hidden");
+      }, 1600);
+    }
+  }
+
+  function updateSaveIndicator() {
+    if (pendingWrites.length) {
+      setBackgroundSaveStatus(
+        navigator.onLine === false ? "pending" : "saving",
+        navigator.onLine === false
+          ? `${pendingWrites.length} cambio${pendingWrites.length === 1 ? "" : "s"} pendiente${pendingWrites.length === 1 ? "" : "s"}`
+          : "Guardando en segundo plano…"
+      );
+    } else {
+      setBackgroundSaveStatus("saved");
+    }
+  }
+
+  function markPendingRecord(record = {}, entry) {
+    return {
+      ...record,
+      pendingSync: true,
+      pendingRequestId: entry.requestId,
+      syncError: Boolean(entry.syncError)
+    };
+  }
+
+  function applyPendingWriteToState(entry) {
+    const payload = entry.payload || {};
+
+    if (entry.action === "saveRsvp") {
+      state.rsvps[payload.guestId] = markPendingRecord(
+        {
+          ...(state.rsvps[payload.guestId] || {}),
+          ...payload
+        },
+        entry
+      );
+    } else if (entry.action === "saveProfile") {
+      state.profiles[payload.guestId] = markPendingRecord(
+        {
+          ...(state.profiles[payload.guestId] || {}),
+          ...payload
+        },
+        entry
+      );
+    } else if (entry.action === "saveGameSubmission") {
+      const key = `${payload.guestId}::${payload.gameId}`;
+      state.gameSubmissions[key] = markPendingRecord(
+        {
+          ...(state.gameSubmissions[key] || {}),
+          ...payload
+        },
+        entry
+      );
+    } else if (entry.action === "saveSocialMessage") {
+      state.socialMessages = dedupeSocialMessages([
+        ...(state.socialMessages || []),
+        markPendingRecord(payload, entry)
+      ]);
+    } else if (entry.action === "saveSocialLike") {
+      const key = socialLikeKey(payload.messageId, payload.guestId);
+      state.socialLikes = {
+        ...(state.socialLikes || {}),
+        [key]: markPendingRecord(payload, entry)
+      };
+    }
+  }
+
+  function applyPendingWritesToState() {
+    pendingWrites.forEach(applyPendingWriteToState);
+  }
+
+  function applyConfirmedWriteToState(entry, record = {}) {
+    const payload = entry.payload || {};
+    const confirmed = {
+      ...payload,
+      ...record,
+      pendingSync: false,
+      syncError: false
+    };
+
+    if (entry.action === "saveRsvp") {
+      state.rsvps[payload.guestId] = confirmed;
+    } else if (entry.action === "saveProfile") {
+      state.profiles[payload.guestId] = confirmed;
+    } else if (entry.action === "saveGameSubmission") {
+      state.gameSubmissions[`${payload.guestId}::${payload.gameId}`] = confirmed;
+    } else if (entry.action === "saveSocialMessage") {
+      state.socialMessages = dedupeSocialMessages([
+        ...(state.socialMessages || []).filter(item => item.messageId !== payload.messageId),
+        confirmed
+      ]);
+    } else if (entry.action === "saveSocialLike") {
+      state.socialLikes = {
+        ...(state.socialLikes || {}),
+        [socialLikeKey(payload.messageId, payload.guestId)]: confirmed
+      };
+    }
+  }
+
+  async function sendPendingWrite(entry, options = {}) {
+    const writeKey = entry.writeKey || writeEntityKey(entry.action, entry.payload);
+    if (activeWriteKeys.has(writeKey)) return false;
+
+    activeWriteKeys.add(writeKey);
+    setRemoteStatus("saving", "Guardando cambios…");
+    updateSaveIndicator();
+
+    const result = await writeToSheets(
+      entry.action,
+      {
+        ...(entry.payload || {}),
+        requestId: entry.requestId
+      },
+      { silent: true, allowPreview: false }
+    );
+
+    activeWriteKeys.delete(writeKey);
+
+    if (!result) {
+      entry.attempts = Number(entry.attempts || 0) + 1;
+      entry.syncError = true;
+      persistPendingWrites();
+      applyPendingWriteToState(entry);
+      setRemoteStatus(
+        navigator.onLine === false ? "error" : "retrying",
+        navigator.onLine === false ? "Sin conexión" : "Pendiente de reintento"
+      );
+      if (!options.silentFailure) {
+        toast("El cambio se ve en la app y se reintentará automáticamente.");
+      }
+      return false;
+    }
+
+    const record = result.record || entry.payload || {};
+    applyConfirmedWriteToState(entry, record);
+    pendingWrites = pendingWrites.filter(item => item.requestId !== entry.requestId);
+    persistPendingWrites();
+    setRemoteStatus("saved", "Guardado correctamente");
+    setBackgroundSaveStatus("saved");
+    scheduleSilentSync(900);
+
+    if (options.successMessage) {
+      toast(options.successMessage);
+    }
+
+    return true;
+  }
+
+  async function queueOptimisticWrite(action, payload, options = {}) {
+    if (adminPreviewActive) {
+      toast("La vista previa es de solo lectura.");
+      return false;
+    }
+
+    const requestId = payload.requestId || newRequestId(action);
+    const writeKey = options.writeKey || writeEntityKey(action, payload);
+
+    if (
+      activeWriteKeys.has(writeKey) ||
+      pendingWrites.some(item => item.writeKey === writeKey)
+    ) {
+      toast("Ese cambio ya se está guardando.");
+      return false;
+    }
+
+    const entry = {
+      requestId,
+      writeKey,
+      action,
+      payload: {
+        ...payload,
+        requestId
+      },
+      createdAt: new Date().toISOString(),
+      attempts: 0,
+      syncError: false
+    };
+
+    pendingWrites.push(entry);
+    applyPendingWriteToState(entry);
+    persistPendingWrites();
+
+    options.beforeRender?.(entry);
+    if (options.render !== false) renderCurrentRoute();
+    options.afterRender?.(entry);
+
+    setBackgroundSaveStatus("saving");
+    void sendPendingWrite(entry, {
+      successMessage: options.successMessage
+    });
+
+    return true;
+  }
+
+  async function retryPendingWrites() {
+    if (
+      pendingRetryInFlight ||
+      !pendingWrites.length ||
+      navigator.onLine === false ||
+      adminPreviewActive
+    ) return;
+
+    pendingRetryInFlight = true;
+    setRemoteStatus("retrying", "Reintentando cambios…");
+
+    try {
+      for (const entry of [...pendingWrites]) {
+        await sendPendingWrite(entry, {
+          silentFailure: true
+        });
+      }
+    } finally {
+      pendingRetryInFlight = false;
+      if (!pendingWrites.length) {
+        await syncFromSheets(false);
+      }
+    }
+  }
+
+
+  function appMode() {
+    return state.appSettings?.mode === "test"
+      ? "test"
+      : "production";
+  }
+
+  function isTestMode() {
+    return appMode() === "test";
+  }
+
+  function loginPrivacyEnabled() {
+    return Boolean(state.appSettings?.loginPrivacyMode);
+  }
+
+  function applyRemoteAppSettings(settings = {}) {
+    state.appSettings = {
+      mode: settings.mode === "test" ? "test" : "production",
+      loginPrivacyMode: Boolean(settings.loginPrivacyMode),
+      forceWeddingDay: Boolean(settings.forceWeddingDay)
+    };
+
+    document.body.classList.toggle("app-test-mode", isTestMode());
+    updateLoginPrivacyUi();
+  }
+
+  function updateLoginPrivacyUi() {
+    const helper = $(".login-helper");
+    const input = $("#guestName");
+    const panel = $("#guestSuggestionPanel");
+
+    if (helper) {
+      helper.textContent = loginPrivacyEnabled()
+        ? "Escribí tu nombre y apellido completos."
+        : "Escribí tu nombre, apellido o alias.";
+    }
+
+    if (input) {
+      input.placeholder = loginPrivacyEnabled()
+        ? "Nombre y apellido completos…"
+        : "Buscá tu nombre…";
+    }
+
+    if (loginPrivacyEnabled()) {
+      panel?.classList.add("hidden");
+      if (panel) panel.innerHTML = "";
+    }
+  }
+
+  function renderGlobalModeBanner() {
+    if (!isTestMode()) return "";
+    return `
+      <div class="global-test-mode-banner" role="status">
+        <span aria-hidden="true">🧪</span>
+        <strong>Modo prueba</strong>
+        <small>Los datos están separados de Productivo.</small>
+      </div>`;
+  }
+
+  function isWeddingDayMode() {
+    if (state.appSettings?.forceWeddingDay || adminSimulateWeddingDay) {
+      return true;
+    }
+
+    const today = new Date();
+    const event = new Date(DATA.couple.eventDate);
+
+    return (
+      today.getFullYear() === event.getFullYear() &&
+      today.getMonth() === event.getMonth() &&
+      today.getDate() === event.getDate()
     );
   }
 
@@ -209,6 +590,11 @@
 
     const exactMatches = DATA.guests.filter(guest => {
       if (!isCompetitionGuest(guest)) return false;
+
+      if (loginPrivacyEnabled()) {
+        return normalize(guestFullName(guest)) === wanted;
+      }
+
       const keys = [
         guest.id,
         guestFullName(guest),
@@ -224,6 +610,7 @@
   }
 
   function guestSuggestionsFor(query) {
+    if (loginPrivacyEnabled()) return [];
     const wanted = normalize(query);
     if (wanted.length < 2) return [];
 
@@ -245,6 +632,12 @@
 
   function setRemoteStatus(status, message = "") {
     remoteStatus = status;
+    if (["saving", "saved", "retrying"].includes(status)) {
+      setBackgroundSaveStatus(
+        status === "retrying" ? "pending" : status,
+        message
+      );
+    }
     const label = message || ONLINE_COPY[status] || status;
     [$("#connectionBadge"), $("#syncBadge")].forEach(badge => {
       if (!badge) return;
@@ -295,26 +688,48 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32453",
+      appVersion: "32454",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
+      environment: appMode(),
       ...payload
     };
   }
 
-  async function writeToSheets(action, payload) {
+  async function writeToSheets(action, payload, options = {}) {
     if (!isConfigured()) return null;
+
+    const adminActions = new Set([
+      "saveScore",
+      "saveUnlock",
+      "clearSocialMessages",
+      "saveAppSettings",
+      "restoreBackupChunk"
+    ]);
+
+    if (
+      adminPreviewActive &&
+      !options.allowPreview &&
+      !adminActions.has(action)
+    ) {
+      if (!options.silent) toast("La vista previa es de solo lectura.");
+      return null;
+    }
 
     if (navigator.onLine === false) {
       setRemoteStatus("error", "Sin conexión");
-      toast("No hay conexión. No se guardó ningún cambio.");
+      if (!options.silent) {
+        toast("No hay conexión. El cambio quedará pendiente.");
+      }
       return null;
     }
 
     if (!state.remoteReady && action !== "logEvent") {
       setRemoteStatus("connecting", "Consultando la base oficial");
-      toast("Esperá unos segundos: estamos cargando la información oficial.");
+      if (!options.silent) {
+        toast("Esperá unos segundos: estamos cargando la información oficial.");
+      }
       await syncFromSheets(false);
       if (!state.remoteReady) return null;
     }
@@ -338,7 +753,9 @@
       state.lastRemoteError = error.message;
       saveState();
       setRemoteStatus("error", "No se pudo guardar");
-      toast("No se pudo guardar. Revisá la conexión y volvé a intentar.");
+      if (!options.silent) {
+        toast("No se pudo guardar. Revisá la conexión y volvé a intentar.");
+      }
       return null;
     }
   }
@@ -386,6 +803,9 @@
   }
 
   function applyRemoteUnlockSnapshot(remote = {}, options = {}) {
+    if (remote.appSettings) {
+      applyRemoteAppSettings(remote.appSettings);
+    }
     if (
       !Object.prototype.hasOwnProperty.call(remote, "manualUnlocks")
     ) {
@@ -459,10 +879,19 @@
         }
 
         // Los candados se aplican apenas llega la respuesta liviana.
+        const previousMode = appMode();
+        const remoteState = response?.data || {};
         applyRemoteUnlockSnapshot(
-          response?.data || {},
+          remoteState,
           { render }
         );
+
+        if (
+          remoteState.appSettings &&
+          appMode() !== previousMode
+        ) {
+          await syncFromSheets(false);
+        }
 
         return true;
       } catch (error) {
@@ -657,6 +1086,9 @@
   }
 
   function mergeRemoteData(remote = {}) {
+    applyRemoteAppSettings(remote.appSettings || state.appSettings || {});
+    state.backendVersion = String(remote.backendVersion || state.backendVersion || "");
+
     const remoteRsvps =
       remote.rsvps && typeof remote.rsvps === "object"
         ? remote.rsvps
@@ -743,6 +1175,7 @@
       new Date().toISOString();
     state.lastRemoteError = "";
 
+    applyPendingWritesToState();
     saveState();
 
     if (currentGuest) {
@@ -803,6 +1236,9 @@
         );
 
         if (currentGuest) renderCurrentRoute();
+        if (pendingWrites.length) {
+          window.setTimeout(() => retryPendingWrites(), 120);
+        }
         return true;
       } catch (error) {
         state.lastRemoteError = error.message;
@@ -1146,6 +1582,8 @@
   function boot() {
     setRemoteStatus(isConfigured() ? "connecting" : "idle");
     history.replaceState({ screen: "login" }, "", basePageUrl());
+    applyPendingWritesToState();
+    updateLoginPrivacyUi();
     fillGuestSuggestions();
     configureNavigation();
     configureInstallExperience();
@@ -1161,6 +1599,7 @@
     window.addEventListener("online", () => {
       syncUnlocksWhenAppReturns();
       checkVersionWhenAppReturns();
+      retryPendingWrites();
     });
 
     window.addEventListener("pageshow", () => {
@@ -1477,9 +1916,11 @@
 
       if (!guest) {
         input.setAttribute("aria-invalid", "true");
-        message.textContent = suggestionMatches.length
-          ? "Elegí tu nombre de la lista para ingresar correctamente."
-          : "No encontramos ese nombre. Probá escribiendo solamente tu nombre o apellido.";
+        message.textContent = loginPrivacyEnabled()
+          ? "No encontramos ese nombre. Escribí nombre y apellido completos."
+          : suggestionMatches.length
+            ? "Elegí tu nombre de la lista para ingresar correctamente."
+            : "No encontramos ese nombre. Probá escribiendo solamente tu nombre o apellido.";
         input.focus();
         return;
       }
@@ -1601,6 +2042,82 @@
     });
   }
 
+
+  function renderLoadingSkeleton() {
+    const hasError = Boolean(state.lastRemoteError);
+    return `
+      <section class="app-loading-skeleton section-card">
+        <div class="skeleton-head">
+          <span class="skeleton-block skeleton-circle"></span>
+          <span class="skeleton-block skeleton-title"></span>
+        </div>
+        <span class="skeleton-block skeleton-line"></span>
+        <span class="skeleton-block skeleton-line short"></span>
+        <div class="skeleton-grid">
+          <span class="skeleton-block skeleton-card"></span>
+          <span class="skeleton-block skeleton-card"></span>
+          <span class="skeleton-block skeleton-card"></span>
+        </div>
+        <p>${hasError ? "No pudimos consultar la base oficial. Revisá la conexión y tocá Sincronizar." : "Cargando la información actualizada…"}</p>
+      </section>`;
+  }
+
+  function renderAdminPreviewBanner() {
+    if (!adminPreviewActive || !currentGuest) return "";
+    return `
+      <section class="admin-preview-banner">
+        <span aria-hidden="true">👁️</span>
+        <div>
+          <strong>Vista previa: ${escapeHTML(guestFullName(currentGuest))}</strong>
+          <small>Solo lectura · no modifica sus datos</small>
+        </div>
+        <button type="button" data-exit-admin-preview>Volver a Admin</button>
+      </section>`;
+  }
+
+  function startAdminGuestPreview(guestId) {
+    const guest = getGuestById(guestId);
+    if (!guest || !isCompetitionGuest(guest)) {
+      toast("Elegí un invitado válido.");
+      return;
+    }
+
+    adminPreviewOriginalGuest = currentGuest;
+    adminPreviewActive = true;
+    currentGuest = guest;
+    currentRoute = "inicio";
+
+    const team = getTeam(guest.team);
+    document.documentElement.style.setProperty(
+      "--team-accent",
+      team.accent || "#c8a75d"
+    );
+    $("#welcomeTitle").textContent = guest.firstName || guestFullName(guest);
+    $("#welcomeInitial").textContent = (guest.firstName || "V").charAt(0).toUpperCase();
+    document.body.classList.add("admin-preview-mode");
+    renderCurrentRoute();
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function exitAdminGuestPreview() {
+    if (!adminPreviewActive) return;
+
+    currentGuest = adminPreviewOriginalGuest || getGuestById(state.currentGuestId);
+    adminPreviewOriginalGuest = null;
+    adminPreviewActive = false;
+    currentRoute = "admin";
+    document.body.classList.remove("admin-preview-mode");
+
+    if (currentGuest) {
+      const team = getTeam(currentGuest.team);
+      document.documentElement.style.setProperty("--team-accent", team.accent || "#c8a75d");
+      $("#welcomeTitle").textContent = currentGuest.firstName || guestFullName(currentGuest);
+      $("#welcomeInitial").textContent = (currentGuest.firstName || "V").charAt(0).toUpperCase();
+    }
+
+    renderCurrentRoute();
+  }
+
   function renderCurrentRoute() {
     const routes = {
       inicio: renderHome,
@@ -1622,11 +2139,20 @@
 
     updateSectionNavigationState();
 
-    const html = !isSectionOpen(currentRoute)
-      ? renderLockedSection(currentRoute)
-      : (routes[currentRoute] || renderHome)();
+    const routeHtml = !state.remoteReady && currentRoute !== "admin"
+      ? renderLoadingSkeleton()
+      : !isSectionOpen(currentRoute)
+        ? renderLockedSection(currentRoute)
+        : (routes[currentRoute] || renderHome)();
+
+    const html = `
+      ${renderGlobalModeBanner()}
+      ${renderAdminPreviewBanner()}
+      ${routeHtml}
+    `;
 
     $("#view").innerHTML = html;
+    $("[data-exit-admin-preview]")?.addEventListener("click", exitAdminGuestPreview);
     bindInstallButtons($("#view"));
     markNotificationsForRoute(currentRoute);
     updateNotificationUi();
@@ -2280,9 +2806,11 @@
       (24 * 60 * 60 * 1000)
     );
     const eventDay =
+      isWeddingDayMode() || (
       now.getFullYear() === eventDate.getFullYear() &&
       now.getMonth() === eventDate.getMonth() &&
-      now.getDate() === eventDate.getDate();
+      now.getDate() === eventDate.getDate()
+      );
     const nearEvent =
       !eventDay &&
       daysToEvent > 0 &&
@@ -2373,6 +2901,20 @@
         </span>
         <span class="home-install-app-arrow" aria-hidden="true">›</span>
       </button>
+
+      ${eventDay ? `
+        <section class="wedding-day-command section-card">
+          <div class="wedding-day-command-head">
+            <span aria-hidden="true">✨</span>
+            <div><small>24 de octubre de 2026</small><h3>Hoy es el gran día</h3><p>Todo lo importante para salir y llegar sin vueltas.</p></div>
+          </div>
+          <div class="wedding-day-command-actions">
+            ${locationOpen ? `<button type="button" data-go="ubicacion">${uiIcon("pin")}<span>Cómo llegar</span></button>` : ""}
+            <button type="button" data-go="cronograma">${uiIcon("clock")}<span>Cronograma</span></button>
+            <button type="button" data-go="traslado">${uiIcon("bus")}<span>Traslado</span></button>
+          </div>
+        </section>
+      ` : ""}
 
       ${primaryAction ? `
         <section
@@ -2726,7 +3268,7 @@
         <section class="section-card rsvp-confirmed-compact">
           <div class="rsvp-confirmed-head">
             <span class="rsvp-okmark">✓</span>
-            <div><h4>Respuesta guardada</h4><p>Podés actualizarla cuando lo necesites.</p></div>
+            <div><h4>${saved.pendingSync ? "Guardando respuesta…" : "Respuesta guardada"}</h4><p>${saved.pendingSync ? "Ya la ves actualizada. La confirmación continúa en segundo plano." : "Podés actualizarla cuando lo necesites."}</p></div>
           </div>
           <div class="rsvp-summary-grid">
             ${summaryLine("Asistencia", attendanceLabel(saved.attendance))}
@@ -4569,19 +5111,12 @@
 
   async function submitSocialMessage(form, parentId = "") {
     const textarea = form.querySelector('textarea[name="message"]');
-    const submitButton = form.querySelector('button[type="submit"]');
     const message = String(textarea?.value || "").trim();
 
     if (!message) {
       toast("Escribí un mensaje antes de publicar.");
       textarea?.focus();
       return;
-    }
-
-    const originalText = submitButton?.textContent || "Publicar";
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = "Guardando…";
     }
 
     const payload = {
@@ -4594,32 +5129,18 @@
       updatedAt: new Date().toISOString()
     };
 
-    const savedRecord = await saveAndVerifyRemote(
+    form.reset();
+    void queueOptimisticWrite(
       "saveSocialMessage",
       payload,
-      record => Boolean(
-        record &&
-        record.messageId === payload.messageId &&
-        record.message
-      )
-    );
-
-    if (!savedRecord) {
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = originalText;
+      {
+        writeKey: `social:${payload.messageId}`,
+        successMessage: parentId ? "Respuesta publicada." : "Mensaje publicado.",
+        beforeRender: () => toast(parentId ? "Respuesta publicada. Guardando…" : "Mensaje publicado. Guardando…")
       }
-      return;
-    }
-
-    state.socialMessages = dedupeSocialMessages([
-      ...(state.socialMessages || []),
-      { ...payload, ...savedRecord }
-    ]);
-    saveState();
-    toast(parentId ? "Respuesta publicada." : "Mensaje publicado.");
-    renderCurrentRoute();
+    );
   }
+
 
   function scoreEntriesForGames(gameIds) {
     const ids = Array.isArray(gameIds) ? gameIds : [gameIds];
@@ -4739,6 +5260,173 @@
   }
 
 
+
+  function cleanBackupRecord(record = {}) {
+    const clean = { ...record };
+    delete clean.pendingSync;
+    delete clean.pendingRequestId;
+    delete clean.syncError;
+    return clean;
+  }
+
+  function mapBackupObject(records = {}) {
+    return Object.fromEntries(
+      Object.entries(records || {}).map(([key, record]) => [
+        key,
+        cleanBackupRecord(record)
+      ])
+    );
+  }
+
+  function currentBackupPayload() {
+    return {
+      format: "vani-fede-backup-v1",
+      createdAt: new Date().toISOString(),
+      frontendVersion: CURRENT_APP_VERSION,
+      backendVersion: state.backendVersion || "",
+      appSettings: state.appSettings,
+      data: {
+        rsvps: mapBackupObject(state.rsvps),
+        profiles: mapBackupObject(state.profiles),
+        gameSubmissions: mapBackupObject(state.gameSubmissions),
+        scoreEntries: (state.scoreEntries || []).map(cleanBackupRecord),
+        socialMessages: (state.socialMessages || []).map(cleanBackupRecord),
+        socialLikes: mapBackupObject(state.socialLikes),
+        notificationsByGuest: mapBackupObject(state.notificationsByGuest),
+        manualUnlocks: state.manualUnlocks
+      }
+    };
+  }
+
+  function downloadJsonFile(filename, payload) {
+    const blob = new Blob(
+      [JSON.stringify(payload, null, 2)],
+      { type: "application/json;charset=utf-8" }
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadFullBackup() {
+    const button = $("#downloadFullBackup");
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Preparando…";
+    }
+
+    await retryPendingWrites();
+    await syncFromSheets(false);
+    const payload = currentBackupPayload();
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadJsonFile(
+      `vani-fede-backup-${appMode()}-${stamp}.json`,
+      payload
+    );
+    localStorage.setItem(LAST_BACKUP_KEY, payload.createdAt);
+    toast("Backup completo descargado.");
+    renderCurrentRoute();
+  }
+
+  function backupOperations(backup) {
+    const data = backup?.data || {};
+    const operations = [];
+
+    Object.values(data.rsvps || {}).forEach(record => operations.push({ action: "saveRsvp", record }));
+    Object.values(data.profiles || {}).forEach(record => operations.push({ action: "saveProfile", record }));
+    Object.values(data.gameSubmissions || {}).forEach(record => operations.push({ action: "saveGameSubmission", record }));
+    (data.scoreEntries || []).forEach(record => operations.push({ action: "saveScore", record }));
+    (data.socialMessages || []).forEach(record => operations.push({ action: "saveSocialMessage", record }));
+    Object.values(data.socialLikes || {}).forEach(record => operations.push({ action: "saveSocialLike", record }));
+    Object.values(data.notificationsByGuest || {}).forEach(record => operations.push({ action: "saveNotificationState", record }));
+    Object.entries(data.manualUnlocks || {}).forEach(([key, open]) => operations.push({ action: "saveUnlock", record: { key, open } }));
+
+    return operations;
+  }
+
+  async function restoreBackupFile(file) {
+    let backup;
+    try {
+      backup = JSON.parse(await file.text());
+    } catch (_) {
+      toast("El archivo no es un backup JSON válido.");
+      return;
+    }
+
+    if (backup?.format !== "vani-fede-backup-v1") {
+      toast("El archivo no corresponde a esta app.");
+      return;
+    }
+
+    const operations = backupOperations(backup);
+    if (!operations.length) {
+      toast("El backup no contiene registros.");
+      return;
+    }
+
+    const word = prompt(
+      `Se restaurarán ${operations.length} registros dentro de ${isTestMode() ? "MODO PRUEBA" : "PRODUCTIVO"}. Escribí RESTAURAR para continuar.`
+    );
+    if (normalize(word) !== "restaurar") {
+      toast("Restauración cancelada.");
+      return;
+    }
+
+    const progress = $("#backupRestoreProgress");
+    const input = $("#restoreBackupInput");
+    const chunkSize = 5;
+    let restored = 0;
+
+    if (progress) progress.textContent = `Restaurando 0 de ${operations.length}…`;
+
+    for (let index = 0; index < operations.length; index += chunkSize) {
+      const chunk = operations.slice(index, index + chunkSize);
+      const result = await writeToSheets(
+        "restoreBackupChunk",
+        {
+          adminPassword: state.adminPassword,
+          operations: chunk
+        },
+        { silent: true, allowPreview: true }
+      );
+
+      if (!result) {
+        if (progress) progress.textContent = `Se detuvo en ${restored} de ${operations.length}.`;
+        toast("La restauración se interrumpió. Podés volver a intentar.");
+        if (input) input.value = "";
+        return;
+      }
+
+      restored += chunk.length;
+      if (progress) progress.textContent = `Restaurando ${restored} de ${operations.length}…`;
+    }
+
+    if (backup.appSettings) {
+      await writeToSheets(
+        "saveAppSettings",
+        {
+          adminPassword: state.adminPassword,
+          settings: {
+            ...backup.appSettings,
+            mode: appMode()
+          }
+        },
+        { silent: true, allowPreview: true }
+      );
+    }
+
+    await syncFromSheets(false);
+    if (progress) progress.textContent = `Restauración completa: ${restored} registros.`;
+    if (input) input.value = "";
+    toast("Backup restaurado correctamente.");
+    renderCurrentRoute();
+  }
+
   function renderAdmin() {
     if (!state.adminUnlocked) {
       return `
@@ -4811,8 +5499,58 @@
               ? `Configuración global: ${formatDateLabel(state.lastUnlockSyncAt)}`
               : "Configuración global pendiente"}
           </small>
+          <div class="admin-version-grid">
+            <span>Frontend <b>v${CURRENT_APP_VERSION}</b></span>
+            <span>Backend <b>${escapeHTML(state.backendVersion || "pendiente")}</b></span>
+            <span>Entorno <b>${isTestMode() ? "PRUEBA" : "PRODUCTIVO"}</b></span>
+            <span>Pendientes <b>${pendingWrites.length}</b></span>
+          </div>
         </div>
         <button id="syncNow" type="button">${uiIcon("sync")}<span>Sincronizar ahora</span></button>
+      </section>
+
+      <section class="admin-stability-grid">
+        <article class="section-card admin-mode-panel ${isTestMode() ? "is-test" : "is-production"}">
+          <div><p class="eyebrow">Entorno de datos</p><h4>${isTestMode() ? "Modo prueba" : "Modo productivo"}</h4><p>${isTestMode() ? "Los datos de prueba están separados de los reales." : "Los invitados están usando la base oficial."}</p></div>
+          <div class="admin-mode-actions">
+            <button type="button" data-set-app-mode="test" class="${isTestMode() ? "active" : ""}">Prueba</button>
+            <button type="button" data-set-app-mode="production" class="${!isTestMode() ? "active" : ""}">Productivo</button>
+          </div>
+        </article>
+
+        <article class="section-card admin-settings-panel">
+          <div><p class="eyebrow">Seguridad y día del evento</p><h4>Configuración global</h4></div>
+          <label class="admin-setting-toggle">
+            <span><strong>Ingreso privado</strong><small>Oculta sugerencias y exige nombre completo.</small></span>
+            <input type="checkbox" data-app-setting="loginPrivacyMode" ${state.appSettings?.loginPrivacyMode ? "checked" : ""}>
+            <i></i>
+          </label>
+          <label class="admin-setting-toggle">
+            <span><strong>Forzar modo día del casamiento</strong><small>Prioriza ubicación, cronograma y traslado en Inicio.</small></span>
+            <input type="checkbox" data-app-setting="forceWeddingDay" ${state.appSettings?.forceWeddingDay ? "checked" : ""}>
+            <i></i>
+          </label>
+        </article>
+      </section>
+
+      <section class="section-card admin-preview-panel">
+        <div><p class="eyebrow">Control de calidad</p><h4>Ver la app como invitado</h4><p>La vista es de solo lectura: no modifica asistencia, juegos ni mensajes.</p></div>
+        <div class="admin-preview-controls">
+          <select id="adminPreviewGuestSelect">
+            <option value="">Elegí un invitado…</option>
+            ${invitedGuests.slice().sort(sortGuestsForDisplay).map(guest => `<option value="${escapeHTML(guest.id)}">${escapeHTML(guestFullName(guest))} · ${escapeHTML(getTeam(guest.team).name)}</option>`).join("")}
+          </select>
+          <button id="startAdminPreview" type="button">Abrir vista previa</button>
+        </div>
+      </section>
+
+      <section class="section-card admin-backup-panel">
+        <div class="admin-backup-copy"><span>${uiIcon("download")}</span><div><p class="eyebrow">Respaldo</p><h4>Backup completo</h4><p>RSVP, juegos, puntos, Social, candados y estados actuales.</p><small>Último backup en este navegador: ${localStorage.getItem(LAST_BACKUP_KEY) ? formatDateLabel(localStorage.getItem(LAST_BACKUP_KEY)) : "todavía no realizado"}</small></div></div>
+        <div class="admin-backup-actions">
+          <button id="downloadFullBackup" type="button">Descargar backup</button>
+          <label class="admin-restore-label">Restaurar backup<input id="restoreBackupInput" type="file" accept="application/json,.json"></label>
+        </div>
+        <p id="backupRestoreProgress" class="admin-backup-progress"></p>
       </section>
 
       <section class="admin-attendance-summary">
@@ -4956,7 +5694,7 @@
             <small>No borra invitados ni puntos discrecionales.</small>
           </div>
         </div>
-        <button id="resetTestData" type="button" class="admin-test-reset-button">Resetear RSVP y formularios</button>
+        <button id="resetTestData" type="button" class="admin-test-reset-button" ${isTestMode() ? "" : "disabled"}>${isTestMode() ? "Resetear datos del modo prueba" : "Disponible solo en modo prueba"}</button>
       </section>
 
       <section class="section-card admin-reset-panel">
@@ -5140,11 +5878,9 @@
         renderCurrentRoute();
       });
 
-      $("#rsvpForm")?.addEventListener("submit", async event => {
+      $("#rsvpForm")?.addEventListener("submit", event => {
         event.preventDefault();
         const form = event.currentTarget;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton?.textContent || "Guardar asistencia";
         const values = Object.fromEntries(new FormData(form).entries());
 
         if (!["si", "no"].includes(values.attendance)) {
@@ -5176,40 +5912,18 @@
           updatedAt: new Date().toISOString()
         };
 
-        if (submitButton) {
-          submitButton.disabled = true;
-          submitButton.textContent = "Guardando…";
-        }
-
-        const savedRecord = await saveAndVerifyRemote(
+        state.rsvpEditMode = false;
+        void queueOptimisticWrite(
           "saveRsvp",
           payload,
-          record => Boolean(
-            record &&
-            record.guestId === payload.guestId &&
-            record.attendance === payload.attendance &&
-            record.updatedAt
-          )
-        );
-
-        if (!savedRecord) {
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
+          {
+            writeKey: `rsvp:${currentGuest.id}`,
+            successMessage: "Asistencia confirmada.",
+            beforeRender: () => {
+              toast("Listo. Estamos guardando tu asistencia.");
+            }
           }
-          toast("No quedó confirmada. Revisá la conexión y volvé a intentar.");
-          return;
-        }
-
-        state.rsvps[currentGuest.id] = {
-          ...(state.rsvps[currentGuest.id] || {}),
-          ...payload,
-          ...savedRecord
-        };
-        state.rsvpEditMode = false;
-        saveState();
-        toast("Asistencia guardada.");
-        renderCurrentRoute();
+        );
       });
     }
 
@@ -5226,12 +5940,9 @@
         renderCurrentRoute();
       });
 
-      $("#profileForm")?.addEventListener("submit", async event => {
+      $("#profileForm")?.addEventListener("submit", event => {
         event.preventDefault();
-        const form = event.currentTarget;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton?.textContent || "Guardar";
-        const values = Object.fromEntries(new FormData(form).entries());
+        const values = Object.fromEntries(new FormData(event.currentTarget).entries());
         const payload = {
           ...values,
           guestId: currentGuest.id,
@@ -5239,46 +5950,25 @@
           updatedAt: new Date().toISOString()
         };
 
-        if (submitButton) {
-          submitButton.disabled = true;
-          submitButton.textContent = "Guardando…";
-        }
-
-        const savedRecord = await saveAndVerifyRemote(
+        state.profileEditMode = false;
+        void queueOptimisticWrite(
           "saveProfile",
           payload,
-          record => record?.guestId === payload.guestId
-        );
-
-        if (!savedRecord) {
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
+          {
+            writeKey: `profile:${currentGuest.id}`,
+            successMessage: "Formulario guardado.",
+            beforeRender: () => toast("Listo. Se está guardando.")
           }
-          return;
-        }
-
-        state.profiles[currentGuest.id] = {
-          ...(state.profiles[currentGuest.id] || {}),
-          ...payload,
-          ...savedRecord
-        };
-        state.profileEditMode = false;
-        saveState();
-        toast("Formulario guardado.");
-        renderCurrentRoute();
+        );
       });
     }
 
     if (route === "puntos") {
-      $$(".game-submit").forEach(form => form.addEventListener("submit", async event => {
+      $$(".game-submit").forEach(form => form.addEventListener("submit", event => {
         event.preventDefault();
         const currentForm = event.currentTarget;
-        const submitButton = currentForm.querySelector('button[type="submit"]');
-        const originalText = submitButton?.textContent || "Enviar";
         const gameId = currentForm.dataset.gameId;
         const values = Object.fromEntries(new FormData(currentForm).entries());
-        const key = `${currentGuest.id}::${gameId}`;
         const payload = {
           ...values,
           gameId,
@@ -5287,33 +5977,15 @@
           updatedAt: new Date().toISOString()
         };
 
-        if (submitButton) {
-          submitButton.disabled = true;
-          submitButton.textContent = "Guardando…";
-        }
-
-        const savedRecord = await saveAndVerifyRemote(
+        void queueOptimisticWrite(
           "saveGameSubmission",
           payload,
-          record => record?.guestId === payload.guestId && record?.gameId === payload.gameId
-        );
-
-        if (!savedRecord) {
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
+          {
+            writeKey: `game:${currentGuest.id}:${gameId}`,
+            successMessage: "Respuesta guardada.",
+            beforeRender: () => toast("Respuesta recibida. Guardando…")
           }
-          return;
-        }
-
-        state.gameSubmissions[key] = {
-          ...(state.gameSubmissions[key] || {}),
-          ...payload,
-          ...savedRecord
-        };
-        saveState();
-        toast("Respuesta guardada.");
-        renderCurrentRoute();
+        );
       }));
     }
 
@@ -5323,13 +5995,9 @@
         renderTriviaAndFocus("music-game");
       });
 
-      $("#musicGameForm")?.addEventListener("submit", async event => {
+      $("#musicGameForm")?.addEventListener("submit", event => {
         event.preventDefault();
-        const form = event.currentTarget;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton?.textContent || "Enviar mis canciones";
-        const values = Object.fromEntries(new FormData(form).entries());
-        const key = `${currentGuest.id}::music-selection`;
+        const values = Object.fromEntries(new FormData(event.currentTarget).entries());
         const payload = {
           ...values,
           gameId: "music-selection",
@@ -5338,64 +6006,44 @@
           updatedAt: new Date().toISOString()
         };
 
-        if (submitButton) {
-          submitButton.disabled = true;
-          submitButton.textContent = "Guardando…";
-        }
+        musicEditMode = false;
+        const earnedPoints = rsvpPointsForTeam(currentGuest.team);
 
-        const savedRecord = await saveAndVerifyRemote(
+        void queueOptimisticWrite(
           "saveGameSubmission",
           payload,
-          record => Boolean(
-            record &&
-            record.guestId === payload.guestId &&
-            record.gameId === payload.gameId &&
-            record.updatedAt
-          )
-        );
-
-        if (!savedRecord) {
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
+          {
+            writeKey: `game:${currentGuest.id}:music-selection`,
+            successMessage: `Canciones confirmadas. El equipo sumó ${earnedPoints} puntos.`,
+            beforeRender: () => toast("Canciones recibidas. Guardando…"),
+            afterRender: () => {
+              window.requestAnimationFrame(() => {
+                document.getElementById("couple-trivia-game")?.scrollIntoView({ behavior: "smooth", block: "center" });
+              });
+            }
           }
-          toast("Las canciones no quedaron guardadas. Volvé a intentar.");
+        );
+      });
+
+      $("#coupleTriviaForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const key = `${currentGuest.id}::couple-trivia-test`;
+        if (state.gameSubmissions[key]) {
+          toast("Esta trivia ya fue jugada. Podés ver tu resultado.");
+          renderCurrentRoute();
           return;
         }
 
-        state.gameSubmissions[key] = {
-          ...(state.gameSubmissions[key] || {}),
-          ...payload,
-          ...savedRecord
-        };
-        saveState();
-        const earnedPoints =
-          rsvpPointsForTeam(currentGuest.team);
-        musicEditMode = false;
-        toast(
-          `Canciones guardadas. El equipo sumó ${earnedPoints} puntos.`
-        );
-        renderTriviaAndFocus("couple-trivia-game");
-      });
-
-      $("#coupleTriviaForm")?.addEventListener("submit", async event => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton?.textContent || "Enviar respuestas";
-        const key = `${currentGuest.id}::couple-trivia-test`;
-        if (state.gameSubmissions[key]) { toast("Esta trivia ya fue jugada. Podés ver tu resultado."); renderCurrentRoute(); return; }
-        const answers = Object.fromEntries(new FormData(form).entries());
+        const answers = Object.fromEntries(new FormData(event.currentTarget).entries());
         const score = SAMPLE_COUPLE_QUESTIONS.reduce(
           (total, question) => total + (answers[question.id] === question.answer ? 1 : 0),
           0
         );
-        const bestScore = score;
         const payload = {
           answers,
           score,
-          bestScore,
-          earnedPoints: bestScore * 20,
+          bestScore: score,
+          earnedPoints: score * 20,
           maxScore: SAMPLE_COUPLE_QUESTIONS.length,
           gameId: "couple-trivia-test",
           guestId: currentGuest.id,
@@ -5403,72 +6051,42 @@
           updatedAt: new Date().toISOString()
         };
 
-        if (submitButton) {
-          submitButton.disabled = true;
-          submitButton.textContent = "Guardando resultado…";
-        }
-
-        const savedRecord = await saveAndVerifyRemote(
+        void queueOptimisticWrite(
           "saveGameSubmission",
           payload,
-          record => Boolean(
-            record &&
-            record.guestId === payload.guestId &&
-            record.gameId === payload.gameId &&
-            Number(record.bestScore ?? record.score ?? -1) === bestScore
-          )
-        );
-
-        if (!savedRecord) {
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
+          {
+            writeKey: `game:${currentGuest.id}:couple-trivia-test`,
+            successMessage: `Trivia confirmada: ${score * 20} puntos.`,
+            beforeRender: () => toast("Resultado calculado. Guardando…"),
+            afterRender: () => {
+              window.requestAnimationFrame(() => {
+                document.getElementById("couple-trivia-result")?.scrollIntoView({ behavior: "smooth", block: "center" });
+              });
+            }
           }
-          toast("El resultado no quedó guardado. Volvé a intentar.");
-          return;
-        }
-
-        state.gameSubmissions[key] = {
-          ...(state.gameSubmissions[key] || {}),
-          ...payload,
-          ...savedRecord
-        };
-        saveState();
-
-        toast(
-          `Trivia completada: ${bestScore * 20} puntos.`
         );
-        renderTriviaAndFocus("couple-trivia-result");
       });
 
 
-      $("#whoIsWhoTriviaForm")?.addEventListener("submit", async event => {
+      $("#whoIsWhoTriviaForm")?.addEventListener("submit", event => {
         event.preventDefault();
-
-        const form = event.currentTarget;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton?.textContent || "Enviar respuestas";
         const key = `${currentGuest.id}::who-is-who-trivia-test`;
-
         if (state.gameSubmissions[key]) {
           toast("Esta trivia ya fue jugada. Podés ver tu resultado.");
           renderCurrentRoute();
           return;
         }
 
-        const answers = Object.fromEntries(new FormData(form).entries());
+        const answers = Object.fromEntries(new FormData(event.currentTarget).entries());
         const score = WHO_IS_WHO_QUESTIONS.reduce(
-          (total, question) =>
-            total + (answers[question.id] === question.answer ? 1 : 0),
+          (total, question) => total + (answers[question.id] === question.answer ? 1 : 0),
           0
         );
-        const bestScore = score;
-
         const payload = {
           answers,
           score,
-          bestScore,
-          earnedPoints: bestScore * 20,
+          bestScore: score,
+          earnedPoints: score * 20,
           maxScore: WHO_IS_WHO_QUESTIONS.length,
           gameId: "who-is-who-trivia-test",
           guestId: currentGuest.id,
@@ -5476,42 +6094,20 @@
           updatedAt: new Date().toISOString()
         };
 
-        if (submitButton) {
-          submitButton.disabled = true;
-          submitButton.textContent = "Guardando resultado…";
-        }
-
-        const savedRecord = await saveAndVerifyRemote(
+        void queueOptimisticWrite(
           "saveGameSubmission",
           payload,
-          record => Boolean(
-            record &&
-            record.guestId === payload.guestId &&
-            record.gameId === payload.gameId &&
-            Number(record.bestScore ?? record.score ?? -1) === bestScore
-          )
-        );
-
-        if (!savedRecord) {
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
+          {
+            writeKey: `game:${currentGuest.id}:who-is-who-trivia-test`,
+            successMessage: `Trivia confirmada: ${score * 20} puntos.`,
+            beforeRender: () => toast("Resultado calculado. Guardando…"),
+            afterRender: () => {
+              window.requestAnimationFrame(() => {
+                document.getElementById("trivia-upcoming-note")?.scrollIntoView({ behavior: "smooth", block: "center" });
+              });
+            }
           }
-          toast("El resultado no quedó guardado. Volvé a intentar.");
-          return;
-        }
-
-        state.gameSubmissions[key] = {
-          ...(state.gameSubmissions[key] || {}),
-          ...payload,
-          ...savedRecord
-        };
-        saveState();
-
-        toast(
-          `Trivia completada: ${bestScore * 20} puntos.`
         );
-        renderTriviaAndFocus("trivia-upcoming-note");
       });
     }
 
@@ -5519,12 +6115,10 @@
     if (route === "social") {
 
       $$("[data-social-like]").forEach(button => {
-        button.addEventListener("click", async () => {
+        button.addEventListener("click", () => {
           const messageId = button.dataset.socialLike;
           if (!messageId || !currentGuest?.id) return;
 
-          const key = socialLikeKey(messageId, currentGuest.id);
-          const previous = state.socialLikes?.[key] || null;
           const active = !currentGuestLikesMessage(messageId);
           const payload = {
             messageId,
@@ -5535,36 +6129,14 @@
             updatedAt: new Date().toISOString()
           };
 
-          button.disabled = true;
-          state.socialLikes = {
-            ...(state.socialLikes || {}),
-            [key]: payload
-          };
-          saveState();
-          renderCurrentRoute();
-
-          const result = await writeToSheets("saveSocialLike", payload);
-
-          if (!result?.record) {
-            const nextLikes = { ...(state.socialLikes || {}) };
-            if (previous) nextLikes[key] = previous;
-            else delete nextLikes[key];
-            state.socialLikes = nextLikes;
-            saveState();
-            renderCurrentRoute();
-            toast("No se pudo guardar el Me gusta.");
-            return;
-          }
-
-          state.socialLikes = {
-            ...(state.socialLikes || {}),
-            [key]: {
-              ...payload,
-              ...result.record
+          void queueOptimisticWrite(
+            "saveSocialLike",
+            payload,
+            {
+              writeKey: `like:${messageId}:${currentGuest.id}`,
+              render: true
             }
-          };
-          saveState();
-          renderCurrentRoute();
+          );
         });
       });
 
@@ -5665,6 +6237,72 @@
   }
 
   function bindAdminEvents() {
+
+    $$('[data-set-app-mode]').forEach(button => {
+      button.addEventListener("click", async () => {
+        const mode = button.dataset.setAppMode === "test" ? "test" : "production";
+        if (mode === appMode()) return;
+
+        const message = mode === "test"
+          ? "¿Cambiar a MODO PRUEBA? Los invitados que abran la app también verán el entorno de prueba hasta volver a Productivo."
+          : "¿Volver a PRODUCTIVO? Se mostrarán nuevamente los datos reales.";
+        if (!confirm(message)) return;
+
+        button.disabled = true;
+        const result = await writeToSheets("saveAppSettings", {
+          adminPassword: state.adminPassword,
+          settings: {
+            ...state.appSettings,
+            mode
+          }
+        }, { allowPreview: true });
+
+        if (!result) {
+          button.disabled = false;
+          return;
+        }
+
+        await syncFromSheets(false);
+        toast(mode === "test" ? "Modo prueba activado." : "Modo productivo activado.");
+        renderCurrentRoute();
+      });
+    });
+
+    $$('[data-app-setting]').forEach(input => {
+      input.addEventListener("change", async () => {
+        const key = input.dataset.appSetting;
+        const previous = Boolean(state.appSettings?.[key]);
+        const nextSettings = {
+          ...state.appSettings,
+          [key]: input.checked
+        };
+
+        const result = await writeToSheets("saveAppSettings", {
+          adminPassword: state.adminPassword,
+          settings: nextSettings
+        }, { allowPreview: true });
+
+        if (!result) {
+          input.checked = previous;
+          return;
+        }
+
+        applyRemoteAppSettings(nextSettings);
+        toast("Configuración global actualizada.");
+        renderCurrentRoute();
+      });
+    });
+
+    $("#startAdminPreview")?.addEventListener("click", () => {
+      startAdminGuestPreview($("#adminPreviewGuestSelect")?.value || "");
+    });
+
+    $("#downloadFullBackup")?.addEventListener("click", downloadFullBackup);
+    $("#restoreBackupInput")?.addEventListener("change", event => {
+      const file = event.currentTarget.files?.[0];
+      if (file) void restoreBackupFile(file);
+    });
+
 
     $("#clearSocialMessages")?.addEventListener("click", async event => {
       const button = event.currentTarget;
@@ -5804,8 +6442,19 @@
         timestamp: new Date().toISOString()
       };
 
+      const submitButton = $("#scoreSubmit");
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Guardando movimiento…";
+      }
+      payload.requestId = newRequestId("saveScore");
+
       const result = await writeToSheets("saveScore", payload);
       if (!result) {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Volver a intentar";
+        }
         toast("El movimiento no quedó guardado.");
         return;
       }
@@ -5821,6 +6470,10 @@
     });
 
     $("#resetTestData")?.addEventListener("click", async () => {
+      if (!isTestMode()) {
+        toast("Cambiá a Modo prueba antes de resetear datos de prueba.");
+        return;
+      }
       const firstConfirmation = confirm(
         "¿Resetear los datos de prueba?\n\nSe limpiarán:\n• Confirmaciones RSVP\n• Formularios personales\n• Respuestas de juegos\n\nLos invitados y los puntos discrecionales no se borrarán."
       );
