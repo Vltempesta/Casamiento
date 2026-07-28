@@ -50,6 +50,9 @@
     notificationsByGuest: {},
     manualUnlocks: {},
     unlockRevision: "",
+    serverRevision: "",
+    serverRanking: [],
+    remoteReady: false,
     lastUnlockSyncAt: null,
     dataResetAt: null,
     lastSyncAt: null,
@@ -63,28 +66,36 @@
 
   function loadState() {
     try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-      delete stored.adminUnlocked;
-      delete stored.adminPassword;
+      const stored = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) || "{}"
+      );
+
+      // El celular sólo recuerda quién ingresó.
+      // Los datos funcionales siempre llegan desde Apps Script.
       return {
         ...defaultState,
-        ...stored,
+        currentGuestId: stored.currentGuestId || null,
         adminUnlocked: false,
         adminPassword: ""
       };
     } catch (error) {
-      console.warn("No se pudo leer el estado local", error);
-      return { ...defaultState, adminUnlocked: false, adminPassword: "" };
+      console.warn("No se pudo leer la sesión local", error);
+      return {
+        ...defaultState,
+        adminUnlocked: false,
+        adminPassword: ""
+      };
     }
   }
 
   function saveState() {
-    const stateToPersist = {
-      ...state,
-      adminUnlocked: false,
-      adminPassword: ""
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToPersist));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        currentGuestId: state.currentGuestId || null,
+        appVersion: CONFIG.APP_VERSION || "32444"
+      })
+    );
   }
 
   function normalize(text) {
@@ -275,7 +286,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32443",
+      appVersion: "32444",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -285,6 +296,19 @@
 
   async function writeToSheets(action, payload) {
     if (!isConfigured()) return null;
+
+    if (navigator.onLine === false) {
+      setRemoteStatus("error", "Sin conexión");
+      toast("No hay conexión. No se guardó ningún cambio.");
+      return null;
+    }
+
+    if (!state.remoteReady && action !== "logEvent") {
+      setRemoteStatus("connecting", "Consultando la base oficial");
+      toast("Esperá unos segundos: estamos cargando la información oficial.");
+      await syncFromSheets(false);
+      if (!state.remoteReady) return null;
+    }
 
     const envelope = buildRemoteEnvelope(action, payload);
 
@@ -311,7 +335,11 @@
   }
 
   async function postToSheets(action, payload) {
-    return Boolean(await writeToSheets(action, payload));
+    const result = await writeToSheets(action, payload);
+    if (!result) return false;
+
+    await syncFromSheets(false);
+    return true;
   }
 
   function scheduleSilentSync(delay = 1800) {
@@ -418,14 +446,27 @@
         try {
           response = await jsonp("getUnlockState");
         } catch (lightSyncError) {
-          // Compatibilidad hasta publicar el backend v32443.
+          // Compatibilidad hasta publicar el backend v32444.
           response = await jsonp("getData");
         }
 
-        applyRemoteUnlockSnapshot(
-          response?.data || {},
-          { render }
+        const remote = response?.data || {};
+        const incomingRevision = String(
+          remote.serverRevision || ""
         );
+        const needsFullSync = Boolean(
+          incomingRevision &&
+          incomingRevision !== String(state.serverRevision || "")
+        );
+
+        applyRemoteUnlockSnapshot(
+          remote,
+          { render: render && !needsFullSync }
+        );
+
+        if (needsFullSync) {
+          await syncFromSheets(false);
+        }
 
         return true;
       } catch (error) {
@@ -487,7 +528,7 @@
       return null;
     }
 
-    scheduleSilentSync();
+    await syncFromSheets(false);
     return savedRecord;
   }
 
@@ -504,12 +545,12 @@
     }, 0);
   }
 
-  function mergeRecordsAfterReset(localRecords = {}, remoteRecords = {}, resetAt = null) {
+  function mergeRecordsAfterReset(_localRecords = {}, remoteRecords = {}, resetAt = null) {
     const cutoff = resetAt ? Date.parse(resetAt) : 0;
-    const merged = { ...localRecords, ...remoteRecords };
 
+    // No se mezclan datos del teléfono con los de la base.
     return Object.fromEntries(
-      Object.entries(merged).filter(([, record]) => {
+      Object.entries(remoteRecords || {}).filter(([, record]) => {
         if (!record || record.resetMarker) return false;
         return !cutoff || recordTimestamp(record) > cutoff;
       })
@@ -607,38 +648,67 @@
   }
 
   function mergeRemoteData(remote = {}) {
-    const remoteRsvps = remote.rsvps && typeof remote.rsvps === "object" ? remote.rsvps : {};
+    const remoteRsvps =
+      remote.rsvps && typeof remote.rsvps === "object"
+        ? remote.rsvps
+        : {};
     const remoteResetMs = resetMarkerTimestamp(remoteRsvps);
-    const localResetMs = state.dataResetAt ? Date.parse(state.dataResetAt) : 0;
-    const effectiveResetMs = Math.max(remoteResetMs, localResetMs || 0);
 
-    if (effectiveResetMs) state.dataResetAt = new Date(effectiveResetMs).toISOString();
+    state.dataResetAt = remoteResetMs
+      ? new Date(remoteResetMs).toISOString()
+      : null;
 
     state.rsvps = mergeRecordsAfterReset(
-      state.rsvps,
+      {},
       remoteRsvps,
       state.dataResetAt
     );
 
     state.profiles = mergeRecordsAfterReset(
-      state.profiles,
-      remote.profiles && typeof remote.profiles === "object" ? remote.profiles : {},
+      {},
+      remote.profiles && typeof remote.profiles === "object"
+        ? remote.profiles
+        : {},
       state.dataResetAt
     );
 
     state.gameSubmissions = mergeRecordsAfterReset(
-      state.gameSubmissions,
-      remote.gameSubmissions && typeof remote.gameSubmissions === "object" ? remote.gameSubmissions : {},
+      {},
+      remote.gameSubmissions &&
+        typeof remote.gameSubmissions === "object"
+        ? remote.gameSubmissions
+        : {},
       state.dataResetAt
     );
 
-    if (Array.isArray(remote.scoreEntries)) state.scoreEntries = dedupeScores([...state.scoreEntries, ...remote.scoreEntries]);
-    if (Array.isArray(remote.socialMessages)) {
-      state.socialMessages = dedupeSocialMessages(remote.socialMessages);
-    }
-    if (remote.socialLikes && typeof remote.socialLikes === "object") {
-      state.socialLikes = { ...remote.socialLikes };
-    }
+    state.scoreEntries = Array.isArray(remote.scoreEntries)
+      ? dedupeScores(remote.scoreEntries)
+      : [];
+
+    state.socialMessages = Array.isArray(remote.socialMessages)
+      ? dedupeSocialMessages(remote.socialMessages)
+      : [];
+
+    state.socialLikes =
+      remote.socialLikes && typeof remote.socialLikes === "object"
+        ? { ...remote.socialLikes }
+        : {};
+
+    state.notificationsByGuest =
+      remote.notificationsByGuest &&
+      typeof remote.notificationsByGuest === "object"
+        ? { ...remote.notificationsByGuest }
+        : {};
+
+    state.serverRanking = Array.isArray(remote.ranking)
+      ? remote.ranking.map(row => ({
+          id: String(row.id || row.teamId || ""),
+          total: Number(row.total || row.points || 0)
+        }))
+      : [];
+
+    state.serverRevision = String(remote.serverRevision || "");
+
     if (
       Object.prototype.hasOwnProperty.call(remote, "manualUnlocks")
     ) {
@@ -653,10 +723,17 @@
           render: false
         }
       );
+    } else {
+      state.manualUnlocks = {};
+      state.unlockRevision = "";
     }
 
-    state.lastSyncAt = new Date().toISOString();
+    state.remoteReady = true;
+    state.lastSyncAt =
+      remote.generatedAt ||
+      new Date().toISOString();
     state.lastRemoteError = "";
+
     saveState();
 
     if (currentGuest) {
@@ -691,9 +768,16 @@
       return true;
     } catch (error) {
       state.lastRemoteError = error.message;
-      saveState();
       setRemoteStatus("error");
-      if (showToast) toast("No se pudo actualizar. Se mantienen los últimos datos disponibles.");
+
+      if (showToast) {
+        toast(
+          state.remoteReady
+            ? "No se pudo actualizar. No se permiten cambios hasta recuperar la conexión."
+            : "No se pudo consultar la base oficial."
+        );
+      }
+
       return false;
     }
   }
@@ -1482,16 +1566,40 @@
   function saveCurrentNotificationState(record) {
     if (!currentGuest?.id) return;
 
+    const officialRecord = {
+      guestId: currentGuest.id,
+      initialized: Boolean(record.initialized),
+      socialSeenAt: Number(record.socialSeenAt || 0),
+      seenUnlockKeys: Array.from(
+        new Set(record.seenUnlockKeys || [])
+      ),
+      seenSectionKeys: Array.from(
+        new Set(record.seenSectionKeys || [])
+      ),
+      updatedAt: new Date().toISOString()
+    };
+
     state.notificationsByGuest = {
       ...(state.notificationsByGuest || {}),
-      [currentGuest.id]: {
-        initialized: Boolean(record.initialized),
-        socialSeenAt: Number(record.socialSeenAt || 0),
-        seenUnlockKeys: Array.from(new Set(record.seenUnlockKeys || [])),
-        seenSectionKeys: Array.from(new Set(record.seenSectionKeys || []))
-      }
+      [currentGuest.id]: officialRecord
     };
-    saveState();
+
+    if (
+      navigator.onLine === false ||
+      !state.remoteReady
+    ) return;
+
+    void writeToSheets(
+      "saveNotificationState",
+      officialRecord
+    ).then(result => {
+      if (result) {
+        window.setTimeout(
+          () => syncFromSheets(false),
+          250
+        );
+      }
+    });
   }
 
   function latestVisibleSocialTime() {
@@ -3221,12 +3329,40 @@
 
 
   function calculateRanking() {
-    const totals = Object.keys(DATA.teams).map(id => ({ id, total: 0 }));
+    if (
+      Array.isArray(state.serverRanking) &&
+      state.serverRanking.length
+    ) {
+      return state.serverRanking
+        .filter(row => DATA.teams[row.id])
+        .map(row => ({
+          id: row.id,
+          total: Number(row.total || 0)
+        }))
+        .sort(
+          (a, b) =>
+            b.total - a.total ||
+            DATA.teams[a.id].name.localeCompare(
+              DATA.teams[b.id].name
+            )
+        );
+    }
+
+    const totals = Object.keys(DATA.teams).map(id => ({
+      id,
+      total: 0
+    }));
+
     for (const entry of allPointEntries()) {
       const row = totals.find(item => item.id === entry.teamId);
       if (row) row.total += Number(entry.points || 0);
     }
-    return totals.sort((a, b) => b.total - a.total || DATA.teams[a.id].name.localeCompare(DATA.teams[b.id].name));
+
+    return totals.sort(
+      (a, b) =>
+        b.total - a.total ||
+        DATA.teams[a.id].name.localeCompare(DATA.teams[b.id].name)
+    );
   }
 
   function gameName(id) {
