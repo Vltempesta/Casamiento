@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32452";
+  const CURRENT_APP_VERSION = "32453";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const ONLINE_COPY = {
@@ -102,7 +102,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32452"
+        appVersion: CONFIG.APP_VERSION || "32453"
       })
     );
   }
@@ -295,7 +295,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32452",
+      appVersion: "32453",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1007,10 +1007,23 @@
     );
   }
 
+  function isIosDevice() {
+    return Boolean(
+      /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (
+        navigator.platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1
+      )
+    );
+  }
+
   function updateInstallButtons() {
     const canInstall =
-      Boolean(deferredInstallPrompt) &&
-      !isAppInstalled();
+      !isAppInstalled() &&
+      (
+        Boolean(deferredInstallPrompt) ||
+        isIosDevice()
+      );
 
     $$("[data-install-app]").forEach(button => {
       button.classList.toggle("hidden", !canInstall);
@@ -1031,7 +1044,9 @@
 
     if (!deferredInstallPrompt) {
       toast(
-        "En Chrome, abrí el menú ⋮ y elegí “Instalar app”."
+        isIosDevice()
+          ? "En Safari, tocá Compartir y después “Agregar a pantalla de inicio”."
+          : "En Chrome, abrí el menú ⋮ y elegí “Instalar app”."
       );
       return;
     }
@@ -1045,6 +1060,21 @@
     if (choice.outcome === "accepted") {
       toast("La app se está instalando.");
     }
+  }
+
+
+  function bindInstallButtons(root = document) {
+    $$("[data-install-app]", root).forEach(button => {
+      if (button.dataset.installBound === "true") return;
+
+      button.dataset.installBound = "true";
+      button.addEventListener(
+        "click",
+        promptInstallApp
+      );
+    });
+
+    updateInstallButtons();
   }
 
   function configureInstallExperience() {
@@ -1357,9 +1387,7 @@
   }
 
   function bindShellEvents() {
-    $$("[data-install-app]").forEach(button => {
-      button.addEventListener("click", promptInstallApp);
-    });
+    bindInstallButtons();
 
     $("#notificationButton")?.addEventListener("click", event => {
       event.stopPropagation();
@@ -1599,6 +1627,7 @@
       : (routes[currentRoute] || renderHome)();
 
     $("#view").innerHTML = html;
+    bindInstallButtons($("#view"));
     markNotificationsForRoute(currentRoute);
     updateNotificationUi();
     bindViewEvents(currentRoute);
@@ -2329,6 +2358,21 @@
           </span>
         </div>
       </section>
+
+      <button
+        type="button"
+        class="home-install-app-banner hidden"
+        data-install-app
+        aria-label="Instalar la app de Vani y Fede">
+        <span class="home-install-app-icon" aria-hidden="true">
+          ${uiIcon("download")}
+        </span>
+        <span class="home-install-app-copy">
+          <strong>¡Instalá nuestra APP!</strong>
+          <small>Vani &amp; Fede</small>
+        </span>
+        <span class="home-install-app-arrow" aria-hidden="true">›</span>
+      </button>
 
       ${primaryAction ? `
         <section
