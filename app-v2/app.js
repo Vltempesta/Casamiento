@@ -96,7 +96,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32446"
+        appVersion: CONFIG.APP_VERSION || "32447"
       })
     );
   }
@@ -289,7 +289,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32446",
+      appVersion: "32447",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2083,6 +2083,23 @@
         </div>
       </section>
 
+      ${primaryAction ? `
+        <section
+          class="home-primary-action home-primary-action--${primaryAction.tone}">
+          <span class="home-primary-icon">
+            ${uiIcon(primaryAction.icon)}
+          </span>
+          <div class="home-primary-copy">
+            <small>${escapeHTML(primaryAction.kicker)}</small>
+            <h3>${escapeHTML(primaryAction.title)}</h3>
+            <p>${escapeHTML(primaryAction.text)}</p>
+          </div>
+          <button type="button" ${primaryAction.attr}>
+            ${escapeHTML(primaryAction.button)}
+          </button>
+        </section>
+      ` : ""}
+
       <section
         id="homeEssential"
         class="home-essential"
@@ -2198,23 +2215,6 @@
           </button>
         ` : ""}
       </section>
-
-      ${primaryAction ? `
-        <section
-          class="home-primary-action home-primary-action--${primaryAction.tone}">
-          <span class="home-primary-icon">
-            ${uiIcon(primaryAction.icon)}
-          </span>
-          <div class="home-primary-copy">
-            <small>${escapeHTML(primaryAction.kicker)}</small>
-            <h3>${escapeHTML(primaryAction.title)}</h3>
-            <p>${escapeHTML(primaryAction.text)}</p>
-          </div>
-          <button type="button" ${primaryAction.attr}>
-            ${escapeHTML(primaryAction.button)}
-          </button>
-        </section>
-      ` : ""}
 
       ${(rsvpDone || challengesDone) ? `
         <section
@@ -2422,6 +2422,11 @@
         : saved.transport;
     const savedDietChoice = saved.dietChoice ||
       (hasSaved ? (String(saved.diet || "").trim() ? "si" : "no") : "");
+    const challengesDone = Boolean(
+      triviaSubmission("music-selection") &&
+      triviaSubmission("couple-trivia-test") &&
+      triviaSubmission("who-is-who-trivia-test")
+    );
 
     if (hasSaved && hasFinalSaved && !editing) {
       return `
@@ -2447,11 +2452,16 @@
           </div>
         </section>
 
-        <section class="rsvp-next-challenge section-card">
-          <div class="rsvp-next-icon">${uiIcon("star")}</div>
-          <div><h4>Ya podés participar</h4><p>Las canciones, la trivia y las próximas misiones están disponibles.</p></div>
-          <button type="button" data-go="puntos">Ver desafíos</button>
-        </section>
+        ${challengesDone ? "" : `
+          <section class="rsvp-next-challenge section-card">
+            <div class="rsvp-next-icon">${uiIcon("star")}</div>
+            <div>
+              <h4>Ya podés participar</h4>
+              <p>Las canciones, la trivia y las próximas misiones están disponibles.</p>
+            </div>
+            <button type="button" data-go="puntos">Ver desafíos</button>
+          </section>
+        `}
 
         <section class="rsvp-related-links rsvp-related-links-single">
           <button
@@ -3008,14 +3018,35 @@
     const triviaDone = Boolean(triviaSubmission("couple-trivia-test"));
     const whoTriviaDone = Boolean(triviaSubmission("who-is-who-trivia-test"));
     const currentGamesDone = rsvpDone && musicDone && triviaDone && whoTriviaDone;
+    const pointsTitle = currentGamesDone
+      ? "¡Ya completaste los desafíos!"
+      : "Qué podés hacer ahora";
+    const pointsText = currentGamesDone
+      ? "Mientras esperás a que lleguen nuevos, deciles a los demás grupos quién va a ganar."
+      : "Mientras esperamos las confirmaciones, ya podés preparar tu aporte para el equipo.";
 
     return `
       ${pointsHubStyles()}
-      <section class="points-compact-head section-card" style="--local-accent:${team.accent}">
+      <section class="points-compact-head section-card ${currentGamesDone ? "is-completed" : ""}" style="--local-accent:${team.accent}">
         ${teamLogo(team,"points-compact-logo")}
-        <div><p class="eyebrow">Sumá puntos</p><h3>Qué podés hacer ahora</h3><p>Mientras esperamos las confirmaciones, ya podés preparar tu aporte para el equipo.</p></div>
+        <div>
+          <p class="eyebrow">Sumá puntos</p>
+          <h3>${escapeHTML(pointsTitle)}</h3>
+          <p>${escapeHTML(pointsText)}</p>
+        </div>
         <span><b>${myPoints}</b><small>puntos</small></span>
       </section>
+
+      ${currentGamesDone ? `
+        <section class="points-social-cta points-social-cta--highlight section-card">
+          <span>${uiIcon("chat")}</span>
+          <div>
+            <h4>Hablales a los otros equipos</h4>
+            <p>Deciles quién va a ganar la competencia.</p>
+          </div>
+          <button type="button" data-go="social">Ir a Social</button>
+        </section>
+      ` : ""}
 
       ${isSectionOpen("reglas") ? `
         <button type="button" class="points-rules-entry section-card" data-go="reglas">
@@ -3107,15 +3138,7 @@
         </strong>
       </div>
 
-      ${currentGamesDone ? `
-        <section class="points-social-cta section-card">
-          <span>${uiIcon("chat")}</span>
-          <div>
-            <h4>¿Te quedaste con ganas de más?</h4>
-            <p>Haceles saber a los demás equipos quién va a ganar.</p>
-          </div>
-          <button type="button" data-go="social">Ir a Social</button>
-        </section>` : ""}`;
+      `;
   }
 
   function pointsAction({ icon, title, text, done, route, progressText = "", editable = true, locked = false }) {
