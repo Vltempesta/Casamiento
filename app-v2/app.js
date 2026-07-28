@@ -1,6 +1,8 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
+  const CURRENT_APP_VERSION = "32452";
+  const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const ONLINE_COPY = {
     idle: "Conexión pendiente",
@@ -29,6 +31,9 @@
   const UNLOCK_SYNC_MIN_GAP_MS = 4000;
   const FULL_SYNC_STALE_MS = 45000;
   let deferredInstallPrompt = null;
+  let appUpdateCheckInFlight = null;
+  let appReloadingForUpdate = false;
+  let serviceWorkerReloadTriggered = false;
   let selectedTeamViewId = null;
   let teamCommunityTab = "mine";
   let expandedGuestTeamId = null;
@@ -97,7 +102,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32451"
+        appVersion: CONFIG.APP_VERSION || "32452"
       })
     );
   }
@@ -290,7 +295,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32451",
+      appVersion: "32452",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -888,6 +893,113 @@
   }
 
 
+
+  async function clearStaticAppCaches() {
+    if (!("caches" in window)) return;
+
+    const keys = await caches.keys();
+
+    await Promise.all(
+      keys
+        .filter(key =>
+          key.startsWith("vani-fede-static-")
+        )
+        .map(key => caches.delete(key))
+    );
+  }
+
+  function latestVersionUrl() {
+    const url = new URL(
+      VERSION_CHECK_URL,
+      window.location.href
+    );
+
+    url.searchParams.set("_ts", String(Date.now()));
+    return url.href;
+  }
+
+  async function checkForAppUpdate(options = {}) {
+    const forceReload = options.forceReload !== false;
+
+    if (appUpdateCheckInFlight) {
+      return appUpdateCheckInFlight;
+    }
+
+    appUpdateCheckInFlight = (async () => {
+      try {
+        const response = await fetch(
+          latestVersionUrl(),
+          {
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache"
+            }
+          }
+        );
+
+        if (!response.ok) return false;
+
+        const remote = await response.json();
+        const remoteVersion = String(
+          remote?.version || ""
+        ).trim();
+
+        if (
+          !remoteVersion ||
+          remoteVersion === CURRENT_APP_VERSION
+        ) {
+          return false;
+        }
+
+        if (!forceReload || appReloadingForUpdate) {
+          return true;
+        }
+
+        appReloadingForUpdate = true;
+        document.documentElement.dataset.appUpdating = "true";
+
+        await clearStaticAppCaches();
+
+        if ("serviceWorker" in navigator) {
+          const registration =
+            await navigator.serviceWorker.getRegistration("./");
+
+          await registration?.update();
+        }
+
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set("v", remoteVersion);
+        nextUrl.searchParams.set(
+          "_refresh",
+          String(Date.now())
+        );
+
+        window.location.replace(nextUrl.href);
+        return true;
+      } catch (error) {
+        console.warn(
+          "No se pudo comprobar la última versión",
+          error
+        );
+        return false;
+      } finally {
+        appUpdateCheckInFlight = null;
+      }
+    })();
+
+    return appUpdateCheckInFlight;
+  }
+
+  function checkVersionWhenAppReturns() {
+    if (
+      document.visibilityState !== "visible" ||
+      navigator.onLine === false ||
+      appReloadingForUpdate
+    ) return;
+
+    void checkForAppUpdate();
+  }
+
   function isAppInstalled() {
     return Boolean(
       window.matchMedia("(display-mode: standalone)").matches ||
@@ -966,17 +1078,38 @@
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
 
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("./sw.js?v=32451", {
-          scope: "./"
-        })
-        .catch(error => {
-          console.warn(
-            "No se pudo registrar el Service Worker",
-            error
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      () => {
+        if (
+          serviceWorkerReloadTriggered ||
+          appReloadingForUpdate
+        ) return;
+
+        serviceWorkerReloadTriggered = true;
+        window.location.reload();
+      }
+    );
+
+    window.addEventListener("load", async () => {
+      try {
+        const registration =
+          await navigator.serviceWorker.register(
+            "./sw.js",
+            {
+              scope: "./",
+              updateViaCache: "none"
+            }
           );
-        });
+
+        await registration.update();
+        await checkForAppUpdate();
+      } catch (error) {
+        console.warn(
+          "No se pudo registrar o actualizar el Service Worker",
+          error
+        );
+      }
     });
   }
 
@@ -987,13 +1120,27 @@
     configureNavigation();
     configureInstallExperience();
     registerServiceWorker();
+    void checkForAppUpdate();
     bindShellEvents();
     window.addEventListener("popstate", handleBrowserNavigation);
-    window.addEventListener("focus", syncUnlocksWhenAppReturns);
-    window.addEventListener("online", syncUnlocksWhenAppReturns);
+    window.addEventListener("focus", () => {
+      syncUnlocksWhenAppReturns();
+      checkVersionWhenAppReturns();
+    });
+
+    window.addEventListener("online", () => {
+      syncUnlocksWhenAppReturns();
+      checkVersionWhenAppReturns();
+    });
+
+    window.addEventListener("pageshow", () => {
+      checkVersionWhenAppReturns();
+    });
+
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         syncUnlocksWhenAppReturns();
+        checkVersionWhenAppReturns();
       }
     });
     startUnlockAutoSync();

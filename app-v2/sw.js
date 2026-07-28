@@ -1,23 +1,22 @@
-const CACHE_NAME = "vani-fede-static-v32451";
+const CACHE_NAME = "vani-fede-static-v32452";
 
 const APP_SHELL = [
-  "./",
   "./index.html",
-  "./styles.css?v=32451",
-  "./app.js?v=32451",
-  "./config.js",
-  "./manifest.webmanifest",
-  "./assets/branding/vyf-seal.png?v=32451",
+  "./styles.css?v=32452",
+  "./app.js?v=32452",
+  "./config.js?v=32452",
+  "./manifest.webmanifest?v=32452",
+  "./assets/branding/vyf-seal.png?v=32452",
   "./icons/icon-32.png",
   "./icons/icon-48.png",
   "./icons/icon-96.png",
   "./icons/icon-128.png",
-  "./icons/icon-256.png",
-  "./icons/favicon.ico",
   "./icons/icon-192.png",
+  "./icons/icon-256.png",
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
-  "./icons/apple-touch-icon.png"
+  "./icons/apple-touch-icon.png",
+  "./icons/favicon.ico"
 ];
 
 self.addEventListener("install", event => {
@@ -44,6 +43,12 @@ self.addEventListener("activate", event => {
   );
 });
 
+self.addEventListener("message", event => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", event => {
   const request = event.request;
 
@@ -51,35 +56,59 @@ self.addEventListener("fetch", event => {
 
   const url = new URL(request.url);
 
-  // Google Apps Script, fuentes y servicios externos nunca se cachean acá.
+  // version.json siempre se consulta en la red.
+  if (
+    url.origin === self.location.origin &&
+    url.pathname.endsWith("/version.json")
+  ) {
+    event.respondWith(
+      fetch(
+        new Request(request, { cache: "no-store" })
+      )
+    );
+    return;
+  }
+
+  // Apps Script, fuentes y servicios externos no se cachean acá.
   if (url.origin !== self.location.origin) {
     event.respondWith(fetch(request));
     return;
   }
 
+  const freshRequest = new Request(
+    request,
+    { cache: "no-store" }
+  );
+
   event.respondWith(
-    fetch(request)
+    fetch(freshRequest)
       .then(response => {
         if (response && response.ok) {
           const copy = response.clone();
+
           caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, copy);
+            if (request.mode === "navigate") {
+              cache.put("./index.html", copy);
+            } else {
+              cache.put(request, copy);
+            }
           });
         }
+
         return response;
       })
       .catch(async () => {
-        const exact = await caches.match(request);
-        if (exact) return exact;
-
         if (request.mode === "navigate") {
           return (
             (await caches.match("./index.html")) ||
-            (await caches.match("./"))
+            Response.error()
           );
         }
 
-        return Response.error();
+        return (
+          (await caches.match(request)) ||
+          Response.error()
+        );
       })
   );
 });
