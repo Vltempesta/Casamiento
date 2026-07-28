@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32458";
+  const CURRENT_APP_VERSION = "32459";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -120,7 +120,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32458"
+        appVersion: CONFIG.APP_VERSION || "32459"
       })
     );
   }
@@ -630,7 +630,7 @@
     });
   }
 
-  function jsonp(action, params = {}) {
+  function jsonp(action, params = {}, options = {}) {
     return new Promise((resolve, reject) => {
       if (!isConfigured()) {
         reject(new Error("Conexión remota no configurada"));
@@ -646,7 +646,20 @@
       Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
 
       const script = document.createElement("script");
-      const timeout = window.setTimeout(() => cleanup(() => reject(new Error("La conexión tardó demasiado"))), 12000);
+      const timeoutMs = Math.max(
+        12000,
+        Number(options.timeoutMs || 12000)
+      );
+      const timeout = window.setTimeout(
+        () => cleanup(
+          () => reject(
+            new Error(
+              `La conexión tardó demasiado (${Math.round(timeoutMs / 1000)} s)`
+            )
+          )
+        ),
+        timeoutMs
+      );
 
       function cleanup(done) {
         window.clearTimeout(timeout);
@@ -672,7 +685,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32458",
+      appVersion: "32459",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -722,7 +735,15 @@
     const envelope = buildRemoteEnvelope(action, payload);
 
     try {
-      const response = await jsonp(action, { payload: JSON.stringify(envelope) });
+      const response = await jsonp(
+        action,
+        {
+          payload: JSON.stringify(envelope)
+        },
+        {
+          timeoutMs: options.timeoutMs
+        }
+      );
       const details = response?.data?.details || {};
       setRemoteStatus("online", "Guardado");
       state.lastRemoteError = "";
@@ -6445,8 +6466,8 @@
               <p class="eyebrow">Limpieza general</p>
               <h4>Resetear toda la actividad</h4>
               <p>
-                Borra asistencias, formularios, juegos,
-                puntos, Social, likes y notificaciones.
+                Borra asistencias, traslados, formularios,
+                juegos, puntos, Social, likes y notificaciones.
               </p>
               <small>
                 No borra la base de invitados,
@@ -7256,6 +7277,90 @@
     </style>`;
   }
 
+
+  function showAdminResetOverlay({
+    state: overlayState = "working",
+    title,
+    text,
+    detail = "",
+    autoClose = false
+  }) {
+    document
+      .querySelector(".admin-reset-overlay")
+      ?.remove();
+
+    const overlay = document.createElement("div");
+    overlay.className =
+      `admin-reset-overlay is-${overlayState}`;
+    overlay.setAttribute("role", "status");
+    overlay.setAttribute("aria-live", "assertive");
+
+    overlay.innerHTML = `
+      <div class="admin-reset-overlay-card">
+        <span class="admin-reset-overlay-icon">
+          ${
+            overlayState === "success"
+              ? uiIcon("checkCircle")
+              : overlayState === "error"
+                ? uiIcon("warning")
+                : uiIcon("sync")
+          }
+        </span>
+
+        <small>Administración</small>
+        <strong>${escapeHTML(title || "")}</strong>
+        <p>${escapeHTML(text || "")}</p>
+
+        ${
+          detail
+            ? `<em>${escapeHTML(detail)}</em>`
+            : ""
+        }
+
+        ${
+          overlayState === "error"
+            ? `<button
+                type="button"
+                data-close-reset-overlay>
+                Cerrar
+              </button>`
+            : ""
+        }
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    overlay
+      .querySelector("[data-close-reset-overlay]")
+      ?.addEventListener("click", () => {
+        overlay.remove();
+      });
+
+    window.requestAnimationFrame(() => {
+      overlay.classList.add("is-visible");
+    });
+
+    if (autoClose) {
+      window.setTimeout(() => {
+        overlay.classList.add("is-leaving");
+
+        window.setTimeout(() => {
+          overlay.remove();
+        }, 260);
+      }, 1500);
+    }
+
+    return overlay;
+  }
+
+  function numericBackendVersion() {
+    return Number(
+      String(state.backendVersion || "")
+        .replace(/\D/g, "")
+    );
+  }
+
   function bindAdminEvents() {
 
     $$("[data-admin-subsection]").forEach(button => {
@@ -7483,6 +7588,28 @@
     $("#resetGuestActivity")?.addEventListener(
       "click",
       async () => {
+        const requiredBackendVersion = 32459;
+        const detectedBackendVersion =
+          numericBackendVersion();
+
+        if (
+          !detectedBackendVersion ||
+          detectedBackendVersion <
+            requiredBackendVersion
+        ) {
+          showAdminResetOverlay({
+            state: "error",
+            title: "Backend sin actualizar",
+            text:
+              "El botón necesita que publiques Code.gs v32459 como una nueva versión del Web App.",
+            detail:
+              `Backend detectado: ${
+                state.backendVersion || "no disponible"
+              }`
+          });
+          return;
+        }
+
         const firstConfirmation = confirm(
           "¿Resetear toda la actividad de la app?\n\nSe borrarán:\n• Asistencias y traslados\n• Formularios personales\n• Canciones y trivias\n• Todos los puntos y la auditoría\n• Mensajes y likes de Social\n• Notificaciones vistas\n\nNo se borrarán los invitados, los candados ni la configuración."
         );
@@ -7490,7 +7617,7 @@
         if (!firstConfirmation) return;
 
         const confirmationWord = prompt(
-          'Para confirmar, escribí BORRAR TODO'
+          "Para confirmar, escribí BORRAR TODO"
         );
 
         if (
@@ -7511,6 +7638,17 @@
           button.textContent = "Reseteando…";
         }
 
+        showAdminResetOverlay({
+          state: "working",
+          title: "Reseteando la actividad",
+          text:
+            "Estamos limpiando asistencias, juegos, puntos y Social.",
+          detail:
+            "No cierres esta pantalla. Puede demorar algunos segundos."
+        });
+
+        state.lastRemoteError = "";
+
         const result = await writeToSheets(
           "resetGuestActivity",
           {
@@ -7518,26 +7656,52 @@
             requestedAt: new Date().toISOString()
           },
           {
-            allowPreview: true
+            allowPreview: true,
+            silent: true,
+            timeoutMs: 60000
           }
         );
 
         if (!result) {
+          document
+            .querySelector(".admin-reset-overlay")
+            ?.remove();
+
           if (button) {
             button.disabled = false;
             button.textContent = originalText;
           }
 
-          toast(
-            "No se pudo completar el reset. No se borró nada."
-          );
+          showAdminResetOverlay({
+            state: "error",
+            title: "No se pudo completar el reset",
+            text:
+              "La base no confirmó la limpieza. No se modificó el estado visible de la app.",
+            detail:
+              state.lastRemoteError ||
+              "Revisá que Code.gs v32459 esté implementado y volvé a intentar."
+          });
           return;
         }
 
+        const cleared =
+          result.details?.cleared || {};
+
+        const totalCleared = Object
+          .values(cleared)
+          .reduce(
+            (total, value) =>
+              total + Number(value || 0),
+            0
+          );
+
         pendingWrites = [];
+        activeWriteKeys.clear();
         persistPendingWrites();
 
-        state.dataResetAt = new Date().toISOString();
+        state.dataResetAt =
+          result.details?.record?.resetAt ||
+          new Date().toISOString();
         state.rsvps = {};
         state.profiles = {};
         state.gameSubmissions = {};
@@ -7548,15 +7712,32 @@
         state.notificationsByGuest = {};
         state.rsvpEditMode = false;
         state.profileEditMode = false;
+        state.lastRemoteError = "";
+        state.lastSyncAt = new Date().toISOString();
 
         saveState();
-        await syncFromSheets(false);
+        setRemoteStatus("online", "Actividad reseteada");
 
-        toast(
-          "Toda la actividad fue reseteada correctamente."
-        );
+        document
+          .querySelector(".admin-reset-overlay")
+          ?.remove();
+
+        showAdminResetOverlay({
+          state: "success",
+          title: "Actividad reseteada",
+          text:
+            "Asistencias, juegos, puntos y Social quedaron vacíos.",
+          detail:
+            `${totalCleared} ${
+              totalCleared === 1
+                ? "registro eliminado"
+                : "registros eliminados"
+            }`,
+          autoClose: true
+        });
 
         renderCurrentRoute();
+        scheduleSilentSync(1200);
       }
     );
 
