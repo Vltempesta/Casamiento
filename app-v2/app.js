@@ -97,7 +97,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32448"
+        appVersion: CONFIG.APP_VERSION || "32451"
       })
     );
   }
@@ -290,7 +290,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32448",
+      appVersion: "32451",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -968,7 +968,7 @@
 
     window.addEventListener("load", () => {
       navigator.serviceWorker
-        .register("./sw.js?v=32448", {
+        .register("./sw.js?v=32451", {
           scope: "./"
         })
         .catch(error => {
