@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32471";
+  const CURRENT_APP_VERSION = "32472";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32471"
+        appVersion: CONFIG.APP_VERSION || "32472"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32471",
+      appVersion: "32472",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2525,7 +2525,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32471`;
+    const src = `assets/team-logos/${team.id}.png?v=32472`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -2569,6 +2569,8 @@
       question: '<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2"/><path d="M12 17h.01"/>',
       chat: '<path d="M4 5h11a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4H9l-5 4v-4a4 4 0 0 1-2-3.5V9a4 4 0 0 1 2-4Z"/><path d="M7 9h7M7 12h4"/>',
       person: '<circle cx="12" cy="8" r="3"/><path d="M5.5 20c.6-4.3 2.8-6.5 6.5-6.5s5.9 2.2 6.5 6.5"/>',
+      teamShield: '<path d="M12 3 20 6v6c0 4.7-3.1 7.5-8 9-4.9-1.5-8-4.3-8-9V6l8-3Z"/><circle cx="12" cy="9" r="2.2"/><path d="M8.5 15.5c.6-2.2 1.7-3.3 3.5-3.3s2.9 1.1 3.5 3.3"/>',
+      group: '<circle cx="9" cy="8" r="2.5"/><circle cx="16.5" cy="9" r="2"/><path d="M3.8 19c.5-4 2.3-6 5.2-6s4.7 2 5.2 6"/><path d="M14.5 14c2.9.1 4.7 1.8 5.2 5"/>',
       download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
       car: '<path d="M5 17h14l-1.5-6h-11L5 17Z"/><path d="m7 11 1.5-4h7L17 11"/><circle cx="8" cy="17" r="1.5"/><circle cx="16" cy="17" r="1.5"/><path d="M5 14H3M21 14h-2"/>',
       carRoute: '<path d="M5 15.5h14l-1.7-5.3H6.7L5 15.5Z"/><path d="m7.4 10.2 1.4-3.3h6.4l1.4 3.3"/><circle cx="8" cy="16.5" r="1.5"/><circle cx="16" cy="16.5" r="1.5"/><path d="M4 20h16M7 20v-1M12 20v-1M17 20v-1"/>',
@@ -3556,7 +3558,7 @@
       ${sectionHeader(
         "casamiento",
         "Traslados",
-        "Organizamos la ida y la vuelta para que disfrutes sin preocuparte por manejar."
+        "Ida y regreso coordinados para disfrutar sin manejar."
       )}
 
       <section class="transport-main-card section-card">
@@ -3565,110 +3567,82 @@
         </span>
 
         <div class="transport-main-copy">
-          <p class="eyebrow">Viajá, disfrutá y volvé tranquilo</p>
-          <h3>Te recomendamos viajar en Micro / Combi</h3>
+          <p class="eyebrow">Micro / Combi</p>
+          <h3>Viajá y volvé tranquilo</h3>
           <p>
-            El lugar queda alejado y queremos que disfrutes toda la fiesta
-            sin preocuparte por manejar. Elegí esta opción en
-            <strong>Asistencia</strong> y con esa información organizaremos
-            los vehículos, recorridos y puntos de salida más convenientes.
+            El lugar queda lejos. Elegí Micro / Combi en
+            <strong>Asistencia</strong> y organizaremos los recorridos
+            según la cantidad de pasajeros.
           </p>
 
-          <div class="transport-main-benefits">
-            <span>
-              ${uiIcon("checkCircle")}
-              Viaje cómodo y seguro
-            </span>
-            <span>
+          <div class="transport-main-bottom">
+            <span class="transport-bonus">
               ${uiIcon("star")}
-              20 puntos extra para tu equipo
+              +20 puntos para tu equipo
             </span>
-            <span>
-              ${uiIcon("bus")}
-              Ida y regreso coordinados
-            </span>
-          </div>
 
-          <button type="button" data-go="asistencia">
-            ${
-              usesMicro
-                ? "Revisar mi elección"
-                : "Elegir Micro / Combi en Asistencia"
-            }
-          </button>
+            <button type="button" data-go="asistencia">
+              ${
+                usesMicro
+                  ? "Revisar elección"
+                  : "Elegir traslado"
+              }
+            </button>
+          </div>
 
           ${
             usesMicro
-              ? `<p class="transport-current-choice">
-                  ✓ Elegiste Micro / Combi
+              ? `<small class="transport-current-choice">
+                  ✓ Micro / Combi
                   ${
                     rsvp.pickupZone
-                      ? ` · Preferencia: ${escapeHTML(selectedZone)}`
+                      ? ` · ${escapeHTML(selectedZone)}`
                       : ""
                   }
-                </p>`
+                </small>`
               : ""
           }
         </div>
       </section>
 
-      <section class="transport-section-heading">
-        <p class="eyebrow">Posibles zonas de salida</p>
-        <h3>Estos puntos son tentativos</h3>
-        <p>
-          Se confirmarán según la cantidad de pasajeros de cada zona.
-        </p>
+      <section class="transport-compact-heading">
+        <div>
+          <p class="eyebrow">Posibles salidas</p>
+          <h3>Puntos tentativos</h3>
+        </div>
+        <small>Según demanda por zona</small>
       </section>
 
       <section class="transport-zones-grid">
         ${transportZoneCard({
-          icon: "pin",
           area: "Capital Federal",
-          place: "Zona Obelisco",
-          text: "Punto exacto y horario a confirmar según la cantidad de pasajeros."
+          place: "Obelisco"
         })}
-
         ${transportZoneCard({
-          icon: "pin",
           area: "Wilde",
-          place: "Punto de encuentro a confirmar",
-          text: "El recorrido se habilitará según la cantidad de invitados de la zona."
+          place: "Punto a confirmar"
         })}
-
         ${transportZoneCard({
-          icon: "pin",
           area: "Longchamps",
-          place: "Punto de encuentro a confirmar",
-          text: "La combi se organizará según la cantidad de pasajeros confirmados."
+          place: "Punto a confirmar"
         })}
       </section>
 
-      <section class="transport-how section-card">
-        <div class="transport-how-head">
-          <span>${uiIcon("road")}</span>
-          <div>
-            <p class="eyebrow">Cómo se organiza</p>
-            <h3>Vos elegís la zona; nosotros armamos el recorrido</h3>
-          </div>
-        </div>
-
-        <div class="transport-steps">
-          ${transportStep(
-            "1",
-            "Confirmá tu asistencia",
-            "Seleccioná Micro / Combi y elegí tu zona preferida."
-          )}
-          ${transportStep(
-            "2",
-            "Cierre de respuestas",
-            "El 15 de agosto revisaremos cuántas personas eligieron cada punto."
-          )}
-          ${transportStep(
-            "3",
-            "Confirmación final",
-            "Publicaremos el punto exacto, el vehículo asignado y el horario definitivo."
-          )}
-        </div>
+      <section class="transport-process-strip section-card">
+        <span>
+          <b>1</b>
+          Confirmás zona
+        </span>
+        <i>›</i>
+        <span>
+          <b>2</b>
+          Cerramos respuestas
+        </span>
+        <i>›</i>
+        <span>
+          <b>3</b>
+          Publicamos recorrido
+        </span>
       </section>
 
       <section class="transport-times-grid">
@@ -3676,76 +3650,97 @@
           <span>${uiIcon("hourglass")}</span>
           <div>
             <small>Salida estimada</small>
-            <strong>Entre 15:30 y 16:30</strong>
-            <p>
-              El horario exacto dependerá de la zona y del recorrido final.
-            </p>
+            <strong>15:30 a 16:30</strong>
+            <p>Horario exacto según cada zona.</p>
           </div>
         </article>
 
         <article class="section-card transport-time-card transport-return-card">
           <span>${uiIcon("coach")}</span>
           <div>
-            <small>Regreso confirmado</small>
+            <small>Regreso</small>
             <strong>03:00 HRS</strong>
-            <p>
-              Los micros y combis volverán a sus respectivos puntos de origen.
-            </p>
+            <p>Al mismo punto de origen.</p>
           </div>
         </article>
       </section>
 
+      <p class="transport-deadline-note">
+        Los puntos y horarios definitivos se informarán
+        después del cierre del 15 de agosto.
+      </p>
     `;
   }
 
   function transportZoneCard({
-    icon,
     area,
-    place,
-    text
+    place
   }) {
     return `
       <article class="section-card transport-zone-card">
-        <span>${uiIcon(icon)}</span>
+        <span>${uiIcon("pin")}</span>
         <div>
-          <small>Posible salida</small>
           <strong>${escapeHTML(area)}</strong>
-          <b>${escapeHTML(place)}</b>
-          <p>${escapeHTML(text)}</p>
+          <small>${escapeHTML(place)}</small>
         </div>
         <em>Tentativo</em>
       </article>
     `;
   }
 
-  function transportStep(number, title, text) {
-    return `
-      <article class="transport-step">
-        <span>${escapeHTML(number)}</span>
-        <div>
-          <strong>${escapeHTML(title)}</strong>
-          <p>${escapeHTML(text)}</p>
-        </div>
-      </article>
-    `;
-  }
-
-
   function transportStyles() {
     return `<style>
-      .transport-main-card{display:grid;grid-template-columns:70px minmax(0,1fr);gap:16px;padding:18px;border-color:rgba(116,51,68,.24);background:radial-gradient(circle at 92% 0%,rgba(213,177,105,.17),transparent 37%),linear-gradient(135deg,rgba(116,51,68,.07),rgba(255,253,248,.94))}
-      .transport-main-icon{width:66px;height:66px;display:grid;place-items:center;border-radius:20px;background:#743344;color:#fffaf2;box-shadow:0 10px 22px rgba(116,51,68,.18)}
-      .transport-main-icon .ui-icon{width:34px;height:34px}
-      .transport-main-copy h3{margin:4px 0 7px;font-size:clamp(24px,4vw,34px);line-height:1.05}.transport-main-copy>p:not(.eyebrow){margin:0;max-width:780px;font-size:11.5px;line-height:1.5}
-      .transport-main-benefits{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.transport-main-benefits span{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid rgba(116,51,68,.13);border-radius:999px;background:rgba(255,255,255,.50);color:#5c3842;font-size:8px;font-weight:900}.transport-main-benefits .ui-icon{width:14px;height:14px}
-      .transport-main-copy button{min-height:38px;padding:8px 13px}.transport-current-choice{margin-top:8px!important;color:#426f47!important;font-size:9px!important;font-weight:900}
-      .transport-section-heading{margin:18px 2px 8px}.transport-section-heading h3{margin:3px 0 2px;font-size:22px}.transport-section-heading>p:not(.eyebrow){margin:0;color:var(--muted);font-size:10px}
-      .transport-zones-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-      .transport-zone-card{position:relative;display:grid;grid-template-columns:36px minmax(0,1fr);gap:9px;padding:12px}.transport-zone-card>span{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:rgba(49,83,110,.08);color:#31536e}.transport-zone-card>span .ui-icon{width:18px;height:18px}.transport-zone-card small,.transport-zone-card strong,.transport-zone-card b{display:block}.transport-zone-card small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-zone-card strong{margin-top:2px;font-size:16px}.transport-zone-card b{margin-top:2px;color:#31536e;font-size:9px}.transport-zone-card p{margin:5px 0 0;font-size:8.5px;line-height:1.35}.transport-zone-card em{position:absolute;top:8px;right:8px;padding:3px 6px;border-radius:999px;background:rgba(201,170,114,.15);color:#8a6129;font-size:6.5px;font-style:normal;font-weight:900;text-transform:uppercase}
-      .transport-how{margin-top:10px;padding:15px}.transport-how-head{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center}.transport-how-head>span{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.14);color:#8a6129}.transport-how-head .ui-icon{width:20px;height:20px}.transport-how-head h3{margin:2px 0 0;font-size:20px}
-      .transport-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.transport-step{display:grid;grid-template-columns:27px minmax(0,1fr);gap:8px;padding:10px;border:1px solid rgba(132,104,68,.13);border-radius:13px;background:rgba(255,255,255,.40)}.transport-step>span{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:#743344;color:#fff;font-size:9px;font-weight:950}.transport-step strong{display:block;font-size:10px}.transport-step p{margin:3px 0 0;font-size:8px;line-height:1.35}
-      .transport-times-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}.transport-time-card{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;padding:13px}.transport-time-card>span{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:rgba(49,83,110,.08);color:#31536e}.transport-time-card .ui-icon{width:19px;height:19px}.transport-time-card small,.transport-time-card strong{display:block}.transport-time-card small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-time-card strong{margin:2px 0;font-size:18px}.transport-time-card p{margin:0;font-size:8.5px}.transport-return-card{border-color:rgba(74,125,79,.21);background:linear-gradient(135deg,rgba(74,125,79,.055),rgba(255,253,248,.88))}.transport-return-card>span{background:rgba(74,125,79,.09);color:#426f47}
-            @media(max-width:720px){.transport-zones-grid,.transport-steps{grid-template-columns:1fr}.transport-times-grid{grid-template-columns:1fr}.transport-main-card{grid-template-columns:52px minmax(0,1fr);padding:14px}.transport-main-icon{width:50px;height:50px;border-radius:15px}.transport-main-icon .ui-icon{width:27px;height:27px}}
+      .transport-main-card{display:grid;grid-template-columns:48px minmax(0,1fr);gap:11px;padding:12px;border-color:rgba(116,51,68,.22);background:linear-gradient(135deg,rgba(116,51,68,.07),rgba(255,253,248,.94))}
+      .transport-main-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#743344;color:#fffaf2;box-shadow:0 7px 15px rgba(116,51,68,.15)}
+      .transport-main-icon .ui-icon{width:25px;height:25px}
+      .transport-main-copy h3{margin:2px 0 4px;font-size:21px;line-height:1.05}
+      .transport-main-copy>p:not(.eyebrow){margin:0;max-width:760px;font-size:9px;line-height:1.4}
+      .transport-main-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+      .transport-bonus{display:inline-flex;align-items:center;gap:4px;color:#8a6129;font-size:8px;font-weight:900}
+      .transport-bonus .ui-icon{width:13px;height:13px}
+      .transport-main-bottom button{min-height:32px;padding:6px 10px;font-size:8px;white-space:nowrap}
+      .transport-current-choice{display:block;margin-top:5px;color:#426f47;font-size:8px;font-weight:900}
+      .transport-compact-heading{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:12px 2px 6px}
+      .transport-compact-heading h3{margin:1px 0 0;font-size:18px}
+      .transport-compact-heading>small{color:var(--muted);font-size:7.5px;font-weight:800}
+      .transport-zones-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+      .transport-zone-card{position:relative;display:grid;grid-template-columns:29px minmax(0,1fr);gap:7px;align-items:center;padding:8px 9px}
+      .transport-zone-card>span{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:rgba(49,83,110,.08);color:#31536e}
+      .transport-zone-card>span .ui-icon{width:15px;height:15px}
+      .transport-zone-card strong,.transport-zone-card small{display:block}
+      .transport-zone-card strong{padding-right:42px;font-size:10.5px;line-height:1.15}
+      .transport-zone-card small{margin-top:2px;color:#31536e;font-size:7.5px;font-weight:800}
+      .transport-zone-card em{position:absolute;top:6px;right:6px;padding:2px 5px;border-radius:999px;background:rgba(201,170,114,.14);color:#8a6129;font-size:5.8px;font-style:normal;font-weight:900;text-transform:uppercase}
+      .transport-process-strip{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:6px;align-items:center;margin-top:8px;padding:8px 10px}
+      .transport-process-strip>span{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:7.5px;font-weight:850}
+      .transport-process-strip b{width:21px;height:21px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;background:#743344;color:#fff;font-size:7px}
+      .transport-process-strip i{color:var(--gold-deep);font-size:15px;font-style:normal}
+      .transport-times-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
+      .transport-time-card{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:center;padding:9px}
+      .transport-time-card>span{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:rgba(49,83,110,.08);color:#31536e}
+      .transport-time-card .ui-icon{width:16px;height:16px}
+      .transport-time-card small,.transport-time-card strong{display:block}
+      .transport-time-card small{color:var(--gold-deep);font-size:6.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
+      .transport-time-card strong{margin:1px 0;font-size:14px}
+      .transport-time-card p{margin:0;font-size:7.5px}
+      .transport-return-card{border-color:rgba(74,125,79,.19);background:linear-gradient(135deg,rgba(74,125,79,.05),rgba(255,253,248,.90))}
+      .transport-return-card>span{background:rgba(74,125,79,.09);color:#426f47}
+      .transport-deadline-note{margin:7px 2px 0;color:var(--muted);font-size:7.5px;font-weight:750;text-align:center}
+      @media(max-width:650px){
+        .transport-main-card{grid-template-columns:42px minmax(0,1fr);padding:10px}
+        .transport-main-icon{width:40px;height:40px;border-radius:12px}
+        .transport-main-icon .ui-icon{width:22px;height:22px}
+        .transport-main-bottom{align-items:flex-start;flex-direction:column}
+        .transport-main-bottom button{width:100%}
+        .transport-zones-grid{grid-template-columns:1fr}
+        .transport-process-strip{grid-template-columns:1fr}
+        .transport-process-strip i{display:none}
+        .transport-process-strip>span{min-height:25px}
+        .transport-times-grid{grid-template-columns:1fr 1fr}
+      }
+      @media(max-width:430px){
+        .transport-times-grid{grid-template-columns:1fr}
+      }
     </style>`;
   }
 
@@ -4475,6 +4470,15 @@
       ? `${rankingIndex + 1}º`
       : "—";
 
+    const backToRanking = `
+      <button
+        type="button"
+        class="community-back-ranking"
+        data-go="ranking">
+        ‹ Volver al Ranking
+      </button>
+    `;
+
     const tabs = guestsSectionOpen
       ? `
         <section class="team-community-tabs section-card">
@@ -4482,13 +4486,26 @@
             type="button"
             data-team-community-tab="mine"
             class="${teamCommunityTab === "mine" ? "active" : ""}">
-            ${uiIcon("team")}<span>Mi equipo</span>
+            <span class="team-community-tab-icon">
+              ${uiIcon("teamShield")}
+            </span>
+            <span class="team-community-tab-copy">
+              <strong>Mi equipo</strong>
+              <small>Integrantes y progreso</small>
+            </span>
           </button>
+
           <button
             type="button"
             data-team-community-tab="all"
             class="${teamCommunityTab === "all" ? "active" : ""}">
-            ${uiIcon("guests")}<span>Todos los equipos</span>
+            <span class="team-community-tab-icon">
+              ${uiIcon("group")}
+            </span>
+            <span class="team-community-tab-copy">
+              <strong>Todos los equipos</strong>
+              <small>Los seis grupos</small>
+            </span>
           </button>
         </section>`
       : "";
@@ -4498,6 +4515,7 @@
         ${captainGuestStyles()}
         ${guestAccordionStyles()}
         ${teamCommunityStyles()}
+        ${backToRanking}
         ${tabs}
         ${renderAllTeamsAccordion()}`;
     }
@@ -4505,14 +4523,7 @@
     return `
       ${captainGuestStyles()}
       ${teamCommunityStyles()}
-
-      <button
-        type="button"
-        class="community-back-ranking"
-        data-go="ranking">
-        ‹ Volver al Ranking
-      </button>
-
+      ${backToRanking}
       ${tabs}
 
       <section class="team-summary-compact section-card" style="--local-accent:${team.accent}">
@@ -4576,10 +4587,22 @@
 
   function teamCommunityStyles() {
     return `<style>
-      .team-community-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;padding:6px}
-      .team-community-tabs button{min-height:39px;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 9px;border:0;border-radius:11px;background:transparent;color:var(--muted);box-shadow:none;font-size:9px;font-weight:900}
-      .team-community-tabs button.active{background:#31536e;color:#fff}
-      .team-community-tabs .ui-icon{width:16px;height:16px}
+      .team-community-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;padding:6px}
+      .team-community-tabs button{min-height:52px;display:grid;grid-template-columns:34px minmax(0,1fr);gap:8px;align-items:center;padding:7px 9px;border:1px solid transparent;border-radius:12px;background:rgba(49,83,110,.035);color:var(--muted);box-shadow:none;text-align:left}
+      .team-community-tabs button.active{border-color:rgba(49,83,110,.22);background:linear-gradient(135deg,#31536e,#243f58);color:#fff;box-shadow:0 7px 15px rgba(49,83,110,.14)}
+      .team-community-tab-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:rgba(49,83,110,.08);color:#31536e}
+      .team-community-tabs button.active .team-community-tab-icon{background:rgba(255,255,255,.13);color:#fff}
+      .team-community-tab-icon .ui-icon{width:18px;height:18px}
+      .team-community-tab-copy{min-width:0}
+      .team-community-tab-copy strong,.team-community-tab-copy small{display:block}
+      .team-community-tab-copy strong{font-size:9.5px;line-height:1.15}
+      .team-community-tab-copy small{margin-top:2px;color:inherit;font-size:7px;font-weight:700;opacity:.74;line-height:1.2}
+      @media(max-width:480px){
+        .team-community-tabs button{grid-template-columns:30px minmax(0,1fr);padding:6px}
+        .team-community-tab-icon{width:29px;height:29px}
+        .team-community-tab-copy strong{font-size:8.5px}
+        .team-community-tab-copy small{font-size:6.5px}
+      }
     </style>`;
   }
 
@@ -5602,18 +5625,6 @@
   function renderRanking() {
     const ranking = calculateRanking();
     const myTeam = getTeam(currentGuest.team);
-    const myTeamIndex = ranking.findIndex(
-      row => row.id === myTeam.id
-    );
-    const myTeamPoints =
-      ranking.find(row => row.id === myTeam.id)
-        ?.total || 0;
-    const myTeamPosition =
-      ranking.some(
-        row => Number(row.total || 0) !== 0
-      )
-        ? `${myTeamIndex + 1}º`
-        : "—";
     const myTeamMembers = DATA.guests.filter(
       guest =>
         guest.team === myTeam.id &&
@@ -5665,20 +5676,9 @@
                 <small>Tu comunidad</small>
                 <strong>Ver mi equipo</strong>
                 <em>
-                  Equipo ${escapeHTML(myTeam.name)}
+                  ${escapeHTML(myTeam.name)}
                   · ${myTeamMembers} integrantes
                 </em>
-              </span>
-
-              <span class="ranking-my-team-stats">
-                <i>
-                  <small>Posición</small>
-                  <b>${myTeamPosition}</b>
-                </i>
-                <i>
-                  <small>Puntos</small>
-                  <b>${myTeamPoints}</b>
-                </i>
               </span>
 
               <span
@@ -5728,26 +5728,20 @@
   function rankingCommunityStyles() {
     return `<style>
       .ranking-my-team-entry,.ranking-all-guests-entry{width:100%;display:grid;align-items:center;text-align:left}
-      .ranking-my-team-entry{grid-template-columns:58px minmax(0,1fr) auto 20px;gap:11px;margin-top:10px;padding:11px 13px;border-color:color-mix(in srgb,var(--local-accent) 30%,var(--line));background:radial-gradient(circle at 90% 0%,color-mix(in srgb,var(--local-accent) 11%,transparent),transparent 38%),linear-gradient(135deg,color-mix(in srgb,var(--local-accent) 6%,#fff),rgba(255,253,248,.93));color:var(--ink);box-shadow:0 8px 18px color-mix(in srgb,var(--local-accent) 10%,transparent)}
-      .ranking-my-team-logo{width:56px;height:56px}
+      .ranking-my-team-entry{grid-template-columns:42px minmax(0,1fr) 18px;gap:9px;margin-top:8px;padding:8px 10px;border-color:color-mix(in srgb,var(--local-accent) 27%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--local-accent) 5%,#fff),rgba(255,253,248,.93));color:var(--ink);box-shadow:0 6px 14px color-mix(in srgb,var(--local-accent) 8%,transparent)}
+      .ranking-my-team-logo{width:40px;height:40px}
       .ranking-my-team-copy,.ranking-all-guests-copy{min-width:0}
       .ranking-my-team-copy small,.ranking-my-team-copy strong,.ranking-my-team-copy em,.ranking-all-guests-copy small,.ranking-all-guests-copy strong,.ranking-all-guests-copy em{display:block}
       .ranking-my-team-copy small,.ranking-all-guests-copy small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
       .ranking-my-team-copy strong,.ranking-all-guests-copy strong{margin-top:2px;color:var(--ink);font-family:var(--font-title);font-size:17px;line-height:1.08}
       .ranking-my-team-copy em,.ranking-all-guests-copy em{margin-top:3px;color:var(--muted);font-size:8.5px;font-style:normal;line-height:1.3}
-      .ranking-my-team-stats{display:grid;grid-template-columns:repeat(2,minmax(52px,auto));gap:6px}
-      .ranking-my-team-stats i{display:grid;justify-items:center;padding:6px 8px;border:1px solid color-mix(in srgb,var(--local-accent) 17%,var(--line));border-radius:10px;background:rgba(255,255,255,.46);font-style:normal}
-      .ranking-my-team-stats small{color:var(--muted);font-size:6.5px;font-weight:900;text-transform:uppercase}
-      .ranking-my-team-stats b{margin-top:1px;color:var(--local-accent);font-family:var(--font-title);font-size:17px}
       .ranking-entry-arrow{color:var(--gold-deep);font-size:25px;font-weight:500;line-height:1}
       .ranking-all-guests-entry{grid-template-columns:45px minmax(0,1fr) 20px;gap:11px;margin-top:10px;padding:12px 13px;border-color:rgba(49,83,110,.20);background:radial-gradient(circle at 92% 0%,rgba(49,83,110,.10),transparent 40%),linear-gradient(135deg,rgba(49,83,110,.055),rgba(255,253,248,.93));color:var(--ink)}
       .ranking-all-guests-icon{width:43px;height:43px;display:grid;place-items:center;border-radius:13px;background:rgba(49,83,110,.09);color:#31536e}
       .ranking-all-guests-icon .ui-icon{width:22px;height:22px}
       @media(max-width:620px){
-        .ranking-my-team-entry{grid-template-columns:49px minmax(0,1fr) 18px}
-        .ranking-my-team-logo{width:47px;height:47px}
-        .ranking-my-team-stats{grid-column:2;grid-row:2;grid-template-columns:repeat(2,minmax(0,78px));justify-content:start}
-        .ranking-my-team-entry>.ranking-entry-arrow{grid-column:3;grid-row:1/3}
+        .ranking-my-team-entry{grid-template-columns:39px minmax(0,1fr) 16px}
+        .ranking-my-team-logo{width:37px;height:37px}
         .ranking-my-team-copy strong,.ranking-all-guests-copy strong{font-size:15px}
         .ranking-all-guests-entry{grid-template-columns:40px minmax(0,1fr) 18px}
         .ranking-all-guests-icon{width:38px;height:38px}
@@ -9006,7 +9000,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32471 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32472 y volvé a intentar.`
           });
         }
       }
