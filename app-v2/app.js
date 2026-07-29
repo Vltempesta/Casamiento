@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32473";
+  const CURRENT_APP_VERSION = "32474";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32473"
+        appVersion: CONFIG.APP_VERSION || "32474"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32473",
+      appVersion: "32474",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2525,7 +2525,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32473`;
+    const src = `assets/team-logos/${team.id}.png?v=32474`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -3692,16 +3692,20 @@
 
   function transportStyles() {
     return `<style>
-      .transport-main-card{display:grid;grid-template-columns:48px minmax(0,1fr);gap:11px;padding:12px;border-color:rgba(116,51,68,.22);background:linear-gradient(135deg,rgba(116,51,68,.07),rgba(255,253,248,.94))}
-      .transport-main-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#743344;color:#fffaf2;box-shadow:0 7px 15px rgba(116,51,68,.15)}
+      .transport-main-card{position:relative;overflow:hidden;display:grid;grid-template-columns:48px minmax(0,1fr);gap:11px;padding:12px;border:1px solid rgba(232,200,132,.38);background:radial-gradient(circle at 93% -12%,rgba(240,208,138,.26),transparent 38%),radial-gradient(circle at 3% 118%,rgba(44,15,27,.32),transparent 43%),linear-gradient(135deg,#8a3b51 0%,#743344 48%,#5d2537 100%);box-shadow:0 12px 24px rgba(92,38,55,.19),inset 0 1px 0 rgba(255,255,255,.08)}
+      .transport-main-card::after{content:"";position:absolute;width:112px;height:112px;top:-70px;right:-36px;border:1px solid rgba(232,200,132,.22);border-radius:50%;box-shadow:0 0 0 14px rgba(232,200,132,.035),0 0 0 29px rgba(232,200,132,.022);pointer-events:none}
+      .transport-main-icon{position:relative;z-index:1;width:46px;height:46px;display:grid;place-items:center;border:1px solid rgba(255,240,204,.24);border-radius:14px;background:rgba(255,248,230,.12);color:#f1d795;box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
       .transport-main-icon .ui-icon{width:25px;height:25px}
-      .transport-main-copy h3{margin:2px 0 4px;font-size:21px;line-height:1.05}
-      .transport-main-copy>p:not(.eyebrow){margin:0;max-width:760px;font-size:9px;line-height:1.4}
+      .transport-main-copy{position:relative;z-index:1}
+      .transport-main-copy .eyebrow{color:#e8c57b}
+      .transport-main-copy h3{margin:2px 0 4px;color:#fff9ee;font-size:21px;line-height:1.05;text-shadow:0 1px 0 rgba(37,12,21,.18)}
+      .transport-main-copy>p:not(.eyebrow){margin:0;max-width:760px;color:rgba(255,248,235,.86);font-size:9px;line-height:1.4}
+      .transport-main-copy>p strong{color:#fff}
       .transport-main-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
-      .transport-bonus{display:inline-flex;align-items:center;gap:4px;color:#8a6129;font-size:8px;font-weight:900}
+      .transport-bonus{display:inline-flex;align-items:center;gap:4px;color:#f0d18c;font-size:8px;font-weight:900}
       .transport-bonus .ui-icon{width:13px;height:13px}
-      .transport-main-bottom button{min-height:32px;padding:6px 10px;font-size:8px;white-space:nowrap}
-      .transport-current-choice{display:block;margin-top:5px;color:#426f47;font-size:8px;font-weight:900}
+      .transport-main-bottom button{min-height:32px;padding:6px 10px;border:1px solid rgba(255,239,197,.36);background:linear-gradient(135deg,#efd27e,#d4a849);color:#4a2a1d;font-size:8px;font-weight:950;white-space:nowrap;box-shadow:0 6px 13px rgba(47,15,25,.18)}
+      .transport-current-choice{display:block;margin-top:5px;color:#d9edcf;font-size:8px;font-weight:900}
       .transport-compact-heading{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:12px 2px 6px}
       .transport-compact-heading h3{margin:1px 0 0;font-size:18px}
       .transport-compact-heading>small{color:var(--muted);font-size:7.5px;font-weight:800}
@@ -5844,13 +5848,6 @@
     }));
 
     return `
-      <button
-        type="button"
-        class="community-back-ranking"
-        data-go="ranking">
-        ‹ Volver al Ranking
-      </button>
-
       <div class="section-head team-all-head">
         <p class="eyebrow">Comunidad</p>
         <h3>Todos los equipos</h3>
@@ -9284,7 +9281,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32473 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32474 y volvé a intentar.`
           });
         }
       }
