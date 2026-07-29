@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32470";
+  const CURRENT_APP_VERSION = "32471";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32470"
+        appVersion: CONFIG.APP_VERSION || "32471"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32470",
+      appVersion: "32471",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2343,8 +2343,15 @@
     }
 
     currentRoute = route;
+    const activeNavigationRoute =
+      ["equipo", "invitados"].includes(route)
+        ? "ranking"
+        : route;
+
     $$(".nav-tabs button[data-route], .bottom-nav button[data-route]").forEach(button => {
-      const active = button.dataset.route === route;
+      const active =
+        button.dataset.route ===
+        activeNavigationRoute;
       button.classList.toggle("active", active);
       if (active) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
@@ -2518,7 +2525,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32470`;
+    const src = `assets/team-logos/${team.id}.png?v=32471`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -4498,6 +4505,14 @@
     return `
       ${captainGuestStyles()}
       ${teamCommunityStyles()}
+
+      <button
+        type="button"
+        class="community-back-ranking"
+        data-go="ranking">
+        ‹ Volver al Ranking
+      </button>
+
       ${tabs}
 
       <section class="team-summary-compact section-card" style="--local-accent:${team.accent}">
@@ -5586,8 +5601,28 @@
 
   function renderRanking() {
     const ranking = calculateRanking();
+    const myTeam = getTeam(currentGuest.team);
+    const myTeamIndex = ranking.findIndex(
+      row => row.id === myTeam.id
+    );
+    const myTeamPoints =
+      ranking.find(row => row.id === myTeam.id)
+        ?.total || 0;
+    const myTeamPosition =
+      ranking.some(
+        row => Number(row.total || 0) !== 0
+      )
+        ? `${myTeamIndex + 1}º`
+        : "—";
+    const myTeamMembers = DATA.guests.filter(
+      guest =>
+        guest.team === myTeam.id &&
+        isCompetitionGuest(guest)
+    ).length;
 
     return `
+      ${rankingCommunityStyles()}
+
       <section class="vf18-ranking-card section-card">
         <div class="vf18-ranking-head">
           <div class="vf18-ranking-title">
@@ -5613,10 +5648,114 @@
         </div>
       </section>
 
-      ${renderRankingSocialHighlights()}`;
+      ${
+        isSectionOpen("equipo")
+          ? `
+            <button
+              type="button"
+              class="ranking-my-team-entry section-card"
+              data-go="equipo"
+              style="--local-accent:${myTeam.accent}">
+              ${teamLogo(
+                myTeam,
+                "ranking-my-team-logo"
+              )}
+
+              <span class="ranking-my-team-copy">
+                <small>Tu comunidad</small>
+                <strong>Ver mi equipo</strong>
+                <em>
+                  Equipo ${escapeHTML(myTeam.name)}
+                  · ${myTeamMembers} integrantes
+                </em>
+              </span>
+
+              <span class="ranking-my-team-stats">
+                <i>
+                  <small>Posición</small>
+                  <b>${myTeamPosition}</b>
+                </i>
+                <i>
+                  <small>Puntos</small>
+                  <b>${myTeamPoints}</b>
+                </i>
+              </span>
+
+              <span
+                class="ranking-entry-arrow"
+                aria-hidden="true">
+                ›
+              </span>
+            </button>
+          `
+          : ""
+      }
+
+      ${renderRankingSocialHighlights()}
+
+      ${
+        isSectionOpen("invitados")
+          ? `
+            <button
+              type="button"
+              class="ranking-all-guests-entry section-card"
+              data-go="invitados">
+              <span class="ranking-all-guests-icon">
+                ${uiIcon("guests")}
+              </span>
+
+              <span class="ranking-all-guests-copy">
+                <small>Comunidad</small>
+                <strong>Ver todos los invitados y equipos</strong>
+                <em>
+                  Conocé los seis equipos y desplegá
+                  la lista completa de integrantes.
+                </em>
+              </span>
+
+              <span
+                class="ranking-entry-arrow"
+                aria-hidden="true">
+                ›
+              </span>
+            </button>
+          `
+          : ""
+      }
+    `;
   }
 
-  function vf18RankRow(row, index) {
+  function rankingCommunityStyles() {
+    return `<style>
+      .ranking-my-team-entry,.ranking-all-guests-entry{width:100%;display:grid;align-items:center;text-align:left}
+      .ranking-my-team-entry{grid-template-columns:58px minmax(0,1fr) auto 20px;gap:11px;margin-top:10px;padding:11px 13px;border-color:color-mix(in srgb,var(--local-accent) 30%,var(--line));background:radial-gradient(circle at 90% 0%,color-mix(in srgb,var(--local-accent) 11%,transparent),transparent 38%),linear-gradient(135deg,color-mix(in srgb,var(--local-accent) 6%,#fff),rgba(255,253,248,.93));color:var(--ink);box-shadow:0 8px 18px color-mix(in srgb,var(--local-accent) 10%,transparent)}
+      .ranking-my-team-logo{width:56px;height:56px}
+      .ranking-my-team-copy,.ranking-all-guests-copy{min-width:0}
+      .ranking-my-team-copy small,.ranking-my-team-copy strong,.ranking-my-team-copy em,.ranking-all-guests-copy small,.ranking-all-guests-copy strong,.ranking-all-guests-copy em{display:block}
+      .ranking-my-team-copy small,.ranking-all-guests-copy small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+      .ranking-my-team-copy strong,.ranking-all-guests-copy strong{margin-top:2px;color:var(--ink);font-family:var(--font-title);font-size:17px;line-height:1.08}
+      .ranking-my-team-copy em,.ranking-all-guests-copy em{margin-top:3px;color:var(--muted);font-size:8.5px;font-style:normal;line-height:1.3}
+      .ranking-my-team-stats{display:grid;grid-template-columns:repeat(2,minmax(52px,auto));gap:6px}
+      .ranking-my-team-stats i{display:grid;justify-items:center;padding:6px 8px;border:1px solid color-mix(in srgb,var(--local-accent) 17%,var(--line));border-radius:10px;background:rgba(255,255,255,.46);font-style:normal}
+      .ranking-my-team-stats small{color:var(--muted);font-size:6.5px;font-weight:900;text-transform:uppercase}
+      .ranking-my-team-stats b{margin-top:1px;color:var(--local-accent);font-family:var(--font-title);font-size:17px}
+      .ranking-entry-arrow{color:var(--gold-deep);font-size:25px;font-weight:500;line-height:1}
+      .ranking-all-guests-entry{grid-template-columns:45px minmax(0,1fr) 20px;gap:11px;margin-top:10px;padding:12px 13px;border-color:rgba(49,83,110,.20);background:radial-gradient(circle at 92% 0%,rgba(49,83,110,.10),transparent 40%),linear-gradient(135deg,rgba(49,83,110,.055),rgba(255,253,248,.93));color:var(--ink)}
+      .ranking-all-guests-icon{width:43px;height:43px;display:grid;place-items:center;border-radius:13px;background:rgba(49,83,110,.09);color:#31536e}
+      .ranking-all-guests-icon .ui-icon{width:22px;height:22px}
+      @media(max-width:620px){
+        .ranking-my-team-entry{grid-template-columns:49px minmax(0,1fr) 18px}
+        .ranking-my-team-logo{width:47px;height:47px}
+        .ranking-my-team-stats{grid-column:2;grid-row:2;grid-template-columns:repeat(2,minmax(0,78px));justify-content:start}
+        .ranking-my-team-entry>.ranking-entry-arrow{grid-column:3;grid-row:1/3}
+        .ranking-my-team-copy strong,.ranking-all-guests-copy strong{font-size:15px}
+        .ranking-all-guests-entry{grid-template-columns:40px minmax(0,1fr) 18px}
+        .ranking-all-guests-icon{width:38px;height:38px}
+      }
+    </style>`;
+  }
+
+    function vf18RankRow(row, index) {
     const team = getTeam(row.id);
     const ownTeam = currentGuest?.team === team.id;
 
@@ -5709,6 +5848,13 @@
     }));
 
     return `
+      <button
+        type="button"
+        class="community-back-ranking"
+        data-go="ranking">
+        ‹ Volver al Ranking
+      </button>
+
       <div class="section-head team-all-head">
         <p class="eyebrow">Comunidad</p>
         <h3>Todos los equipos</h3>
@@ -8860,7 +9006,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32470 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32471 y volvé a intentar.`
           });
         }
       }
