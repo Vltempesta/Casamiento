@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32474";
+  const CURRENT_APP_VERSION = "32475";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32474"
+        appVersion: CONFIG.APP_VERSION || "32475"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32474",
+      appVersion: "32475",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2525,7 +2525,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32474`;
+    const src = `assets/team-logos/${team.id}.png?v=32475`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -6402,7 +6402,7 @@
       )}
 
       <section class="gift-hero section-card">
-        <span>${uiIcon("plane")}</span>
+        <span>${uiIcon("gift")}</span>
 
         <div>
           <p class="eyebrow">
@@ -6466,96 +6466,6 @@
             <strong>Federico Santi</strong>.
           </p>
         </div>
-      </section>
-
-      <section class="gift-wallet-card section-card">
-        <div class="gift-wallet-heading">
-          <div>
-            <p class="eyebrow">
-              Transferí desde tu celular
-            </p>
-            <h3>
-              Copiá el alias y abrí tu billetera
-            </h3>
-          </div>
-
-          <span>${uiIcon("phone")}</span>
-        </div>
-
-        <div class="gift-wallet-steps">
-          <span>
-            <b>1</b>
-            Copiá el alias
-          </span>
-          <i>›</i>
-          <span>
-            <b>2</b>
-            Abrí la app
-          </span>
-          <i>›</i>
-          <span>
-            <b>3</b>
-            Transferí
-          </span>
-        </div>
-
-        <button
-          type="button"
-          class="gift-alias-copy-main"
-          data-copy-gift="alias">
-          <span>
-            <small>Alias</small>
-            <strong>${escapeHTML(
-              GIFT_DETAILS.alias
-            )}</strong>
-          </span>
-
-          <b>
-            ${uiIcon("copy")}
-            Copiar
-          </b>
-        </button>
-
-        <div class="gift-wallet-buttons">
-          <a
-            class="gift-wallet-button gift-wallet-button-mp"
-            href="${escapeHTML(
-              giftAppUrl("mercadoPago")
-            )}"
-            target="_blank"
-            rel="noopener"
-            data-gift-app="mercadoPago">
-            ${mercadoPagoBrand()}
-
-            <span class="gift-wallet-action">
-              Abrir
-              ${uiIcon("external")}
-            </span>
-          </a>
-
-          <a
-            class="gift-wallet-button gift-wallet-button-modo"
-            href="${escapeHTML(
-              giftAppUrl("modo")
-            )}"
-            target="_blank"
-            rel="noopener"
-            data-gift-app="modo">
-            ${modoBrand()}
-
-            <span class="gift-wallet-action">
-              Abrir
-              ${uiIcon("external")}
-            </span>
-          </a>
-        </div>
-
-        <p class="gift-app-note">
-          El botón abre la app o su página oficial
-          de descarga según el dispositivo.
-          Para transferencias en USD usá una app
-          que permita operar en dólares.
-        </p>
       </section>
 
       <p class="gift-thanks">
@@ -9281,7 +9191,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32474 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32475 y volvé a intentar.`
           });
         }
       }

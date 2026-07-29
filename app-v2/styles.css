@@ -10851,3 +10851,49 @@ html[data-app-updating="true"] {
   color: rgba(255,248,235,.86) !important;
 }
 
+
+
+/* ============================================================
+   v32475 · Regalos simplificado y hero azul
+   ============================================================ */
+
+.gift-hero {
+  border-color: rgba(176, 201, 232, .42) !important;
+  background:
+    radial-gradient(circle at 90% -8%, rgba(217, 229, 247, .22), transparent 34%),
+    radial-gradient(circle at 8% 115%, rgba(13, 42, 76, .28), transparent 44%),
+    linear-gradient(135deg, #1e4f84 0%, #173f6b 48%, #123458 100%) !important;
+  box-shadow: 0 14px 26px rgba(16, 44, 77, .18), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+.gift-hero::after {
+  border-color: rgba(219, 233, 247, .22);
+  box-shadow: 0 0 0 15px rgba(219, 233, 247, .04), 0 0 0 31px rgba(219, 233, 247, .025);
+}
+
+.gift-hero > span {
+  border: 1px solid rgba(255,255,255,.18) !important;
+  background: rgba(255,255,255,.10) !important;
+  color: #f5e0a2 !important;
+}
+
+.gift-hero .eyebrow {
+  color: #f0cb76 !important;
+}
+
+.gift-hero h3 {
+  color: #fffaf2 !important;
+}
+
+.gift-hero p:not(.eyebrow) {
+  color: rgba(245, 248, 252, .92) !important;
+}
+
+.gift-transfer-card {
+  margin-top: 10px;
+}
+
+/* ocultar estilos de la tarjeta eliminada si quedaran referencias */
+.gift-wallet-card, .gift-wallet-heading, .gift-wallet-steps, .gift-wallet-buttons, .gift-app-note, .gift-alias-copy-main {
+  display: none !important;
+}
