@@ -1945,7 +1945,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32466 · Fondo bordado minimalista en portada ===== */
+/* ===== v32467 · Fondo bordado minimalista en portada ===== */
 .login-screen {
   position: relative;
   isolation: isolate;
@@ -1957,7 +1957,7 @@ body::before { opacity: .22; }
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32466');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32467');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2008,7 +2008,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32466 · Corrección definitiva de visibilidad del fondo =====
+/* ===== v32467 · Corrección definitiva de visibilidad del fondo =====
    Las reglas anteriores ocultaban ::before y ::after con display:none
    y conservaban dimensiones de 90px. */
 #loginScreen.login-screen::before,
@@ -2022,7 +2022,7 @@ body::before { opacity: .22; }
 #loginScreen.login-screen::before {
   inset: 0;
   z-index: 0;
-  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32466');
+  background-image: url('assets/backgrounds/portada-bordado-minimalista.png?v=32467');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -2061,7 +2061,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32466 · Fondo móvil nítido y tarjeta más alta ===== */
+/* ===== v32467 · Fondo móvil nítido y tarjeta más alta ===== */
 #loginScreen.login-screen::before {
   opacity: .64;
   filter: saturate(1.06) contrast(1.05);
@@ -2077,7 +2077,7 @@ body::before { opacity: .22; }
 
 @media (max-width: 700px) {
   #loginScreen.login-screen::before {
-    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32466');
+    background-image: url('assets/backgrounds/portada-bordado-mobile.png?v=32467');
     background-size: cover;
     background-position: center top;
     opacity: .66;
@@ -2111,7 +2111,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32466 · Wordmark oficial + fecha bordó ===== */
+/* ===== v32467 · Wordmark oficial + fecha bordó ===== */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -2148,7 +2148,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32466 · Wordmark tipográfico nítido y elegante ===== */
+/* ===== v32467 · Wordmark tipográfico nítido y elegante ===== */
 #loginScreen .couple-wordmark-image {
   display: none !important;
 }
@@ -2199,7 +2199,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32466 · Inicio minimalista ===== */
+/* ===== v32467 · Inicio minimalista ===== */
 #mainScreen.main-screen::before,
 #mainScreen.main-screen::after,
 #mainScreen .topbar::before,
@@ -2291,7 +2291,7 @@ body::before { opacity: .22; }
 }
 
 
-/* ===== v32466 · Navegación en menú hamburguesa ===== */
+/* ===== v32467 · Navegación en menú hamburguesa ===== */
 body.menu-open {
   overflow: hidden;
 }
@@ -2501,7 +2501,7 @@ body.menu-open {
 }
 
 
-/* ===== v32466 · UX universal 30–70 años ===== */
+/* ===== v32467 · UX universal 30–70 años ===== */
 #mainScreen .topbar {
   min-height: 68px;
   padding: 11px 14px 11px 18px;
@@ -2648,7 +2648,7 @@ body.menu-open {
 }
 
 
-/* ===== v32466 · Iconografía, asistencia y Calendar ===== */
+/* ===== v32467 · Iconografía, asistencia y Calendar ===== */
 .menu-item-icon {
   width: 34px;
   height: 34px;
@@ -2815,7 +2815,7 @@ body.menu-open {
 }
 
 
-/* ===== v32466 · Ajustes UX solicitados ===== */
+/* ===== v32467 · Ajustes UX solicitados ===== */
 #mainScreen .main-menu,
 #mainScreen .main-menu *,
 #mainScreen .main-menu button,
@@ -2898,7 +2898,7 @@ body.menu-open {
 }
 
 
-/* ===== v32466 · Accesos cruzados y estados de acciones ===== */
+/* ===== v32467 · Accesos cruzados y estados de acciones ===== */
 .points-right button:disabled {
   cursor: default;
   opacity: .58;
@@ -2917,7 +2917,7 @@ body.menu-open {
 }
 
 
-/* ===== v32466 · Reset seguro de datos de prueba ===== */
+/* ===== v32467 · Reset seguro de datos de prueba ===== */
 .admin-test-reset-button:disabled {
   cursor: wait;
   opacity: .65;
@@ -2925,7 +2925,7 @@ body.menu-open {
 }
 
 
-/* ===== v32466 · Trivia, ranking y mejoras de UX ===== */
+/* ===== v32467 · Trivia, ranking y mejoras de UX ===== */
 .ranking-prize-note {
   display: flex;
   align-items: center;
@@ -2972,7 +2972,7 @@ body.menu-open {
 }
 
 
-/* ===== v32466 · Menú compacto, sin fondo detrás del texto ===== */
+/* ===== v32467 · Menú compacto, sin fondo detrás del texto ===== */
 #mainScreen .main-menu .nav-tabs .menu-group button {
   min-height: 47px;
   font-size: 14px;
@@ -3013,20 +3013,20 @@ body.menu-open {
 }
 
 
-/* ===== v32466 · Estados reales de guardado ===== */
+/* ===== v32467 · Estados reales de guardado ===== */
 button:disabled,
 input:disabled {
   cursor: wait;
 }
 
 
-/* ===== v32466 · Guardado rápido ===== */
+/* ===== v32467 · Guardado rápido ===== */
 button:disabled {
   opacity: .72;
 }
 
 
-/* ===== v32466 · Seguridad de Administración ===== */
+/* ===== v32467 · Seguridad de Administración ===== */
 .admin-lock-button,
 .admin-access-card,
 .admin-access-card * {
@@ -3034,7 +3034,7 @@ button:disabled {
 }
 
 /* ============================================================
-   v32466 · Mejoras integrales
+   v32467 · Mejoras integrales
    ============================================================ */
 
 #mainScreen .main-menu .nav-tabs .menu-group button.menu-transport { color:#5c5144; }
@@ -3134,7 +3134,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Optimización móvil, historial y vistas compactas
+   v32467 · Optimización móvil, historial y vistas compactas
    ============================================================ */
 .guest-suggestion--name-only{min-height:58px;align-items:center}.guest-suggestion--name-only strong{font-size:15px}.guest-suggestion--name-only small{display:none!important}
 
@@ -3167,7 +3167,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · compactación móvil y refinamiento visual
+   v32467 · compactación móvil y refinamiento visual
    ============================================================ */
 
 /* Barra superior: inicial + nombre + casita + menú */
@@ -3499,7 +3499,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Ranking vertical y ajustes de espaciado
+   v32467 · Ranking vertical y ajustes de espaciado
    ============================================================ */
 
 /* Cuenta regresiva sin fecha fija */
@@ -3713,7 +3713,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Ranking ultra compacto y alineado
+   v32467 · Ranking ultra compacto y alineado
    ============================================================ */
 
 .ranking-summary-ultra {
@@ -3943,7 +3943,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Ranking corregido con clases aisladas
+   v32467 · Ranking corregido con clases aisladas
    ============================================================ */
 
 .vf-ranking-head {
@@ -4172,7 +4172,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Ranking equilibrado, menú sutil e invitados compactos
+   v32467 · Ranking equilibrado, menú sutil e invitados compactos
    ============================================================ */
 
 /* Botón hamburguesa apenas más chico */
@@ -4518,7 +4518,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Acciones del ranking al pie
+   v32467 · Acciones del ranking al pie
    ============================================================ */
 
 .vf18-ranking-title h3 {
@@ -4565,7 +4565,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Menú, Mi equipo, Social y Regalos
+   v32467 · Menú, Mi equipo, Social y Regalos
    ============================================================ */
 .menu-nav-clean{gap:8px!important}.menu-nav-clean .menu-group{gap:3px!important}.menu-nav-clean .menu-group+.menu-group{margin-top:5px;padding-top:10px;border-top:1px solid rgba(132,104,68,.15)}.menu-nav-clean .menu-group-admin{margin-top:5px!important;padding-top:10px!important}.menu-nav-clean .menu-group>p{display:none!important}
 .team-ranking-summary-button{display:grid!important;grid-template-columns:23px auto auto!important;gap:7px!important;align-items:center!important;width:auto!important;min-width:156px!important;min-height:43px!important;padding:7px 9px!important;border-radius:13px!important}.team-ranking-summary-icon{display:grid!important;place-items:center!important}.team-ranking-summary-icon .ui-icon{width:18px!important;height:18px!important}.team-ranking-summary-label{display:block!important;color:#fff!important;font-size:11px!important;font-weight:900!important}.team-ranking-summary-data{display:flex!important;align-items:center!important;gap:5px!important;padding-left:7px;border-left:1px solid rgba(255,255,255,.23)}.team-ranking-summary-data b,.team-ranking-summary-data em{display:block!important;color:#fff!important;font-style:normal;white-space:nowrap}.team-ranking-summary-data b{font-size:10px}.team-ranking-summary-data em{min-width:23px;padding:3px 5px;border-radius:999px;background:rgba(255,255,255,.16);font-size:9px;font-weight:900}
@@ -4574,7 +4574,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Coherencia tipográfica, RSVP y Admin compacto
+   v32467 · Coherencia tipográfica, RSVP y Admin compacto
    ============================================================ */
 
 #view .section-head {
@@ -4833,7 +4833,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Menú inferior persistente
+   v32467 · Menú inferior persistente
    ============================================================ */
 
 #mainScreen {
@@ -5168,7 +5168,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Refinamiento de navegación y asistencia
+   v32467 · Refinamiento de navegación y asistencia
    ============================================================ */
 
 /* Hamburguesa superior: exactamente tan compacta como Inicio */
@@ -5486,7 +5486,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Ajustes de Inicio, Social, RSVP y Ranking
+   v32467 · Ajustes de Inicio, Social, RSVP y Ranking
    ============================================================ */
 
 /* Sin botón Inicio superior: hamburguesa ocupa el único acceso circular */
@@ -5634,7 +5634,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Dashboard de restricciones y auditoría compacta
+   v32467 · Dashboard de restricciones y auditoría compacta
    ============================================================ */
 
 /* Dashboard: seis indicadores en 3 x 2, un poco más legibles */
@@ -5826,7 +5826,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Últimos retoques de Inicio, RSVP y Sumá puntos
+   v32467 · Últimos retoques de Inicio, RSVP y Sumá puntos
    ============================================================ */
 
 /* CTA principal pendiente: bordó oscuro, blanco y dorado */
@@ -5948,7 +5948,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Doble trivia
+   v32467 · Doble trivia
    ============================================================ */
 
 .trivia-who-card {
@@ -6014,7 +6014,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Likes, destacados y dashboard Admin
+   v32467 · Likes, destacados y dashboard Admin
    ============================================================ */
 
 /* Botón Me gusta */
@@ -6266,7 +6266,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Inicio, traslados, En viaje, Reglas y bloqueos
+   v32467 · Inicio, traslados, En viaje, Reglas y bloqueos
    ============================================================ */
 
 .home-countdown-v2{min-height:50px!important;padding:7px 11px!important;border-radius:14px!important}
@@ -6294,7 +6294,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Ubicación, cronograma y cabecera de equipo
+   v32467 · Ubicación, cronograma y cabecera de equipo
    ============================================================ */
 
 #mainScreen .topbar-person {
@@ -6436,7 +6436,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Notificaciones, regalos y refinamientos
+   v32467 · Notificaciones, regalos y refinamientos
    ============================================================ */
 
 /* Topbar nuevamente con inicial */
@@ -7101,7 +7101,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Diseño optimizado y restaurado
+   v32467 · Diseño optimizado y restaurado
    ============================================================ */
 
 /* Eliminar únicamente decoraciones internas punteadas */
@@ -7436,7 +7436,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32466 · Tipografía uniforme e integrantes compactos
+   v32467 · Tipografía uniforme e integrantes compactos
    ============================================================ */
 
 /* ------------------------------------------------------------
@@ -7793,7 +7793,7 @@ select {
 
 
 /* ============================================================
-   v32466 · Nombre superior con tipografía de títulos
+   v32467 · Nombre superior con tipografía de títulos
    ============================================================ */
 
 #mainScreen .topbar-name {
@@ -7811,7 +7811,7 @@ select {
 
 
 /* ============================================================
-   v32466 · Lo esencial y Regalos
+   v32467 · Lo esencial y Regalos
    ============================================================ */
 
 /* Cinco filas uniformes */
@@ -7952,7 +7952,7 @@ select {
 
 
 /* ============================================================
-   v32466 · Navegación progresiva y app simplificada
+   v32467 · Navegación progresiva y app simplificada
    ============================================================ */
 
 /* El menú inferior se adapta a la cantidad de accesos visibles */
@@ -8070,7 +8070,7 @@ select {
 
 
 /* ============================================================
-   v32466 · UX Asistencia, historial, Ranking y En viaje
+   v32467 · UX Asistencia, historial, Ranking y En viaje
    ============================================================ */
 
 /* Lugar secreto */
@@ -8316,7 +8316,7 @@ select {
 
 
 /* ============================================================
-   v32466 · Sincronización global definitiva
+   v32467 · Sincronización global definitiva
    ============================================================ */
 
 .admin-global-config-status {
@@ -8329,7 +8329,7 @@ select {
 
 
 /* ============================================================
-   v32466 · Estado oficial
+   v32467 · Estado oficial
    ============================================================ */
 
 .remote-status.error,
@@ -8337,11 +8337,11 @@ select {
   font-weight: 900;
 }
 
-/* v32466 · sincronización rápida */
+/* v32467 · sincronización rápida */
 
 
 /* ============================================================
-   v32466 · Inicio y desafíos compactos
+   v32467 · Inicio y desafíos compactos
    ============================================================ */
 
 /* Estados al final de Inicio */
@@ -8607,7 +8607,7 @@ select {
 
 
 /* ============================================================
-   v32466 · Próximos pasos y cierre de desafíos
+   v32467 · Próximos pasos y cierre de desafíos
    ============================================================ */
 
 /* Los dos llamados prioritarios de Inicio se muestran arriba y en bordó */
@@ -8704,7 +8704,7 @@ select {
 
 
 /* ============================================================
-   v32466 · PWA instalable
+   v32467 · PWA instalable
    ============================================================ */
 
 .install-app-landing {
@@ -8739,14 +8739,14 @@ select {
 }
 
 
-/* v32466 · actualización forzada */
+/* v32467 · actualización forzada */
 html[data-app-updating="true"] {
   cursor: progress;
 }
 
 
 /* ============================================================
-   v32466 · Instalar app desde Inicio
+   v32467 · Instalar app desde Inicio
    ============================================================ */
 
 .home-install-app-banner {
@@ -8839,7 +8839,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · estabilización, velocidad y control
+   v32467 · estabilización, velocidad y control
    ============================================================ */
 
 .background-save-status {
@@ -8902,7 +8902,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Social, asistencia y flujo de desafíos
+   v32467 · Social, asistencia y flujo de desafíos
    ============================================================ */
 
 /* Confirmación de Social a pantalla completa */
@@ -9420,7 +9420,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Administración organizada
+   v32467 · Administración organizada
    ============================================================ */
 
 .admin-subsection-launchers {
@@ -9675,7 +9675,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Base oficial única y reset total
+   v32467 · Base oficial única y reset total
    ============================================================ */
 
 .admin-stability-grid-single {
@@ -9700,7 +9700,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Desafíos compactos y progreso claro
+   v32467 · Desafíos compactos y progreso claro
    ============================================================ */
 
 .points-unified-challenges {
@@ -9778,7 +9778,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Reset total robusto
+   v32467 · Reset total robusto
    ============================================================ */
 
 .admin-reset-overlay {
@@ -9916,7 +9916,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Puntos y desafíos mejorados
+   v32467 · Puntos y desafíos mejorados
    ============================================================ */
 
 .points-unified-challenge .points-action {
@@ -10037,7 +10037,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Animaciones de acciones y reset de Sheets
+   v32467 · Animaciones de acciones y reset de Sheets
    ============================================================ */
 
 :is(
@@ -10222,7 +10222,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Formulario de asistencia estable
+   v32467 · Formulario de asistencia estable
    ============================================================ */
 
 .rsvp-draft-protection {
@@ -10240,7 +10240,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32466 · Desafíos estables durante sincronización
+   v32467 · Desafíos estables durante sincronización
    ============================================================ */
 
 .game-draft-protection {
@@ -10255,4 +10255,224 @@ html[data-app-updating="true"] {
   font-weight: 750;
   line-height: 1.3;
   text-align: center;
+}
+
+
+/* ============================================================
+   v32467 · Textos, desafíos y logos de equipos
+   ============================================================ */
+
+/* Regalos con avión integrado */
+#view .home-gifts-feature-copy em {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+}
+
+#view .home-gifts-plane {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #e6c477;
+}
+
+#view .home-gifts-plane .ui-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Traslados: iconos más claros y con caja propia */
+.choice-pill-with-icon > span {
+  min-height: 48px;
+}
+
+.choice-pill-with-icon > span > i {
+  width: 31px;
+  height: 31px;
+  border: 1px solid rgba(49,83,110,.16);
+  border-radius: 10px;
+  background: rgba(49,83,110,.065);
+}
+
+.choice-pill-with-icon > span > i .ui-icon {
+  width: 20px !important;
+  height: 20px !important;
+  stroke-width: 1.9;
+}
+
+.choice-pill-with-icon:has(input:checked) > span > i {
+  border-color: rgba(255,255,255,.28);
+  background: rgba(255,255,255,.10);
+}
+
+/* Reglas destacadas en dorado */
+.points-rules-entry {
+  border-color: rgba(178,128,49,.38) !important;
+  background:
+    radial-gradient(
+      circle at 92% 0%,
+      rgba(229,194,113,.26),
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      #f7e7bd,
+      #e7bf68
+    ) !important;
+  color: #4a3517 !important;
+  box-shadow: 0 8px 18px rgba(154,110,47,.14) !important;
+}
+
+.points-rules-entry > span {
+  background: rgba(91,61,20,.10) !important;
+  color: #6f4d1d !important;
+}
+
+.points-rules-entry strong,
+.points-rules-entry small,
+.points-rules-entry > b {
+  color: #4a3517 !important;
+}
+
+/* Asistencia diferenciada en bordó */
+.points-rsvp-challenge {
+  border-color: rgba(116,51,68,.32) !important;
+  background:
+    radial-gradient(
+      circle at 94% 0%,
+      rgba(218,177,113,.12),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(116,51,68,.105),
+      rgba(255,251,244,.93)
+    ) !important;
+  box-shadow: 0 8px 18px rgba(116,51,68,.09) !important;
+}
+
+.points-rsvp-challenge .points-action-icon {
+  color: #743344 !important;
+  background: rgba(116,51,68,.10) !important;
+}
+
+.points-rsvp-challenge .points-action-copy strong {
+  color: #743344 !important;
+}
+
+.points-rsvp-challenge .points-action-end button {
+  background: linear-gradient(135deg,#82374b,#68283a) !important;
+  color: #fffaf2 !important;
+}
+
+/* Nuevos logos vectoriales de equipos */
+.team-logo {
+  --team-accent: #8b6b42;
+  color: var(--team-accent) !important;
+  background:
+    radial-gradient(
+      circle at 35% 28%,
+      rgba(255,255,255,.98),
+      color-mix(in srgb,var(--team-accent) 10%,#fff) 58%,
+      color-mix(in srgb,var(--team-accent) 20%,#f4eadb)
+    ) !important;
+  border: 2px solid
+    color-mix(in srgb,var(--team-accent) 62%,#d7c29b) !important;
+  box-shadow:
+    inset 0 0 0 4px rgba(255,255,255,.72),
+    0 7px 16px
+    color-mix(in srgb,var(--team-accent) 17%,transparent) !important;
+}
+
+.team-logo::before {
+  inset: 7% !important;
+  border: 1.5px solid
+    color-mix(in srgb,var(--team-accent) 74%,white) !important;
+  opacity: .72 !important;
+}
+
+.team-logo .team-symbol-svg {
+  position: relative;
+  z-index: 2;
+  width: 62%;
+  height: 62%;
+  color: var(--team-accent);
+  filter:
+    drop-shadow(0 1px 0 rgba(255,255,255,.75));
+}
+
+.team-logo--bosque {
+  --team-accent: #416a49 !important;
+  background:
+    radial-gradient(circle at 35% 28%,#fff,#e5f0e3 62%,#c7ddc6) !important;
+}
+
+.team-logo--fuego {
+  --team-accent: #ad4539 !important;
+  background:
+    radial-gradient(circle at 35% 28%,#fff,#f8e4db 62%,#efc6b9) !important;
+}
+
+.team-logo--luz {
+  --team-accent: #b88925 !important;
+  background:
+    radial-gradient(circle at 35% 28%,#fffdf6,#f7e8b3 62%,#e6c96f) !important;
+}
+
+.team-logo--noche {
+  --team-accent: #64509c !important;
+  background:
+    radial-gradient(circle at 35% 28%,#fff,#e9e3f7 62%,#cfc3eb) !important;
+}
+
+.team-logo--agua {
+  --team-accent: #2f6d94 !important;
+  background:
+    radial-gradient(circle at 35% 28%,#fff,#deedf7 62%,#bdd9e9) !important;
+}
+
+.team-logo--viento {
+  --team-accent: #687780 !important;
+  background:
+    radial-gradient(circle at 35% 28%,#fff,#e8edef 62%,#cbd4d8) !important;
+}
+
+#view .team-summary-logo {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+#view .guest-team-toggle-logo {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+#view .team-summary-compact {
+  border-width: 1.5px !important;
+}
+
+#view .guest-team-accordion-card {
+  border-left: 4px solid var(--local-accent) !important;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb,var(--local-accent) 7%,#fff),
+      rgba(255,253,248,.94)
+    ) !important;
+}
+
+@media(max-width:600px) {
+  #view .home-gifts-feature-copy em {
+    white-space: normal !important;
+  }
+
+  #view .team-summary-logo {
+    width: 54px !important;
+    height: 54px !important;
+  }
+
+  #view .guest-team-toggle-logo {
+    width: 41px !important;
+    height: 41px !important;
+  }
 }

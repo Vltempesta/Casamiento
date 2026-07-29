@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32466";
+  const CURRENT_APP_VERSION = "32467";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32466"
+        appVersion: CONFIG.APP_VERSION || "32467"
       })
     );
   }
@@ -950,7 +950,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32466",
+      appVersion: "32467",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2461,11 +2461,55 @@
   }
 
 
+  function teamSymbolSvg(teamId) {
+    const symbols = {
+      bosque:
+        '<path d="M12 3 7.5 9.5h2.8L6.5 15h3.8v6h3.4v-6h3.8l-3.8-5.5h2.8L12 3Z"/><path d="M5 21h14"/>',
+      fuego:
+        '<path d="M13.8 3.2c.5 3-1.3 4.2-2.7 5.7-1.3 1.3-2.3 2.7-1.6 4.6.5-1.5 1.6-2.5 3-3.5-.1 2.2 2.4 3.4 2.4 6.1A4.9 4.9 0 0 1 10 21a5.3 5.3 0 0 1-5.2-5.4c0-4.6 3.6-7.1 6.2-10.3.4 1.8 1.5 2.7 2.8 3.5.7-1.8.6-3.7 0-5.6Z"/>',
+      luz:
+        '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M5.3 5.3l2.8 2.8M15.9 15.9l2.8 2.8M18.7 5.3l-2.8 2.8M8.1 15.9l-2.8 2.8"/>',
+      noche:
+        '<path d="M17.8 15.8A7.7 7.7 0 1 1 9.2 4.1a6.4 6.4 0 0 0 8.6 11.7Z"/><path d="m17.5 5 .5 1.4 1.5.5-1.5.5-.5 1.5-.5-1.5-1.5-.5 1.5-.5.5-1.4Z"/>',
+      agua:
+        '<path d="M4 9.5c2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M4 14c2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M6 18.5c1.5 0 2 1 3.5 1s2-1 3.5-1 2 1 3.5 1 2-1 3.5-1"/>',
+      viento:
+        '<path d="M3.5 8.5h10.8c2 0 3.2-1 3.2-2.4 0-1.2-.9-2.1-2.2-2.1-1 0-1.8.5-2.2 1.4M3.5 12h15.2c1.4 0 2.3.8 2.3 2s-.9 2-2.2 2c-1 0-1.8-.5-2.2-1.3M3.5 15.5h7.8c1.7 0 2.7 1 2.7 2.3 0 1.2-.9 2.2-2.2 2.2-1 0-1.7-.5-2.1-1.3"/>'
+    };
+
+    const symbol = symbols[teamId] || symbols.luz;
+
+    return `
+      <svg
+        class="team-symbol-svg"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round">
+        ${symbol}
+      </svg>
+    `;
+  }
+
   function teamLogo(team, className = "") {
     if (!team) return "";
-    const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=31000`;
-    return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
+
+    const cls = className
+      ? ` ${className}`
+      : "";
+
+    return `
+      <span
+        class="team-logo team-logo--${escapeHTML(team.id)}${cls}"
+        style="--team-accent:${escapeHTML(team.accent)}"
+        aria-label="Logo ${escapeHTML(team.name)}"
+        role="img">
+        ${teamSymbolSvg(team.id)}
+      </span>
+    `;
   }
 
   function teamBadge(team, text = `Equipo ${team.name}`) {
@@ -2493,6 +2537,7 @@
       heart: '<path d="M20.8 5.8a5.1 5.1 0 0 0-7.2 0L12 7.4l-1.6-1.6a5.1 5.1 0 0 0-7.2 7.2L12 21l8.8-8a5.1 5.1 0 0 0 0-7.2Z"/>',
       pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
       bus: '<rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 7h8"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/>',
+      coach: '<rect x="4" y="3.5" width="16" height="15" rx="3"/><path d="M6.5 7h11M6.5 10h11M4 14h16"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="16.5" cy="18.5" r="1.5"/><path d="M2.5 9.5H4M20 9.5h1.5"/>',
       dress: '<path d="M10 3h4l1 4-2 2 4 11H7l4-11-2-2 1-4Z"/><path d="M9 7h6"/>',
       food: '<path d="M7 3v7M4.5 3v4.5A2.5 2.5 0 0 0 7 10M9.5 3v4.5A2.5 2.5 0 0 1 7 10v11"/><path d="M15 3v18"/><path d="M15 3c3.2 0 5 2.1 5 5.2 0 3.2-1.8 5.3-5 5.3"/>',
       calendarPlus: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/>',
@@ -2508,6 +2553,8 @@
       person: '<circle cx="12" cy="8" r="3"/><path d="M5.5 20c.6-4.3 2.8-6.5 6.5-6.5s5.9 2.2 6.5 6.5"/>',
       download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
       car: '<path d="M5 17h14l-1.5-6h-11L5 17Z"/><path d="m7 11 1.5-4h7L17 11"/><circle cx="8" cy="17" r="1.5"/><circle cx="16" cy="17" r="1.5"/><path d="M5 14H3M21 14h-2"/>',
+      carRoute: '<path d="M5 15.5h14l-1.7-5.3H6.7L5 15.5Z"/><path d="m7.4 10.2 1.4-3.3h6.4l1.4 3.3"/><circle cx="8" cy="16.5" r="1.5"/><circle cx="16" cy="16.5" r="1.5"/><path d="M4 20h16M7 20v-1M12 20v-1M17 20v-1"/>',
+      plane: '<path d="m3 13 7.2 1.2L18.5 21l2-1-4.2-7.2 4.7-2.2c1.3-.6 1.6-2.3.6-3.3-.7-.7-1.8-.8-2.6-.3l-4.8 2.8L7.2 5.5 5.7 6.8l4.7 5.5-5.9-1.1L3 13Z"/>',
       road: '<path d="M9 21 11 3h2l2 18"/><path d="M12 6v3M12 12v3M12 18v2"/>',
       rules: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="m6.5 8 .5.5 1-1"/>',
       phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10 5h4M11 18.5h2"/>'
@@ -2671,7 +2718,7 @@
   const GAME_NOTIFICATION_DEFINITIONS = [
     { key: "trivia-music", title: "Canciones favoritas", route: "puntos" },
     { key: "trivia-couple", title: "¿Cuánto conocés a los novios?", route: "puntos" },
-    { key: "trivia-who", title: "¿Quién es quién?", route: "puntos" }
+    { key: "trivia-who", title: "¿Quién?", route: "puntos" }
   ];
 
   function currentNotificationState() {
@@ -3097,8 +3144,7 @@
 
     const rank = calculateRanking();
     const deadline =
-      CONFIG.RSVP_DEADLINE_LABEL ||
-      "31 de agosto de 2026";
+      "15 de agosto de 2026";
 
     const now = new Date();
     const eventDate = new Date(DATA.couple.eventDate);
@@ -3253,7 +3299,7 @@
             <div>
               <small>Fecha</small>
               <strong>Sábado 24 de Octubre</strong>
-              <p>18:00 a 03:00</p>
+              <p>18:00 a 03:00 HRS</p>
             </div>
           </article>
 
@@ -3266,7 +3312,7 @@
                 ${uiIcon("pin")}
               </span>
               <div>
-                <small>Lugar</small>
+                <small>Ubicación</small>
                 <strong>Estancia "Los Candiles"</strong>
                 <p>Solís, Provincia de Buenos Aires</p>
               </div>
@@ -3278,9 +3324,9 @@
                 ${uiIcon("lock")}
               </span>
               <div>
-                <small>Lugar</small>
+                <small>Ubicación</small>
                 <strong>¡Lugar secreto!</strong>
-                <p>La ubicación se habilitará más adelante.</p>
+                <p>Animate a vivir la experiencia completa con los micros ;)</p>
               </div>
             </article>
           `}
@@ -3295,7 +3341,7 @@
             <div>
               <small>Traslado</small>
               <strong>Micro / Combi</strong>
-              <p>Confirmá en la asistencia</p>
+              <p>Confirmá en Asistencia · Próximamente novedades</p>
             </div>
           </button>
 
@@ -3306,10 +3352,7 @@
             <div>
               <small>Vestimenta</small>
               <strong>Elegante sport</strong>
-              <p>
-                El lugar tiene mucho césped,
-                ¡vení con calzado cómodo!
-              </p>
+              <p>Lugar con mucho césped. ¡Vení con calzado cómodo!</p>
             </div>
           </article>
 
@@ -3321,9 +3364,9 @@
               ${uiIcon("food")}
             </span>
             <div>
-              <small>Información importante</small>
-              <strong>Restricciones alimentarias</strong>
-              <p>Confirmá en la asistencia</p>
+              <small>Menú</small>
+              <strong>Restricciones Alimentarias</strong>
+              <p>Confirmá en Asistencia</p>
             </div>
           </button>
         </div>
@@ -3342,7 +3385,10 @@
                 Nuestro mejor regalo es tu presencia 🥂
               </strong>
               <em>
-                Ver opciones para ayudarnos con nuestra Luna de Miel
+                Pero te dejamos opciones para que nos ayudes con la Luna de miel
+                <span class="home-gifts-plane" aria-hidden="true">
+                  ${uiIcon("plane")}
+                </span>
               </em>
             </span>
             <b aria-hidden="true">›</b>
@@ -3559,7 +3605,7 @@
       !hasSaved ||
       !hasFinalSaved
     );
-    const deadlineLabel = "31 de agosto de 2026";
+    const deadlineLabel = "15 de agosto de 2026";
     const savedTransport = ["combi", "micro"].includes(formValues.transport)
       ? "combi"
       : formValues.transport === "auto"
@@ -3640,8 +3686,8 @@
               <small>Traslado elegido</small>
               <strong>${escapeHTML(selectedTransport)}</strong>
               <em>
-                Consultá horarios, puntos de salida e información
-                completa en la sección Traslados.
+                Los horarios y puntos de salida serán informados
+                próximamente en la sección Traslados.
               </em>
             </span>
             <b aria-hidden="true">Ver traslados ›</b>
@@ -3757,7 +3803,7 @@
                 "transport",
                 "particular",
                 "Particular",
-                "car",
+                "carRoute",
                 savedTransport,
                 true
               )}
@@ -3765,14 +3811,14 @@
                 "transport",
                 "combi",
                 "Micro / Combi",
-                "bus",
+                "coach",
                 savedTransport,
                 true
               )}
             </div>
             <small class="transport-choice-help">
-              Después de confirmar, consultá horarios y puntos
-              de salida en la sección Traslados.
+              Los horarios y puntos de salida de los traslados
+              serán informados próximamente.
             </small>
           </fieldset>
 
@@ -4407,7 +4453,7 @@
       : "Qué podés hacer ahora";
     const pointsText = currentGamesDone
       ? "Mientras esperás a que lleguen nuevos, deciles a los demás grupos quién va a ganar."
-      : "Completá cada desafío por separado y ayudá a tu equipo.";
+      : "¡Completá los desafíos y ayudá a tu equipo!";
 
     return `
       ${pointsHubStyles()}
@@ -4463,7 +4509,7 @@
       ` : ""}
 
       <div class="points-unified-challenges">
-        <section class="points-unified-challenge section-card">
+        <section class="points-unified-challenge points-rsvp-challenge section-card">
           ${pointsAction({
             icon:"✉️",
             title:"Confirmar asistencia",
@@ -4491,8 +4537,8 @@
             icon:"🎵",
             title:"Canciones favoritas",
             text:musicDone
-              ? "Tus dos elecciones musicales quedaron guardadas para la boda y la entrada de tu equipo."
-              : "Elegí una canción favorita para la boda y otra para la entrada de tu equipo.",
+              ? "Tu canción para bailar y la canción para la entrada de tu equipo quedaron guardadas."
+              : "Elegí 1 canción para bailar y otra para la entrada de tu equipo.",
             done:musicDone,
             route:"musica",
             progressText:musicDone
@@ -4523,9 +4569,9 @@
         <section class="points-unified-challenge section-card">
           ${pointsAction({
             icon:"⚖️",
-            title:"¿Quién es quién?",
+            title:"¿Quién?",
             text:whoTriviaDone
-              ? "Ya elegiste quién representa mejor cada una de las cinco situaciones."
+              ? "Ya elegiste si cada una de las cinco situaciones representa a Vani o a Fede."
               : "Descubrí si cada costumbre o situación describe mejor a Vani o a Fede.",
             done:whoTriviaDone,
             route:"trivia-quien",
@@ -4925,7 +4971,7 @@
       return renderLockedTriviaCard(
         "01",
         "Canciones favoritas",
-        "Dos canciones tendrán una misión especial.",
+        "Una canción para bailar y otra para la entrada de tu equipo.",
         "trivia-music",
         "music-game"
       );
@@ -4950,7 +4996,7 @@
 
             <div class="music-compact-values">
               <span>
-                <small>Boda</small>
+                <small>Para bailar</small>
                 <strong>
                   ${escapeHTML(saved.weddingSong || "Canción guardada")}
                 </strong>
@@ -4999,7 +5045,7 @@
           </div>
 
           <p>
-            Elegí una canción para la boda y otra para
+            Elegí 1 canción para bailar y otra para
             la entrada del equipo ${escapeHTML(team.name)}.
           </p>
 
@@ -5008,7 +5054,7 @@
               Tus canciones se mantienen mientras completás el desafío.
             </div>
             <label>
-              Canción para la boda
+              Canción para bailar
               <input
                 name="weddingSong"
                 type="text"
@@ -5092,7 +5138,7 @@
               id:"couple-next-challenge",
               route:"trivia-quien",
               eyebrow:"Último desafío",
-              title:"¿Quién es quién?",
+              title:"¿Quién?",
               text:"Elegí entre Vani o Fede en cinco situaciones.",
               button:"Ir al desafío 3"
             })}
@@ -5164,8 +5210,8 @@
     if (!open) {
       return renderLockedTriviaCard(
         "03",
-        "¿Quién es quién? · Vani o Fede",
-        "Cinco situaciones para descubrir quién es quién.",
+        "¿Quién? · Vani o Fede",
+        "Cinco situaciones para descubrir si la respuesta es Vani o Fede.",
         "trivia-who",
         "who-is-who-game"
       );
@@ -5184,7 +5230,7 @@
             <div class="trivia-game-heading">
               <div>
                 <span class="trivia-status completed">Completada</span>
-                <h4>¿Quién es quién? · Vani o Fede</h4>
+                <h4>¿Quién? · Vani o Fede</h4>
               </div>
               ${uiIcon("checkCircle","trivia-main-icon")}
             </div>
@@ -5218,7 +5264,7 @@
           <div class="trivia-game-heading">
             <div>
               <span class="trivia-status open">Una sola oportunidad</span>
-              <h4>¿Quién es quién? · Vani o Fede</h4>
+              <h4>¿Quién? · Vani o Fede</h4>
             </div>
             ${uiIcon("question","trivia-main-icon")}
           </div>
@@ -5420,7 +5466,7 @@
     if (id === "auto-music-selection") return "Canciones favoritas";
     if (id === "auto-micro-transport") return "Bonus por viajar en micro";
     if (id === "auto-couple-trivia") return "¿Cuánto conocés a los novios?";
-    if (id === "auto-who-is-who-trivia") return "¿Quién es quién?";
+    if (id === "auto-who-is-who-trivia") return "¿Quién?";
     if (id === "discrecional-fede-vani") return "Puntos a discreción";
     if (["reset-discretionary-clear-marker", "reset-discrecional-fede-vani"].includes(id)) return "Limpieza de puntos discrecionales";
     if (["reset-total-clear-marker", "reset-total-fede-vani"].includes(id)) return "Limpieza general de puntos";
@@ -6820,7 +6866,7 @@
               },
               {
                 key: "trivia-who",
-                title: "¿Quién es quién?",
+                title: "¿Quién?",
                 text: "Cinco preguntas Vani o Fede."
               }
             ].map(game => {
@@ -8419,7 +8465,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32466 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32467 y volvé a intentar.`
           });
         }
       }
