@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32468";
+  const CURRENT_APP_VERSION = "32469";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32468"
+        appVersion: CONFIG.APP_VERSION || "32469"
       })
     );
   }
@@ -950,7 +950,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32468",
+      appVersion: "32469",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2464,7 +2464,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32468`;
+    const src = `assets/team-logos/${team.id}.png?v=32469`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -3483,46 +3483,222 @@
   }
 
   function renderTransport() {
+    const rsvp = state.rsvps[currentGuest.id] || {};
+    const usesMicro =
+      rsvp.attendance === "si" &&
+      ["combi", "micro"].includes(rsvp.transport);
+    const selectedZone =
+      pickupZoneLabel(rsvp.pickupZone);
+
     return `
       ${transportStyles()}
-      ${sectionHeader("casamiento", "Traslados", "Elegí cómo querés llegar a la celebración.")}
+      ${sectionHeader(
+        "casamiento",
+        "Traslados",
+        "Organizamos la ida y la vuelta para que disfrutes sin preocuparte por manejar."
+      )}
 
-      <section class="transport-experience section-card">
-        <span class="transport-experience-icon">${uiIcon("bus")}</span>
-        <div>
-          <p class="eyebrow">Experiencia completa</p>
-          <h3>¡Te recomendamos viajar en micro!</h3>
-          <p>Además de viajar cómodo y seguro, vas a poder participar de las consignas del recorrido y sumar <strong>20 puntos extra</strong> para tu equipo.</p>
-          <button type="button" data-go="asistencia">Elegir micro en Asistencia</button>
+      <section class="transport-main-card section-card">
+        <span class="transport-main-icon">
+          ${uiIcon("coach")}
+        </span>
+
+        <div class="transport-main-copy">
+          <p class="eyebrow">Viajá, disfrutá y volvé tranquilo</p>
+          <h3>Te recomendamos viajar en Micro / Combi</h3>
+          <p>
+            El lugar queda alejado y queremos que disfrutes toda la fiesta
+            sin preocuparte por manejar. Elegí esta opción en
+            <strong>Asistencia</strong> y con esa información organizaremos
+            los vehículos, recorridos y puntos de salida más convenientes.
+          </p>
+
+          <div class="transport-main-benefits">
+            <span>
+              ${uiIcon("checkCircle")}
+              Viaje cómodo y seguro
+            </span>
+            <span>
+              ${uiIcon("star")}
+              20 puntos extra para tu equipo
+            </span>
+            <span>
+              ${uiIcon("bus")}
+              Ida y regreso coordinados
+            </span>
+          </div>
+
+          <button type="button" data-go="asistencia">
+            ${
+              usesMicro
+                ? "Revisar mi elección"
+                : "Elegir Micro / Combi en Asistencia"
+            }
+          </button>
+
+          ${
+            usesMicro
+              ? `<p class="transport-current-choice">
+                  ✓ Elegiste Micro / Combi
+                  ${
+                    rsvp.pickupZone
+                      ? ` · Preferencia: ${escapeHTML(selectedZone)}`
+                      : ""
+                  }
+                </p>`
+              : ""
+          }
         </div>
       </section>
 
-      <section class="transport-options-grid">
-        <article class="section-card transport-option-card">
-          <span>${uiIcon("car")}</span>
+      <section class="transport-section-heading">
+        <p class="eyebrow">Posibles zonas de salida</p>
+        <h3>Estos puntos son tentativos</h3>
+        <p>
+          Se confirmarán según la cantidad de pasajeros de cada zona.
+        </p>
+      </section>
+
+      <section class="transport-zones-grid">
+        ${transportZoneCard({
+          icon: "pin",
+          area: "Capital Federal",
+          place: "Zona Obelisco",
+          text: "Punto exacto y horario a confirmar según la cantidad de pasajeros."
+        })}
+
+        ${transportZoneCard({
+          icon: "pin",
+          area: "Wilde",
+          place: "Punto de encuentro a confirmar",
+          text: "El recorrido se habilitará según la cantidad de invitados de la zona."
+        })}
+
+        ${transportZoneCard({
+          icon: "pin",
+          area: "Longchamps",
+          place: "Punto de encuentro a confirmar",
+          text: "La combi se organizará según la cantidad de pasajeros confirmados."
+        })}
+      </section>
+
+      <section class="transport-how section-card">
+        <div class="transport-how-head">
+          <span>${uiIcon("road")}</span>
           <div>
-            <small>Viaje particular</small>
-            <strong>La ubicación se habilitará el día de la boda</strong>
-            <p>Ese día vas a encontrar la locación y las indicaciones necesarias dentro de la aplicación.</p>
+            <p class="eyebrow">Cómo se organiza</p>
+            <h3>Vos elegís la zona; nosotros armamos el recorrido</h3>
+          </div>
+        </div>
+
+        <div class="transport-steps">
+          ${transportStep(
+            "1",
+            "Confirmá tu asistencia",
+            "Seleccioná Micro / Combi y elegí tu zona preferida."
+          )}
+          ${transportStep(
+            "2",
+            "Cierre de respuestas",
+            "El 15 de agosto revisaremos cuántas personas eligieron cada punto."
+          )}
+          ${transportStep(
+            "3",
+            "Confirmación final",
+            "Publicaremos el punto exacto, el vehículo asignado y el horario definitivo."
+          )}
+        </div>
+      </section>
+
+      <section class="transport-times-grid">
+        <article class="section-card transport-time-card">
+          <span>${uiIcon("hourglass")}</span>
+          <div>
+            <small>Salida estimada</small>
+            <strong>Entre 15:30 y 16:30</strong>
+            <p>
+              El horario exacto dependerá de la zona y del recorrido final.
+            </p>
           </div>
         </article>
 
-        <article class="section-card transport-option-card transport-stay-card">
-          <span>${uiIcon("pin")}</span>
+        <article class="section-card transport-time-card transport-return-card">
+          <span>${uiIcon("coach")}</span>
           <div>
-            <small>Alojamiento</small>
-            <strong>¿Te interesa hospedarte por la zona?</strong>
-            <p>Contactá a los novios cuando quieras y te orientamos con opciones cercanas.</p>
+            <small>Regreso confirmado</small>
+            <strong>03:00 HRS</strong>
+            <p>
+              Los micros y combis volverán a sus respectivos puntos de origen.
+            </p>
           </div>
         </article>
-      </section>`;
+      </section>
+
+      <section class="transport-final-note section-card">
+        <span>${uiIcon("question")}</span>
+        <div>
+          <strong>¿Todavía no sabés qué zona elegir?</strong>
+          <p>
+            Podés seleccionar <b>“Me adapto a cualquiera”</b>.
+            Esa opción nos ayuda a completar mejor cada vehículo.
+          </p>
+        </div>
+        <button type="button" data-go="asistencia">
+          Ir a Asistencia
+        </button>
+      </section>
+    `;
+  }
+
+  function transportZoneCard({
+    icon,
+    area,
+    place,
+    text
+  }) {
+    return `
+      <article class="section-card transport-zone-card">
+        <span>${uiIcon(icon)}</span>
+        <div>
+          <small>Posible salida</small>
+          <strong>${escapeHTML(area)}</strong>
+          <b>${escapeHTML(place)}</b>
+          <p>${escapeHTML(text)}</p>
+        </div>
+        <em>Tentativo</em>
+      </article>
+    `;
+  }
+
+  function transportStep(number, title, text) {
+    return `
+      <article class="transport-step">
+        <span>${escapeHTML(number)}</span>
+        <div>
+          <strong>${escapeHTML(title)}</strong>
+          <p>${escapeHTML(text)}</p>
+        </div>
+      </article>
+    `;
   }
 
 
   function transportStyles() {
     return `<style>
-      .transport-hero{display:grid;grid-template-columns:75px minmax(0,1fr);gap:15px;align-items:center;padding:17px;background:linear-gradient(135deg,rgba(201,170,114,.12),rgba(255,253,248,.90))}.transport-illustration{width:68px;height:68px;display:grid;place-items:center;border:1px solid rgba(116,51,68,.16);border-radius:20px;background:rgba(116,51,68,.06);color:#743344}.transport-illustration .ui-icon{width:34px;height:34px}.transport-status{display:inline-flex;padding:4px 8px;border-radius:999px;background:rgba(201,170,114,.14);color:var(--gold-deep);font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-copy h3{margin:5px 0 4px;font-size:clamp(22px,4vw,32px)}.transport-copy p{margin:0;font-size:12px;line-height:1.35}.transport-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.transport-grid article{display:grid;grid-template-columns:35px minmax(0,1fr);gap:9px;padding:12px}.transport-grid article>span{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:rgba(201,170,114,.13);color:#8a6129}.transport-grid .ui-icon{width:18px;height:18px}.transport-grid small,.transport-grid strong{display:block}.transport-grid strong{margin:2px 0 3px;font-size:16px}.transport-grid p{margin:0;font-size:10px}.transport-preview{display:flex;align-items:center;gap:10px;padding:13px;border-style:solid}.transport-preview>div:first-child{width:37px;height:37px;display:grid;place-items:center;border-radius:11px;background:rgba(132,104,68,.08)}.transport-preview strong{display:block}.transport-preview p{margin:2px 0 0;font-size:11px}
-      @media(max-width:650px){.transport-hero{grid-template-columns:58px minmax(0,1fr);padding:14px}.transport-illustration{width:54px;height:54px;border-radius:16px}.transport-illustration .ui-icon{width:28px;height:28px}.transport-grid{grid-template-columns:1fr}.transport-grid article{padding:10px}}
+      .transport-main-card{display:grid;grid-template-columns:70px minmax(0,1fr);gap:16px;padding:18px;border-color:rgba(116,51,68,.24);background:radial-gradient(circle at 92% 0%,rgba(213,177,105,.17),transparent 37%),linear-gradient(135deg,rgba(116,51,68,.07),rgba(255,253,248,.94))}
+      .transport-main-icon{width:66px;height:66px;display:grid;place-items:center;border-radius:20px;background:#743344;color:#fffaf2;box-shadow:0 10px 22px rgba(116,51,68,.18)}
+      .transport-main-icon .ui-icon{width:34px;height:34px}
+      .transport-main-copy h3{margin:4px 0 7px;font-size:clamp(24px,4vw,34px);line-height:1.05}.transport-main-copy>p:not(.eyebrow){margin:0;max-width:780px;font-size:11.5px;line-height:1.5}
+      .transport-main-benefits{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.transport-main-benefits span{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid rgba(116,51,68,.13);border-radius:999px;background:rgba(255,255,255,.50);color:#5c3842;font-size:8px;font-weight:900}.transport-main-benefits .ui-icon{width:14px;height:14px}
+      .transport-main-copy button{min-height:38px;padding:8px 13px}.transport-current-choice{margin-top:8px!important;color:#426f47!important;font-size:9px!important;font-weight:900}
+      .transport-section-heading{margin:18px 2px 8px}.transport-section-heading h3{margin:3px 0 2px;font-size:22px}.transport-section-heading>p:not(.eyebrow){margin:0;color:var(--muted);font-size:10px}
+      .transport-zones-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+      .transport-zone-card{position:relative;display:grid;grid-template-columns:36px minmax(0,1fr);gap:9px;padding:12px}.transport-zone-card>span{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:rgba(49,83,110,.08);color:#31536e}.transport-zone-card>span .ui-icon{width:18px;height:18px}.transport-zone-card small,.transport-zone-card strong,.transport-zone-card b{display:block}.transport-zone-card small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-zone-card strong{margin-top:2px;font-size:16px}.transport-zone-card b{margin-top:2px;color:#31536e;font-size:9px}.transport-zone-card p{margin:5px 0 0;font-size:8.5px;line-height:1.35}.transport-zone-card em{position:absolute;top:8px;right:8px;padding:3px 6px;border-radius:999px;background:rgba(201,170,114,.15);color:#8a6129;font-size:6.5px;font-style:normal;font-weight:900;text-transform:uppercase}
+      .transport-how{margin-top:10px;padding:15px}.transport-how-head{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center}.transport-how-head>span{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.14);color:#8a6129}.transport-how-head .ui-icon{width:20px;height:20px}.transport-how-head h3{margin:2px 0 0;font-size:20px}
+      .transport-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.transport-step{display:grid;grid-template-columns:27px minmax(0,1fr);gap:8px;padding:10px;border:1px solid rgba(132,104,68,.13);border-radius:13px;background:rgba(255,255,255,.40)}.transport-step>span{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:#743344;color:#fff;font-size:9px;font-weight:950}.transport-step strong{display:block;font-size:10px}.transport-step p{margin:3px 0 0;font-size:8px;line-height:1.35}
+      .transport-times-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}.transport-time-card{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;padding:13px}.transport-time-card>span{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:rgba(49,83,110,.08);color:#31536e}.transport-time-card .ui-icon{width:19px;height:19px}.transport-time-card small,.transport-time-card strong{display:block}.transport-time-card small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-time-card strong{margin:2px 0;font-size:18px}.transport-time-card p{margin:0;font-size:8.5px}.transport-return-card{border-color:rgba(74,125,79,.21);background:linear-gradient(135deg,rgba(74,125,79,.055),rgba(255,253,248,.88))}.transport-return-card>span{background:rgba(74,125,79,.09);color:#426f47}
+      .transport-final-note{display:grid;grid-template-columns:39px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:10px;padding:13px}.transport-final-note>span{width:37px;height:37px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.14);color:#8a6129}.transport-final-note .ui-icon{width:19px;height:19px}.transport-final-note strong{font-size:12px}.transport-final-note p{margin:3px 0 0;font-size:8.5px}.transport-final-note button{min-height:34px;padding:7px 10px;white-space:nowrap}
+      @media(max-width:720px){.transport-zones-grid,.transport-steps{grid-template-columns:1fr}.transport-times-grid{grid-template-columns:1fr}.transport-main-card{grid-template-columns:52px minmax(0,1fr);padding:14px}.transport-main-icon{width:50px;height:50px;border-radius:15px}.transport-main-icon .ui-icon{width:27px;height:27px}.transport-final-note{grid-template-columns:36px minmax(0,1fr)}.transport-final-note button{grid-column:1/-1;width:100%}}
     </style>`;
   }
 
@@ -3568,6 +3744,9 @@
       : formValues.transport === "auto"
         ? "particular"
         : formValues.transport;
+    const savedPickupZone =
+      formValues.pickupZone || "";
+
     const savedDietChoice = formValues.dietChoice ||
       (
         hasSaved
@@ -3642,9 +3821,20 @@
             <span class="rsvp-transport-unified-copy">
               <small>Traslado elegido</small>
               <strong>${escapeHTML(selectedTransport)}</strong>
+              ${
+                ["combi", "micro"].includes(saved.transport)
+                  ? `<span class="rsvp-transport-zone">
+                      Zona preferida:
+                      ${escapeHTML(
+                        pickupZoneLabel(saved.pickupZone) ||
+                        "Sin definir"
+                      )}
+                    </span>`
+                  : ""
+              }
               <em>
-                Los horarios y puntos de salida serán informados
-                próximamente en la sección Traslados.
+                Los horarios y puntos definitivos serán informados
+                después del cierre de respuestas del 15 de agosto.
               </em>
             </span>
             <b aria-hidden="true">Ver traslados ›</b>
@@ -3779,6 +3969,67 @@
             </small>
           </fieldset>
 
+
+          <fieldset
+            class="choice-field pickup-zone-field ${
+              savedTransport === "combi"
+                ? ""
+                : "hidden"
+            }"
+            data-pickup-zone
+            ${savedTransport === "combi" ? "" : "disabled"}>
+            <legend>
+              ¿Desde qué zona preferís salir?
+            </legend>
+            <p class="pickup-zone-intro">
+              Son puntos tentativos. La opción final dependerá
+              de la cantidad de pasajeros de cada zona.
+            </p>
+
+            <div class="choice-group pickup-zone-grid">
+              ${choicePill(
+                "pickupZone",
+                "capital-obelisco",
+                "Capital · Obelisco",
+                savedPickupZone,
+                savedTransport === "combi"
+              )}
+              ${choicePill(
+                "pickupZone",
+                "wilde",
+                "Wilde",
+                savedPickupZone,
+                savedTransport === "combi"
+              )}
+              ${choicePill(
+                "pickupZone",
+                "longchamps",
+                "Longchamps",
+                savedPickupZone,
+                savedTransport === "combi"
+              )}
+              ${choicePill(
+                "pickupZone",
+                "flexible",
+                "Me adapto a cualquiera",
+                savedPickupZone,
+                savedTransport === "combi"
+              )}
+              ${choicePill(
+                "pickupZone",
+                "otra",
+                "Necesitaría otra alternativa",
+                savedPickupZone,
+                savedTransport === "combi"
+              )}
+            </div>
+
+            <small class="pickup-zone-help">
+              El punto exacto y el horario se confirmarán
+              después del 15 de agosto.
+            </small>
+          </fieldset>
+
           <fieldset class="choice-field diet-choice-field">
             <legend>¿Tenés restricciones alimentarias?</legend>
             <div class="choice-group choice-group-two">
@@ -3852,13 +4103,14 @@
       .rsvp-form-compact{padding:16px}.rsvp-form-compact .form-grid{gap:10px}.rsvp-form-compact label{gap:5px}.rsvp-form-compact input,.rsvp-form-compact select{min-height:42px}.rsvp-form-compact textarea{min-height:70px}
       .choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}
       .choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
+      .pickup-zone-field{grid-column:1/-1;padding:11px!important;border:1px solid rgba(49,83,110,.14)!important;border-radius:14px;background:rgba(49,83,110,.035)}.pickup-zone-field.hidden{display:none}.pickup-zone-intro{margin:-1px 0 8px;color:var(--muted);font-size:8.5px;line-height:1.35}.pickup-zone-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pickup-zone-grid .choice-pill:last-child{grid-column:1/-1}.pickup-zone-help{display:block;margin-top:7px;color:#31536e;font-size:8px;font-weight:800}.rsvp-transport-zone{display:block;margin-top:2px;color:#31536e;font-size:8px;font-weight:900}
       .diet-detail-label{display:grid;gap:5px;margin-top:10px;padding:11px;border:1px solid rgba(132,104,68,.14);border-radius:14px;background:rgba(255,255,255,.35);transition:.18s}.diet-detail-label>span{font-size:12px;font-weight:900}.diet-detail-label small{color:var(--muted);font-size:9px}.diet-detail-label.is-disabled{background:rgba(120,120,120,.055);border-color:rgba(120,120,120,.13)}.diet-detail-label.is-disabled>span,.diet-detail-label.is-disabled small{color:#8b8782}.diet-detail-label textarea:disabled{background:rgba(120,120,120,.08)!important;color:#999!important;cursor:not-allowed}
       .rsvp-confirmed-compact{padding:16px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.80))}.rsvp-confirmed-head{display:flex;align-items:center;gap:11px}.rsvp-confirmed-head h4{margin:0 0 2px;font-size:20px}.rsvp-confirmed-head p{margin:0;font-size:11px}.rsvp-okmark{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:21px;font-weight:1000}
       .rsvp-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.summary-item{border:1px solid rgba(132,104,68,.14);border-radius:13px;padding:10px;background:rgba(255,255,255,.44)}.summary-item strong{display:block;color:#7a3140;font-size:8px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.summary-item p{margin:0;color:var(--ink);font-size:12px;font-weight:750;word-break:break-word}
       .rsvp-actions-row,.rsvp-form-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-actions-row button,.rsvp-form-actions button{min-height:37px;padding:8px 12px}
       .rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:37px;padding:8px 12px;border:1px solid rgba(54,85,111,.25);border-radius:999px;background:rgba(54,85,111,.07);color:#36556f!important;text-decoration:none;font-size:10px;font-weight:900;box-shadow:none}.rsvp-calendar-link .ui-icon{width:15px;height:15px}.rsvp-calendar-link-small{margin-left:auto}
       .rsvp-next-challenge{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:9px;padding:12px 14px;border-color:rgba(201,170,114,.35);background:linear-gradient(135deg,rgba(201,170,114,.10),rgba(255,253,248,.86))}.rsvp-next-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.15);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:19px;height:19px}.rsvp-next-challenge h4{margin:0 0 2px;font-size:17px}.rsvp-next-challenge p{margin:0;font-size:10px}.rsvp-next-challenge button{min-height:36px;padding:8px 11px;white-space:nowrap}
-      @media(max-width:650px){.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
+      @media(max-width:650px){.pickup-zone-grid{grid-template-columns:1fr}.pickup-zone-grid .choice-pill:last-child{grid-column:auto}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
     </style>`;
   }
 
@@ -4040,13 +4292,25 @@
 
   function transportLabel(value) {
     const labels = {
-      "particular": "De forma particular",
-      "auto": "De forma particular",
-      "combi": "Necesito información del micro",
-      "micro": "Necesito información del micro",
+      "particular": "Particular",
+      "auto": "Particular",
+      "combi": "Micro / Combi",
+      "micro": "Micro / Combi",
       "duermo": "Duermo en la estancia"
     };
     return labels[value] || value || "Sin cargar";
+  }
+
+  function pickupZoneLabel(value) {
+    const labels = {
+      "capital-obelisco": "Capital Federal · Obelisco",
+      "wilde": "Wilde",
+      "longchamps": "Longchamps",
+      "flexible": "Me adapto a cualquiera",
+      "otra": "Necesitaría otra alternativa"
+    };
+
+    return labels[value] || value || "";
   }
 
   function rsvpThanksTitle(saved) {
@@ -6103,7 +6367,32 @@
       answered: { title: "Respondieron la invitación", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]), detail: guest => `Equipo ${getTeam(guest.team).name} · ${attendanceLabel(state.rsvps[guest.id]?.attendance)}` },
       declined: { title: "No asistirán", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]) && state.rsvps[guest.id].attendance === "no", detail: guest => `Equipo ${getTeam(guest.team).name} · No asiste` },
       unanswered: { title: "Todavía no respondieron", filter: guest => !hasCompletedRsvp(state.rsvps[guest.id]), detail: guest => `Equipo ${getTeam(guest.team).name} · Pendiente` },
-      micro: { title: "Necesitan información del micro", filter: guest => { const row = state.rsvps[guest.id]; return hasCompletedRsvp(row) && row.attendance === "si" && ["combi","micro"].includes(row.transport); }, detail: guest => `Equipo ${getTeam(guest.team).name} · Micro desde el Obelisco` },
+      micro: {
+        title: "Eligieron Micro / Combi",
+        filter: guest => {
+          const row = state.rsvps[guest.id];
+
+          return (
+            hasCompletedRsvp(row) &&
+            row.attendance === "si" &&
+            ["combi", "micro"].includes(
+              row.transport
+            )
+          );
+        },
+        detail: guest => {
+          const row =
+            state.rsvps[guest.id] || {};
+
+          return `Equipo ${
+            getTeam(guest.team).name
+          } · ${
+            pickupZoneLabel(
+              row.pickupZone
+            ) || "Zona sin definir"
+          }`;
+        }
+      },
       restrictions: {
         title: "Restricciones alimentarias",
         filter: guest => {
@@ -6444,6 +6733,39 @@
         ["combi", "micro"].includes(rsvp.transport)
       );
     }).length;
+
+    const pickupZoneCounts = {
+      "capital-obelisco": 0,
+      "wilde": 0,
+      "longchamps": 0,
+      "flexible": 0,
+      "otra": 0,
+      "sin-definir": 0
+    };
+
+    invitedGuests.forEach(guest => {
+      const rsvp = state.rsvps[guest.id];
+
+      if (
+        !hasCompletedRsvp(rsvp) ||
+        rsvp.attendance !== "si" ||
+        !["combi", "micro"].includes(
+          rsvp.transport
+        )
+      ) {
+        return;
+      }
+
+      const key =
+        Object.prototype.hasOwnProperty.call(
+          pickupZoneCounts,
+          rsvp.pickupZone
+        )
+          ? rsvp.pickupZone
+          : "sin-definir";
+
+      pickupZoneCounts[key] += 1;
+    });
 
     const restrictionsCount = invitedGuests.filter(guest => {
       const rsvp = state.rsvps[guest.id];
@@ -7067,6 +7389,56 @@
         </button>
       </section>
 
+
+      <section class="admin-transport-demand section-card">
+        <div class="admin-transport-demand-head">
+          <span>${uiIcon("coach")}</span>
+          <div>
+            <p class="eyebrow">Planificación de traslados</p>
+            <h3>Preferencias de salida</h3>
+            <p>
+              ${combiCount} ${
+                combiCount === 1
+                  ? "persona eligió"
+                  : "personas eligieron"
+              } Micro / Combi.
+            </p>
+          </div>
+        </div>
+
+        <div class="admin-transport-demand-grid">
+          ${adminTransportZone(
+            "Capital · Obelisco",
+            pickupZoneCounts["capital-obelisco"]
+          )}
+          ${adminTransportZone(
+            "Wilde",
+            pickupZoneCounts.wilde
+          )}
+          ${adminTransportZone(
+            "Longchamps",
+            pickupZoneCounts.longchamps
+          )}
+          ${adminTransportZone(
+            "Me adapto",
+            pickupZoneCounts.flexible
+          )}
+          ${adminTransportZone(
+            "Otra alternativa",
+            pickupZoneCounts.otra
+          )}
+          ${adminTransportZone(
+            "Sin definir",
+            pickupZoneCounts["sin-definir"]
+          )}
+        </div>
+
+        <small>
+          Los recorridos definitivos se pueden definir
+          después del cierre del 15 de agosto.
+        </small>
+      </section>
+
       ${renderAdminPeopleModal()}
 
       <section class="admin-subsection-launchers">
@@ -7128,6 +7500,15 @@
     `;
   }
 
+  function adminTransportZone(label, value) {
+    return `
+      <div class="admin-transport-zone">
+        <span>${escapeHTML(label)}</span>
+        <strong>${Number(value || 0)}</strong>
+      </div>
+    `;
+  }
+
   function renderAdminSubsectionHeader({
     icon,
     eyebrow,
@@ -7170,6 +7551,7 @@
       .admin-attendance-summary article{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.78);box-shadow:0 8px 20px rgba(76,51,22,.05)}
       .admin-attendance-summary article>span{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:rgba(122,49,64,.09);color:#743344;font-size:20px;font-weight:950}
       .admin-attendance-summary small{display:block;color:var(--muted-2);font-weight:850}.admin-attendance-summary strong{display:block;margin-top:2px;color:var(--ink);font-family:var(--font-title);font-size:29px}.admin-attendance-summary p{margin:1px 0 0;font-size:12px;line-height:1.35}
+      .admin-transport-demand{margin-top:12px;padding:15px;border-color:rgba(49,83,110,.18);background:linear-gradient(135deg,rgba(49,83,110,.055),rgba(255,253,248,.90))}.admin-transport-demand-head{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center}.admin-transport-demand-head>span{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(49,83,110,.09);color:#31536e}.admin-transport-demand-head .ui-icon{width:21px;height:21px}.admin-transport-demand-head h3{margin:2px 0;font-size:20px}.admin-transport-demand-head p:not(.eyebrow){margin:0;font-size:9px}.admin-transport-demand-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin-top:11px}.admin-transport-zone{padding:9px;border:1px solid rgba(49,83,110,.12);border-radius:11px;background:rgba(255,255,255,.48)}.admin-transport-zone span{display:block;color:var(--muted);font-size:7px;font-weight:800;line-height:1.25}.admin-transport-zone strong{display:block;margin-top:3px;color:#31536e;font-family:var(--font-title);font-size:21px}.admin-transport-demand>small{display:block;margin-top:9px;color:var(--muted);font-size:8px;font-weight:750}
       .admin-official-export{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:16px;align-items:center;margin-top:15px;padding:20px 22px;border-color:rgba(74,125,79,.22);background:linear-gradient(135deg,rgba(74,125,79,.06),rgba(255,253,248,.86))}.admin-official-export-icon{width:50px;height:50px;display:grid;place-items:center;border-radius:15px;background:rgba(74,125,79,.10);color:#426f47}.admin-official-export-icon .ui-icon{width:24px;height:24px}.admin-official-export h4{margin:4px 0 5px;font-size:22px}.admin-official-export p:not(.eyebrow){margin:0;font-size:13px}.admin-official-export button{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.admin-official-export button .ui-icon{width:18px;height:18px}
       .admin-score-card{display:grid;gap:22px;margin-top:16px;padding:26px}.admin-score-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.admin-score-heading h4{margin:5px 0 6px;font-size:28px}.admin-score-heading p{margin:0}.admin-score-preview{display:inline-flex;align-items:center;min-height:36px;padding:8px 12px;border-radius:999px;background:rgba(201,170,114,.13);color:var(--gold-deep);font-size:12px;font-weight:900;white-space:nowrap}
       .admin-score-fieldset{margin:0;padding:0;border:0}.admin-score-fieldset legend{margin-bottom:11px;color:var(--ink);font-weight:900}.admin-team-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.admin-team-option{position:relative;display:grid;justify-items:center;gap:7px;min-height:104px;margin:0;padding:13px 8px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.40);color:var(--ink);font-size:12px;font-weight:900;cursor:pointer;text-align:center}.admin-team-option input{position:absolute;opacity:0;pointer-events:none}.admin-team-option:has(input:checked){border-color:color-mix(in srgb,var(--local-accent) 65%,var(--line));background:color-mix(in srgb,var(--local-accent) 13%,rgba(255,255,255,.56));box-shadow:0 0 0 3px color-mix(in srgb,var(--local-accent) 12%,transparent)}.admin-team-logo{width:48px;height:48px}
@@ -7180,9 +7562,9 @@
       .admin-test-reset-copy{display:grid;grid-template-columns:52px minmax(0,1fr);gap:15px;align-items:start}.admin-test-reset-icon{width:50px;height:50px;display:grid;place-items:center;border:1px solid rgba(122,49,64,.18);border-radius:15px;background:rgba(122,49,64,.08);color:#743344;font-size:25px;font-weight:900}.admin-test-reset-copy h4{margin:4px 0 6px;font-size:24px}.admin-test-reset-copy p:not(.eyebrow){margin:0;max-width:700px}.admin-test-reset-copy small{display:block;margin-top:7px;line-height:1.4}.admin-test-reset-button{min-height:48px;flex:0 0 auto;border:1px solid #743344;background:#743344;color:#fffaf0;box-shadow:0 8px 18px rgba(116,51,68,.13);white-space:nowrap}.admin-test-reset-button:hover{background:#652c3b}
       .team-page-actions{display:flex;gap:9px;margin-top:17px}.team-page-actions button,.ranking-action-card button{display:inline-flex;align-items:center;gap:8px}.team-page-actions .ui-icon,.ranking-action-card .ui-icon{width:19px;height:19px}
       .ranking-action-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px}.ranking-action-card strong{color:var(--ink);font-size:17px}.ranking-action-card p{margin:3px 0 0;font-size:13px}.ranking-action-card button{white-space:nowrap}.ranking-action-buttons{display:flex;gap:9px;align-items:center}.ranking-refresh-button{border:1px solid rgba(132,104,68,.24);background:rgba(255,255,255,.50);color:var(--ink);box-shadow:none}.ranking-action-buttons button{display:inline-flex;align-items:center;gap:8px}.ranking-action-buttons .ui-icon{width:18px;height:18px}
-      @media(max-width:1100px){.admin-attendance-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+      @media(max-width:1100px){.admin-attendance-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-transport-demand-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
       @media(max-width:900px){.admin-title-row{align-items:stretch;flex-direction:column}.admin-lock-button{width:100%;justify-content:center;margin-top:0}.admin-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-team-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-game-toggle-list{grid-template-columns:1fr}.admin-sync-card{grid-template-columns:18px minmax(0,1fr)}.admin-sync-card button{grid-column:1/-1;width:100%;justify-content:center}}
-      @media(max-width:560px){.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-combi-stat{grid-column:1/-1}.admin-official-export{grid-template-columns:44px minmax(0,1fr)}.admin-official-export-icon{width:42px;height:42px}.admin-official-export button{grid-column:1/-1;width:100%;justify-content:center}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-buttons{display:grid;width:100%;grid-template-columns:1fr 1fr}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}.admin-test-reset-panel{align-items:stretch;flex-direction:column}.admin-test-reset-copy{grid-template-columns:44px minmax(0,1fr)}.admin-test-reset-icon{width:42px;height:42px}.admin-test-reset-button{width:100%;white-space:normal}}
+      @media(max-width:560px){.admin-transport-demand-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-attendance-summary{grid-template-columns:1fr 1fr}.admin-combi-stat{grid-column:1/-1}.admin-official-export{grid-template-columns:44px minmax(0,1fr)}.admin-official-export-icon{width:42px;height:42px}.admin-official-export button{grid-column:1/-1;width:100%;justify-content:center}.admin-attendance-summary article{grid-template-columns:1fr;gap:7px;padding:14px}.admin-attendance-summary article>span{width:36px;height:36px}.admin-attendance-summary strong{font-size:25px}.admin-score-card{padding:18px}.admin-score-heading{display:grid}.admin-score-preview{width:max-content}.admin-team-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-action-card{align-items:flex-start;flex-direction:column}.ranking-action-buttons{display:grid;width:100%;grid-template-columns:1fr 1fr}.ranking-action-card button,.team-page-actions button{width:100%;justify-content:center}.admin-test-reset-panel{align-items:stretch;flex-direction:column}.admin-test-reset-copy{grid-template-columns:44px minmax(0,1fr)}.admin-test-reset-icon{width:42px;height:42px}.admin-test-reset-button{width:100%;white-space:normal}}
     </style>`;
   }
 
@@ -7289,6 +7671,49 @@
 
     if (route === "asistencia") {
       const rsvpForm = $("#rsvpForm");
+      const updatePickupZoneField = () => {
+        if (!rsvpForm) return;
+
+        const selectedTransport =
+          rsvpForm.querySelector(
+            'input[name="transport"]:checked'
+          )?.value || "";
+
+        const fieldset =
+          rsvpForm.querySelector(
+            "[data-pickup-zone]"
+          );
+
+        if (!fieldset) return;
+
+        const visible =
+          ["combi", "micro"].includes(
+            selectedTransport
+          );
+
+        fieldset.classList.toggle(
+          "hidden",
+          !visible
+        );
+        fieldset.disabled = !visible;
+
+        fieldset
+          .querySelectorAll(
+            'input[name="pickupZone"]'
+          )
+          .forEach(input => {
+            input.required = visible;
+
+            if (!visible) {
+              input.checked = false;
+            }
+          });
+
+        if (!visible) {
+          captureRsvpDraft(rsvpForm);
+        }
+      };
+
       const updateDietField = () => {
         if (!rsvpForm) return;
         const choice = rsvpForm.querySelector('input[name="dietChoice"]:checked')?.value || "";
@@ -7310,6 +7735,15 @@
 
         if (disabled) textarea.value = "";
       };
+
+      rsvpForm?.querySelectorAll(
+        'input[name="transport"]'
+      ).forEach(input => {
+        input.addEventListener(
+          "change",
+          updatePickupZoneField
+        );
+      });
 
       rsvpForm?.querySelectorAll(
         'input[name="dietChoice"]'
@@ -7340,6 +7774,7 @@
         );
       }
 
+      updatePickupZoneField();
       updateDietField();
 
       $("#editRsvp")?.addEventListener("click", () => {
@@ -7371,6 +7806,32 @@
           return;
         }
 
+        const usesMicro =
+          ["combi", "micro"].includes(
+            values.transport
+          );
+
+        const pickupZone = usesMicro
+          ? String(values.pickupZone || "").trim()
+          : "";
+
+        if (usesMicro && !pickupZone) {
+          toast(
+            "Elegí desde qué zona preferís viajar."
+          );
+
+          form
+            .querySelector(
+              '[data-pickup-zone]'
+            )
+            ?.scrollIntoView({
+              behavior: "smooth",
+              block: "center"
+            });
+
+          return;
+        }
+
         const diet = values.dietChoice === "si"
           ? String(values.diet || "").trim()
           : "";
@@ -7383,6 +7844,7 @@
 
         const payload = {
           ...values,
+          pickupZone,
           diet,
           comment: "",
           guestId: currentGuest.id,
@@ -8422,7 +8884,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32468 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32469 y volvé a intentar.`
           });
         }
       }
@@ -8788,6 +9250,7 @@
       "Teléfono",
       "Asistencia",
       "Traslado / micro",
+      "Zona preferida de salida",
       "Restricciones alimenticias",
       "Canción que quiere escuchar",
       "Canción que no quiere escuchar",
@@ -8822,6 +9285,7 @@
           rsvp.phone || "",
           attendanceLabel(rsvp.attendance),
           transportLabel(rsvp.transport),
+          pickupZoneLabel(rsvp.pickupZone),
           rsvp.diet || "",
           profile.songYes || "",
           profile.songNo || "",
@@ -8842,8 +9306,8 @@
   }
 
   function buildRsvpCsv() {
-    const header = ["guestId", "nombre", "apellido", "email", "telefono", "asistencia", "traslado", "restricciones", "updatedAt"];
-    const rows = Object.entries(state.rsvps).map(([guestId, row]) => [guestId, row.firstName, row.lastName, row.email, row.phone, row.attendance, row.transport, row.diet, row.updatedAt]);
+    const header = ["guestId", "nombre", "apellido", "email", "telefono", "asistencia", "traslado", "zonaPreferida", "restricciones", "updatedAt"];
+    const rows = Object.entries(state.rsvps).map(([guestId, row]) => [guestId, row.firstName, row.lastName, row.email, row.phone, row.attendance, row.transport, row.pickupZone, row.diet, row.updatedAt]);
     return [header, ...rows].map(row => row.map(csvCell).join(",")).join("\n");
   }
 
