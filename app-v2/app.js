@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32472";
+  const CURRENT_APP_VERSION = "32473";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32472"
+        appVersion: CONFIG.APP_VERSION || "32473"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32472",
+      appVersion: "32473",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2525,7 +2525,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32472`;
+    const src = `assets/team-logos/${team.id}.png?v=32473`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -2577,7 +2577,9 @@
       plane: '<path d="m3 13 7.2 1.2L18.5 21l2-1-4.2-7.2 4.7-2.2c1.3-.6 1.6-2.3.6-3.3-.7-.7-1.8-.8-2.6-.3l-4.8 2.8L7.2 5.5 5.7 6.8l4.7 5.5-5.9-1.1L3 13Z"/>',
       road: '<path d="M9 21 11 3h2l2 18"/><path d="M12 6v3M12 12v3M12 18v2"/>',
       rules: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="m6.5 8 .5.5 1-1"/>',
-      phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10 5h4M11 18.5h2"/>'
+      phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10 5h4M11 18.5h2"/>',
+      copy: '<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+      external: '<path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
@@ -6310,81 +6312,303 @@
 
 
   const GIFT_DETAILS = {
-    alias: "NOVIO.NOVIA.BODA",
-    cbu: "0000000000000000000000",
-    holder: "Nombre Apellido",
-    paymentUrl: ""
+    alias: "vani.fede.viaje",
+    cbu: "0720500288000005998036",
+    holder: "Federico Santi"
   };
 
-  function renderGifts() {
-    const paymentEnabled = Boolean(GIFT_DETAILS.paymentUrl);
+  const GIFT_APP_LINKS = {
+    mercadoPago: {
+      ios:
+        "https://apps.apple.com/ar/app/mercado-pago-cuenta-digital/id925436649",
+      android:
+        "https://play.google.com/store/apps/details?id=com.mercadopago.wallet",
+      web:
+        "https://www.mercadopago.com.ar/"
+    },
+    modo: {
+      ios:
+        "https://apps.apple.com/ar/app/modo/id1530606263",
+      android:
+        "https://play.google.com/store/apps/details?id=com.playdigital.modo",
+      web:
+        "https://www.modo.com.ar/"
+    }
+  };
 
+  function mobilePlatform() {
+    const userAgent =
+      navigator.userAgent || "";
+    const platform =
+      navigator.platform || "";
+
+    const isIOS =
+      /iPad|iPhone|iPod/i.test(userAgent) ||
+      (
+        platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1
+      );
+
+    if (isIOS) return "ios";
+    if (/Android/i.test(userAgent)) {
+      return "android";
+    }
+
+    return "web";
+  }
+
+  function giftAppUrl(provider) {
+    const links =
+      GIFT_APP_LINKS[provider];
+
+    if (!links) return "";
+
+    return (
+      links[mobilePlatform()] ||
+      links.web
+    );
+  }
+
+  function mercadoPagoBrand() {
+    return `
+      <span
+        class="gift-brand gift-brand-mp"
+        aria-label="Mercado Pago">
+        <span class="gift-brand-mp-mark">
+          <i></i><b></b>
+        </span>
+        <strong>
+          mercado <em>pago</em>
+        </strong>
+      </span>
+    `;
+  }
+
+  function modoBrand() {
+    return `
+      <span
+        class="gift-brand gift-brand-modo"
+        aria-label="MODO">
+        <strong>MODO</strong>
+        <i></i>
+      </span>
+    `;
+  }
+
+  function renderGifts() {
     return `
       ${giftStyles()}
-      ${sectionHeader("casamiento", "Regalos", "")}
+      ${sectionHeader(
+        "casamiento",
+        "Regalos",
+        ""
+      )}
 
       <section class="gift-hero section-card">
-        <span>${uiIcon("gift")}</span>
+        <span>${uiIcon("plane")}</span>
+
         <div>
-          <p class="eyebrow">Gracias por acompañarnos</p>
-          <h3>Nuestro mejor regalo es compartir este día con vos 🥂</h3>
-          <p>Tu presencia en el casamiento es lo más importante para nosotros.</p>
-          <p>Además, si querés hacernos un regalo y ayudarnos a seguir sumando aventuras en nuestra <strong>Luna de Miel</strong>, podés hacerlo de la manera que te resulte más cómoda.</p>
+          <p class="eyebrow">
+            Nuestra Luna de miel
+          </p>
+          <h3>
+            Tu presencia es nuestro mejor regalo
+          </h3>
+          <p>
+            Pero si querés ayudarnos a seguir
+            sumando aventuras, podés hacer una
+            transferencia con estos datos.
+          </p>
         </div>
       </section>
 
-      <section class="gift-options">
-        <article class="gift-bank-card section-card">
-          <div class="gift-card-heading">
-            <span>${uiIcon("download")}</span>
-            <div><small>Opción 1</small><h4>Transferencia bancaria</h4></div>
+      <section class="gift-transfer-card section-card">
+        <div class="gift-transfer-heading">
+          <span>${uiIcon("download")}</span>
+          <div>
+            <small>Única opción</small>
+            <h3>Transferencia bancaria</h3>
           </div>
 
-          ${giftDetailRow("Alias", GIFT_DETAILS.alias, "alias")}
-          ${giftDetailRow("CBU / CVU", GIFT_DETAILS.cbu, "cbu")}
-          ${giftDetailRow("Titular", GIFT_DETAILS.holder, "")}
-        </article>
+          <span class="gift-currency-badge">
+            PESOS / USD
+          </span>
+        </div>
 
-        <article class="gift-payment-card section-card">
-          <div class="gift-card-heading">
-            <span>${uiIcon("phone")}</span>
-            <div><small>Opción 2</small><h4>Mercado Pago / MODO</h4></div>
-          </div>
+        <div class="gift-data-list">
+          ${giftDetailRow(
+            "Alias",
+            GIFT_DETAILS.alias,
+            "alias",
+            true
+          )}
 
-          <p>También podés realizar el regalo escaneando nuestro código QR o ingresando desde el siguiente botón.</p>
+          ${giftDetailRow(
+            "CBU",
+            GIFT_DETAILS.cbu,
+            "cbu",
+            true
+          )}
 
-          <div class="gift-qr-placeholder">
-            ${uiIcon("gift")}
-            <strong>QR próximamente</strong>
-            <small>Acá aparecerá el código de pago.</small>
-          </div>
+          ${giftDetailRow(
+            "Titular",
+            GIFT_DETAILS.holder,
+            "",
+            false
+          )}
+        </div>
 
-          ${paymentEnabled
-            ? `<a href="${escapeHTML(GIFT_DETAILS.paymentUrl)}" target="_blank" rel="noopener">Hacer un regalo</a>`
-            : `<button type="button" disabled>Enlace próximamente</button>`}
-        </article>
+        <div class="gift-currency-note">
+          <span>${uiIcon("checkCircle")}</span>
+          <p>
+            Este es el alias que tenés que copiar.
+            Antes de confirmar una transferencia
+            en pesos o USD, verificá que la app
+            muestre la moneda correcta y que el
+            titular sea
+            <strong>Federico Santi</strong>.
+          </p>
+        </div>
       </section>
 
-      <p class="gift-thanks">Gracias por acompañarnos y ser parte de este momento tan especial 🤍</p>`;
+      <section class="gift-wallet-card section-card">
+        <div class="gift-wallet-heading">
+          <div>
+            <p class="eyebrow">
+              Transferí desde tu celular
+            </p>
+            <h3>
+              Copiá el alias y abrí tu billetera
+            </h3>
+          </div>
+
+          <span>${uiIcon("phone")}</span>
+        </div>
+
+        <div class="gift-wallet-steps">
+          <span>
+            <b>1</b>
+            Copiá el alias
+          </span>
+          <i>›</i>
+          <span>
+            <b>2</b>
+            Abrí la app
+          </span>
+          <i>›</i>
+          <span>
+            <b>3</b>
+            Transferí
+          </span>
+        </div>
+
+        <button
+          type="button"
+          class="gift-alias-copy-main"
+          data-copy-gift="alias">
+          <span>
+            <small>Alias</small>
+            <strong>${escapeHTML(
+              GIFT_DETAILS.alias
+            )}</strong>
+          </span>
+
+          <b>
+            ${uiIcon("copy")}
+            Copiar
+          </b>
+        </button>
+
+        <div class="gift-wallet-buttons">
+          <a
+            class="gift-wallet-button gift-wallet-button-mp"
+            href="${escapeHTML(
+              giftAppUrl("mercadoPago")
+            )}"
+            target="_blank"
+            rel="noopener"
+            data-gift-app="mercadoPago">
+            ${mercadoPagoBrand()}
+
+            <span class="gift-wallet-action">
+              Abrir
+              ${uiIcon("external")}
+            </span>
+          </a>
+
+          <a
+            class="gift-wallet-button gift-wallet-button-modo"
+            href="${escapeHTML(
+              giftAppUrl("modo")
+            )}"
+            target="_blank"
+            rel="noopener"
+            data-gift-app="modo">
+            ${modoBrand()}
+
+            <span class="gift-wallet-action">
+              Abrir
+              ${uiIcon("external")}
+            </span>
+          </a>
+        </div>
+
+        <p class="gift-app-note">
+          El botón abre la app o su página oficial
+          de descarga según el dispositivo.
+          Para transferencias en USD usá una app
+          que permita operar en dólares.
+        </p>
+      </section>
+
+      <p class="gift-thanks">
+        Gracias por acompañarnos y ser parte
+        de este momento tan especial 🤍
+      </p>
+    `;
   }
 
-  function giftDetailRow(label, value, copyKey) {
+  function giftDetailRow(
+    label,
+    value,
+    copyKey,
+    emphasized = false
+  ) {
     return `
-      <div class="gift-detail-row">
-        <div><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong></div>
-        ${copyKey
-          ? `<button type="button" data-copy-gift="${escapeHTML(copyKey)}">Copiar</button>`
-          : ""}
-      </div>`;
+      <div
+        class="gift-detail-row ${
+          emphasized
+            ? "gift-detail-row-emphasized"
+            : ""
+        }">
+        <div>
+          <small>${escapeHTML(label)}</small>
+          <strong>${escapeHTML(value)}</strong>
+        </div>
+
+        ${
+          copyKey
+            ? `
+              <button
+                type="button"
+                data-copy-gift="${escapeHTML(
+                  copyKey
+                )}">
+                ${uiIcon("copy")}
+                <span>Copiar</span>
+              </button>
+            `
+            : ""
+        }
+      </div>
+    `;
   }
 
 
   function giftStyles() {
-    return `<style>
-      .gift-placeholder{display:grid;grid-template-columns:74px minmax(0,1fr);gap:17px;align-items:center;padding:23px;background:linear-gradient(135deg,rgba(201,170,114,.12),rgba(255,253,248,.90));border-color:rgba(201,170,114,.30)}.gift-placeholder-icon{width:68px;height:68px;display:grid;place-items:center;border-radius:21px;background:rgba(201,170,114,.14);color:#8d642d}.gift-placeholder-icon .ui-icon{width:34px;height:34px}.gift-placeholder h3{margin:4px 0 6px;font-size:27px}.gift-placeholder p:not(.eyebrow){margin:0;max-width:650px;font-size:12px}
-      @media(max-width:560px){.gift-placeholder{grid-template-columns:54px minmax(0,1fr);padding:16px}.gift-placeholder-icon{width:51px;height:51px;border-radius:16px}.gift-placeholder-icon .ui-icon{width:27px;height:27px}.gift-placeholder h3{font-size:21px}}
-    </style>`;
+    return "";
   }
+
 
   function showSocialPublishSuccess(isReply = false) {
     document
@@ -7755,14 +7979,74 @@
     }
 
     if (route === "regalos") {
-      $$("[data-copy-gift]").forEach(button => {
-        button.addEventListener("click", async () => {
-          const key = button.dataset.copyGift;
-          const value = GIFT_DETAILS[key] || "";
-          const copied = await copyText(value);
-          toast(copied ? `${key === "alias" ? "Alias" : "CBU"} copiado.` : "No se pudo copiar.");
-        });
-      });
+      $$("[data-copy-gift]").forEach(
+        button => {
+          button.addEventListener(
+            "click",
+            async () => {
+              const key =
+                button.dataset.copyGift;
+              const value =
+                GIFT_DETAILS[key] || "";
+              const copied =
+                await copyText(value);
+
+              if (!copied) {
+                toast(
+                  "No se pudo copiar."
+                );
+                return;
+              }
+
+              const original =
+                button.innerHTML;
+
+              button.classList.add(
+                "is-copied"
+              );
+
+              if (
+                button.classList.contains(
+                  "gift-alias-copy-main"
+                )
+              ) {
+                const action =
+                  button.querySelector(
+                    ":scope > b"
+                  );
+
+                if (action) {
+                  action.innerHTML = `
+                    ${uiIcon(
+                      "checkCircle"
+                    )}
+                    Copiado
+                  `;
+                }
+              } else {
+                button.innerHTML = `
+                  ${uiIcon(
+                    "checkCircle"
+                  )}
+                  <span>Copiado</span>
+                `;
+              }
+
+              window.setTimeout(() => {
+                if (!button.isConnected) {
+                  return;
+                }
+
+                button.innerHTML =
+                  original;
+                button.classList.remove(
+                  "is-copied"
+                );
+              }, 1800);
+            }
+          );
+        }
+      );
     }
 
     if (route === "ranking") {
@@ -9000,7 +9284,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32472 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32473 y volvé a intentar.`
           });
         }
       }
