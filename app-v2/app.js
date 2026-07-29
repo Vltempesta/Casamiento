@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32476";
+  const CURRENT_APP_VERSION = "32477";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32476"
+        appVersion: CONFIG.APP_VERSION || "32477"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32476",
+      appVersion: "32477",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2525,7 +2525,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32476`;
+    const src = `assets/team-logos/${team.id}.png?v=32477`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -3868,10 +3868,19 @@
             )}
           </div>
 
-          <button
-            type="button"
-            class="rsvp-transport-unified"
-            data-go="traslado">
+          ${
+            usesMicro
+              ? `
+                <button
+                  type="button"
+                  class="rsvp-transport-unified"
+                  data-go="traslado">
+              `
+              : `
+                <section
+                  class="rsvp-transport-unified rsvp-transport-unified-static">
+              `
+          }
             <span class="rsvp-transport-unified-icon">
               ${
                 usesMicro
@@ -3901,8 +3910,16 @@
                 }
               </em>
             </span>
-            <b aria-hidden="true">Ver traslados ›</b>
-          </button>
+            ${
+              usesMicro
+                ? `<b aria-hidden="true">Ver traslados ›</b>`
+                : ""
+            }
+          ${
+            usesMicro
+              ? "</button>"
+              : "</section>"
+          }
 
           ${
             usesParticular
@@ -4161,6 +4178,8 @@
       .pickup-zone-field{grid-column:1/-1;padding:11px!important;border:1px solid rgba(49,83,110,.14)!important;border-radius:14px;background:rgba(49,83,110,.035)}.pickup-zone-field.hidden{display:none}.pickup-zone-intro{margin:-1px 0 8px;color:var(--muted);font-size:8.5px;line-height:1.35}.pickup-zone-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.pickup-zone-help{display:block;margin-top:7px;color:#31536e;font-size:8px;font-weight:800}.rsvp-transport-zone{display:block;margin-top:2px;color:#31536e;font-size:8px;font-weight:900}
       .diet-detail-label{display:grid;gap:5px;margin-top:10px;padding:11px;border:1px solid rgba(132,104,68,.14);border-radius:14px;background:rgba(255,255,255,.35);transition:.18s}.diet-detail-label>span{font-size:12px;font-weight:900}.diet-detail-label small{color:var(--muted);font-size:9px}.diet-detail-label.is-disabled{background:rgba(120,120,120,.055);border-color:rgba(120,120,120,.13)}.diet-detail-label.is-disabled>span,.diet-detail-label.is-disabled small{color:#8b8782}.diet-detail-label textarea:disabled{background:rgba(120,120,120,.08)!important;color:#999!important;cursor:not-allowed}
       .rsvp-confirmed-compact{padding:16px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.80))}.rsvp-confirmed-head{display:flex;align-items:center;gap:11px}.rsvp-confirmed-head h4{margin:0 0 2px;font-size:20px}.rsvp-confirmed-head p{margin:0;font-size:11px}.rsvp-okmark{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:21px;font-weight:1000}
+      .rsvp-transport-unified-static{cursor:default;text-decoration:none}
+      .rsvp-transport-unified-static:hover{transform:none;box-shadow:none}
       .rsvp-accommodation-note{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center;margin-top:9px;padding:11px 12px;border:1px solid rgba(116,51,68,.16);border-radius:14px;background:linear-gradient(135deg,rgba(116,51,68,.055),rgba(255,253,248,.72))}
       .rsvp-accommodation-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(116,51,68,.09);color:#743344}
       .rsvp-accommodation-icon .ui-icon{width:21px;height:21px}
@@ -5777,14 +5796,18 @@
   function rankingCommunityStyles() {
     return `<style>
       .ranking-my-team-entry,.ranking-all-guests-entry{width:100%;display:grid;align-items:center;text-align:left}
-      .ranking-my-team-entry{grid-template-columns:42px minmax(0,1fr) 18px;gap:9px;margin-top:8px;padding:8px 10px;border-color:color-mix(in srgb,var(--local-accent) 27%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--local-accent) 5%,#fff),rgba(255,253,248,.93));color:var(--ink);box-shadow:0 6px 14px color-mix(in srgb,var(--local-accent) 8%,transparent)}
+      .ranking-my-team-entry{grid-template-columns:42px minmax(0,1fr) 18px;gap:9px;margin-top:8px;padding:8px 10px;border-color:rgba(210,226,243,.22);background:radial-gradient(circle at 92% 0%,rgba(255,255,255,.10),transparent 40%),linear-gradient(135deg,#315b83,#244866);color:#fff;box-shadow:0 8px 18px rgba(34,67,98,.18)}
+      .ranking-my-team-entry:hover{border-color:rgba(229,211,162,.34);background:linear-gradient(135deg,#37658f,#274d6d)}
       .ranking-my-team-logo{width:40px;height:40px}
       .ranking-my-team-copy,.ranking-all-guests-copy{min-width:0}
       .ranking-my-team-copy small,.ranking-my-team-copy strong,.ranking-my-team-copy em,.ranking-all-guests-copy small,.ranking-all-guests-copy strong,.ranking-all-guests-copy em{display:block}
-      .ranking-my-team-copy small,.ranking-all-guests-copy small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
-      .ranking-my-team-copy strong,.ranking-all-guests-copy strong{margin-top:2px;color:var(--ink);font-family:var(--font-title);font-size:17px;line-height:1.08}
-      .ranking-my-team-copy em,.ranking-all-guests-copy em{margin-top:3px;color:var(--muted);font-size:8.5px;font-style:normal;line-height:1.3}
-      .ranking-entry-arrow{color:var(--gold-deep);font-size:25px;font-weight:500;line-height:1}
+      .ranking-my-team-copy small{color:#e7c879;font-size:7px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+      .ranking-all-guests-copy small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+      .ranking-my-team-copy strong{margin-top:2px;color:#fffaf2;font-family:var(--font-title);font-size:17px;line-height:1.08}
+      .ranking-all-guests-copy strong{margin-top:2px;color:var(--ink);font-family:var(--font-title);font-size:17px;line-height:1.08}
+      .ranking-my-team-copy em{margin-top:3px;color:rgba(239,246,252,.82);font-size:8.5px;font-style:normal;line-height:1.3}
+      .ranking-all-guests-copy em{margin-top:3px;color:var(--muted);font-size:8.5px;font-style:normal;line-height:1.3}
+      .ranking-entry-arrow{color:#e7c879;font-size:25px;font-weight:500;line-height:1}
       .ranking-all-guests-entry{grid-template-columns:45px minmax(0,1fr) 20px;gap:11px;margin-top:10px;padding:12px 13px;border-color:rgba(49,83,110,.20);background:radial-gradient(circle at 92% 0%,rgba(49,83,110,.10),transparent 40%),linear-gradient(135deg,rgba(49,83,110,.055),rgba(255,253,248,.93));color:var(--ink)}
       .ranking-all-guests-icon{width:43px;height:43px;display:grid;place-items:center;border-radius:13px;background:rgba(49,83,110,.09);color:#31536e}
       .ranking-all-guests-icon .ui-icon{width:22px;height:22px}
@@ -9234,7 +9257,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32476 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32477 y volvé a intentar.`
           });
         }
       }
