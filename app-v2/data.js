@@ -166,7 +166,7 @@ window.WEDDING_APP_DATA = {
       "motto": "No nos ves venir. Ese es el punto.",
       "trait": "Movimiento, sorpresa y desorden útil.",
       "strategy": "Cambiar de dirección hasta que el resto pierda el mapa.",
-      "accent": "#7c8992"
+      "accent": "#aeb5b4"
     }
   },
   "guests": [
