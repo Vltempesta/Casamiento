@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32475";
+  const CURRENT_APP_VERSION = "32476";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32475"
+        appVersion: CONFIG.APP_VERSION || "32476"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32475",
+      appVersion: "32476",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2525,7 +2525,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32475`;
+    const src = `assets/team-logos/${team.id}.png?v=32476`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -2579,7 +2579,8 @@
       rules: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="m6.5 8 .5.5 1-1"/>',
       phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10 5h4M11 18.5h2"/>',
       copy: '<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
-      external: '<path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
+      external: '<path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+      house: '<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
@@ -3815,6 +3816,14 @@
       const selectedTransport =
         transportLabel(saved.transport) ||
         "Sin definir";
+      const usesMicro =
+        ["combi", "micro"].includes(
+          saved.transport
+        );
+      const usesParticular =
+        ["particular", "auto"].includes(
+          saved.transport
+        );
 
       return `
         ${rsvpStyles()}
@@ -3864,13 +3873,17 @@
             class="rsvp-transport-unified"
             data-go="traslado">
             <span class="rsvp-transport-unified-icon">
-              ${uiIcon("bus")}
+              ${
+                usesMicro
+                  ? uiIcon("coach")
+                  : uiIcon("carRoute")
+              }
             </span>
             <span class="rsvp-transport-unified-copy">
               <small>Traslado elegido</small>
               <strong>${escapeHTML(selectedTransport)}</strong>
               ${
-                ["combi", "micro"].includes(saved.transport)
+                usesMicro
                   ? `<span class="rsvp-transport-zone">
                       Zona preferida:
                       ${escapeHTML(
@@ -3881,12 +3894,37 @@
                   : ""
               }
               <em>
-                Los horarios y puntos definitivos serán informados
-                después del cierre de respuestas del 15 de agosto.
+                ${
+                  usesParticular
+                    ? "El destino se informará el mismo día de la boda."
+                    : "Los horarios y puntos definitivos serán informados después del cierre de respuestas del 15 de agosto."
+                }
               </em>
             </span>
             <b aria-hidden="true">Ver traslados ›</b>
           </button>
+
+          ${
+            usesParticular
+              ? `
+                <section class="rsvp-accommodation-note">
+                  <span class="rsvp-accommodation-icon">
+                    ${uiIcon("house")}
+                  </span>
+                  <div>
+                    <strong>
+                      ¿Necesitás organizar alojamiento?
+                    </strong>
+                    <p>
+                      Si necesitás información anticipada
+                      para coordinar alojamiento por la zona,
+                      escribinos por WhatsApp.
+                    </p>
+                  </div>
+                </section>
+              `
+              : ""
+          }
 
           <div class="rsvp-actions-row">
             <button id="editRsvp" type="button">
@@ -4123,6 +4161,11 @@
       .pickup-zone-field{grid-column:1/-1;padding:11px!important;border:1px solid rgba(49,83,110,.14)!important;border-radius:14px;background:rgba(49,83,110,.035)}.pickup-zone-field.hidden{display:none}.pickup-zone-intro{margin:-1px 0 8px;color:var(--muted);font-size:8.5px;line-height:1.35}.pickup-zone-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.pickup-zone-help{display:block;margin-top:7px;color:#31536e;font-size:8px;font-weight:800}.rsvp-transport-zone{display:block;margin-top:2px;color:#31536e;font-size:8px;font-weight:900}
       .diet-detail-label{display:grid;gap:5px;margin-top:10px;padding:11px;border:1px solid rgba(132,104,68,.14);border-radius:14px;background:rgba(255,255,255,.35);transition:.18s}.diet-detail-label>span{font-size:12px;font-weight:900}.diet-detail-label small{color:var(--muted);font-size:9px}.diet-detail-label.is-disabled{background:rgba(120,120,120,.055);border-color:rgba(120,120,120,.13)}.diet-detail-label.is-disabled>span,.diet-detail-label.is-disabled small{color:#8b8782}.diet-detail-label textarea:disabled{background:rgba(120,120,120,.08)!important;color:#999!important;cursor:not-allowed}
       .rsvp-confirmed-compact{padding:16px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.80))}.rsvp-confirmed-head{display:flex;align-items:center;gap:11px}.rsvp-confirmed-head h4{margin:0 0 2px;font-size:20px}.rsvp-confirmed-head p{margin:0;font-size:11px}.rsvp-okmark{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:21px;font-weight:1000}
+      .rsvp-accommodation-note{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center;margin-top:9px;padding:11px 12px;border:1px solid rgba(116,51,68,.16);border-radius:14px;background:linear-gradient(135deg,rgba(116,51,68,.055),rgba(255,253,248,.72))}
+      .rsvp-accommodation-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(116,51,68,.09);color:#743344}
+      .rsvp-accommodation-icon .ui-icon{width:21px;height:21px}
+      .rsvp-accommodation-note strong{display:block;color:#233a55;font-family:var(--font-title);font-size:13px;line-height:1.15}
+      .rsvp-accommodation-note p{margin:3px 0 0;color:var(--muted);font-size:8.5px;font-weight:750;line-height:1.4}
       .rsvp-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.summary-item{border:1px solid rgba(132,104,68,.14);border-radius:13px;padding:10px;background:rgba(255,255,255,.44)}.summary-item strong{display:block;color:#7a3140;font-size:8px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.summary-item p{margin:0;color:var(--ink);font-size:12px;font-weight:750;word-break:break-word}
       .rsvp-actions-row,.rsvp-form-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-actions-row button,.rsvp-form-actions button{min-height:37px;padding:8px 12px}
       .rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:37px;padding:8px 12px;border:1px solid rgba(54,85,111,.25);border-radius:999px;background:rgba(54,85,111,.07);color:#36556f!important;text-decoration:none;font-size:10px;font-weight:900;box-shadow:none}.rsvp-calendar-link .ui-icon{width:15px;height:15px}.rsvp-calendar-link-small{margin-left:auto}
@@ -9191,7 +9234,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32475 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32476 y volvé a intentar.`
           });
         }
       }
