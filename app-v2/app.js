@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32469";
+  const CURRENT_APP_VERSION = "32470";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32469"
+        appVersion: CONFIG.APP_VERSION || "32470"
       })
     );
   }
@@ -429,6 +429,7 @@
   function setBackgroundSaveStatus(status, message = "") {
     const element = $("#backgroundSaveStatus");
     const text = $("#backgroundSaveText");
+
     if (!element || !text) return;
 
     if (saveIndicatorTimer) {
@@ -436,37 +437,48 @@
       saveIndicatorTimer = null;
     }
 
-    element.className = `background-save-status ${status}`;
-    text.textContent = message || (
-      status === "saving"
-        ? "Guardando en segundo plano…"
-        : status === "saved"
-          ? "Guardado correctamente"
-          : status === "pending"
-            ? "Cambio pendiente de sincronizar"
-            : status === "error"
-              ? "No se pudo sincronizar"
-              : ""
-    );
+    const shouldShow =
+      status === "pending" ||
+      status === "error";
 
-    if (status === "saved") {
-      saveIndicatorTimer = window.setTimeout(() => {
-        element.classList.add("hidden");
-      }, 1600);
+    if (!shouldShow) {
+      element.className =
+        "background-save-status hidden";
+      text.textContent = "";
+      return;
     }
+
+    element.className =
+      `background-save-status ${status}`;
+
+    text.textContent =
+      message ||
+      (
+        status === "pending"
+          ? "Cambio pendiente de sincronizar"
+          : "No se pudo sincronizar"
+      );
   }
 
   function updateSaveIndicator() {
-    if (pendingWrites.length) {
-      setBackgroundSaveStatus(
-        navigator.onLine === false ? "pending" : "saving",
-        navigator.onLine === false
-          ? `${pendingWrites.length} cambio${pendingWrites.length === 1 ? "" : "s"} pendiente${pendingWrites.length === 1 ? "" : "s"}`
-          : "Guardando en segundo plano…"
-      );
-    } else {
-      setBackgroundSaveStatus("saved");
+    if (!pendingWrites.length) {
+      setBackgroundSaveStatus("idle");
+      return;
     }
+
+    if (navigator.onLine === false) {
+      setBackgroundSaveStatus(
+        "pending",
+        `${pendingWrites.length} cambio${
+          pendingWrites.length === 1 ? "" : "s"
+        } pendiente${
+          pendingWrites.length === 1 ? "" : "s"
+        }`
+      );
+      return;
+    }
+
+    setBackgroundSaveStatus("saving");
   }
 
   function markPendingRecord(record = {}, entry) {
@@ -950,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32469",
+      appVersion: "32470",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1595,16 +1607,58 @@
     }
   }
 
+  function isRoutineSaveToast(message) {
+    const text = normalize(message || "");
+
+    const routineFragments = [
+      "guardando",
+      "guardado correctamente",
+      "respuesta guardada",
+      "formulario guardado",
+      "asistencia confirmada",
+      "respuesta recibida",
+      "canciones recibidas",
+      "canciones favoritas confirmadas",
+      "resultado calculado",
+      "trivia confirmada",
+      "se esta guardando",
+      "estamos guardando",
+      "se reintentara automaticamente"
+    ];
+
+    return routineFragments.some(
+      fragment => text.includes(fragment)
+    );
+  }
+
   function toast(message) {
+    if (
+      !message ||
+      isRoutineSaveToast(message)
+    ) {
+      return;
+    }
+
     const host = $("#toastHost");
+    if (!host) return;
+
     const el = document.createElement("div");
     el.className = "toast";
     el.textContent = message;
     host.appendChild(el);
-    setTimeout(() => el.classList.add("show"), 10);
+
+    setTimeout(
+      () => el.classList.add("show"),
+      10
+    );
+
     setTimeout(() => {
       el.classList.remove("show");
-      setTimeout(() => el.remove(), 250);
+
+      setTimeout(
+        () => el.remove(),
+        250
+      );
     }, 3600);
   }
 
@@ -2464,7 +2518,7 @@
   function teamLogo(team, className = "") {
     if (!team) return "";
     const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32469`;
+    const src = `assets/team-logos/${team.id}.png?v=32470`;
     return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
   }
 
@@ -3634,19 +3688,6 @@
         </article>
       </section>
 
-      <section class="transport-final-note section-card">
-        <span>${uiIcon("question")}</span>
-        <div>
-          <strong>¿Todavía no sabés qué zona elegir?</strong>
-          <p>
-            Podés seleccionar <b>“Me adapto a cualquiera”</b>.
-            Esa opción nos ayuda a completar mejor cada vehículo.
-          </p>
-        </div>
-        <button type="button" data-go="asistencia">
-          Ir a Asistencia
-        </button>
-      </section>
     `;
   }
 
@@ -3697,8 +3738,7 @@
       .transport-how{margin-top:10px;padding:15px}.transport-how-head{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center}.transport-how-head>span{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.14);color:#8a6129}.transport-how-head .ui-icon{width:20px;height:20px}.transport-how-head h3{margin:2px 0 0;font-size:20px}
       .transport-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.transport-step{display:grid;grid-template-columns:27px minmax(0,1fr);gap:8px;padding:10px;border:1px solid rgba(132,104,68,.13);border-radius:13px;background:rgba(255,255,255,.40)}.transport-step>span{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:#743344;color:#fff;font-size:9px;font-weight:950}.transport-step strong{display:block;font-size:10px}.transport-step p{margin:3px 0 0;font-size:8px;line-height:1.35}
       .transport-times-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}.transport-time-card{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;padding:13px}.transport-time-card>span{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:rgba(49,83,110,.08);color:#31536e}.transport-time-card .ui-icon{width:19px;height:19px}.transport-time-card small,.transport-time-card strong{display:block}.transport-time-card small{color:var(--gold-deep);font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.transport-time-card strong{margin:2px 0;font-size:18px}.transport-time-card p{margin:0;font-size:8.5px}.transport-return-card{border-color:rgba(74,125,79,.21);background:linear-gradient(135deg,rgba(74,125,79,.055),rgba(255,253,248,.88))}.transport-return-card>span{background:rgba(74,125,79,.09);color:#426f47}
-      .transport-final-note{display:grid;grid-template-columns:39px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:10px;padding:13px}.transport-final-note>span{width:37px;height:37px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.14);color:#8a6129}.transport-final-note .ui-icon{width:19px;height:19px}.transport-final-note strong{font-size:12px}.transport-final-note p{margin:3px 0 0;font-size:8.5px}.transport-final-note button{min-height:34px;padding:7px 10px;white-space:nowrap}
-      @media(max-width:720px){.transport-zones-grid,.transport-steps{grid-template-columns:1fr}.transport-times-grid{grid-template-columns:1fr}.transport-main-card{grid-template-columns:52px minmax(0,1fr);padding:14px}.transport-main-icon{width:50px;height:50px;border-radius:15px}.transport-main-icon .ui-icon{width:27px;height:27px}.transport-final-note{grid-template-columns:36px minmax(0,1fr)}.transport-final-note button{grid-column:1/-1;width:100%}}
+            @media(max-width:720px){.transport-zones-grid,.transport-steps{grid-template-columns:1fr}.transport-times-grid{grid-template-columns:1fr}.transport-main-card{grid-template-columns:52px minmax(0,1fr);padding:14px}.transport-main-icon{width:50px;height:50px;border-radius:15px}.transport-main-icon .ui-icon{width:27px;height:27px}}
     </style>`;
   }
 
@@ -3880,19 +3920,6 @@
       <form
         id="rsvpForm"
         class="section-card form-card rsvp-form-compact">
-        <div
-          class="rsvp-draft-protection"
-          aria-live="polite">
-          Tus datos se mantienen mientras completás el formulario.
-        </div>
-        ${
-          hasSaved
-            ? `<div class="warning-ribbon">
-                Completá una respuesta definitiva por sí o por no.
-              </div>`
-            : ""
-        }
-
         <div class="form-grid">
           ${field(
             "firstName",
@@ -4008,26 +4035,8 @@
                 savedPickupZone,
                 savedTransport === "combi"
               )}
-              ${choicePill(
-                "pickupZone",
-                "flexible",
-                "Me adapto a cualquiera",
-                savedPickupZone,
-                savedTransport === "combi"
-              )}
-              ${choicePill(
-                "pickupZone",
-                "otra",
-                "Necesitaría otra alternativa",
-                savedPickupZone,
-                savedTransport === "combi"
-              )}
             </div>
 
-            <small class="pickup-zone-help">
-              El punto exacto y el horario se confirmarán
-              después del 15 de agosto.
-            </small>
           </fieldset>
 
           <fieldset class="choice-field diet-choice-field">
@@ -4103,14 +4112,14 @@
       .rsvp-form-compact{padding:16px}.rsvp-form-compact .form-grid{gap:10px}.rsvp-form-compact label{gap:5px}.rsvp-form-compact input,.rsvp-form-compact select{min-height:42px}.rsvp-form-compact textarea{min-height:70px}
       .choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}
       .choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
-      .pickup-zone-field{grid-column:1/-1;padding:11px!important;border:1px solid rgba(49,83,110,.14)!important;border-radius:14px;background:rgba(49,83,110,.035)}.pickup-zone-field.hidden{display:none}.pickup-zone-intro{margin:-1px 0 8px;color:var(--muted);font-size:8.5px;line-height:1.35}.pickup-zone-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pickup-zone-grid .choice-pill:last-child{grid-column:1/-1}.pickup-zone-help{display:block;margin-top:7px;color:#31536e;font-size:8px;font-weight:800}.rsvp-transport-zone{display:block;margin-top:2px;color:#31536e;font-size:8px;font-weight:900}
+      .pickup-zone-field{grid-column:1/-1;padding:11px!important;border:1px solid rgba(49,83,110,.14)!important;border-radius:14px;background:rgba(49,83,110,.035)}.pickup-zone-field.hidden{display:none}.pickup-zone-intro{margin:-1px 0 8px;color:var(--muted);font-size:8.5px;line-height:1.35}.pickup-zone-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.pickup-zone-help{display:block;margin-top:7px;color:#31536e;font-size:8px;font-weight:800}.rsvp-transport-zone{display:block;margin-top:2px;color:#31536e;font-size:8px;font-weight:900}
       .diet-detail-label{display:grid;gap:5px;margin-top:10px;padding:11px;border:1px solid rgba(132,104,68,.14);border-radius:14px;background:rgba(255,255,255,.35);transition:.18s}.diet-detail-label>span{font-size:12px;font-weight:900}.diet-detail-label small{color:var(--muted);font-size:9px}.diet-detail-label.is-disabled{background:rgba(120,120,120,.055);border-color:rgba(120,120,120,.13)}.diet-detail-label.is-disabled>span,.diet-detail-label.is-disabled small{color:#8b8782}.diet-detail-label textarea:disabled{background:rgba(120,120,120,.08)!important;color:#999!important;cursor:not-allowed}
       .rsvp-confirmed-compact{padding:16px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.80))}.rsvp-confirmed-head{display:flex;align-items:center;gap:11px}.rsvp-confirmed-head h4{margin:0 0 2px;font-size:20px}.rsvp-confirmed-head p{margin:0;font-size:11px}.rsvp-okmark{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:21px;font-weight:1000}
       .rsvp-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.summary-item{border:1px solid rgba(132,104,68,.14);border-radius:13px;padding:10px;background:rgba(255,255,255,.44)}.summary-item strong{display:block;color:#7a3140;font-size:8px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.summary-item p{margin:0;color:var(--ink);font-size:12px;font-weight:750;word-break:break-word}
       .rsvp-actions-row,.rsvp-form-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-actions-row button,.rsvp-form-actions button{min-height:37px;padding:8px 12px}
       .rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:37px;padding:8px 12px;border:1px solid rgba(54,85,111,.25);border-radius:999px;background:rgba(54,85,111,.07);color:#36556f!important;text-decoration:none;font-size:10px;font-weight:900;box-shadow:none}.rsvp-calendar-link .ui-icon{width:15px;height:15px}.rsvp-calendar-link-small{margin-left:auto}
       .rsvp-next-challenge{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:9px;padding:12px 14px;border-color:rgba(201,170,114,.35);background:linear-gradient(135deg,rgba(201,170,114,.10),rgba(255,253,248,.86))}.rsvp-next-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.15);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:19px;height:19px}.rsvp-next-challenge h4{margin:0 0 2px;font-size:17px}.rsvp-next-challenge p{margin:0;font-size:10px}.rsvp-next-challenge button{min-height:36px;padding:8px 11px;white-space:nowrap}
-      @media(max-width:650px){.pickup-zone-grid{grid-template-columns:1fr}.pickup-zone-grid .choice-pill:last-child{grid-column:auto}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
+      @media(max-width:650px){.pickup-zone-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
     </style>`;
   }
 
@@ -5271,9 +5280,6 @@
           </p>
 
           <form id="musicGameForm" class="trivia-form">
-            <div class="game-draft-protection">
-              Tus canciones se mantienen mientras completás el desafío.
-            </div>
             <label>
               Canción para bailar
               <input
@@ -5294,12 +5300,6 @@
                 required>
             </label>
 
-            <label>
-              Motivo <span>(opcional)</span>
-              <textarea
-                name="reason"
-                placeholder="¿Por qué la elegiste?">${escapeHTML(formValues.reason || "")}</textarea>
-            </label>
 
             <div class="trivia-form-footer">
               <button type="submit">
@@ -5387,9 +5387,6 @@
           </div>
 
           <form id="coupleTriviaForm" class="trivia-quiz-form">
-            <div class="game-draft-protection">
-              Tus respuestas se mantienen mientras completás la trivia.
-            </div>
             ${SAMPLE_COUPLE_QUESTIONS.map((item,index) => `
               <fieldset class="trivia-question">
                 <legend>
@@ -5498,9 +5495,6 @@
           </div>
 
           <form id="whoIsWhoTriviaForm" class="trivia-quiz-form">
-            <div class="game-draft-protection">
-              Tus respuestas se mantienen mientras completás la trivia.
-            </div>
             ${WHO_IS_WHO_QUESTIONS.map((item,index) => `
               <fieldset class="trivia-question trivia-who-question">
                 <legend>
@@ -6325,7 +6319,7 @@
       {
         writeKey: `social:${payload.messageId}`,
         successMessage: parentId ? "Respuesta publicada." : "Mensaje publicado.",
-        beforeRender: () => toast(parentId ? "Respuesta publicada. Guardando…" : "Mensaje publicado. Guardando…")
+        beforeRender: () => {}
       }
     );
   }
@@ -6738,8 +6732,6 @@
       "capital-obelisco": 0,
       "wilde": 0,
       "longchamps": 0,
-      "flexible": 0,
-      "otra": 0,
       "sin-definir": 0
     };
 
@@ -7420,14 +7412,6 @@
             pickupZoneCounts.longchamps
           )}
           ${adminTransportZone(
-            "Me adapto",
-            pickupZoneCounts.flexible
-          )}
-          ${adminTransportZone(
-            "Otra alternativa",
-            pickupZoneCounts.otra
-          )}
-          ${adminTransportZone(
             "Sin definir",
             pickupZoneCounts["sin-definir"]
           )}
@@ -7551,10 +7535,10 @@
       .admin-attendance-summary article{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:20px;background:rgba(255,253,248,.78);box-shadow:0 8px 20px rgba(76,51,22,.05)}
       .admin-attendance-summary article>span{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:rgba(122,49,64,.09);color:#743344;font-size:20px;font-weight:950}
       .admin-attendance-summary small{display:block;color:var(--muted-2);font-weight:850}.admin-attendance-summary strong{display:block;margin-top:2px;color:var(--ink);font-family:var(--font-title);font-size:29px}.admin-attendance-summary p{margin:1px 0 0;font-size:12px;line-height:1.35}
-      .admin-transport-demand{margin-top:12px;padding:15px;border-color:rgba(49,83,110,.18);background:linear-gradient(135deg,rgba(49,83,110,.055),rgba(255,253,248,.90))}.admin-transport-demand-head{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center}.admin-transport-demand-head>span{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(49,83,110,.09);color:#31536e}.admin-transport-demand-head .ui-icon{width:21px;height:21px}.admin-transport-demand-head h3{margin:2px 0;font-size:20px}.admin-transport-demand-head p:not(.eyebrow){margin:0;font-size:9px}.admin-transport-demand-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin-top:11px}.admin-transport-zone{padding:9px;border:1px solid rgba(49,83,110,.12);border-radius:11px;background:rgba(255,255,255,.48)}.admin-transport-zone span{display:block;color:var(--muted);font-size:7px;font-weight:800;line-height:1.25}.admin-transport-zone strong{display:block;margin-top:3px;color:#31536e;font-family:var(--font-title);font-size:21px}.admin-transport-demand>small{display:block;margin-top:9px;color:var(--muted);font-size:8px;font-weight:750}
+      .admin-transport-demand{margin-top:12px;padding:15px;border-color:rgba(49,83,110,.18);background:linear-gradient(135deg,rgba(49,83,110,.055),rgba(255,253,248,.90))}.admin-transport-demand-head{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center}.admin-transport-demand-head>span{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(49,83,110,.09);color:#31536e}.admin-transport-demand-head .ui-icon{width:21px;height:21px}.admin-transport-demand-head h3{margin:2px 0;font-size:20px}.admin-transport-demand-head p:not(.eyebrow){margin:0;font-size:9px}.admin-transport-demand-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:11px}.admin-transport-zone{padding:9px;border:1px solid rgba(49,83,110,.12);border-radius:11px;background:rgba(255,255,255,.48)}.admin-transport-zone span{display:block;color:var(--muted);font-size:7px;font-weight:800;line-height:1.25}.admin-transport-zone strong{display:block;margin-top:3px;color:#31536e;font-family:var(--font-title);font-size:21px}.admin-transport-demand>small{display:block;margin-top:9px;color:var(--muted);font-size:8px;font-weight:750}
       .admin-official-export{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:16px;align-items:center;margin-top:15px;padding:20px 22px;border-color:rgba(74,125,79,.22);background:linear-gradient(135deg,rgba(74,125,79,.06),rgba(255,253,248,.86))}.admin-official-export-icon{width:50px;height:50px;display:grid;place-items:center;border-radius:15px;background:rgba(74,125,79,.10);color:#426f47}.admin-official-export-icon .ui-icon{width:24px;height:24px}.admin-official-export h4{margin:4px 0 5px;font-size:22px}.admin-official-export p:not(.eyebrow){margin:0;font-size:13px}.admin-official-export button{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.admin-official-export button .ui-icon{width:18px;height:18px}
       .admin-score-card{display:grid;gap:22px;margin-top:16px;padding:26px}.admin-score-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.admin-score-heading h4{margin:5px 0 6px;font-size:28px}.admin-score-heading p{margin:0}.admin-score-preview{display:inline-flex;align-items:center;min-height:36px;padding:8px 12px;border-radius:999px;background:rgba(201,170,114,.13);color:var(--gold-deep);font-size:12px;font-weight:900;white-space:nowrap}
-      .admin-score-fieldset{margin:0;padding:0;border:0}.admin-score-fieldset legend{margin-bottom:11px;color:var(--ink);font-weight:900}.admin-team-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.admin-team-option{position:relative;display:grid;justify-items:center;gap:7px;min-height:104px;margin:0;padding:13px 8px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.40);color:var(--ink);font-size:12px;font-weight:900;cursor:pointer;text-align:center}.admin-team-option input{position:absolute;opacity:0;pointer-events:none}.admin-team-option:has(input:checked){border-color:color-mix(in srgb,var(--local-accent) 65%,var(--line));background:color-mix(in srgb,var(--local-accent) 13%,rgba(255,255,255,.56));box-shadow:0 0 0 3px color-mix(in srgb,var(--local-accent) 12%,transparent)}.admin-team-logo{width:48px;height:48px}
+      .admin-score-fieldset{margin:0;padding:0;border:0}.admin-score-fieldset legend{margin-bottom:11px;color:var(--ink);font-weight:900}.admin-team-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.admin-team-option{position:relative;display:grid;justify-items:center;gap:7px;min-height:104px;margin:0;padding:13px 8px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.40);color:var(--ink);font-size:12px;font-weight:900;cursor:pointer;text-align:center}.admin-team-option input{position:absolute;opacity:0;pointer-events:none}.admin-team-option:has(input:checked){border-color:color-mix(in srgb,var(--local-accent) 65%,var(--line));background:color-mix(in srgb,var(--local-accent) 13%,rgba(255,255,255,.56));box-shadow:0 0 0 3px color-mix(in srgb,var(--local-accent) 12%,transparent)}.admin-team-logo{width:48px;height:48px}
       .admin-sign-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-sign-picker label{position:relative;margin:0}.admin-sign-picker input{position:absolute;opacity:0;pointer-events:none}.admin-sign-picker span{display:flex;align-items:center;justify-content:center;min-height:49px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.42);color:var(--ink);font-weight:900;cursor:pointer}.admin-sign-picker label:first-child:has(input:checked) span{border-color:rgba(74,125,79,.35);background:rgba(74,125,79,.10);color:#426f47}.admin-sign-picker label:last-child:has(input:checked) span{border-color:rgba(185,87,77,.34);background:rgba(185,87,77,.09);color:#93463c}
       .admin-points-input{position:relative}.admin-points-input input{height:58px;margin:0;padding-right:80px;border-radius:15px;font-size:21px;font-weight:850}.admin-points-input>span{position:absolute;right:17px;top:50%;transform:translateY(-50%);color:var(--muted-2);font-size:13px;font-weight:850}.admin-preset-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}.admin-preset-row button{min-width:64px;padding:9px 13px;border:1px solid var(--line);background:rgba(255,255,255,.45);color:var(--ink);box-shadow:none}.admin-comment-label{margin:0}.admin-comment-label>span{color:var(--muted-2);font-weight:600}.admin-comment-label textarea{min-height:85px}
       .admin-score-submit{width:100%;min-height:52px}.admin-score-submit.is-negative{background:linear-gradient(135deg,#c66b5d,#9d4138);color:#fff}.admin-score-submit:disabled{cursor:not-allowed;opacity:.48;transform:none}
@@ -7859,10 +7843,7 @@
           payload,
           {
             writeKey: `rsvp:${currentGuest.id}`,
-            successMessage: "Asistencia confirmada.",
-            beforeRender: () => {
-              toast("Listo. Estamos guardando tu asistencia.");
-            }
+            successMessage: ""
           }
         );
       });
@@ -7897,8 +7878,7 @@
           payload,
           {
             writeKey: `profile:${currentGuest.id}`,
-            successMessage: "Formulario guardado.",
-            beforeRender: () => toast("Listo. Se está guardando.")
+            successMessage: ""
           }
         );
       });
@@ -7931,8 +7911,7 @@
           payload,
           {
             writeKey: `game:${currentGuest.id}:${gameId}`,
-            successMessage: "Respuesta guardada.",
-            beforeRender: () => toast("Respuesta recibida. Guardando…")
+            successMessage: ""
           }
         );
       });
@@ -7989,8 +7968,7 @@
           payload,
           {
             writeKey: `game:${currentGuest.id}:music-selection`,
-            successMessage: `Canciones favoritas confirmadas. El equipo sumó ${earnedPoints} puntos.`,
-            beforeRender: () => toast("Canciones recibidas. Guardando…"),
+            successMessage: "",
             afterRender: () => {
               window.requestAnimationFrame(() => {
                 document
@@ -8040,8 +8018,7 @@
           payload,
           {
             writeKey: `game:${currentGuest.id}:couple-trivia-test`,
-            successMessage: `Trivia confirmada: ${score * 20} puntos.`,
-            beforeRender: () => toast("Resultado calculado. Guardando…"),
+            successMessage: "",
             afterRender: () => {
               window.requestAnimationFrame(() => {
                 document
@@ -8092,8 +8069,7 @@
           payload,
           {
             writeKey: `game:${currentGuest.id}:who-is-who-trivia-test`,
-            successMessage: `Trivia confirmada: ${score * 20} puntos.`,
-            beforeRender: () => toast("Resultado calculado. Guardando…"),
+            successMessage: "",
             afterRender: () => {
               toast("¡Completaste todos los desafíos!");
 
@@ -8884,7 +8860,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32469 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32470 y volvé a intentar.`
           });
         }
       }
