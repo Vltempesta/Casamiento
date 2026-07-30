@@ -3,7 +3,7 @@
   El token debe coincidir con PUBLIC_WRITE_TOKEN en Apps Script.
 */
 window.WEDDING_APP_CONFIG = {
-  GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwXKKT82vDuVvperrzz5o-KYqVnjk-UFwWNvvGsPp6BasoEvGmGpI7qw2Ojm1GT2AdP/exec",
+  GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwTwJdIVcJwG_m7szZ886ki7KPA-XpmVD1pAePrPOpZMxwsX6oKednSnaojrVVyeSo6/exec",
   PUBLIC_WRITE_TOKEN: "VF-2026-BOSQUE",
   LOCAL_ADMIN_PASSWORD: "vanifyfede2026",
   ENABLE_REMOTE_SYNC: true,
