@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32482 · Regalos simplificado y hero azul
+   v32483 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32482 · Menú, identidad y tipografías
+   v32483 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32482 · Textos amigables y botones dorados legibles
+   v32483 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11108,5 +11108,158 @@ html[data-app-updating="true"] {
   .social-composer-actions button[type="submit"],
   .social-reply-actions button[type="submit"] {
     font-size: 10.5px !important;
+  }
+}
+
+
+/* ============================================================
+   v32483 · Cronograma, Sumá puntos, progreso y botones
+   ============================================================ */
+
+/* Cronograma bordó con textos dorados y blancos */
+#view .schedule-card {
+  border-color: rgba(230,199,128,.32) !important;
+  background:
+    radial-gradient(
+      circle at 92% 0%,
+      rgba(230,199,128,.13),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      #6c2638,
+      #4f1827
+    ) !important;
+  box-shadow: 0 12px 28px rgba(79,24,39,.20) !important;
+}
+
+#view .schedule-row time {
+  color: #e9cb82 !important;
+}
+
+#view .schedule-row > span::after {
+  background:
+    linear-gradient(
+      #e6c780,
+      rgba(230,199,128,.24)
+    ) !important;
+}
+
+#view .schedule-row > span i {
+  border-color: #5b2030 !important;
+  background: #e6c780 !important;
+  box-shadow:
+    0 0 0 2px rgba(230,199,128,.22) !important;
+}
+
+#view .schedule-row > div {
+  border-color: rgba(255,255,255,.13) !important;
+  background: rgba(255,255,255,.075) !important;
+}
+
+#view .schedule-row strong {
+  color: #fffaf2 !important;
+}
+
+#view .schedule-row p {
+  color: rgba(255,250,242,.78) !important;
+}
+
+/* Encabezado de Sumá puntos con fondo bordó */
+#view .points-compact-head {
+  border-color: rgba(230,199,128,.34) !important;
+  background:
+    radial-gradient(
+      circle at 92% 0%,
+      rgba(230,199,128,.16),
+      transparent 36%
+    ),
+    linear-gradient(
+      135deg,
+      #6c2638,
+      #4f1827
+    ) !important;
+  color: #fffaf2 !important;
+  box-shadow: 0 12px 28px rgba(79,24,39,.20) !important;
+}
+
+#view .points-compact-head .eyebrow {
+  color: #e9cb82 !important;
+}
+
+#view .points-compact-head h3 {
+  color: #fffaf2 !important;
+}
+
+#view .points-compact-head p:not(.eyebrow) {
+  color: rgba(255,250,242,.82) !important;
+}
+
+#view .points-compact-head > span b {
+  color: #e9cb82 !important;
+}
+
+#view .points-compact-head > span small {
+  color: rgba(255,250,242,.72) !important;
+}
+
+/* Progreso de desafíos en Mi equipo */
+#view .team-challenge-mini > span {
+  color: #9b742e !important;
+}
+
+#view .team-challenge-mini i {
+  background: rgba(201,170,114,.16) !important;
+}
+
+#view .team-challenge-mini i em {
+  background:
+    linear-gradient(
+      90deg,
+      #c69a43,
+      #e4c677
+    ) !important;
+}
+
+#view .team-challenge-mini > b {
+  color: #8a642a !important;
+}
+
+/*
+  Todos los botones dorados de acción usan exactamente
+  el mismo tamaño de letra.
+*/
+#view .home-primary-action > button,
+#view .rsvp-next-challenge > button,
+#view .transport-main-bottom > button,
+#view .points-social-cta--highlight > button,
+#view .rsvp-form-actions button[type="submit"],
+#view .points-action-end button,
+#view .challenge-next-cta button,
+#view .trivia-form-footer button[type="submit"],
+#view .trivia-quiz-form > button[type="submit"],
+#view .trivia-all-complete button,
+#view .location-hero a {
+  min-height: 40px !important;
+  padding: 9px 14px !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+
+@media(max-width:600px) {
+  #view .home-primary-action > button,
+  #view .rsvp-next-challenge > button,
+  #view .transport-main-bottom > button,
+  #view .points-social-cta--highlight > button,
+  #view .rsvp-form-actions button[type="submit"],
+  #view .points-action-end button,
+  #view .challenge-next-cta button,
+  #view .trivia-form-footer button[type="submit"],
+  #view .trivia-quiz-form > button[type="submit"],
+  #view .trivia-all-complete button,
+  #view .location-hero a {
+    font-size: 13px !important;
   }
 }

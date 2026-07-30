@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32482";
+  const CURRENT_APP_VERSION = "32483";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32482"
+        appVersion: CONFIG.APP_VERSION || "32483"
       })
     );
   }
@@ -955,7 +955,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32482",
+      appVersion: "32483",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -4792,10 +4792,24 @@
         );
       });
     const activePlayers = members.length;
-    const confirmed = completedRsvpMembers(team.id).length;
-    const percent = Math.min(
+    const challengeCompleters =
+      members.filter(guest => {
+        const progress =
+          guestChallengeProgress(guest);
+
+        return (
+          progress.total > 0 &&
+          progress.completed === progress.total
+        );
+      }).length;
+    const challengePercent = Math.min(
       100,
-      Math.round((confirmed / Math.max(activePlayers, 1)) * 100)
+      Math.round(
+        (
+          challengeCompleters /
+          Math.max(activePlayers, 1)
+        ) * 100
+      )
     );
     const ranking = calculateRanking();
     const rankingIndex = ranking.findIndex(row => row.id === team.id);
@@ -4890,13 +4904,25 @@
         </button>
       </section>
 
-      <section class="team-attendance-mini section-card">
-        <span>${uiIcon("calendar")}</span>
+      <section class="team-attendance-mini team-challenge-mini section-card">
+        <span>${uiIcon("star")}</span>
         <div>
-          <strong>${confirmed} de ${activePlayers} confirmaron asistencia</strong>
-          <i><em style="width:${percent}%"></em></i>
+          <strong>
+            ${challengeCompleters} de ${activePlayers}
+            ${
+              challengeCompleters === 1
+                ? "ya completó"
+                : "ya completaron"
+            }
+            los desafíos
+          </strong>
+          <i>
+            <em
+              style="width:${challengePercent}%">
+            </em>
+          </i>
         </div>
-        <b>${percent}%</b>
+        <b>${challengePercent}%</b>
       </section>
 
       <section class="section-card team-members-card">
@@ -4943,23 +4969,325 @@
 
   function captainGuestStyles() {
     return `<style>
-      .guest-pill.captain-pill{border-color:rgba(201,170,114,.72);background:linear-gradient(135deg,rgba(201,170,114,.17),rgba(255,255,255,.52));box-shadow:0 0 0 1px rgba(201,170,114,.10) inset}.captain-label{display:inline-flex;align-items:center;gap:5px;margin-top:4px;padding:3px 7px;border-radius:999px;background:rgba(201,170,114,.15);color:var(--gold-deep);font-weight:950;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
-      .guest-pill.is-declined{filter:grayscale(1);opacity:.52;border-style:solid;background:rgba(220,220,216,.38)!important}.guest-pill.is-declined .guest-person-icon{background:rgba(100,100,100,.08);color:#777}.declined-label{display:inline-flex;margin-top:4px;color:#666;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+      .guest-pill.captain-pill{
+        border-color:color-mix(in srgb,var(--captain-bg) 74%,#fff);
+        background:
+          radial-gradient(
+            circle at 100% 0%,
+            color-mix(in srgb,var(--captain-accent) 32%,transparent),
+            transparent 43%
+          ),
+          linear-gradient(
+            135deg,
+            var(--captain-bg),
+            color-mix(in srgb,var(--captain-bg) 82%,#111)
+          );
+        color:var(--captain-fg);
+        box-shadow:
+          0 8px 18px
+          color-mix(in srgb,var(--captain-bg) 28%,transparent),
+          0 0 0 1px
+          rgba(255,255,255,.09) inset;
+      }
+      .guest-pill.captain-pill .guest-pill-copy>strong{
+        color:var(--captain-fg);
+      }
+      .guest-pill.captain-pill .guest-person-initial{
+        border:1px solid rgba(255,255,255,.30);
+        background:rgba(255,255,255,.16);
+        color:var(--captain-fg);
+      }
+      .captain-label{
+        display:inline-flex;
+        align-items:center;
+        gap:5px;
+        margin-top:4px;
+        padding:3px 7px;
+        border:1px solid
+          color-mix(
+            in srgb,
+            var(--captain-accent,#e6c780) 68%,
+            transparent
+          );
+        border-radius:999px;
+        background:
+          color-mix(
+            in srgb,
+            var(--captain-accent,#e6c780) 34%,
+            transparent
+          );
+        color:var(--captain-fg,var(--gold-deep));
+        font-size:9px;
+        font-weight:950;
+        letter-spacing:.06em;
+        text-transform:uppercase;
+      }
+      .guest-pill.has-attendance-status{
+        grid-template-columns:
+          42px minmax(0,1fr) auto;
+      }
+      .guest-attendance-status{
+        max-width:116px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap:5px;
+        padding:5px 7px;
+        border:1px solid transparent;
+        border-radius:999px;
+        font-size:8px;
+        font-weight:950;
+        line-height:1.15;
+        text-align:right;
+        white-space:normal;
+      }
+      .guest-attendance-status>i{
+        width:6px;
+        height:6px;
+        flex:0 0 auto;
+        border-radius:50%;
+        background:currentColor;
+      }
+      .guest-attendance-status.is-confirmed{
+        border-color:rgba(74,125,79,.22);
+        background:rgba(74,125,79,.10);
+        color:#3f7446;
+      }
+      .guest-attendance-status.is-pending{
+        border-color:rgba(171,124,48,.22);
+        background:rgba(201,170,114,.11);
+        color:#8b6428;
+      }
+      .guest-attendance-status.is-not-attending{
+        border-color:rgba(116,51,68,.20);
+        background:rgba(116,51,68,.08);
+        color:#743344;
+      }
+      .captain-pill .guest-attendance-status{
+        border-color:rgba(255,255,255,.25);
+        background:rgba(255,255,255,.15);
+        color:var(--captain-fg);
+      }
+      .guest-pill.is-declined{
+        filter:grayscale(1);
+        opacity:.52;
+        border-style:solid;
+        background:rgba(220,220,216,.38)!important;
+      }
+      .guest-pill.is-declined .guest-person-icon{
+        background:rgba(100,100,100,.08);
+        color:#777;
+      }
+      .declined-label{
+        display:inline-flex;
+        margin-top:4px;
+        color:#666;
+        font-size:9px;
+        font-weight:900;
+        letter-spacing:.06em;
+        text-transform:uppercase;
+      }
+      @media(max-width:440px){
+        .guest-pill.has-attendance-status{
+          grid-template-columns:
+            38px minmax(0,1fr) 102px;
+          gap:7px;
+        }
+        .guest-attendance-status{
+          max-width:102px;
+          padding:4px 6px;
+          font-size:7.5px;
+        }
+      }
     </style>`;
   }
 
-  function guestPill(guest, options = {}) {
-    const captain = isGuestCaptain(guest);
-    const declined = hasCompletedRsvp(state.rsvps[guest.id]) && state.rsvps[guest.id]?.attendance === "no";
-    const visibleRole = guest.roleVisible || guest.displayRelation || guest.relation || guest.role || "invitado";
-    const aliasText = guest.alias ? `${guest.alias} · ${visibleRole}` : visibleRole;
-    const progress = guestChallengeProgress(guest);
-    const initial = String(guest.firstName || guest.lastName || "?").trim().charAt(0).toUpperCase();
-    const icon = `<span class="guest-person-initial ${captain ? "is-captain" : ""}">${escapeHTML(initial)}</span>`;
-    const challengeStatus = options.showChallenges ? `<div class="guest-challenge-status"><span><b>${progress.completed}/${progress.total}</b><em>desafíos</em></span><i><em style="width:${Math.round((progress.completed / Math.max(progress.total,1)) * 100)}%"></em></i></div>` : "";
-    const secondaryText = options.hideAlias ? "" : `<small>${escapeHTML(aliasText)}</small>`;
+  function captainPalette(teamId) {
+    const palettes = {
+      bosque: {
+        background: "#294d35",
+        foreground: "#fffaf2",
+        accent: "#9fc39f"
+      },
+      fuego: {
+        background: "#812f2d",
+        foreground: "#fffaf2",
+        accent: "#efaaa0"
+      },
+      luz: {
+        background: "#c6a244",
+        foreground: "#2d2411",
+        accent: "#fff0b8"
+      },
+      noche: {
+        background: "#4e3b78",
+        foreground: "#fffaf2",
+        accent: "#c9b9f1"
+      },
+      agua: {
+        background: "#285979",
+        foreground: "#fffaf2",
+        accent: "#a9d3ec"
+      },
+      viento: {
+        background: "#9aa3a8",
+        foreground: "#202a30",
+        accent: "#eef2f4"
+      }
+    };
 
-    return `<div class="guest-pill ${captain ? "captain-pill" : ""} ${declined ? "is-declined" : ""} ${options.showChallenges ? "has-challenges" : ""} ${options.hideAlias ? "without-alias" : ""}"><span class="guest-pill-avatar">${icon}</span><div class="guest-pill-copy"><strong>${escapeHTML(guestFullName(guest))}</strong>${secondaryText}${captain ? `<span class="captain-label">Capitán</span>` : ""}${declined ? `<span class="declined-label">No asiste</span>` : ""}${challengeStatus}</div></div>`;
+    return (
+      palettes[teamId] || {
+        background: "#665468",
+        foreground: "#fffaf2",
+        accent: "#e5d8e7"
+      }
+    );
+  }
+
+  function guestPill(guest, options = {}) {
+    const captain =
+      isGuestCaptain(guest);
+    const rsvp =
+      state.rsvps[guest.id] || {};
+    const rsvpCompleted =
+      hasCompletedRsvp(rsvp);
+    const declined =
+      rsvpCompleted &&
+      rsvp.attendance === "no";
+    const visibleRole =
+      guest.roleVisible ||
+      guest.displayRelation ||
+      guest.relation ||
+      guest.role ||
+      "invitado";
+    const aliasText =
+      guest.alias
+        ? `${guest.alias} · ${visibleRole}`
+        : visibleRole;
+    const progress =
+      guestChallengeProgress(guest);
+    const initial =
+      String(
+        guest.firstName ||
+        guest.lastName ||
+        "?"
+      )
+        .trim()
+        .charAt(0)
+        .toUpperCase();
+    const icon = `
+      <span class="guest-person-initial ${
+        captain ? "is-captain" : ""
+      }">
+        ${escapeHTML(initial)}
+      </span>
+    `;
+    const challengeStatus =
+      options.showChallenges
+        ? `
+          <div class="guest-challenge-status">
+            <span>
+              <b>${progress.completed}/${progress.total}</b>
+              <em>desafíos</em>
+            </span>
+            <i>
+              <em
+                style="width:${
+                  Math.round(
+                    (
+                      progress.completed /
+                      Math.max(progress.total, 1)
+                    ) * 100
+                  )
+                }%">
+              </em>
+            </i>
+          </div>
+        `
+        : "";
+    const secondaryText =
+      options.hideAlias
+        ? ""
+        : `<small>${escapeHTML(aliasText)}</small>`;
+
+    let attendanceClass = "is-pending";
+    let attendanceText = "Asistencia pendiente";
+
+    if (rsvpCompleted && rsvp.attendance === "si") {
+      attendanceClass = "is-confirmed";
+      attendanceText = "Confirmó asistencia";
+    } else if (
+      rsvpCompleted &&
+      rsvp.attendance === "no"
+    ) {
+      attendanceClass = "is-not-attending";
+      attendanceText = "No podrá asistir";
+    }
+
+    const attendanceStatus =
+      options.showAttendanceStatus
+        ? `
+          <span
+            class="guest-attendance-status ${attendanceClass}">
+            <i aria-hidden="true"></i>
+            ${escapeHTML(attendanceText)}
+          </span>
+        `
+        : "";
+
+    const palette =
+      captain
+        ? captainPalette(guest.team)
+        : null;
+    const captainStyle =
+      palette
+        ? ` style="--captain-bg:${palette.background};--captain-fg:${palette.foreground};--captain-accent:${palette.accent}"`
+        : "";
+
+    return `
+      <div
+        class="guest-pill ${
+          captain ? "captain-pill" : ""
+        } ${
+          declined ? "is-declined" : ""
+        } ${
+          options.showChallenges
+            ? "has-challenges"
+            : ""
+        } ${
+          options.hideAlias
+            ? "without-alias"
+            : ""
+        } ${
+          options.showAttendanceStatus
+            ? "has-attendance-status"
+            : ""
+        }"
+        ${captainStyle}>
+        <span class="guest-pill-avatar">
+          ${icon}
+        </span>
+        <div class="guest-pill-copy">
+          <strong>
+            ${escapeHTML(guestFullName(guest))}
+          </strong>
+          ${secondaryText}
+          ${
+            captain
+              ? `<span class="captain-label">Capitán</span>`
+              : ""
+          }
+          ${
+            declined
+              ? `<span class="declined-label">No asiste</span>`
+              : ""
+          }
+          ${challengeStatus}
+        </div>
+        ${attendanceStatus}
+      </div>
+    `;
   }
 
 
@@ -6269,7 +6597,8 @@
                       guest,
                       {
                         minimalIcon: true,
-                        hideAlias: true
+                        hideAlias: true,
+                        showAttendanceStatus: true
                       }
                     )
                   ).join("")}
@@ -9755,7 +10084,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32482 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32483 y volvé a intentar.`
           });
         }
       }
