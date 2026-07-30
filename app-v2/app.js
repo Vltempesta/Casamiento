@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32478";
+  const CURRENT_APP_VERSION = "32481";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32478"
+        appVersion: CONFIG.APP_VERSION || "32481"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32478",
+      appVersion: "32481",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1966,8 +1966,14 @@
     document.documentElement.style.setProperty("--team-accent", team.accent || "#c8a75d");
     $("#loginScreen").classList.add("hidden");
     $("#mainScreen").classList.remove("hidden");
-    $("#welcomeTitle").textContent = guest.firstName || guestFullName(guest);
-    $("#welcomeInitial").textContent = (guest.firstName || guest.lastName || "V").charAt(0).toUpperCase();
+    $("#welcomeTitle").textContent =
+      guest.firstName || guestFullName(guest);
+    $("#welcomeInitial").textContent =
+      (guest.firstName || guest.lastName || "V")
+        .charAt(0)
+        .toUpperCase();
+    $("#welcomeTeam").textContent =
+      `Equipo ${team.name}`;
 
     migrateSectionNotificationBaselineBeforeSync();
     updateNotificationUi();
@@ -2313,12 +2319,33 @@
     });
   }
 
-  function enterApp(guest, showWelcome, historyMode = "push") {
-    applyGuestShell(guest);
-    state.currentGuestId = guest.id;
-    saveState();
-    navigate("inicio", { historyMode });
-    if (showWelcome) toast(`Acceso concedido · Equipo ${getTeam(guest.team).name}.`);
+  function enterApp(
+    guest,
+    showWelcome,
+    historyMode = "push"
+  ) {
+    const openApp = () => {
+      applyGuestShell(guest);
+      state.currentGuestId = guest.id;
+      saveState();
+      navigate("inicio", { historyMode });
+
+      if (showWelcome) {
+        toast(
+          `Acceso concedido · Equipo ${
+            getTeam(guest.team).name
+          }.`
+        );
+      }
+    };
+
+    if (teamLogosReady) {
+      openApp();
+      return;
+    }
+
+    void preloadTeamLogos()
+      .finally(openApp);
   }
 
   function navigate(route, options = {}) {
@@ -2344,19 +2371,63 @@
     }
 
     currentRoute = route;
-    const activeNavigationRoute =
+
+    const activeMenuRoute =
+      route === "invitados"
+        ? "equipo"
+        : route;
+    const activeBottomRoute =
       ["equipo", "invitados"].includes(route)
         ? "ranking"
         : route;
 
-    $$(".nav-tabs button[data-route], .bottom-nav button[data-route]").forEach(button => {
-      const active =
-        button.dataset.route ===
-        activeNavigationRoute;
-      button.classList.toggle("active", active);
-      if (active) button.setAttribute("aria-current", "page");
-      else button.removeAttribute("aria-current");
-    });
+    $$(".nav-tabs button[data-route]").forEach(
+      button => {
+        const active =
+          button.dataset.route ===
+          activeMenuRoute;
+
+        button.classList.toggle(
+          "active",
+          active
+        );
+
+        if (active) {
+          button.setAttribute(
+            "aria-current",
+            "page"
+          );
+        } else {
+          button.removeAttribute(
+            "aria-current"
+          );
+        }
+      }
+    );
+
+    $$(".bottom-nav button[data-route]").forEach(
+      button => {
+        const active =
+          button.dataset.route ===
+          activeBottomRoute;
+
+        button.classList.toggle(
+          "active",
+          active
+        );
+
+        if (active) {
+          button.setAttribute(
+            "aria-current",
+            "page"
+          );
+        } else {
+          button.removeAttribute(
+            "aria-current"
+          );
+        }
+      }
+    );
 
     const historyMode = options.historyMode || "push";
     if (currentGuest && historyMode !== "none") {
@@ -2438,8 +2509,14 @@
       "--team-accent",
       team.accent || "#c8a75d"
     );
-    $("#welcomeTitle").textContent = guest.firstName || guestFullName(guest);
-    $("#welcomeInitial").textContent = (guest.firstName || "V").charAt(0).toUpperCase();
+    $("#welcomeTitle").textContent =
+      guest.firstName || guestFullName(guest);
+    $("#welcomeInitial").textContent =
+      (guest.firstName || "V")
+        .charAt(0)
+        .toUpperCase();
+    $("#welcomeTeam").textContent =
+      `Equipo ${team.name}`;
     document.body.classList.add("admin-preview-mode");
     renderCurrentRoute();
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -2457,8 +2534,15 @@
     if (currentGuest) {
       const team = getTeam(currentGuest.team);
       document.documentElement.style.setProperty("--team-accent", team.accent || "#c8a75d");
-      $("#welcomeTitle").textContent = currentGuest.firstName || guestFullName(currentGuest);
-      $("#welcomeInitial").textContent = (currentGuest.firstName || "V").charAt(0).toUpperCase();
+      $("#welcomeTitle").textContent =
+        currentGuest.firstName ||
+        guestFullName(currentGuest);
+      $("#welcomeInitial").textContent =
+        (currentGuest.firstName || "V")
+          .charAt(0)
+          .toUpperCase();
+      $("#welcomeTeam").textContent =
+        `Equipo ${team.name}`;
     }
 
     renderCurrentRoute();
@@ -2532,13 +2616,138 @@
     "viento"
   ];
 
-  function preloadTeamLogos() {
-    TEAM_LOGO_IDS.forEach(teamId => {
+  const TEAM_LOGO_CACHE_NAME =
+    "vani-fede-team-logos-v1";
+  const teamLogoSources = new Map();
+  let teamLogosReady = false;
+  let teamLogosReadyPromise = null;
+
+  function teamLogoPath(teamId) {
+    return `assets/team-logos/${teamId}.png`;
+  }
+
+  async function cachedTeamLogoResponse(
+    teamId
+  ) {
+    const absoluteUrl = new URL(
+      teamLogoPath(teamId),
+      document.baseURI
+    ).href;
+
+    if ("caches" in window) {
+      try {
+        const stableCache =
+          await caches.open(
+            TEAM_LOGO_CACHE_NAME
+          );
+
+        let response =
+          await stableCache.match(
+            absoluteUrl,
+            { ignoreSearch: true }
+          );
+
+        if (!response) {
+          response = await caches.match(
+            absoluteUrl,
+            { ignoreSearch: true }
+          );
+
+          if (response) {
+            await stableCache.put(
+              absoluteUrl,
+              response.clone()
+            );
+          }
+        }
+
+        if (response) return response;
+      } catch (error) {
+        console.warn(
+          "No se pudo leer el caché de logos",
+          error
+        );
+      }
+    }
+
+    const response = await fetch(
+      absoluteUrl,
+      { cache: "force-cache" }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `No se pudo cargar el logo ${teamId}`
+      );
+    }
+
+    if ("caches" in window) {
+      try {
+        const stableCache =
+          await caches.open(
+            TEAM_LOGO_CACHE_NAME
+          );
+
+        await stableCache.put(
+          absoluteUrl,
+          response.clone()
+        );
+      } catch (_) {
+        // El logo igual se usa aunque CacheStorage
+        // no esté disponible.
+      }
+    }
+
+    return response;
+  }
+
+  async function prepareTeamLogo(teamId) {
+    try {
+      const response =
+        await cachedTeamLogoResponse(teamId);
+      const blob = await response.blob();
+      const objectUrl =
+        URL.createObjectURL(blob);
       const image = new Image();
-      image.decoding = "async";
-      image.src =
-        `assets/team-logos/${teamId}.png?v=${CURRENT_APP_VERSION}`;
-    });
+
+      image.decoding = "sync";
+      image.src = objectUrl;
+
+      if (typeof image.decode === "function") {
+        await image.decode();
+      } else {
+        await new Promise(resolve => {
+          image.onload = resolve;
+          image.onerror = resolve;
+        });
+      }
+
+      teamLogoSources.set(
+        teamId,
+        objectUrl
+      );
+    } catch (error) {
+      console.warn(
+        `No se pudo precargar ${teamId}`,
+        error
+      );
+    }
+  }
+
+  function preloadTeamLogos() {
+    if (!teamLogosReadyPromise) {
+      teamLogosReadyPromise = Promise
+        .all(
+          TEAM_LOGO_IDS.map(
+            prepareTeamLogo
+          )
+        )
+        .finally(() => {
+          teamLogosReady = true;
+        });
+    }
+
+    return teamLogosReadyPromise;
   }
 
   function teamLogo(team, className = "") {
@@ -2548,7 +2757,8 @@
       ? ` ${className}`
       : "";
     const src =
-      `assets/team-logos/${team.id}.png?v=32478`;
+      teamLogoSources.get(team.id) ||
+      teamLogoPath(team.id);
 
     return `
       <span
@@ -2558,7 +2768,8 @@
           src="${src}"
           alt="Logo ${escapeHTML(team.name)}"
           loading="eager"
-          decoding="async">
+          decoding="sync"
+          fetchpriority="high">
       </span>
     `;
   }
@@ -3972,8 +4183,8 @@
             <div>
               <h4>Ya podés participar</h4>
               <p>
-                Las canciones y las dos trivias
-                ya están disponibles.
+                Mientras esperamos a que todos confirmen,
+                podés comenzar a sumar puntos para tu equipo.
               </p>
             </div>
             <button type="button" data-go="puntos">
@@ -6407,7 +6618,7 @@
         <div>
           <p class="eyebrow">¿Por qué competir?</p>
           <h3>Seis equipos, una sola celebración</h3>
-          <p>La competencia está pensada para que todos participen, se conozcan y lleguen a la fiesta con ganas de jugar. Los puntos son grupales y las acciones previas están equilibradas según la cantidad de integrantes de cada equipo.</p>
+          <p>Cada invitado pertenece a un equipo y competirá contra los otros cinco por puntos, desde este momento hasta el final de la fiesta.</p>
         </div>
       </section>
 
@@ -9487,7 +9698,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32478 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32481 y volvé a intentar.`
           });
         }
       }

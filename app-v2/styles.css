@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32478 · Regalos simplificado y hero azul
+   v32481 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10896,4 +10896,156 @@ html[data-app-updating="true"] {
 /* ocultar estilos de la tarjeta eliminada si quedaran referencias */
 .gift-wallet-card, .gift-wallet-heading, .gift-wallet-steps, .gift-wallet-buttons, .gift-app-note, .gift-alias-copy-main {
   display: none !important;
+}
+
+
+/* ============================================================
+   v32481 · Menú, identidad y tipografías
+   ============================================================ */
+
+#mainScreen .topbar-identity {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+#mainScreen .topbar-team {
+  overflow: hidden;
+  color: #743344;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: .045em;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Reglas */
+#view .rules-intro p:not(.eyebrow) {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+#view .rules-table-row strong,
+#view .rules-table-row b {
+  font-size: 12px !important;
+}
+
+#view .rules-table-row p,
+#view .rules-note {
+  font-size: 10px !important;
+  line-height: 1.4 !important;
+}
+
+/* Sumá puntos */
+#view .points-compact-head p:not(.eyebrow) {
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+#view .points-action-copy strong {
+  font-size: 15px !important;
+}
+
+#view .points-action-copy p {
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+}
+
+#view .points-action-copy small,
+#view .points-complete-badge {
+  font-size: 10px !important;
+}
+
+#view .points-rules-entry strong {
+  font-size: 13px !important;
+}
+
+#view .points-rules-entry small {
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+#view .points-action-end button {
+  font-size: 9px !important;
+}
+
+/* Traslados */
+#view .transport-main-copy > p:not(.eyebrow) {
+  font-size: 10.5px !important;
+  line-height: 1.45 !important;
+}
+
+#view .transport-bonus,
+#view .transport-current-choice {
+  font-size: 9px !important;
+}
+
+#view .transport-main-bottom button {
+  font-size: 9px !important;
+}
+
+#view .transport-compact-heading h3 {
+  font-size: 19px !important;
+}
+
+#view .transport-compact-heading > small {
+  font-size: 8.5px !important;
+}
+
+#view .transport-zone-card strong {
+  font-size: 11.5px !important;
+}
+
+#view .transport-zone-card small {
+  font-size: 8.5px !important;
+}
+
+#view .transport-zone-card em {
+  font-size: 6.5px !important;
+}
+
+#view .transport-time-card small {
+  font-size: 7.5px !important;
+}
+
+#view .transport-time-card strong {
+  font-size: 15px !important;
+}
+
+#view .transport-time-card p,
+#view .transport-deadline-note {
+  font-size: 8.5px !important;
+  line-height: 1.4 !important;
+}
+
+@media(max-width:650px) {
+  #mainScreen .topbar-team {
+    font-size: 7.5px;
+  }
+
+  #view .rules-intro p:not(.eyebrow) {
+    font-size: 11px !important;
+  }
+
+  #view .rules-table-row strong {
+    font-size: 12px !important;
+  }
+
+  #view .rules-table-row b {
+    font-size: 11px !important;
+  }
+
+  #view .rules-table-row p {
+    font-size: 10px !important;
+  }
+
+  #view .points-action-copy strong {
+    font-size: 14px !important;
+  }
+
+  #view .points-action-copy p {
+    font-size: 11px !important;
+  }
 }
