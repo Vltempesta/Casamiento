@@ -905,22 +905,6 @@ window.WEDDING_APP_DATA = {
       "displayRelation": "Tío"
     },
     {
-      "id": "francisco-baioni",
-      "firstName": "Francisco",
-      "lastName": "Baioni",
-      "email": "",
-      "alias": "Fran",
-      "relation": "Primo",
-      "team": "luz",
-      "role": "invitado",
-      "tags": [
-        "luz",
-        "familia-materna-fede"
-      ],
-      "roleVisible": "Primo",
-      "displayRelation": "Primo"
-    },
-    {
       "id": "isidora-barreto",
       "firstName": "Isidora",
       "lastName": "Barreto",
@@ -1111,22 +1095,6 @@ window.WEDDING_APP_DATA = {
       ],
       "roleVisible": "Prima",
       "displayRelation": "Prima"
-    },
-    {
-      "id": "valentino-viera",
-      "firstName": "Valentino",
-      "lastName": "Viera",
-      "email": "",
-      "alias": "Tino",
-      "relation": "Sobrino",
-      "team": "luz",
-      "role": "invitado",
-      "tags": [
-        "luz",
-        "familia-materna-fede"
-      ],
-      "roleVisible": "Sobrino",
-      "displayRelation": "Sobrino"
     },
     {
       "id": "griselda-martinez",

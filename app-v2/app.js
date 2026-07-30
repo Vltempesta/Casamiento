@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32489";
+  const CURRENT_APP_VERSION = "32490";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32489"
+        appVersion: CONFIG.APP_VERSION || "32490"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32489",
+      appVersion: "32490",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -10284,7 +10284,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32489 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32490 y volvé a intentar.`
           });
         }
       }
