@@ -312,7 +312,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "nacho-campolo",
-      "firstName": "Nacho",
+      "firstName": "Ignacio",
       "lastName": "Campolo",
       "email": "",
       "alias": "Nacho",
@@ -360,7 +360,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "mati-fernandez-abeijon",
-      "firstName": "Mati",
+      "firstName": "Matías",
       "lastName": "Fernandez Abeijon",
       "email": "",
       "alias": "Mati",
@@ -522,7 +522,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "camila-aguero",
       "firstName": "Camila",
-      "lastName": "Aguero",
+      "lastName": "Agüero",
       "email": "",
       "alias": "Cami",
       "relation": "Cuñada",
@@ -537,7 +537,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "agustin-carra",
-      "firstName": "Agustin",
+      "firstName": "Agustín",
       "lastName": "Carra",
       "email": "",
       "alias": "Agus",
@@ -553,7 +553,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "matias-carra",
-      "firstName": "Matias",
+      "firstName": "Matías",
       "lastName": "Carra",
       "email": "",
       "alias": "Mati",
@@ -633,8 +633,8 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "ines-mari",
-      "firstName": "Ines",
-      "lastName": "Mari",
+      "firstName": "Inés",
+      "lastName": "Marí",
       "email": "",
       "alias": "Nechi",
       "relation": "Tía",
@@ -650,7 +650,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "juan-mari",
       "firstName": "Juan",
-      "lastName": "Mari",
+      "lastName": "Marí",
       "email": "",
       "alias": "Juan",
       "relation": "Tío",
@@ -666,7 +666,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "liliana-mari",
       "firstName": "Liliana",
-      "lastName": "Mari",
+      "lastName": "Marí",
       "email": "",
       "alias": "Lili",
       "relation": "Tía",
@@ -682,7 +682,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "patricia-mari",
       "firstName": "Patricia",
-      "lastName": "Mari",
+      "lastName": "Marí",
       "email": "",
       "alias": "Patri",
       "relation": "Tía",
@@ -746,7 +746,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "nicolas-tempesta",
-      "firstName": "Nicolas",
+      "firstName": "Nicolás",
       "lastName": "Tempesta",
       "email": "",
       "alias": "Nico",
@@ -762,7 +762,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "anahi-trenti",
-      "firstName": "Anahi",
+      "firstName": "Anahí",
       "lastName": "Trenti",
       "email": "",
       "alias": "Ani",
@@ -890,7 +890,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "nicolas-baioni",
-      "firstName": "Nicolas",
+      "firstName": "Nicolás",
       "lastName": "Baioni",
       "email": "",
       "alias": "Nico",
@@ -903,6 +903,22 @@ window.WEDDING_APP_DATA = {
       ],
       "roleVisible": "Tío",
       "displayRelation": "Tío"
+    },
+    {
+      "id": "francisco-baioni",
+      "firstName": "Francisco",
+      "lastName": "Baioni",
+      "email": "",
+      "alias": "Fran",
+      "relation": "Primo",
+      "team": "luz",
+      "role": "invitado",
+      "tags": [
+        "luz",
+        "familia-materna-fede"
+      ],
+      "roleVisible": "Primo",
+      "displayRelation": "Primo"
     },
     {
       "id": "isidora-barreto",
@@ -939,7 +955,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "bruno-garcia",
       "firstName": "Bruno",
-      "lastName": "Garcia",
+      "lastName": "García",
       "email": "",
       "alias": "Bruno",
       "relation": "Primo",
@@ -954,8 +970,8 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "maria-julia-garcia",
-      "firstName": "Maria Julia",
-      "lastName": "Garcia",
+      "firstName": "María Julia",
+      "lastName": "García",
       "email": "",
       "alias": "Marita",
       "relation": "Tía",
@@ -971,7 +987,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "paula-garcia",
       "firstName": "Paula",
-      "lastName": "Garcia",
+      "lastName": "García",
       "email": "",
       "alias": "Pauli",
       "relation": "Prima",
@@ -986,8 +1002,8 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "tobias-garcia",
-      "firstName": "Tobias",
-      "lastName": "Garcia",
+      "firstName": "Tobías",
+      "lastName": "García",
       "email": "",
       "alias": "Tobi",
       "relation": "Primo",
@@ -1003,7 +1019,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "ale-garcia-barreto",
       "firstName": "Ale",
-      "lastName": "Garcia Barreto",
+      "lastName": "García Barreto",
       "email": "",
       "alias": "Ale",
       "relation": "Mamá",
@@ -1035,7 +1051,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "delfina-gomez",
       "firstName": "Delfina",
-      "lastName": "Gomez",
+      "lastName": "Gómez",
       "email": "",
       "alias": "Delfi",
       "relation": "Prima",
@@ -1051,7 +1067,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "miguel-gomez",
       "firstName": "Miguel",
-      "lastName": "Gomez",
+      "lastName": "Gómez",
       "email": "",
       "alias": "Migue",
       "relation": "Tío",
@@ -1079,6 +1095,38 @@ window.WEDDING_APP_DATA = {
       ],
       "roleVisible": "Prima",
       "displayRelation": "Prima"
+    },
+    {
+      "id": "cecilia-pedrozo",
+      "firstName": "Cecilia",
+      "lastName": "Pedrozo",
+      "email": "",
+      "alias": "Ceci P",
+      "relation": "Prima",
+      "team": "luz",
+      "role": "invitado",
+      "tags": [
+        "luz",
+        "familia-materna-fede"
+      ],
+      "roleVisible": "Prima",
+      "displayRelation": "Prima"
+    },
+    {
+      "id": "valentino-viera",
+      "firstName": "Valentino",
+      "lastName": "Viera",
+      "email": "",
+      "alias": "Tino",
+      "relation": "Sobrino",
+      "team": "luz",
+      "role": "invitado",
+      "tags": [
+        "luz",
+        "familia-materna-fede"
+      ],
+      "roleVisible": "Sobrino",
+      "displayRelation": "Sobrino"
     },
     {
       "id": "griselda-martinez",
@@ -1163,7 +1211,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "nicolas-arbizu",
-      "firstName": "Nicolas",
+      "firstName": "Nicolás",
       "lastName": "Arbizu",
       "email": "",
       "alias": "Nico",
@@ -1387,7 +1435,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "carla-tempesta",
-      "firstName": "Carla",
+      "firstName": "Carli",
       "lastName": "Tempesta",
       "email": "",
       "alias": "Carli",
@@ -1516,7 +1564,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "anahi-cueva",
-      "firstName": "Anahi",
+      "firstName": "Anahí",
       "lastName": "Cueva",
       "email": "",
       "alias": "Ani",
@@ -1598,7 +1646,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "daiana-garcia",
       "firstName": "Daiana",
-      "lastName": "Garcia",
+      "lastName": "García",
       "email": "",
       "alias": "Dai",
       "relation": "Amiga",
@@ -1629,7 +1677,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "maria-peral",
-      "firstName": "Maria",
+      "firstName": "María",
       "lastName": "Peral",
       "email": "",
       "alias": "Mari",
@@ -1645,7 +1693,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "belen-priori",
-      "firstName": "Belen",
+      "firstName": "Belén",
       "lastName": "Priori",
       "email": "",
       "alias": "Belu",
@@ -1709,7 +1757,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "salome-vogel",
-      "firstName": "Salome",
+      "firstName": "Salomé",
       "lastName": "Vogel",
       "email": "",
       "alias": "Salo",
@@ -1725,7 +1773,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "lucia-benitez",
-      "firstName": "Lucia",
+      "firstName": "Lucía",
       "lastName": "Benitez",
       "email": "",
       "alias": "Lu",
@@ -1741,7 +1789,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "nicolas-boscato",
-      "firstName": "Nicolas",
+      "firstName": "Nicolás",
       "lastName": "Boscato",
       "email": "",
       "alias": "Nico",
@@ -1757,7 +1805,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "nicolas-casal",
-      "firstName": "Nicolas",
+      "firstName": "Nicolás",
       "lastName": "Casal",
       "email": "",
       "alias": "Nico",
@@ -1789,7 +1837,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "sofia-di-croce",
-      "firstName": "Sofia",
+      "firstName": "Sofía",
       "lastName": "Di Croce",
       "email": "",
       "alias": "Sofi",
@@ -1821,7 +1869,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "andres-gismano",
-      "firstName": "Andres",
+      "firstName": "Andrés",
       "lastName": "Gismano",
       "email": "",
       "alias": "Andy",
@@ -1837,7 +1885,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "martin-jaremczuk",
-      "firstName": "Martin",
+      "firstName": "Martín",
       "lastName": "Jaremczuk",
       "email": "",
       "alias": "Tincho",
@@ -1869,7 +1917,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "matias-karmelic",
-      "firstName": "Matias",
+      "firstName": "Matías",
       "lastName": "Karmelic",
       "email": "",
       "alias": "Mati",
@@ -2014,7 +2062,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "jonathan-nunez",
       "firstName": "Jonathan",
-      "lastName": "Nuñez",
+      "lastName": "Núñez",
       "email": "",
       "alias": "Jon",
       "relation": "Amigo",
@@ -2030,7 +2078,7 @@ window.WEDDING_APP_DATA = {
     },
     {
       "id": "damian-perozzi",
-      "firstName": "Damian",
+      "firstName": "Damián",
       "lastName": "Perozzi",
       "email": "",
       "alias": "Dami",
@@ -2075,6 +2123,22 @@ window.WEDDING_APP_DATA = {
       ],
       "roleVisible": "Amigo",
       "displayRelation": "Amigo"
+    },
+    {
+      "id": "alex",
+      "firstName": "Alex",
+      "lastName": "Garramuno",
+      "email": "",
+      "alias": "Lex",
+      "relation": "Amiga",
+      "team": "viento",
+      "role": "invitado",
+      "tags": [
+        "viento",
+        "trabajo-vani-y-fede"
+      ],
+      "roleVisible": "Amiga",
+      "displayRelation": "Amiga"
     }
   ],
   "games": [
