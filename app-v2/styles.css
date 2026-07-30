@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32483 · Regalos simplificado y hero azul
+   v32485 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32483 · Menú, identidad y tipografías
+   v32485 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32483 · Textos amigables y botones dorados legibles
+   v32485 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11113,7 +11113,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32483 · Cronograma, Sumá puntos, progreso y botones
+   v32485 · Cronograma, Sumá puntos, progreso y botones
    ============================================================ */
 
 /* Cronograma bordó con textos dorados y blancos */
@@ -11261,5 +11261,288 @@ html[data-app-updating="true"] {
   #view .trivia-all-complete button,
   #view .location-hero a {
     font-size: 13px !important;
+  }
+}
+
+
+/* ============================================================
+   v32485 · Bloqueados visibles, Cronograma en Inicio y Social
+   ============================================================ */
+
+/* Ubicación y En viaje quedan visibles en el menú aunque estén bloqueados */
+#mainMenu .nav-tabs button.is-section-locked {
+  position: relative;
+  opacity: .72 !important;
+  filter: saturate(.72) !important;
+}
+
+#mainMenu .nav-tabs button.is-section-locked .menu-item-icon::after {
+  content: "🔒" !important;
+  right: -4px !important;
+  bottom: -4px !important;
+  width: 15px !important;
+  height: 15px !important;
+  border: 1px solid rgba(255,255,255,.72);
+  background: #743344 !important;
+  color: #fff !important;
+  font-size: 7px !important;
+  line-height: 1 !important;
+}
+
+/* La ubicación bloqueada de Lo esencial conserva apariencia de acceso */
+#view .home-essential-location-locked {
+  cursor: pointer;
+}
+
+#view .home-essential-location-locked:hover,
+#view .home-essential-location-locked:focus-visible {
+  background: rgba(116,51,68,.045);
+}
+
+/* Cronograma pequeño y destacado debajo de Regalos */
+#view .home-schedule-feature {
+  appearance: none;
+  width: 100%;
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: 38px minmax(0,1fr) 16px;
+  gap: 9px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 9px 12px;
+  border: 1px solid rgba(230,199,128,.32);
+  border-radius: 15px;
+  background:
+    radial-gradient(
+      circle at 92% 0%,
+      rgba(230,199,128,.15),
+      transparent 39%
+    ),
+    linear-gradient(
+      135deg,
+      #6c2638,
+      #4f1827
+    );
+  color: #fffaf2;
+  text-align: left;
+  box-shadow: 0 8px 18px rgba(79,24,39,.15);
+}
+
+#view .home-schedule-feature:hover,
+#view .home-schedule-feature:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(79,24,39,.20);
+}
+
+#view .home-schedule-feature-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(255,255,255,.10);
+  color: #e9cb82;
+}
+
+#view .home-schedule-feature-icon .ui-icon {
+  width: 19px;
+  height: 19px;
+}
+
+#view .home-schedule-feature-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+#view .home-schedule-feature-copy small {
+  color: #e9cb82;
+  font-size: 7px;
+  font-weight: 950;
+  letter-spacing: .11em;
+}
+
+#view .home-schedule-feature-copy strong {
+  color: #fffaf2;
+  font-family: var(--font-title);
+  font-size: 14px;
+  line-height: 1.12;
+}
+
+#view .home-schedule-feature-copy em {
+  color: rgba(255,250,242,.72);
+  font-size: 8px;
+  font-style: normal;
+  line-height: 1.25;
+}
+
+#view .home-schedule-feature > b {
+  color: #e9cb82;
+  font-size: 21px;
+  font-weight: 500;
+}
+
+/* El acceso a Social forma parte del mismo cartel Misión cumplida */
+#view .points-compact-head.is-completed {
+  align-items: start;
+}
+
+#view .points-completed-social-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 9px 15px;
+  border: 1px solid rgba(255,250,242,.18);
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      135deg,
+      #e1bd65,
+      #c89438
+    );
+  color: #3c2a11;
+  box-shadow: 0 7px 16px rgba(29,17,7,.18);
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  line-height: 1.15 !important;
+}
+
+#view .points-completed-social-button .ui-icon {
+  width: 17px;
+  height: 17px;
+}
+
+#view .points-completed-social-button:hover,
+#view .points-completed-social-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 9px 19px rgba(29,17,7,.23);
+}
+
+@media(max-width:570px) {
+  #view .home-schedule-feature {
+    grid-template-columns: 36px minmax(0,1fr) 15px;
+    min-height: 58px;
+    padding: 9px 10px;
+  }
+
+  #view .points-compact-head.is-completed {
+    grid-template-columns: 40px minmax(0,1fr) auto;
+  }
+
+  #view .points-completed-social-button {
+    width: 100%;
+    font-size: 13px !important;
+  }
+}
+
+
+/* ============================================================
+   v32485 · Estados sutiles y capitanes con contraste
+   ============================================================ */
+
+#view .guest-pill.captain-pill {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--captain-bg) 72%,
+      #fff
+    ) !important;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(
+        in srgb,
+        var(--captain-accent) 30%,
+        transparent
+      ),
+      transparent 43%
+    ),
+    linear-gradient(
+      135deg,
+      var(--captain-bg),
+      color-mix(
+        in srgb,
+        var(--captain-bg) 82%,
+        #111
+      )
+    ) !important;
+  color: var(--captain-fg) !important;
+}
+
+#view .guest-pill.captain-pill .guest-pill-copy > strong,
+#view .guest-pill.captain-pill .guest-pill-copy > small {
+  color: var(--captain-fg) !important;
+}
+
+#view .guest-pill.captain-pill .guest-pill-copy > strong {
+  font-weight: 1000 !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,.14);
+}
+
+#view .guest-pill.captain-pill .captain-label {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--captain-accent) 75%,
+      transparent
+    ) !important;
+  background:
+    color-mix(
+      in srgb,
+      var(--captain-accent) 34%,
+      transparent
+    ) !important;
+  color: var(--captain-fg) !important;
+}
+
+#view .guest-pill.captain-pill .guest-person-initial {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--captain-accent) 70%,
+      transparent
+    ) !important;
+  background:
+    color-mix(
+      in srgb,
+      var(--captain-accent) 27%,
+      transparent
+    ) !important;
+  color: var(--captain-fg) !important;
+}
+
+#view .guest-pill.has-attendance-status {
+  grid-template-columns:
+    42px minmax(0,1fr) 26px !important;
+}
+
+#view .guest-attendance-status {
+  width: 23px !important;
+  height: 23px !important;
+  max-width: none !important;
+  min-width: 23px;
+  display: grid !important;
+  place-items: center;
+  justify-self: end;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-family: Arial, sans-serif;
+  line-height: 1 !important;
+  text-align: center;
+}
+
+@media(max-width:440px) {
+  #view .guest-pill.has-attendance-status {
+    grid-template-columns:
+      38px minmax(0,1fr) 24px !important;
+  }
+
+  #view .guest-attendance-status {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px;
   }
 }

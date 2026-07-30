@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32483";
+  const CURRENT_APP_VERSION = "32485";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32483"
+        appVersion: CONFIG.APP_VERSION || "32485"
       })
     );
   }
@@ -955,7 +955,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32483",
+      appVersion: "32485",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2915,20 +2915,62 @@
   }
 
   function updateSectionNavigationState() {
+    const visibleLockedMenuRoutes =
+      new Set([
+        "ubicacion",
+        "en-viaje"
+      ]);
+
     $$("[data-route]").forEach(button => {
-      const route = button.dataset.route;
-      const hiddenByLock = !isSectionOpen(route);
+      const route =
+        button.dataset.route;
+      const sectionOpen =
+        isSectionOpen(route);
+      const belongsToHamburgerMenu =
+        Boolean(
+          button.closest("#mainMenu")
+        );
+      const showLockedInMenu =
+        !sectionOpen &&
+        belongsToHamburgerMenu &&
+        visibleLockedMenuRoutes.has(route);
+      const hiddenByLock =
+        !sectionOpen &&
+        !showLockedInMenu;
 
-      button.classList.remove("is-section-locked");
-      button.classList.toggle("hidden", hiddenByLock);
+      button.classList.toggle(
+        "is-section-locked",
+        showLockedInMenu
+      );
+      button.classList.toggle(
+        "hidden",
+        hiddenByLock
+      );
 
-      if (hiddenByLock) {
+      if (showLockedInMenu) {
         button.setAttribute(
           "aria-label",
-          `${sectionDefinition(route)?.title || route}: oculta`
+          `${
+            sectionDefinition(route)?.title ||
+            route
+          }: contenido bloqueado`
         );
+        button.setAttribute(
+          "title",
+          "Próximamente"
+        );
+      } else if (hiddenByLock) {
+        button.setAttribute(
+          "aria-label",
+          `${
+            sectionDefinition(route)?.title ||
+            route
+          }: oculta`
+        );
+        button.removeAttribute("title");
       } else {
         button.removeAttribute("aria-label");
+        button.removeAttribute("title");
       }
     });
 
@@ -3591,17 +3633,19 @@
               </div>
             </button>
           ` : `
-            <article
-              class="home-essential-row home-essential-location home-essential-location-locked">
+            <button
+              type="button"
+              class="home-essential-row home-essential-link home-essential-location home-essential-location-locked"
+              data-go="ubicacion">
               <span class="home-essential-icon">
                 ${uiIcon("lock")}
               </span>
               <div>
                 <small>Ubicación</small>
                 <strong>¡Lugar secreto!</strong>
-                <p>Animate a vivir la experiencia completa con los micros ;)</p>
+                <p>Entrá para descubrir cuándo se revelará.</p>
               </div>
-            </article>
+            </button>
           `}
 
           <button
@@ -3667,6 +3711,23 @@
             <b aria-hidden="true">›</b>
           </button>
         ` : ""}
+
+        <button
+          type="button"
+          class="home-schedule-feature"
+          data-go="cronograma">
+          <span class="home-schedule-feature-icon">
+            ${uiIcon("clock")}
+          </span>
+          <span class="home-schedule-feature-copy">
+            <small>CRONOGRAMA</small>
+            <strong>Así va a ser el gran día</strong>
+            <em>
+              Guardá los horarios para no perderte nada.
+            </em>
+          </span>
+          <b aria-hidden="true">›</b>
+        </button>
       </section>
 
       ${(rsvpDone || challengesDone) ? `
@@ -4990,12 +5051,28 @@
           rgba(255,255,255,.09) inset;
       }
       .guest-pill.captain-pill .guest-pill-copy>strong{
-        color:var(--captain-fg);
+        color:var(--captain-fg)!important;
+        text-shadow:
+          0 1px 1px rgba(0,0,0,.12);
+      }
+      .guest-pill.captain-pill .guest-pill-copy>small{
+        color:var(--captain-fg)!important;
+        opacity:.84;
       }
       .guest-pill.captain-pill .guest-person-initial{
-        border:1px solid rgba(255,255,255,.30);
-        background:rgba(255,255,255,.16);
-        color:var(--captain-fg);
+        border:1px solid
+          color-mix(
+            in srgb,
+            var(--captain-accent) 70%,
+            transparent
+          )!important;
+        background:
+          color-mix(
+            in srgb,
+            var(--captain-accent) 27%,
+            transparent
+          )!important;
+        color:var(--captain-fg)!important;
       }
       .captain-label{
         display:inline-flex;
@@ -5024,49 +5101,50 @@
       }
       .guest-pill.has-attendance-status{
         grid-template-columns:
-          42px minmax(0,1fr) auto;
+          42px minmax(0,1fr) 26px!important;
       }
       .guest-attendance-status{
-        max-width:116px;
-        display:inline-flex;
-        align-items:center;
-        justify-content:flex-end;
-        gap:5px;
-        padding:5px 7px;
+        width:23px;
+        height:23px;
+        display:grid;
+        place-items:center;
+        justify-self:end;
+        padding:0;
         border:1px solid transparent;
-        border-radius:999px;
-        font-size:8px;
-        font-weight:950;
-        line-height:1.15;
-        text-align:right;
-        white-space:normal;
-      }
-      .guest-attendance-status>i{
-        width:6px;
-        height:6px;
-        flex:0 0 auto;
         border-radius:50%;
-        background:currentColor;
+        font-family:Arial,sans-serif;
+        font-size:15px;
+        font-weight:1000;
+        line-height:1;
+        cursor:help;
       }
       .guest-attendance-status.is-confirmed{
-        border-color:rgba(74,125,79,.22);
-        background:rgba(74,125,79,.10);
-        color:#3f7446;
+        border-color:rgba(65,126,72,.16);
+        background:rgba(65,126,72,.08);
+        color:#43804a;
       }
       .guest-attendance-status.is-pending{
-        border-color:rgba(171,124,48,.22);
-        background:rgba(201,170,114,.11);
+        border-color:rgba(139,100,40,.15);
+        background:rgba(139,100,40,.07);
         color:#8b6428;
+        font-size:14px;
       }
       .guest-attendance-status.is-not-attending{
-        border-color:rgba(116,51,68,.20);
-        background:rgba(116,51,68,.08);
-        color:#743344;
+        border-color:rgba(170,54,54,.15);
+        background:rgba(170,54,54,.07);
+        color:#ad3939;
+        font-size:18px;
+        font-weight:800;
       }
       .captain-pill .guest-attendance-status{
-        border-color:rgba(255,255,255,.25);
+        border-color:
+          color-mix(
+            in srgb,
+            var(--captain-accent) 54%,
+            transparent
+          );
         background:rgba(255,255,255,.15);
-        color:var(--captain-fg);
+        color:var(--captain-fg)!important;
       }
       .guest-pill.is-declined{
         filter:grayscale(1);
@@ -5090,13 +5168,12 @@
       @media(max-width:440px){
         .guest-pill.has-attendance-status{
           grid-template-columns:
-            38px minmax(0,1fr) 102px;
+            38px minmax(0,1fr) 24px!important;
           gap:7px;
         }
         .guest-attendance-status{
-          max-width:102px;
-          padding:4px 6px;
-          font-size:7.5px;
+          width:22px;
+          height:22px;
         }
       }
     </style>`;
@@ -5213,25 +5290,30 @@
 
     let attendanceClass = "is-pending";
     let attendanceText = "Asistencia pendiente";
+    let attendanceIcon = "◷";
 
     if (rsvpCompleted && rsvp.attendance === "si") {
       attendanceClass = "is-confirmed";
       attendanceText = "Confirmó asistencia";
+      attendanceIcon = "✓";
     } else if (
       rsvpCompleted &&
       rsvp.attendance === "no"
     ) {
       attendanceClass = "is-not-attending";
       attendanceText = "No podrá asistir";
+      attendanceIcon = "×";
     }
 
     const attendanceStatus =
       options.showAttendanceStatus
         ? `
           <span
-            class="guest-attendance-status ${attendanceClass}">
-            <i aria-hidden="true"></i>
-            ${escapeHTML(attendanceText)}
+            class="guest-attendance-status ${attendanceClass}"
+            role="img"
+            aria-label="${escapeHTML(attendanceText)}"
+            title="${escapeHTML(attendanceText)}">
+            ${attendanceIcon}
           </span>
         `
         : "";
@@ -5279,7 +5361,8 @@
               : ""
           }
           ${
-            declined
+            declined &&
+            !options.showAttendanceStatus
               ? `<span class="declined-label">No asiste</span>`
               : ""
           }
@@ -5403,26 +5486,26 @@
           <p class="eyebrow">${escapeHTML(pointsEyebrow)}</p>
           <h3>${escapeHTML(pointsTitle)}</h3>
           <p>${escapeHTML(pointsText)}</p>
+
+          ${
+            currentGamesDone
+              ? `
+                <button
+                  type="button"
+                  class="points-completed-social-button"
+                  data-go="social">
+                  ${uiIcon("chat")}
+                  <span>Ir a Social</span>
+                </button>
+              `
+              : ""
+          }
         </div>
         <span>
           <b>${myPoints}</b>
           <small>puntos</small>
         </span>
       </section>
-
-      ${currentGamesDone ? `
-        <section
-          class="points-social-cta points-social-cta--highlight section-card">
-          <span>${uiIcon("chat")}</span>
-          <div>
-            <h4>Hablales a los otros equipos</h4>
-            <p>Deciles quién va a ganar la competencia.</p>
-          </div>
-          <button type="button" data-go="social">
-            Ir a Social
-          </button>
-        </section>
-      ` : ""}
 
       ${isSectionOpen("reglas") ? `
         <button
@@ -5531,23 +5614,19 @@
         </section>
       ` : ""}
 
-      <div
-        class="points-coming-soon-note ${
-          currentGamesDone
-            ? "is-completed"
-            : ""
-        }">
-        <span aria-hidden="true">
-          ${currentGamesDone ? "🕒" : "🔒"}
-        </span>
-        <strong>
-          ${
-            currentGamesDone
-              ? "¡Próximamente más desafíos!"
-              : "Más juegos y actividades se habilitarán más adelante."
-          }
-        </strong>
-      </div>
+      ${
+        !currentGamesDone
+          ? `
+            <div class="points-coming-soon-note">
+              <span aria-hidden="true">🔒</span>
+              <strong>
+                Más juegos y actividades se habilitarán
+                más adelante.
+              </strong>
+            </div>
+          `
+          : ""
+      }
     `;
   }
 
@@ -10084,7 +10163,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32483 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32485 y volvé a intentar.`
           });
         }
       }
