@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32488";
+  const CURRENT_APP_VERSION = "32489";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32488"
+        appVersion: CONFIG.APP_VERSION || "32489"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32488",
+      appVersion: "32489",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -3340,39 +3340,38 @@
   }
 
 
+  const TRIVIA_POINTS_PER_CORRECT = 10;
+
   const SAMPLE_COUPLE_QUESTIONS = [
     {
-      id: "first-look",
-      question: "¿Dónde empezó la historia de Vani y Fede?",
+      id: "first-work",
+      question: "¿Dónde se conocieron Vani y Fede?",
       options: [
-        "En el comedor de su primer trabajo",
-        "En una fiesta de amigos",
-        "En la facultad",
-        "En una sala de escape"
+        "En su primer trabajo",
+        "En una fiesta",
+        "En la facultad"
       ],
-      answer: "En el comedor de su primer trabajo"
+      answer: "En su primer trabajo"
     },
     {
-      id: "first-date",
-      question: "¿Cuál fue el plan de su primera cita?",
+      id: "escape-room",
+      question: "¿Qué tipo de actividad disfrutan especialmente cuando quieren ponerse a prueba?",
       options: [
-        "Ir al cine",
-        "Salir a cenar",
-        "Tomar una merienda",
-        "Ir a una plaza"
+        "Ir al karaoke",
+        "Hacer salas de escape",
+        "Jugar al bowling"
       ],
-      answer: "Ir al cine"
+      answer: "Hacer salas de escape"
     },
     {
       id: "shared-passion",
       question: "¿Qué pasión compartida fue protagonista de gran parte de sus años juntos?",
       options: [
-        "Viajar y descubrir lugares nuevos",
-        "Correr maratones",
-        "Realizar deportes",
-        "Aprender instrumentos musicales"
+        "Viajar",
+        "Deportes",
+        "Música"
       ],
-      answer: "Viajar y descubrir lugares nuevos"
+      answer: "Viajar"
     },
     {
       id: "dog",
@@ -3380,8 +3379,7 @@
       options: [
         "Simba",
         "Coco",
-        "Milo",
-        "Loki"
+        "Milo"
       ],
       answer: "Simba"
     },
@@ -3389,7 +3387,6 @@
       id: "years",
       question: "¿Cuántos años llevan juntos actualmente?",
       options: [
-        "9 años",
         "10 años",
         "11 años",
         "12 años"
@@ -3400,8 +3397,8 @@
 
   const WHO_IS_WHO_QUESTIONS = [
     {
-      id: "lost-things",
-      question: "¿Quién suele olvidarse las llaves o el celular?",
+      id: "lost-keys",
+      question: "¿Quién suele perder las llaves de casa?",
       options: ["Vani", "Fede"],
       answer: "Vani"
     },
@@ -3412,10 +3409,10 @@
       answer: "Fede"
     },
     {
-      id: "exercise",
-      question: "Aunque el día haya sido largo, ¿quién suele cumplir igual con la actividad física?",
+      id: "competitive-games",
+      question: "¿Quién es más competitivo cuando juegan a juegos de mesa?",
       options: ["Vani", "Fede"],
-      answer: "Vani"
+      answer: "Fede"
     },
     {
       id: "masterchef",
@@ -4632,8 +4629,17 @@
           timestamp: submission.updatedAt,
           gameId: "auto-couple-trivia",
           teamId: submission.teamId,
-          points: bestScore * 20,
-          comment: `Trivia Vani y Fede completada · ${guest?.firstName || submission.guestId || "Invitado"} · ${bestScore * 20} puntos`,
+          points:
+            bestScore * TRIVIA_POINTS_PER_CORRECT,
+          comment:
+            `Trivia Vani y Fede completada · ${
+              guest?.firstName ||
+              submission.guestId ||
+              "Invitado"
+            } · ${
+              bestScore *
+              TRIVIA_POINTS_PER_CORRECT
+            } puntos`,
           automatic: true
         });
       }
@@ -4650,8 +4656,17 @@
           timestamp: submission.updatedAt,
           gameId: "auto-who-is-who-trivia",
           teamId: submission.teamId,
-          points: bestScore * 20,
-          comment: `Trivia Vani o Fede completada · ${guest?.firstName || submission.guestId || "Invitado"} · ${bestScore * 20} puntos`,
+          points:
+            bestScore * TRIVIA_POINTS_PER_CORRECT,
+          comment:
+            `Trivia Vani o Fede completada · ${
+              guest?.firstName ||
+              submission.guestId ||
+              "Invitado"
+            } · ${
+              bestScore *
+              TRIVIA_POINTS_PER_CORRECT
+            } puntos`,
           automatic: true
         });
       }
@@ -5466,33 +5481,35 @@
         )
       : 0;
     const coupleEarnedPoints = triviaDone
-      ? Math.max(
-          0,
-          Number(
-            coupleSubmission?.earnedPoints ??
-            (
+      ? (
+          Math.max(
+            0,
+            Math.min(
+              SAMPLE_COUPLE_QUESTIONS.length,
               Number(
                 coupleSubmission?.score ??
                 coupleSubmission?.bestScore ??
                 0
-              ) * 20
+              )
             )
-          )
+          ) *
+          TRIVIA_POINTS_PER_CORRECT
         )
       : 0;
     const whoEarnedPoints = whoTriviaDone
-      ? Math.max(
-          0,
-          Number(
-            whoSubmission?.earnedPoints ??
-            (
+      ? (
+          Math.max(
+            0,
+            Math.min(
+              WHO_IS_WHO_QUESTIONS.length,
               Number(
                 whoSubmission?.score ??
                 whoSubmission?.bestScore ??
                 0
-              ) * 20
+              )
             )
-          )
+          ) *
+          TRIVIA_POINTS_PER_CORRECT
         )
       : 0;
     const currentGamesDone =
@@ -5616,7 +5633,7 @@
             route:"trivia-pareja",
             progressText:triviaDone
               ? `${coupleEarnedPoints} puntos obtenidos`
-              : "Hasta 100 puntos",
+              : "Hasta 50 puntos",
             editable:false,
             locked:!rsvpDone || !triviaOpen
           })}
@@ -5633,7 +5650,7 @@
             route:"trivia-quien",
             progressText:whoTriviaDone
               ? `${whoEarnedPoints} puntos obtenidos`
-              : "Hasta 100 puntos",
+              : "Hasta 50 puntos",
             editable:false,
             locked:!rsvpDone || !whoTriviaOpen
           })}
@@ -6077,7 +6094,7 @@
               route:"trivia-pareja",
               eyebrow:"Siguiente desafío",
               title:"¿Cuánto conocés a Vani y Fede?",
-              text:"Respondé cinco preguntas y sumá hasta 100 puntos.",
+              text:"Respondé cinco preguntas y sumá hasta 50 puntos.",
               button:"Ir al desafío 2"
             })}
           </div>
@@ -6155,25 +6172,28 @@
     }
 
     if (saved) {
-      const earnedPoints = Math.max(
-        0,
+      const maxScore =
         Number(
-          saved.earnedPoints ??
-          (
-            Number(
-              saved.score ??
-              saved.bestScore ??
-              0
-            ) * 20
+          saved.maxScore ||
+          SAMPLE_COUPLE_QUESTIONS.length
+        );
+      const correctAnswers = Math.max(
+        0,
+        Math.min(
+          maxScore,
+          Number(
+            saved.score ??
+            saved.bestScore ??
+            0
           )
         )
       );
-      const maxScore =
-        Number(saved.maxScore || 5);
+      const earnedPoints =
+        correctAnswers *
+        TRIVIA_POINTS_PER_CORRECT;
       const maxPoints =
-        maxScore * 20;
-      const correctAnswers =
-        Math.round(earnedPoints / 20);
+        maxScore *
+        TRIVIA_POINTS_PER_CORRECT;
 
       return `
         <article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card is-completed is-compact-completed">
@@ -6226,7 +6246,7 @@
 
           <p>
             Cinco preguntas, una sola oportunidad y hasta
-            <strong>100 puntos</strong> para tu equipo.
+            <strong>50 puntos</strong> para tu equipo.
           </p>
 
           <div class="trivia-points-rule">
@@ -6284,25 +6304,28 @@
     }
 
     if (saved) {
-      const earnedPoints = Math.max(
-        0,
+      const maxScore =
         Number(
-          saved.earnedPoints ??
-          (
-            Number(
-              saved.score ??
-              saved.bestScore ??
-              0
-            ) * 20
+          saved.maxScore ||
+          WHO_IS_WHO_QUESTIONS.length
+        );
+      const correctAnswers = Math.max(
+        0,
+        Math.min(
+          maxScore,
+          Number(
+            saved.score ??
+            saved.bestScore ??
+            0
           )
         )
       );
-      const maxScore =
-        Number(saved.maxScore || 5);
+      const earnedPoints =
+        correctAnswers *
+        TRIVIA_POINTS_PER_CORRECT;
       const maxPoints =
-        maxScore * 20;
-      const correctAnswers =
-        Math.round(earnedPoints / 20);
+        maxScore *
+        TRIVIA_POINTS_PER_CORRECT;
 
       return `
         <article id="who-is-who-game" class="trivia-game-card is-open trivia-quiz-card trivia-who-card is-completed is-compact-completed">
@@ -6356,7 +6379,7 @@
 
           <p>
             Cinco situaciones, dos posibles respuestas y hasta
-            <strong>100 puntos</strong> para tu equipo.
+            <strong>50 puntos</strong> para tu equipo.
           </p>
 
           <div class="trivia-points-rule">
@@ -7183,8 +7206,8 @@
         ${rulesRow("Confirmar asistencia", `+${teamPoints}`, "Respuesta definitiva por sí o por no. El valor está equilibrado por equipo.")}
         ${rulesRow("Elegir canciones", `+${teamPoints}`, "Completar la propuesta musical para la boda y la entrada del equipo.")}
         ${rulesRow("Viajar en micro", "+20", "Bonus adicional para quienes seleccionen el micro en Asistencia.")}
-        ${rulesRow("Trivia de los novios", "+20 por acierto", "Cinco preguntas, con un máximo de 100 puntos.")}
-        ${rulesRow("Trivia Vani o Fede", "+20 por acierto", "Cinco preguntas, con un máximo de 100 puntos.")}
+        ${rulesRow("Trivia de los novios", "+10 por acierto", "Cinco preguntas, con un máximo de 50 puntos.")}
+        ${rulesRow("Trivia Vani o Fede", "+10 por acierto", "Cinco preguntas, con un máximo de 50 puntos.")}
         ${rulesRow("Próximos desafíos", "Según consigna", "Cada actividad indicará cuántos puntos entrega.")}
         ${rulesRow("Bonus o penalizaciones", "+ / −", "Vani y Fede podrán sumar o restar puntos por juegos, actitud o incumplimiento de consignas.")}
       </section>
@@ -9398,7 +9421,9 @@
           answers,
           score,
           bestScore: score,
-          earnedPoints: score * 20,
+          earnedPoints:
+            score *
+            TRIVIA_POINTS_PER_CORRECT,
           maxScore: SAMPLE_COUPLE_QUESTIONS.length,
           gameId: "couple-trivia-test",
           guestId: currentGuest.id,
@@ -9449,7 +9474,9 @@
           answers,
           score,
           bestScore: score,
-          earnedPoints: score * 20,
+          earnedPoints:
+            score *
+            TRIVIA_POINTS_PER_CORRECT,
           maxScore: WHO_IS_WHO_QUESTIONS.length,
           gameId: "who-is-who-trivia-test",
           guestId: currentGuest.id,
@@ -10257,7 +10284,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32488 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32489 y volvé a intentar.`
           });
         }
       }
