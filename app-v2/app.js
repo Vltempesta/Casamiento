@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32477";
+  const CURRENT_APP_VERSION = "32478";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32477"
+        appVersion: CONFIG.APP_VERSION || "32478"
       })
     );
   }
@@ -962,7 +962,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32477",
+      appVersion: "32478",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -1924,6 +1924,7 @@
     updateLoginPrivacyUi();
     fillGuestSuggestions();
     configureNavigation();
+    preloadTeamLogos();
     configureInstallExperience();
     registerServiceWorker();
     void checkForAppUpdate();
@@ -2522,11 +2523,44 @@
   }
 
 
+  const TEAM_LOGO_IDS = [
+    "bosque",
+    "fuego",
+    "luz",
+    "noche",
+    "agua",
+    "viento"
+  ];
+
+  function preloadTeamLogos() {
+    TEAM_LOGO_IDS.forEach(teamId => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src =
+        `assets/team-logos/${teamId}.png?v=${CURRENT_APP_VERSION}`;
+    });
+  }
+
   function teamLogo(team, className = "") {
     if (!team) return "";
-    const cls = className ? ` ${className}` : "";
-    const src = `assets/team-logos/${team.id}.png?v=32477`;
-    return `<span class="team-logo team-logo--${team.id}${cls}" aria-label="${escapeHTML(team.name)}"><img src="${src}" alt="Logo ${escapeHTML(team.name)}" loading="lazy"></span>`;
+
+    const cls = className
+      ? ` ${className}`
+      : "";
+    const src =
+      `assets/team-logos/${team.id}.png?v=32478`;
+
+    return `
+      <span
+        class="team-logo team-logo--${team.id}${cls}"
+        aria-label="${escapeHTML(team.name)}">
+        <img
+          src="${src}"
+          alt="Logo ${escapeHTML(team.name)}"
+          loading="eager"
+          decoding="async">
+      </span>
+    `;
   }
 
 
@@ -3436,7 +3470,7 @@
                 ${
                   rsvp.attendance === "si"
                     ? "Asistencia confirmada"
-                    : "Respuesta guardada"
+                    : "Respuesta enviada"
                 }
               </span>
             </button>
@@ -3631,30 +3665,13 @@
         })}
       </section>
 
-      <section class="transport-process-strip section-card">
-        <span>
-          <b>1</b>
-          Confirmás zona
-        </span>
-        <i>›</i>
-        <span>
-          <b>2</b>
-          Cerramos respuestas
-        </span>
-        <i>›</i>
-        <span>
-          <b>3</b>
-          Publicamos recorrido
-        </span>
-      </section>
-
       <section class="transport-times-grid">
         <article class="section-card transport-time-card">
           <span>${uiIcon("hourglass")}</span>
           <div>
             <small>Salida estimada</small>
             <strong>15:30 a 16:30</strong>
-            <p>Horario exacto según cada zona.</p>
+            <p>Horario estimado según la zona elegida.</p>
           </div>
         </article>
 
@@ -3718,10 +3735,6 @@
       .transport-zone-card strong{padding-right:42px;font-size:10.5px;line-height:1.15}
       .transport-zone-card small{margin-top:2px;color:#31536e;font-size:7.5px;font-weight:800}
       .transport-zone-card em{position:absolute;top:6px;right:6px;padding:2px 5px;border-radius:999px;background:rgba(201,170,114,.14);color:#8a6129;font-size:5.8px;font-style:normal;font-weight:900;text-transform:uppercase}
-      .transport-process-strip{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:6px;align-items:center;margin-top:8px;padding:8px 10px}
-      .transport-process-strip>span{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:7.5px;font-weight:850}
-      .transport-process-strip b{width:21px;height:21px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;background:#743344;color:#fff;font-size:7px}
-      .transport-process-strip i{color:var(--gold-deep);font-size:15px;font-style:normal}
       .transport-times-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
       .transport-time-card{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:center;padding:9px}
       .transport-time-card>span{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:rgba(49,83,110,.08);color:#31536e}
@@ -3740,9 +3753,6 @@
         .transport-main-bottom{align-items:flex-start;flex-direction:column}
         .transport-main-bottom button{width:100%}
         .transport-zones-grid{grid-template-columns:1fr}
-        .transport-process-strip{grid-template-columns:1fr}
-        .transport-process-strip i{display:none}
-        .transport-process-strip>span{min-height:25px}
         .transport-times-grid{grid-template-columns:1fr 1fr}
       }
       @media(max-width:430px){
@@ -3795,6 +3805,8 @@
         : formValues.transport;
     const savedPickupZone =
       formValues.pickupZone || "";
+    const attendanceDeclined =
+      formValues.attendance === "no";
 
     const savedDietChoice = formValues.dietChoice ||
       (
@@ -3817,13 +3829,95 @@
         transportLabel(saved.transport) ||
         "Sin definir";
       const usesMicro =
+        saved.attendance === "si" &&
         ["combi", "micro"].includes(
           saved.transport
         );
       const usesParticular =
+        saved.attendance === "si" &&
         ["particular", "auto"].includes(
           saved.transport
         );
+
+      const transportSummaryCard =
+        saved.attendance === "si"
+          ? `
+            ${
+              usesMicro
+                ? `
+                  <button
+                    type="button"
+                    class="rsvp-transport-unified"
+                    data-go="traslado">
+                `
+                : `
+                  <section
+                    class="rsvp-transport-unified rsvp-transport-unified-static">
+                `
+            }
+              <span class="rsvp-transport-unified-icon">
+                ${
+                  usesMicro
+                    ? uiIcon("coach")
+                    : uiIcon("carRoute")
+                }
+              </span>
+
+              <span class="rsvp-transport-unified-copy">
+                <small>Traslado elegido</small>
+                <strong>${escapeHTML(selectedTransport)}</strong>
+
+                ${
+                  usesMicro
+                    ? `
+                      <span class="rsvp-transport-zone">
+                        Zona tentativa:
+                        ${escapeHTML(
+                          pickupZoneLabel(saved.pickupZone) ||
+                          "Sin definir"
+                        )}
+                      </span>
+                    `
+                    : ""
+                }
+
+                <em>
+                  ${
+                    usesParticular
+                      ? "El destino se informará el mismo día de la boda."
+                      : "Los horarios y puntos definitivos serán informados después del cierre de respuestas del 15 de agosto."
+                  }
+                </em>
+              </span>
+
+            ${
+              usesMicro
+                ? "</button>"
+                : "</section>"
+            }
+          `
+          : "";
+
+      const accommodationNote =
+        usesParticular
+          ? `
+            <section class="rsvp-accommodation-note">
+              <span class="rsvp-accommodation-icon">
+                ${uiIcon("house")}
+              </span>
+              <div>
+                <strong>
+                  ¿Necesitás organizar alojamiento?
+                </strong>
+                <p>
+                  Si necesitás información anticipada
+                  para coordinar alojamiento por la zona,
+                  escribinos por WhatsApp.
+                </p>
+              </div>
+            </section>
+          `
+          : "";
 
       return `
         ${rsvpStyles()}
@@ -3837,20 +3931,8 @@
           <div class="rsvp-confirmed-head">
             <span class="rsvp-okmark">✓</span>
             <div>
-              <h4>
-                ${
-                  saved.pendingSync
-                    ? "Guardando respuesta…"
-                    : "Respuesta guardada"
-                }
-              </h4>
-              <p>
-                ${
-                  saved.pendingSync
-                    ? "Ya la ves actualizada. La confirmación continúa en segundo plano."
-                    : "Podés actualizarla cuando lo necesites."
-                }
-              </p>
+              <h4>Respuesta enviada</h4>
+              <p>Podés actualizarla cuando lo necesites.</p>
             </div>
           </div>
 
@@ -3859,89 +3941,21 @@
               "Asistencia",
               attendanceLabel(saved.attendance)
             )}
-            ${summaryLine(
-              "Restricciones",
-              saved.dietChoice === "no" ||
-              !String(formValues.diet || "").trim()
-                ? "No"
-                : saved.diet
-            )}
-          </div>
-
-          ${
-            usesMicro
-              ? `
-                <button
-                  type="button"
-                  class="rsvp-transport-unified"
-                  data-go="traslado">
-              `
-              : `
-                <section
-                  class="rsvp-transport-unified rsvp-transport-unified-static">
-              `
-          }
-            <span class="rsvp-transport-unified-icon">
-              ${
-                usesMicro
-                  ? uiIcon("coach")
-                  : uiIcon("carRoute")
-              }
-            </span>
-            <span class="rsvp-transport-unified-copy">
-              <small>Traslado elegido</small>
-              <strong>${escapeHTML(selectedTransport)}</strong>
-              ${
-                usesMicro
-                  ? `<span class="rsvp-transport-zone">
-                      Zona preferida:
-                      ${escapeHTML(
-                        pickupZoneLabel(saved.pickupZone) ||
-                        "Sin definir"
-                      )}
-                    </span>`
-                  : ""
-              }
-              <em>
-                ${
-                  usesParticular
-                    ? "El destino se informará el mismo día de la boda."
-                    : "Los horarios y puntos definitivos serán informados después del cierre de respuestas del 15 de agosto."
-                }
-              </em>
-            </span>
             ${
-              usesMicro
-                ? `<b aria-hidden="true">Ver traslados ›</b>`
+              saved.attendance === "si"
+                ? summaryLine(
+                    "Restricciones",
+                    saved.dietChoice === "no" ||
+                    !String(formValues.diet || "").trim()
+                      ? "No"
+                      : saved.diet
+                  )
                 : ""
             }
-          ${
-            usesMicro
-              ? "</button>"
-              : "</section>"
-          }
+          </div>
 
-          ${
-            usesParticular
-              ? `
-                <section class="rsvp-accommodation-note">
-                  <span class="rsvp-accommodation-icon">
-                    ${uiIcon("house")}
-                  </span>
-                  <div>
-                    <strong>
-                      ¿Necesitás organizar alojamiento?
-                    </strong>
-                    <p>
-                      Si necesitás información anticipada
-                      para coordinar alojamiento por la zona,
-                      escribinos por WhatsApp.
-                    </p>
-                  </div>
-                </section>
-              `
-              : ""
-          }
+          ${transportSummaryCard}
+          ${accommodationNote}
 
           <div class="rsvp-actions-row">
             <button id="editRsvp" type="button">
@@ -4033,7 +4047,12 @@
             </div>
           </fieldset>
 
-          <fieldset class="choice-field transport-choice-field">
+          <fieldset
+            class="choice-field transport-choice-field rsvp-attendance-dependent ${
+              attendanceDeclined ? "hidden" : ""
+            }"
+            data-attendance-dependent
+            ${attendanceDeclined ? "disabled" : ""}>
             <legend>¿Cómo pensás llegar?</legend>
             <div class="choice-group choice-group-two">
               ${choicePillIcon(
@@ -4061,13 +4080,20 @@
 
 
           <fieldset
-            class="choice-field pickup-zone-field ${
+            class="choice-field pickup-zone-field rsvp-attendance-dependent ${
+              !attendanceDeclined &&
               savedTransport === "combi"
                 ? ""
                 : "hidden"
             }"
+            data-attendance-dependent
             data-pickup-zone
-            ${savedTransport === "combi" ? "" : "disabled"}>
+            ${
+              !attendanceDeclined &&
+              savedTransport === "combi"
+                ? ""
+                : "disabled"
+            }>
             <legend>
               ¿Desde qué zona preferís salir?
             </legend>
@@ -4102,7 +4128,12 @@
 
           </fieldset>
 
-          <fieldset class="choice-field diet-choice-field">
+          <fieldset
+            class="choice-field diet-choice-field rsvp-attendance-dependent ${
+              attendanceDeclined ? "hidden" : ""
+            }"
+            data-attendance-dependent
+            ${attendanceDeclined ? "disabled" : ""}>
             <legend>¿Tenés restricciones alimentarias?</legend>
             <div class="choice-group choice-group-two">
               ${choicePill(
@@ -4124,18 +4155,31 @@
         </div>
 
         <label
-          class="diet-detail-label ${
-            savedDietChoice === "no"
-              ? "is-disabled"
-              : ""
+          class="diet-detail-label rsvp-attendance-dependent ${
+            attendanceDeclined
+              ? "hidden is-disabled"
+              : savedDietChoice === "no"
+                ? "is-disabled"
+                : ""
           }"
+          data-attendance-dependent
           data-diet-detail>
           <span>Detalle de restricciones / alergias</span>
           <textarea
             name="diet"
             placeholder="Ej: vegetariano, celíaco, sin lactosa..."
-            ${savedDietChoice === "no" ? "disabled" : ""}
-            ${savedDietChoice === "si" ? "required" : ""}
+            ${
+              attendanceDeclined ||
+              savedDietChoice === "no"
+                ? "disabled"
+                : ""
+            }
+            ${
+              !attendanceDeclined &&
+              savedDietChoice === "si"
+                ? "required"
+                : ""
+            }
           >${escapeHTML(formValues.diet || "")}</textarea>
           <small>
             ${
@@ -4173,7 +4217,7 @@
   function rsvpStyles() {
     return `<style>
       .rsvp-form-compact{padding:16px}.rsvp-form-compact .form-grid{gap:10px}.rsvp-form-compact label{gap:5px}.rsvp-form-compact input,.rsvp-form-compact select{min-height:42px}.rsvp-form-compact textarea{min-height:70px}
-      .choice-field{border:0;padding:0;margin:0}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .choice-field{border:0;padding:0;margin:0}.rsvp-attendance-dependent.hidden{display:none!important}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}
       .choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
       .pickup-zone-field{grid-column:1/-1;padding:11px!important;border:1px solid rgba(49,83,110,.14)!important;border-radius:14px;background:rgba(49,83,110,.035)}.pickup-zone-field.hidden{display:none}.pickup-zone-intro{margin:-1px 0 8px;color:var(--muted);font-size:8.5px;line-height:1.35}.pickup-zone-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.pickup-zone-help{display:block;margin-top:7px;color:#31536e;font-size:8px;font-weight:800}.rsvp-transport-zone{display:block;margin-top:2px;color:#31536e;font-size:8px;font-weight:900}
       .diet-detail-label{display:grid;gap:5px;margin-top:10px;padding:11px;border:1px solid rgba(132,104,68,.14);border-radius:14px;background:rgba(255,255,255,.35);transition:.18s}.diet-detail-label>span{font-size:12px;font-weight:900}.diet-detail-label small{color:var(--muted);font-size:9px}.diet-detail-label.is-disabled{background:rgba(120,120,120,.055);border-color:rgba(120,120,120,.13)}.diet-detail-label.is-disabled>span,.diet-detail-label.is-disabled small{color:#8b8782}.diet-detail-label textarea:disabled{background:rgba(120,120,120,.08)!important;color:#999!important;cursor:not-allowed}
@@ -5437,8 +5481,23 @@
     if (saved) {
       const earnedPoints = Math.max(
         0,
-        Number(saved.earnedPoints ?? (Number(saved.score ?? saved.bestScore ?? 0) * 20))
+        Number(
+          saved.earnedPoints ??
+          (
+            Number(
+              saved.score ??
+              saved.bestScore ??
+              0
+            ) * 20
+          )
+        )
       );
+      const maxScore =
+        Number(saved.maxScore || 5);
+      const maxPoints =
+        maxScore * 20;
+      const correctAnswers =
+        Math.round(earnedPoints / 20);
 
       return `
         <article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card is-completed is-compact-completed">
@@ -5456,8 +5515,12 @@
               class="trivia-result trivia-result-final">
               ${uiIcon("star")}
               <div>
-                <strong>${earnedPoints} puntos</strong>
-                <span>Resultado final obtenido para tu equipo</span>
+                <strong>
+                  ¡${earnedPoints} puntos de ${maxPoints} disponibles!
+                </strong>
+                <span>
+                  ${correctAnswers} de ${maxScore} respuestas correctas
+                </span>
               </div>
             </div>
 
@@ -5544,8 +5607,23 @@
     if (saved) {
       const earnedPoints = Math.max(
         0,
-        Number(saved.earnedPoints ?? (Number(saved.score ?? saved.bestScore ?? 0) * 20))
+        Number(
+          saved.earnedPoints ??
+          (
+            Number(
+              saved.score ??
+              saved.bestScore ??
+              0
+            ) * 20
+          )
+        )
       );
+      const maxScore =
+        Number(saved.maxScore || 5);
+      const maxPoints =
+        maxScore * 20;
+      const correctAnswers =
+        Math.round(earnedPoints / 20);
 
       return `
         <article id="who-is-who-game" class="trivia-game-card is-open trivia-quiz-card trivia-who-card is-completed is-compact-completed">
@@ -5563,8 +5641,12 @@
               class="trivia-result trivia-result-final">
               ${uiIcon("star")}
               <div>
-                <strong>${earnedPoints} puntos</strong>
-                <span>Resultado final obtenido para tu equipo</span>
+                <strong>
+                  ¡${earnedPoints} puntos de ${maxPoints} disponibles!
+                </strong>
+                <span>
+                  ${correctAnswers} de ${maxScore} respuestas correctas
+                </span>
               </div>
             </div>
 
@@ -8052,6 +8134,73 @@
 
     if (route === "asistencia") {
       const rsvpForm = $("#rsvpForm");
+      const updateAttendanceDependentFields = () => {
+        if (!rsvpForm) return;
+
+        const attendance =
+          rsvpForm.querySelector(
+            'input[name="attendance"]:checked'
+          )?.value || "";
+        const declined =
+          attendance === "no";
+
+        rsvpForm
+          .querySelectorAll(
+            "[data-attendance-dependent]"
+          )
+          .forEach(element => {
+            element.classList.toggle(
+              "hidden",
+              declined
+            );
+
+            if (
+              element instanceof
+              HTMLFieldSetElement
+            ) {
+              element.disabled = declined;
+            }
+          });
+
+        const transportInputs =
+          rsvpForm.querySelectorAll(
+            'input[name="transport"]'
+          );
+        const dietChoiceInputs =
+          rsvpForm.querySelectorAll(
+            'input[name="dietChoice"]'
+          );
+
+        if (declined) {
+          rsvpForm
+            .querySelectorAll(
+              'input[name="transport"], input[name="pickupZone"], input[name="dietChoice"]'
+            )
+            .forEach(input => {
+              input.checked = false;
+              input.required = false;
+            });
+
+          const dietTextarea =
+            rsvpForm.querySelector(
+              'textarea[name="diet"]'
+            );
+
+          if (dietTextarea) {
+            dietTextarea.value = "";
+            dietTextarea.disabled = true;
+            dietTextarea.required = false;
+          }
+        } else {
+          transportInputs.forEach(input => {
+            input.required = true;
+          });
+          dietChoiceInputs.forEach(input => {
+            input.required = true;
+          });
+        }
+      };
+
       const updatePickupZoneField = () => {
         if (!rsvpForm) return;
 
@@ -8067,7 +8216,13 @@
 
         if (!fieldset) return;
 
+        const attendance =
+          rsvpForm.querySelector(
+            'input[name="attendance"]:checked'
+          )?.value || "";
+
         const visible =
+          attendance !== "no" &&
           ["combi", "micro"].includes(
             selectedTransport
           );
@@ -8097,15 +8252,42 @@
 
       const updateDietField = () => {
         if (!rsvpForm) return;
-        const choice = rsvpForm.querySelector('input[name="dietChoice"]:checked')?.value || "";
-        const label = rsvpForm.querySelector("[data-diet-detail]");
-        const textarea = rsvpForm.querySelector('textarea[name="diet"]');
+        const attendance =
+          rsvpForm.querySelector(
+            'input[name="attendance"]:checked'
+          )?.value || "";
+        const choice =
+          rsvpForm.querySelector(
+            'input[name="dietChoice"]:checked'
+          )?.value || "";
+        const label =
+          rsvpForm.querySelector(
+            "[data-diet-detail]"
+          );
+        const textarea =
+          rsvpForm.querySelector(
+            'textarea[name="diet"]'
+          );
         if (!label || !textarea) return;
 
-        const disabled = choice === "no";
-        label.classList.toggle("is-disabled", disabled);
+        const declined =
+          attendance === "no";
+        const disabled =
+          declined ||
+          choice === "no";
+
+        label.classList.toggle(
+          "hidden",
+          declined
+        );
+        label.classList.toggle(
+          "is-disabled",
+          disabled
+        );
         textarea.disabled = disabled;
-        textarea.required = choice === "si";
+        textarea.required =
+          !declined &&
+          choice === "si";
 
         const helper = label.querySelector("small");
         if (helper) {
@@ -8116,6 +8298,20 @@
 
         if (disabled) textarea.value = "";
       };
+
+      rsvpForm?.querySelectorAll(
+        'input[name="attendance"]'
+      ).forEach(input => {
+        input.addEventListener(
+          "change",
+          () => {
+            updateAttendanceDependentFields();
+            updatePickupZoneField();
+            updateDietField();
+            captureRsvpDraft(rsvpForm);
+          }
+        );
+      });
 
       rsvpForm?.querySelectorAll(
         'input[name="transport"]'
@@ -8155,6 +8351,7 @@
         );
       }
 
+      updateAttendanceDependentFields();
       updatePickupZoneField();
       updateDietField();
 
@@ -8182,14 +8379,39 @@
           return;
         }
 
-        if (!["si", "no"].includes(values.dietChoice)) {
+        const attending =
+          values.attendance === "si";
+
+        const transport = attending
+          ? String(values.transport || "")
+          : "";
+
+        if (
+          attending &&
+          !["particular", "combi", "micro"].includes(
+            transport
+          )
+        ) {
+          toast("Elegí cómo pensás llegar.");
+          return;
+        }
+
+        const dietChoice = attending
+          ? String(values.dietChoice || "")
+          : "";
+
+        if (
+          attending &&
+          !["si", "no"].includes(dietChoice)
+        ) {
           toast("Indicá si tenés restricciones alimentarias.");
           return;
         }
 
         const usesMicro =
+          attending &&
           ["combi", "micro"].includes(
-            values.transport
+            transport
           );
 
         const pickupZone = usesMicro
@@ -8213,11 +8435,17 @@
           return;
         }
 
-        const diet = values.dietChoice === "si"
-          ? String(values.diet || "").trim()
-          : "";
+        const diet =
+          attending &&
+          dietChoice === "si"
+            ? String(values.diet || "").trim()
+            : "";
 
-        if (values.dietChoice === "si" && !diet) {
+        if (
+          attending &&
+          dietChoice === "si" &&
+          !diet
+        ) {
           toast("Detallá la restricción alimentaria.");
           form.querySelector('textarea[name="diet"]')?.focus();
           return;
@@ -8225,7 +8453,9 @@
 
         const payload = {
           ...values,
+          transport,
           pickupZone,
+          dietChoice,
           diet,
           comment: "",
           guestId: currentGuest.id,
@@ -9257,7 +9487,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32477 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32478 y volvé a intentar.`
           });
         }
       }
