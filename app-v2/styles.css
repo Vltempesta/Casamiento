@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32481 · Regalos simplificado y hero azul
+   v32482 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32481 · Menú, identidad y tipografías
+   v32482 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11047,5 +11047,66 @@ html[data-app-updating="true"] {
 
   #view .points-action-copy p {
     font-size: 11px !important;
+  }
+}
+
+
+/* ============================================================
+   v32482 · Textos amigables y botones dorados legibles
+   ============================================================ */
+
+#loginButton,
+.install-app-landing,
+.home-primary-action > button,
+.rsvp-form-actions button[type="submit"],
+.rsvp-next-challenge > button,
+.transport-main-bottom button,
+.points-action-end button,
+.points-social-cta--highlight button,
+.trivia-form-footer button[type="submit"],
+.trivia-quiz-form > button[type="submit"],
+.challenge-next-cta button,
+.trivia-all-complete button,
+.vf18-ranking-points,
+.location-hero a,
+.social-composer-actions button[type="submit"],
+.social-reply-actions button[type="submit"],
+.info-calendar-button,
+.transport-experience button {
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .005em;
+}
+
+#loginButton {
+  font-size: 12px !important;
+}
+
+.music-complete-copy {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+@media(max-width:600px) {
+  #loginButton,
+  .install-app-landing,
+  .home-primary-action > button,
+  .rsvp-form-actions button[type="submit"],
+  .rsvp-next-challenge > button,
+  .transport-main-bottom button,
+  .points-action-end button,
+  .points-social-cta--highlight button,
+  .trivia-form-footer button[type="submit"],
+  .trivia-quiz-form > button[type="submit"],
+  .challenge-next-cta button,
+  .trivia-all-complete button,
+  .vf18-ranking-points,
+  .location-hero a,
+  .social-composer-actions button[type="submit"],
+  .social-reply-actions button[type="submit"] {
+    font-size: 10.5px !important;
   }
 }

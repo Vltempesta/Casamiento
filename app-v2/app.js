@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32481";
+  const CURRENT_APP_VERSION = "32482";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -378,7 +378,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32481"
+        appVersion: CONFIG.APP_VERSION || "32482"
       })
     );
   }
@@ -712,20 +712,13 @@
   }
 
   function updateLoginPrivacyUi() {
-    const helper = $(".login-helper");
     const input = $("#guestName");
     const panel = $("#guestSuggestionPanel");
 
-    if (helper) {
-      helper.textContent = loginPrivacyEnabled()
-        ? "Escribí tu nombre y apellido completos."
-        : "Escribí tu nombre, apellido o alias.";
-    }
-
     if (input) {
       input.placeholder = loginPrivacyEnabled()
-        ? "Nombre y apellido completos…"
-        : "Buscá tu nombre…";
+        ? "Nombre y apellido completos"
+        : "Buscá tu nombre";
     }
 
     if (loginPrivacyEnabled()) {
@@ -962,7 +955,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32481",
+      appVersion: "32482",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2964,19 +2957,31 @@
       text: "Este contenido se habilitará más adelante."
     };
 
+    const isLocation =
+      route === "ubicacion";
+    const lockedEyebrow = isLocation
+      ? "EL SECRETO MEJOR GUARDADO"
+      : "PRÓXIMAMENTE";
+    const lockedTitle = isLocation
+      ? "El destino todavía es secreto"
+      : "Esta sorpresa todavía no se desbloqueó";
+    const lockedText = isLocation
+      ? "Paciencia: parte de la experiencia es no saberlo todo desde el principio."
+      : "Volvé más adelante: Vani y Fede todavía guardan algunos secretos.";
+
     return `
       <style>
         .section-locked-page{display:grid;grid-template-columns:56px minmax(0,1fr);gap:14px;align-items:center;min-height:150px;padding:20px;background:linear-gradient(135deg,rgba(116,51,68,.055),rgba(255,253,248,.90));border-color:rgba(116,51,68,.17)}
         .section-locked-page>span{width:52px;height:52px;display:grid;place-items:center;border-radius:16px;background:rgba(116,51,68,.09);color:#743344}
         .section-locked-page .ui-icon{width:25px;height:25px}.section-locked-page h3{margin:3px 0 5px;font-size:25px}.section-locked-page p:not(.eyebrow){margin:0;color:var(--muted);font-size:11px}
       </style>
-      ${sectionHeader("próximamente", definition.title, "")}
+      ${sectionHeader("PRÓXIMAMENTE", definition.title, "")}
       <section class="section-card section-locked-page">
         <span>${uiIcon("lock")}</span>
         <div>
-          <p class="eyebrow">Contenido bloqueado</p>
-          <h3>Se habilitará más adelante</h3>
-          <p>${escapeHTML(definition.text)}</p>
+          <p class="eyebrow">${lockedEyebrow}</p>
+          <h3>${lockedTitle}</h3>
+          <p>${lockedText}</p>
         </div>
       </section>`;
   }
@@ -2985,8 +2990,8 @@
 
   const GAME_NOTIFICATION_DEFINITIONS = [
     { key: "trivia-music", title: "Canciones favoritas", route: "puntos" },
-    { key: "trivia-couple", title: "¿Cuánto conocés a los novios?", route: "puntos" },
-    { key: "trivia-who", title: "¿Quién?", route: "puntos" }
+    { key: "trivia-couple", title: "¿Cuánto conocés a Vani y Fede?", route: "puntos" },
+    { key: "trivia-who", title: "¿Vani o Fede?", route: "puntos" }
   ];
 
   function currentNotificationState() {
@@ -3437,9 +3442,9 @@
       primaryAction = {
         tone: "pending",
         icon: "calendarCheck",
-        kicker: "Tu próximo paso",
-        title: "Confirmá tu asistencia",
-        text: `Respondé antes del ${deadline}.`,
+        kicker: "TU PRIMER PASO",
+        title: "CONFIRMÁ TU ASISTENCIA",
+        text: "Respondé antes del 15 de agosto de 2026.",
         button: "Confirmar asistencia",
         attr: 'data-go="asistencia"'
       };
@@ -3469,9 +3474,9 @@
       primaryAction = {
         tone: "play",
         icon: "star",
-        kicker: "Tu próximo desafío",
-        title: "Sumá puntos para tu equipo",
-        text: "Revisá las misiones disponibles.",
+        kicker: "TU PRÓXIMO DESAFÍO",
+        title: "SUMÁ PUNTOS PARA TU EQUIPO!",
+        text: "Mientras esperamos al resto, ayudá a tu equipo desde ahora.",
         button: "Ver desafíos",
         attr: 'data-go="puntos"'
       };
@@ -3554,7 +3559,7 @@
         aria-labelledby="homeEssentialTitle">
         <div class="home-section-heading">
           <div>
-            <p class="home-kicker">Información práctica</p>
+            <p class="home-kicker">PARA TENER A MANO</p>
             <h3 id="homeEssentialTitle">Lo esencial</h3>
           </div>
         </div>
@@ -3815,12 +3820,12 @@
         </span>
 
         <div class="transport-main-copy">
-          <p class="eyebrow">Micro / Combi</p>
+          <p class="eyebrow">VIAJÁ SIN PREOCUPARTE</p>
           <h3>Viajá y volvé tranquilo</h3>
           <p>
-            El lugar queda lejos. Elegí Micro / Combi en
-            <strong>Asistencia</strong> y organizaremos los recorridos
-            según la cantidad de pasajeros.
+            El lugar queda lejos, así que queremos ponértelo fácil:
+            elegí <strong>Micro / Combi</strong> y nosotros
+            organizamos el resto.
           </p>
 
           <div class="transport-main-bottom">
@@ -3855,10 +3860,13 @@
 
       <section class="transport-compact-heading">
         <div>
-          <p class="eyebrow">Posibles salidas</p>
-          <h3>Puntos tentativos</h3>
+          <p class="eyebrow">POSIBLES SALIDAS</p>
+          <h3>Elegí la zona que te quede mejor</h3>
         </div>
-        <small>Según demanda por zona</small>
+        <small>
+          Los puntos son tentativos y se confirmarán
+          según la cantidad de pasajeros.
+        </small>
       </section>
 
       <section class="transport-zones-grid">
@@ -3881,8 +3889,8 @@
           <span>${uiIcon("hourglass")}</span>
           <div>
             <small>Salida estimada</small>
-            <strong>15:30 a 16:30</strong>
-            <p>Horario estimado según la zona elegida.</p>
+            <strong>Entre 15:30 y 16:30</strong>
+            <p>El horario dependerá de la zona elegida.</p>
           </div>
         </article>
 
@@ -3891,7 +3899,7 @@
           <div>
             <small>Regreso</small>
             <strong>03:00 HRS</strong>
-            <p>Al mismo punto de origen.</p>
+            <p>Volvemos al mismo punto de salida.</p>
           </div>
         </article>
       </section>
@@ -4133,7 +4141,7 @@
       return `
         ${rsvpStyles()}
         ${sectionHeader(
-          "confirmación",
+          "¿CONTAMOS CON VOS?",
           "Asistencia confirmada",
           ""
         )}
@@ -4142,8 +4150,11 @@
           <div class="rsvp-confirmed-head">
             <span class="rsvp-okmark">✓</span>
             <div>
-              <h4>Respuesta enviada</h4>
-              <p>Podés actualizarla cuando lo necesites.</p>
+              <h4>¡Respuesta enviada!</h4>
+              <p>
+                Listo, ya tenemos tu confirmación.
+                Podés actualizarla cuando lo necesites.
+              </p>
             </div>
           </div>
 
@@ -4181,10 +4192,10 @@
               ${uiIcon("star")}
             </div>
             <div>
-              <h4>Ya podés participar</h4>
+              <h4>¡YA PODÉS JUGAR!</h4>
               <p>
                 Mientras esperamos a que todos confirmen,
-                podés comenzar a sumar puntos para tu equipo.
+                empezá a sumar puntos para tu equipo.
               </p>
             </div>
             <button type="button" data-go="puntos">
@@ -4198,11 +4209,11 @@
     return `
       ${rsvpStyles()}
       ${sectionHeader(
-        "confirmación",
+        "¿CONTAMOS CON VOS?",
         hasSaved
           ? "Editar asistencia"
           : "Confirmar asistencia",
-        `Responder antes del ${deadlineLabel}.`
+        "Respondé antes del 15 de agosto y contanos cómo pensás llegar."
       )}
 
       <form
@@ -4827,7 +4838,7 @@
             </span>
             <span class="team-community-tab-copy">
               <strong>Todos los equipos</strong>
-              <small>Los seis grupos</small>
+              <small>Conocé a la competencia</small>
             </span>
           </button>
         </section>`
@@ -5039,12 +5050,15 @@
       triviaDone &&
       whoTriviaDone;
 
+    const pointsEyebrow = currentGamesDone
+      ? "MISIÓN CUMPLIDA"
+      : "SUMÁ PUNTOS";
     const pointsTitle = currentGamesDone
-      ? "¡Ya completaste los desafíos!"
-      : "Qué podés hacer ahora";
+      ? "¡Completaste todos los desafíos!"
+      : "QUE EMPIECE LA COMPETENCIA";
     const pointsText = currentGamesDone
-      ? "Mientras esperás a que lleguen nuevos, deciles a los demás grupos quién va a ganar."
-      : "¡Completá los desafíos y ayudá a tu equipo!";
+      ? "Ahora sólo queda esperar nuevas misiones… o ir a Social a provocar un poco a los otros equipos."
+      : "Completá desafíos, sumá puntos y ayudá a tu equipo a llegar a la cima.";
 
     return `
       ${pointsHubStyles()}
@@ -5058,7 +5072,7 @@
         style="--local-accent:${team.accent}">
         ${teamLogo(team,"points-compact-logo")}
         <div>
-          <p class="eyebrow">Sumá puntos</p>
+          <p class="eyebrow">${escapeHTML(pointsEyebrow)}</p>
           <h3>${escapeHTML(pointsTitle)}</h3>
           <p>${escapeHTML(pointsText)}</p>
         </div>
@@ -5089,10 +5103,10 @@
           data-go="reglas">
           <span>${uiIcon("rules")}</span>
           <div>
-            <strong>Cómo funciona la competencia</strong>
+            <strong>¿Cómo se juega?</strong>
             <small>
-              Consultá las reglas y todas las formas
-              de sumar o restar puntos.
+              Conocé las reglas, los bonus y todas las formas
+              de sumar o perder puntos.
             </small>
           </div>
           <b aria-hidden="true">›</b>
@@ -5143,7 +5157,7 @@
         <section class="points-unified-challenge section-card">
           ${pointsAction({
             icon:"🎯",
-            title:"¿Cuánto conocés a los novios?",
+            title:"¿Cuánto conocés a Vani y Fede?",
             text:triviaDone
               ? "Ya respondiste las cinco preguntas sobre la historia y los gustos de Vani y Fede."
               : "Respondé cinco preguntas sobre la historia, los viajes y los gustos de Vani y Fede.",
@@ -5160,7 +5174,7 @@
         <section class="points-unified-challenge section-card">
           ${pointsAction({
             icon:"⚖️",
-            title:"¿Quién?",
+            title:"¿Vani o Fede?",
             text:whoTriviaDone
               ? "Ya elegiste si cada una de las cinco situaciones representa a Vani o a Fede."
               : "Descubrí si cada costumbre o situación describe mejor a Vani o a Fede.",
@@ -5580,10 +5594,14 @@
                 <span class="trivia-status completed">
                   Completado
                 </span>
-                <h4>Canciones favoritas</h4>
+                <h4>¡Canciones enviadas!</h4>
               </div>
               ${uiIcon("checkCircle","trivia-main-icon")}
             </div>
+
+            <p class="music-complete-copy">
+              Tus elecciones ya forman parte de la banda sonora de la boda.
+            </p>
 
             <div class="music-compact-values">
               <span>
@@ -5611,7 +5629,7 @@
               id:"music-next-challenge",
               route:"trivia-pareja",
               eyebrow:"Siguiente desafío",
-              title:"¿Cuánto conocés a los novios?",
+              title:"¿Cuánto conocés a Vani y Fede?",
               text:"Respondé cinco preguntas y sumá hasta 100 puntos.",
               button:"Ir al desafío 2"
             })}
@@ -5628,16 +5646,16 @@
           <div class="trivia-game-heading">
             <div>
               <span class="trivia-status open">
-                ${saved ? "Editando" : "Disponible"}
+                ${saved ? "Editando" : "DESAFÍO MUSICAL"}
               </span>
-              <h4>Canciones favoritas</h4>
+              <h4>Elegí la música de la fiesta</h4>
             </div>
             ${uiIcon("music","trivia-main-icon")}
           </div>
 
           <p>
-            Elegí 1 canción para bailar y otra para
-            la entrada del equipo ${escapeHTML(team.name)}.
+            Proponé una canción para bailar y otra
+            para la entrada de tu equipo.
           </p>
 
           <form id="musicGameForm" class="trivia-form">
@@ -5682,7 +5700,7 @@
     if (!open) {
       return renderLockedTriviaCard(
         "02",
-        "¿Cuánto conocés a los novios?",
+        "¿Cuánto conocés a Vani y Fede?",
         "Cinco preguntas sobre la historia de Vani y Fede.",
         "trivia-couple",
         "couple-trivia-game"
@@ -5717,7 +5735,7 @@
             <div class="trivia-game-heading">
               <div>
                 <span class="trivia-status completed">Completada</span>
-                <h4>¿Cuánto conocés a los novios?</h4>
+                <h4>¿Cuánto conocés a Vani y Fede?</h4>
               </div>
               ${uiIcon("checkCircle","trivia-main-icon")}
             </div>
@@ -5727,10 +5745,10 @@
               ${uiIcon("star")}
               <div>
                 <strong>
-                  ¡${earnedPoints} puntos de ${maxPoints} disponibles!
+                  ¡Sumaste ${earnedPoints} de ${maxPoints} puntos!
                 </strong>
                 <span>
-                  ${correctAnswers} de ${maxScore} respuestas correctas
+                  Acertaste ${correctAnswers} de las ${maxScore} respuestas.
                 </span>
               </div>
             </div>
@@ -5739,7 +5757,7 @@
               id:"couple-next-challenge",
               route:"trivia-quien",
               eyebrow:"Último desafío",
-              title:"¿Quién?",
+              title:"¿Vani o Fede?",
               text:"Elegí entre Vani o Fede en cinco situaciones.",
               button:"Ir al desafío 3"
             })}
@@ -5753,13 +5771,16 @@
         <div class="trivia-game-content">
           <div class="trivia-game-heading">
             <div>
-              <span class="trivia-status open">Una sola oportunidad</span>
-              <h4>¿Cuánto conocés a los novios?</h4>
+              <span class="trivia-status open">DESAFÍO 2</span>
+              <h4>¿Cuánto conocés a Vani y Fede?</h4>
             </div>
             ${uiIcon("question","trivia-main-icon")}
           </div>
 
-          <p>Respondé cinco preguntas. Cada acierto suma <strong>20 puntos</strong>: podés conseguir hasta <strong>100 puntos</strong> para tu equipo.</p>
+          <p>
+            Cinco preguntas, una sola oportunidad y hasta
+            <strong>100 puntos</strong> para tu equipo.
+          </p>
 
           <div class="trivia-points-rule">
             ${uiIcon("star")}
@@ -5808,7 +5829,7 @@
     if (!open) {
       return renderLockedTriviaCard(
         "03",
-        "¿Quién? · Vani o Fede",
+        "¿Vani o Fede?",
         "Cinco situaciones para descubrir si la respuesta es Vani o Fede.",
         "trivia-who",
         "who-is-who-game"
@@ -5843,7 +5864,7 @@
             <div class="trivia-game-heading">
               <div>
                 <span class="trivia-status completed">Completada</span>
-                <h4>¿Quién? · Vani o Fede</h4>
+                <h4>¿Vani o Fede?</h4>
               </div>
               ${uiIcon("checkCircle","trivia-main-icon")}
             </div>
@@ -5853,10 +5874,10 @@
               ${uiIcon("star")}
               <div>
                 <strong>
-                  ¡${earnedPoints} puntos de ${maxPoints} disponibles!
+                  ¡Sumaste ${earnedPoints} de ${maxPoints} puntos!
                 </strong>
                 <span>
-                  ${correctAnswers} de ${maxScore} respuestas correctas
+                  Acertaste ${correctAnswers} de las ${maxScore} situaciones.
                 </span>
               </div>
             </div>
@@ -5880,13 +5901,16 @@
         <div class="trivia-game-content">
           <div class="trivia-game-heading">
             <div>
-              <span class="trivia-status open">Una sola oportunidad</span>
-              <h4>¿Quién? · Vani o Fede</h4>
+              <span class="trivia-status open">DESAFÍO 3</span>
+              <h4>¿Vani o Fede?</h4>
             </div>
             ${uiIcon("question","trivia-main-icon")}
           </div>
 
-          <p>Elegí entre <strong>Vani</strong> o <strong>Fede</strong>. Cada acierto suma <strong>20 puntos</strong>: podés conseguir hasta <strong>100 puntos</strong>.</p>
+          <p>
+            Cinco situaciones, dos posibles respuestas y hasta
+            <strong>100 puntos</strong> para tu equipo.
+          </p>
 
           <div class="trivia-points-rule">
             ${uiIcon("star")}
@@ -5998,9 +6022,12 @@
       <section class="vf18-ranking-card section-card">
         <div class="vf18-ranking-head">
           <div class="vf18-ranking-title">
-            <p class="eyebrow">Competencia</p>
-            <h3>Ranking de equipos</h3>
-            <p class="vf20-ranking-description">Los equipos competirán durante toda la fiesta para quedarse con el primer puesto.</p>
+            <p class="eyebrow">LA COMPETENCIA</p>
+            <h3>RANKING DE EQUIPOS</h3>
+            <p class="vf20-ranking-description">
+              Seguí el puntaje de los seis equipos desde ahora
+              hasta el final de la fiesta.
+            </p>
           </div>
         </div>
 
@@ -6067,10 +6094,10 @@
 
               <span class="ranking-all-guests-copy">
                 <small>Comunidad</small>
-                <strong>Ver todos los invitados y equipos</strong>
+                <strong>Ver todos los equipos</strong>
                 <em>
-                  Conocé los seis equipos y desplegá
-                  la lista completa de integrantes.
+                  Descubrí quién juega en cada grupo y
+                  contra quiénes vas a competir.
                 </em>
               </span>
 
@@ -6178,8 +6205,8 @@
     if (id === "auto-rsvp") return "Confirmación de asistencia";
     if (id === "auto-music-selection") return "Canciones favoritas";
     if (id === "auto-micro-transport") return "Bonus por viajar en micro";
-    if (id === "auto-couple-trivia") return "¿Cuánto conocés a los novios?";
-    if (id === "auto-who-is-who-trivia") return "¿Quién?";
+    if (id === "auto-couple-trivia") return "¿Cuánto conocés a Vani y Fede?";
+    if (id === "auto-who-is-who-trivia") return "¿Vani o Fede?";
     if (id === "discrecional-fede-vani") return "Puntos a discreción";
     if (["reset-discretionary-clear-marker", "reset-discrecional-fede-vani"].includes(id)) return "Limpieza de puntos discrecionales";
     if (["reset-total-clear-marker", "reset-total-fede-vani"].includes(id)) return "Limpieza general de puntos";
@@ -6208,9 +6235,9 @@
 
     return `
       <div class="section-head team-all-head">
-        <p class="eyebrow">Comunidad</p>
-        <h3>Todos los equipos</h3>
-        <p>Tocá un equipo para desplegar sus integrantes.</p>
+        <p class="eyebrow">COMPETENCIA</p>
+        <h3>LOS SEIS EQUIPOS</h3>
+        <p>Tocá un equipo para descubrir quiénes lo integran.</p>
       </div>
 
       <section class="guest-team-accordion">
@@ -6396,7 +6423,11 @@
     return `
       ${socialStyles()}
       <section class="social-title-row">
-        ${sectionHeader("comunidad", "Social", "Mensajes para todos los invitados.")}
+        ${sectionHeader(
+          "QUE SE ESCUCHE TU EQUIPO",
+          "Social",
+          "Dejá un mensaje, alentá a los tuyos y picanteá un poco la competencia."
+        )}
         <button id="refreshSocial" type="button" class="social-refresh-button">${uiIcon("sync")}<span>Actualizar</span></button>
       </section>
 
@@ -6408,7 +6439,7 @@
             <span>${teamLogo(team, "social-team-logo")} Equipo ${escapeHTML(team.name)}</span>
           </div>
 
-          <textarea name="message" maxlength="400" placeholder="Escribí un mensaje para todos..."></textarea>
+          <textarea name="message" maxlength="400" placeholder="Escribí algo para los otros equipos..."></textarea>
           ${socialEmojiToolbar()}
 
           <div class="social-composer-actions">
@@ -6421,7 +6452,7 @@
       <section class="social-feed">
         ${rootMessages.length
           ? rootMessages.map(post => socialPostMarkup(post, repliesByParent[post.messageId] || [])).join("")
-          : `<div class="social-empty section-card">${uiIcon("chat")}<strong>Todavía no hay mensajes</strong><p>Podés ser la primera persona en saludar a todos.</p></div>`}
+          : `<div class="social-empty section-card">${uiIcon("chat")}<strong>Todavía nadie rompió el hielo</strong><p>Sé la primera persona en saludar, alentar o provocar a los demás equipos.</p></div>`}
       </section>`;
   }
 
@@ -6448,7 +6479,11 @@
 
     return `
       ${locationStyles()}
-      ${sectionHeader("casamiento", "Ubicación", "La locación y el acceso para llegar sin vueltas.")}
+      ${sectionHeader(
+        "DESTINO REVELADO",
+        "Estancia Los Candiles",
+        "Ya podés abrir la ruta y empezar a preparar el viaje."
+      )}
 
       <section class="location-hero section-card">
         <span>${uiIcon("pin")}</span>
@@ -6486,12 +6521,16 @@
       { time: "18:30", title: "Ceremonia", detail: "El momento más esperado." },
       { time: "19:00", title: "Recepción + evento sorpresa", detail: "Comienza la experiencia." },
       { time: "21:00", title: "Cena y fiesta", detail: "A comer, brindar y bailar." },
-      { time: "03:00", title: "Fin :)", detail: "Regreso y cierre de la celebración." }
+      { time: "03:00", title: "Regreso", detail: "Nos despedimos… o seguimos cantando en el micro." }
     ];
 
     return `
       ${scheduleStyles()}
-      ${sectionHeader("24 de octubre", "Cronograma", "Los momentos principales para que no te pierdas nada.")}
+      ${sectionHeader(
+        "24 DE OCTUBRE",
+        "Así va a ser el gran día",
+        "Guardá estos horarios para no perderte nada."
+      )}
 
       <section class="schedule-card section-card">
         ${schedule.map((item, index) => `
@@ -6528,7 +6567,11 @@
     if (!mode) {
       return `
         ${travelStyles()}
-        ${sectionHeader("día del casamiento", "En viaje", "La experiencia se adapta a la forma de traslado que elegiste.")}
+        ${sectionHeader(
+          "LA EXPERIENCIA YA EMPEZÓ",
+          "El viaje también juega",
+          "Música, consignas y desafíos para entrar en clima antes de llegar."
+        )}
         <section class="travel-choice-required section-card">
           <span>${uiIcon("bus")}</span>
           <div>
@@ -6544,7 +6587,11 @@
 
     return `
       ${travelStyles()}
-      ${sectionHeader("día del casamiento", "En viaje", "Consignas y contenidos para disfrutar desde que empieza el recorrido.")}
+      ${sectionHeader(
+        "LA EXPERIENCIA YA EMPEZÓ",
+        "El viaje también juega",
+        "Música, consignas y desafíos para entrar en clima antes de llegar."
+      )}
 
       <section class="travel-selected-mode section-card ${microMode ? "is-micro" : "is-auto"}">
         <span>${uiIcon(microMode ? "bus" : "car")}</span>
@@ -6558,9 +6605,12 @@
         <section class="travel-hero section-card">
           <span>${uiIcon("bus")}</span>
           <div>
-            <p class="eyebrow">Modo micro</p>
-            <h3>La competencia empieza en el viaje</h3>
-            <p>Acá aparecerán las consignas especiales para el micro, la playlist compartida y las trivias relámpago.</p>
+            <p class="eyebrow">MODO MICRO</p>
+            <h3>La competencia empieza en el camino</h3>
+            <p>
+              Playlist, juegos y consignas especiales para
+              sumar puntos durante el recorrido.
+            </p>
           </div>
         </section>
         <section class="travel-content-grid">
@@ -6572,9 +6622,12 @@
         <section class="travel-hero section-card travel-auto-hero">
           <span>${uiIcon("car")}</span>
           <div>
-            <p class="eyebrow">Modo auto</p>
-            <h3>También hay desafíos para el camino</h3>
-            <p>Acá aparecerán la información para llegar, la playlist y las consignas pensadas para quienes viajan de forma particular.</p>
+            <p class="eyebrow">MODO AUTO</p>
+            <h3>Poné primera a la experiencia</h3>
+            <p>
+              Música, indicaciones y desafíos para quienes
+              llegan por su cuenta.
+            </p>
           </div>
         </section>
         <section class="travel-content-grid">
@@ -6611,14 +6664,22 @@
       <button type="button" class="rules-back-to-points" data-go="puntos">
         ${uiIcon("arrowLeft")}<span>Volver a Sumá puntos</span>
       </button>
-      ${sectionHeader("competencia", "Reglas", "Cómo se suman y restan puntos durante toda la experiencia.")}
+      ${sectionHeader(
+        "LAS REGLAS DEL JUEGO",
+        "¿Cómo funciona la competencia?",
+        "Todo lo que necesitás saber para sumar puntos, evitar penalizaciones y ayudar a tu equipo."
+      )}
 
       <section class="rules-intro section-card">
         <span>${uiIcon("ranking")}</span>
         <div>
           <p class="eyebrow">¿Por qué competir?</p>
           <h3>Seis equipos, una sola celebración</h3>
-          <p>Cada invitado pertenece a un equipo y competirá contra los otros cinco por puntos, desde este momento hasta el final de la fiesta.</p>
+          <p>
+            Cada invitado juega para un equipo. Desde ahora y hasta
+            el final de la fiesta, los seis grupos competirán
+            por puntos… y por la gloria.
+          </p>
         </div>
       </section>
 
@@ -6636,7 +6697,7 @@
         ${rulesRow("Bonus o penalizaciones", "+ / −", "Vani y Fede podrán sumar o restar puntos por juegos, actitud o incumplimiento de consignas.")}
       </section>
 
-      <p class="rules-note">Los puntos se acreditan al equipo. No existe un ranking individual.</p>`;
+      <p class="rules-note">Los puntos son del equipo: acá se gana y se pierde en grupo.</p>`;
   }
 
   function rulesRow(action, points, detail) {
@@ -6765,15 +6826,14 @@
 
         <div>
           <p class="eyebrow">
-            Nuestra Luna de miel
+            MUCHAS GRACIAS!
           </p>
           <h3>
-            Tu presencia es nuestro mejor regalo
+            Tu presencia es el mejor regalo
           </h3>
           <p>
-            Pero si querés ayudarnos a seguir
-            sumando aventuras, podés hacer una
-            transferencia con estos datos.
+            Pero si querés ayudarnos a sumar kilómetros,
+            aventuras y recuerdos, te dejamos nuestros datos.
           </p>
         </div>
       </section>
@@ -6782,8 +6842,8 @@
         <div class="gift-transfer-heading">
           <span>${uiIcon("download")}</span>
           <div>
-            <small>Única opción</small>
-            <h3>Transferencia bancaria</h3>
+            <small>PARA NUESTRA PRÓXIMA AVENTURA</small>
+            <h3>Transferencia</h3>
           </div>
 
           <span class="gift-currency-badge">
@@ -6817,12 +6877,9 @@
         <div class="gift-currency-note">
           <span>${uiIcon("checkCircle")}</span>
           <p>
-            Este es el alias que tenés que copiar.
-            Antes de confirmar una transferencia
-            en pesos o USD, verificá que la app
-            muestre la moneda correcta y que el
-            titular sea
-            <strong>Federico Santi</strong>.
+            Podés transferir en pesos o USD. Antes de confirmar,
+            verificá que el titular sea <strong>Federico Santi</strong>
+            y que la moneda seleccionada sea la correcta.
           </p>
         </div>
       </section>
@@ -7762,12 +7819,12 @@
               },
               {
                 key: "trivia-couple",
-                title: "¿Cuánto conocés a los novios?",
+                title: "¿Cuánto conocés a Vani y Fede?",
                 text: "Cinco preguntas de opción múltiple."
               },
               {
                 key: "trivia-who",
-                title: "¿Quién?",
+                title: "¿Vani o Fede?",
                 text: "Cinco preguntas Vani o Fede."
               }
             ].map(game => {
@@ -9698,7 +9755,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32481 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32482 y volvé a intentar.`
           });
         }
       }
