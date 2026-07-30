@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32485 · Regalos simplificado y hero azul
+   v32486 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32485 · Menú, identidad y tipografías
+   v32486 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32485 · Textos amigables y botones dorados legibles
+   v32486 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11113,7 +11113,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32485 · Cronograma, Sumá puntos, progreso y botones
+   v32486 · Cronograma, Sumá puntos, progreso y botones
    ============================================================ */
 
 /* Cronograma bordó con textos dorados y blancos */
@@ -11266,7 +11266,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32485 · Bloqueados visibles, Cronograma en Inicio y Social
+   v32486 · Bloqueados visibles, Cronograma en Inicio y Social
    ============================================================ */
 
 /* Ubicación y En viaje quedan visibles en el menú aunque estén bloqueados */
@@ -11440,7 +11440,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32485 · Estados sutiles y capitanes con contraste
+   v32486 · Estados sutiles y capitanes con contraste
    ============================================================ */
 
 #view .guest-pill.captain-pill {
@@ -11544,5 +11544,106 @@ html[data-app-updating="true"] {
     width: 22px !important;
     height: 22px !important;
     min-width: 22px;
+  }
+}
+
+
+/* ============================================================
+   v32486 · Capitanes, acordeón y Mi equipo
+   ============================================================ */
+
+/* El icono queda centrado respecto de toda la tarjeta */
+#view .guest-pill.has-attendance-status {
+  position: relative !important;
+  grid-template-columns:
+    42px minmax(0,1fr) !important;
+  padding-right: 39px !important;
+}
+
+#view .guest-attendance-status {
+  position: absolute !important;
+  top: 50% !important;
+  right: 8px !important;
+  align-self: auto !important;
+  justify-self: auto !important;
+  transform: translateY(-50%) !important;
+}
+
+/* Nombre, inicial, Capitán, progreso e iconos usan el mismo contraste */
+#view .guest-pill.captain-pill .guest-pill-copy > strong,
+#view .guest-pill.captain-pill .guest-pill-copy > small,
+#view .guest-pill.captain-pill .captain-label,
+#view .guest-pill.captain-pill .guest-person-initial,
+#view .guest-pill.captain-pill .guest-attendance-status,
+#view .guest-pill.captain-pill .guest-challenge-status > span,
+#view .guest-pill.captain-pill .guest-challenge-status > span b,
+#view .guest-pill.captain-pill .guest-challenge-status > span em {
+  color: var(--captain-fg) !important;
+}
+
+#view .guest-pill.captain-pill .guest-challenge-status > i {
+  background:
+    color-mix(
+      in srgb,
+      var(--captain-accent) 24%,
+      transparent
+    ) !important;
+}
+
+#view .guest-pill.captain-pill .guest-challenge-status > i > em {
+  background:
+    linear-gradient(
+      90deg,
+      var(--captain-accent),
+      color-mix(
+        in srgb,
+        var(--captain-accent) 72%,
+        #fff
+      )
+    ) !important;
+}
+
+/* Melina y Jonathan tienen fondos suficientemente oscuros para blanco */
+#view .guest-pill.captain-pill[style*="--captain-bg:#8b681d"],
+#view .guest-pill.captain-pill[style*="--captain-bg:#65727a"] {
+  color: #fffdf7 !important;
+}
+
+/* Barra superior de Mi equipo: Ranking + Posición + Puntos */
+#view .team-ranking-bluebar {
+  grid-template-columns:
+    minmax(92px,1.35fr)
+    repeat(2,minmax(62px,.78fr)) !important;
+}
+
+/* Ya no se muestra una tercera repetición de la cantidad de integrantes */
+#view .team-members-card .card-title-row .badge {
+  display: none !important;
+}
+
+@media(max-width:600px) {
+  #view .team-ranking-bluebar {
+    grid-template-columns:
+      minmax(82px,1.25fr)
+      repeat(2,minmax(56px,.78fr)) !important;
+  }
+}
+
+@media(max-width:440px) {
+  #view .guest-pill.has-attendance-status {
+    grid-template-columns:
+      38px minmax(0,1fr) !important;
+    padding-right: 36px !important;
+  }
+
+  #view .guest-attendance-status {
+    right: 7px !important;
+  }
+}
+
+@media(max-width:390px) {
+  #view .team-ranking-bluebar {
+    grid-template-columns:
+      62px repeat(2,minmax(56px,1fr)) !important;
   }
 }

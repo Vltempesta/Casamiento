@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32485";
+  const CURRENT_APP_VERSION = "32486";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -49,7 +49,8 @@
   let serviceWorkerReloadTriggered = false;
   let selectedTeamViewId = null;
   let teamCommunityTab = "mine";
-  let expandedGuestTeamId = null;
+  const expandedGuestTeamIds = new Set();
+  let guestTeamsAccordionInitialized = false;
   let musicEditMode = false;
   let travelMode = null;
   let triviaFocusTarget = null;
@@ -378,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32485"
+        appVersion: CONFIG.APP_VERSION || "32486"
       })
     );
   }
@@ -955,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32485",
+      appVersion: "32486",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -4958,10 +4959,6 @@
             <small>Puntos</small>
             <b>${teamPoints}</b>
           </span>
-          <span class="team-ranking-bluebar-stat">
-            <small>Integrantes</small>
-            <b>${activePlayers}</b>
-          </span>
         </button>
       </section>
 
@@ -4989,7 +4986,6 @@
       <section class="section-card team-members-card">
         <div class="card-title-row">
           <h4>Integrantes y desafíos</h4>
-          <span class="badge">${members.length}</span>
         </div>
         <div class="guest-list team-member-list">
           ${members.map(guest =>
@@ -5100,15 +5096,19 @@
         text-transform:uppercase;
       }
       .guest-pill.has-attendance-status{
+        position:relative;
         grid-template-columns:
-          42px minmax(0,1fr) 26px!important;
+          42px minmax(0,1fr)!important;
+        padding-right:39px!important;
       }
       .guest-attendance-status{
+        position:absolute;
+        top:50%;
+        right:8px;
         width:23px;
         height:23px;
         display:grid;
         place-items:center;
-        justify-self:end;
         padding:0;
         border:1px solid transparent;
         border-radius:50%;
@@ -5117,6 +5117,7 @@
         font-weight:1000;
         line-height:1;
         cursor:help;
+        transform:translateY(-50%);
       }
       .guest-attendance-status.is-confirmed{
         border-color:rgba(65,126,72,.16);
@@ -5168,10 +5169,12 @@
       @media(max-width:440px){
         .guest-pill.has-attendance-status{
           grid-template-columns:
-            38px minmax(0,1fr) 24px!important;
+            38px minmax(0,1fr)!important;
           gap:7px;
+          padding-right:36px!important;
         }
         .guest-attendance-status{
+          right:7px;
           width:22px;
           height:22px;
         }
@@ -5179,7 +5182,26 @@
     </style>`;
   }
 
-  function captainPalette(teamId) {
+  function captainPalette(
+    teamId,
+    guestId = ""
+  ) {
+    if (guestId === "melina-santi") {
+      return {
+        background: "#8b681d",
+        foreground: "#fffdf7",
+        accent: "#f1d57c"
+      };
+    }
+
+    if (guestId === "jonathan-nunez") {
+      return {
+        background: "#65727a",
+        foreground: "#fffdf7",
+        accent: "#dce5e9"
+      };
+    }
+
     const palettes = {
       bosque: {
         background: "#294d35",
@@ -5320,7 +5342,7 @@
 
     const palette =
       captain
-        ? captainPalette(guest.team)
+        ? captainPalette(guest.team, guest.id)
         : null;
     const captainStyle =
       palette
@@ -6625,9 +6647,53 @@
     return renderTeam();
   }
 
+  function scrollGuestTeamToStart(teamId) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const toggle =
+          Array.from(
+            document.querySelectorAll(
+              "[data-guest-team-toggle]"
+            )
+          ).find(
+            button =>
+              button.dataset.guestTeamToggle ===
+              teamId
+          );
+        const card =
+          toggle?.closest(
+            ".guest-team-accordion-card"
+          );
+
+        if (!card) return;
+
+        const topbarHeight =
+          document.querySelector(".topbar")
+            ?.getBoundingClientRect()
+            .height || 64;
+        const targetTop =
+          window.scrollY +
+          card.getBoundingClientRect().top -
+          topbarHeight -
+          8;
+
+        window.scrollTo({
+          top: Math.max(0, targetTop),
+          behavior: "smooth"
+        });
+      });
+    });
+  }
+
   function renderAllTeamsAccordion() {
-    if (expandedGuestTeamId === null) {
-      expandedGuestTeamId = currentGuest?.team || "";
+    if (!guestTeamsAccordionInitialized) {
+      if (currentGuest?.team) {
+        expandedGuestTeamIds.add(
+          currentGuest.team
+        );
+      }
+
+      guestTeamsAccordionInitialized = true;
     }
 
     const grouped = Object.values(DATA.teams).map(team => ({
@@ -6649,7 +6715,7 @@
 
       <section class="guest-team-accordion">
         ${grouped.map(group => {
-          const expanded = expandedGuestTeamId === group.team.id;
+          const expanded = expandedGuestTeamIds.has(group.team.id);
 
           return `
             <article
@@ -8699,12 +8765,22 @@
 
       $$("[data-guest-team-toggle]").forEach(button => {
         button.addEventListener("click", () => {
-          const teamId = button.dataset.guestTeamToggle;
-          expandedGuestTeamId =
-            expandedGuestTeamId === teamId
-              ? ""
-              : teamId;
+          const teamId =
+            button.dataset.guestTeamToggle;
+          const willOpen =
+            !expandedGuestTeamIds.has(teamId);
+
+          if (willOpen) {
+            expandedGuestTeamIds.add(teamId);
+          } else {
+            expandedGuestTeamIds.delete(teamId);
+          }
+
           renderCurrentRoute();
+
+          if (willOpen) {
+            scrollGuestTeamToStart(teamId);
+          }
         });
       });
     }
@@ -10163,7 +10239,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32485 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32486 y volvé a intentar.`
           });
         }
       }
