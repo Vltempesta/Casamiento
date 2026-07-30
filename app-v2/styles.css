@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32486 · Regalos simplificado y hero azul
+   v32487 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32486 · Menú, identidad y tipografías
+   v32487 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32486 · Textos amigables y botones dorados legibles
+   v32487 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11113,7 +11113,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32486 · Cronograma, Sumá puntos, progreso y botones
+   v32487 · Cronograma, Sumá puntos, progreso y botones
    ============================================================ */
 
 /* Cronograma bordó con textos dorados y blancos */
@@ -11266,7 +11266,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32486 · Bloqueados visibles, Cronograma en Inicio y Social
+   v32487 · Bloqueados visibles, Cronograma en Inicio y Social
    ============================================================ */
 
 /* Ubicación y En viaje quedan visibles en el menú aunque estén bloqueados */
@@ -11440,7 +11440,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32486 · Estados sutiles y capitanes con contraste
+   v32487 · Estados sutiles y capitanes con contraste
    ============================================================ */
 
 #view .guest-pill.captain-pill {
@@ -11549,7 +11549,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32486 · Capitanes, acordeón y Mi equipo
+   v32487 · Capitanes, acordeón y Mi equipo
    ============================================================ */
 
 /* El icono queda centrado respecto de toda la tarjeta */
@@ -11645,5 +11645,39 @@ html[data-app-updating="true"] {
   #view .team-ranking-bluebar {
     grid-template-columns:
       62px repeat(2,minmax(56px,1fr)) !important;
+  }
+}
+
+
+/* ============================================================
+   v32487 · Íconos de asistencia geométricamente centrados
+   ============================================================ */
+
+#view .guest-attendance-status {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 0 !important;
+}
+
+#view .guest-attendance-status .guest-attendance-icon {
+  width: 15px !important;
+  height: 15px !important;
+  display: block !important;
+  flex: 0 0 auto;
+  margin: 0 !important;
+  transform: none !important;
+  stroke-width: 2.2;
+}
+
+#view .guest-pill.captain-pill .guest-attendance-icon {
+  color: var(--captain-fg) !important;
+  stroke: currentColor !important;
+}
+
+@media(max-width:440px) {
+  #view .guest-attendance-status .guest-attendance-icon {
+    width: 14px !important;
+    height: 14px !important;
   }
 }

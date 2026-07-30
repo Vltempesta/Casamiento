@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32486";
+  const CURRENT_APP_VERSION = "32487";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32486"
+        appVersion: CONFIG.APP_VERSION || "32487"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32486",
+      appVersion: "32487",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2819,7 +2819,10 @@
       phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10 5h4M11 18.5h2"/>',
       copy: '<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
       external: '<path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
-      house: '<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>'
+      house: '<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>',
+      statusCheck: '<path d="m5.5 12.5 4 4 9-9"/>',
+      statusClock: '<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3.3 2"/>',
+      statusX: '<path d="m7.5 7.5 9 9M16.5 7.5l-9 9"/>'
     };
     const path = icons[name] || icons.sparkle;
     const cls = className ? ` ${className}` : "";
@@ -5107,17 +5110,23 @@
         right:8px;
         width:23px;
         height:23px;
-        display:grid;
-        place-items:center;
+        display:flex;
+        align-items:center;
+        justify-content:center;
         padding:0;
         border:1px solid transparent;
         border-radius:50%;
-        font-family:Arial,sans-serif;
-        font-size:15px;
-        font-weight:1000;
-        line-height:1;
+        line-height:0;
         cursor:help;
         transform:translateY(-50%);
+      }
+      .guest-attendance-status .guest-attendance-icon{
+        width:15px;
+        height:15px;
+        display:block;
+        flex:0 0 auto;
+        margin:0;
+        stroke-width:2.2;
       }
       .guest-attendance-status.is-confirmed{
         border-color:rgba(65,126,72,.16);
@@ -5128,14 +5137,11 @@
         border-color:rgba(139,100,40,.15);
         background:rgba(139,100,40,.07);
         color:#8b6428;
-        font-size:14px;
       }
       .guest-attendance-status.is-not-attending{
         border-color:rgba(170,54,54,.15);
         background:rgba(170,54,54,.07);
         color:#ad3939;
-        font-size:18px;
-        font-weight:800;
       }
       .captain-pill .guest-attendance-status{
         border-color:
@@ -5312,19 +5318,31 @@
 
     let attendanceClass = "is-pending";
     let attendanceText = "Asistencia pendiente";
-    let attendanceIcon = "◷";
+    let attendanceIcon =
+      uiIcon(
+        "statusClock",
+        "guest-attendance-icon"
+      );
 
     if (rsvpCompleted && rsvp.attendance === "si") {
       attendanceClass = "is-confirmed";
       attendanceText = "Confirmó asistencia";
-      attendanceIcon = "✓";
+      attendanceIcon =
+        uiIcon(
+          "statusCheck",
+          "guest-attendance-icon"
+        );
     } else if (
       rsvpCompleted &&
       rsvp.attendance === "no"
     ) {
       attendanceClass = "is-not-attending";
       attendanceText = "No podrá asistir";
-      attendanceIcon = "×";
+      attendanceIcon =
+        uiIcon(
+          "statusX",
+          "guest-attendance-icon"
+        );
     }
 
     const attendanceStatus =
@@ -10239,7 +10257,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32486 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32487 y volvé a intentar.`
           });
         }
       }
