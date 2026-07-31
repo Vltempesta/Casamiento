@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32492";
+  const CURRENT_APP_VERSION = "32493";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32492"
+        appVersion: CONFIG.APP_VERSION || "32493"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32492",
+      appVersion: "32493",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2921,12 +2921,6 @@
   }
 
   function updateSectionNavigationState() {
-    const visibleLockedMenuRoutes =
-      new Set([
-        "ubicacion",
-        "en-viaje"
-      ]);
-
     $$("[data-route]").forEach(button => {
       const route =
         button.dataset.route;
@@ -2936,35 +2930,34 @@
         Boolean(
           button.closest("#mainMenu")
         );
-      const showLockedInMenu =
+      const showDisabledInMenu =
         !sectionOpen &&
-        belongsToHamburgerMenu &&
-        visibleLockedMenuRoutes.has(route);
+        belongsToHamburgerMenu;
       const hiddenByLock =
         !sectionOpen &&
-        !showLockedInMenu;
+        !belongsToHamburgerMenu;
 
+      button.classList.remove(
+        "is-section-locked"
+      );
       button.classList.toggle(
-        "is-section-locked",
-        showLockedInMenu
+        "is-section-disabled",
+        showDisabledInMenu
       );
       button.classList.toggle(
         "hidden",
         hiddenByLock
       );
 
-      if (showLockedInMenu) {
+      if (showDisabledInMenu) {
         button.setAttribute(
           "aria-label",
           `${
             sectionDefinition(route)?.title ||
             route
-          }: contenido bloqueado`
+          }: todavía no habilitada`
         );
-        button.setAttribute(
-          "title",
-          "Próximamente"
-        );
+        button.removeAttribute("title");
       } else if (hiddenByLock) {
         button.setAttribute(
           "aria-label",
@@ -3007,15 +3000,96 @@
 
     const isLocation =
       route === "ubicacion";
-    const lockedEyebrow = isLocation
-      ? "EL SECRETO MEJOR GUARDADO"
-      : "PRÓXIMAMENTE";
-    const lockedTitle = isLocation
-      ? "El destino todavía es secreto"
-      : "Esta sorpresa todavía no se desbloqueó";
-    const lockedText = isLocation
-      ? "Paciencia: parte de la experiencia es no saberlo todo desde el principio."
-      : "Volvé más adelante: Vani y Fede todavía guardan algunos secretos.";
+
+    if (isLocation) {
+      const rsvp =
+        state.rsvps[currentGuest?.id] || {};
+      const selectedTransport =
+        String(rsvp.transport || "");
+      const usesMicro =
+        ["combi", "micro"].includes(
+          selectedTransport
+        );
+      const usesParticular =
+        ["particular", "auto"].includes(
+          selectedTransport
+        );
+
+      const locationMainText = usesMicro
+        ? "Elegiste vivir la experiencia completa en micro: no vas a necesitar saber la ubicación. ¡Dejate llevar!"
+        : usesParticular
+          ? "Elegiste viajar de forma particular. La ubicación exacta se te revelará el mismo día de la boda."
+          : "Si elegís vivir la experiencia completa en micro, no vas a necesitar saber la ubicación: ¡dejate llevar! Si viajás de forma particular, se te revelará el mismo día de la boda.";
+
+      return `
+        <style>
+          .location-secret-page{display:grid;gap:10px}
+          .location-secret-hero{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;padding:17px;border-color:rgba(116,51,68,.19);background:radial-gradient(circle at 92% 0%,rgba(201,170,114,.16),transparent 38%),linear-gradient(135deg,rgba(116,51,68,.07),rgba(255,253,248,.94))}
+          .location-secret-hero>span{width:50px;height:50px;display:grid;place-items:center;border-radius:15px;background:#743344;color:#fffaf2}
+          .location-secret-hero>span .ui-icon{width:24px;height:24px}
+          .location-secret-hero h3{margin:3px 0 4px;font-size:23px}
+          .location-secret-hero p:not(.eyebrow){margin:0;color:var(--muted);font-size:10px;line-height:1.42}
+          .location-secret-distance{display:grid;grid-template-columns:35px minmax(0,1fr);gap:9px;align-items:center;padding:11px 12px}
+          .location-secret-distance>.ui-icon{width:21px;height:21px;color:#36556f}
+          .location-secret-distance strong{display:block;font-size:11px}
+          .location-secret-distance p{margin:2px 0 0;color:var(--muted);font-size:8.5px;line-height:1.35}
+          .location-secret-transport{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr) 12px;gap:9px;align-items:center;padding:10px 11px;border-color:rgba(49,83,110,.16);background:rgba(49,83,110,.045);color:#31536e;text-align:left;box-shadow:none}
+          .location-secret-transport>span{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:rgba(49,83,110,.08)}
+          .location-secret-transport .ui-icon{width:18px;height:18px}
+          .location-secret-transport strong,.location-secret-transport small{display:block}
+          .location-secret-transport strong{font-size:10.5px}
+          .location-secret-transport small{margin-top:2px;color:#64788a;font-size:8px;line-height:1.25}
+          .location-secret-transport>b{font-size:18px}
+          @media(max-width:570px){.location-secret-hero{grid-template-columns:44px minmax(0,1fr);padding:14px}.location-secret-hero>span{width:42px;height:42px}.location-secret-hero h3{font-size:20px}}
+        </style>
+
+        ${sectionHeader(
+          "EL SECRETO MEJOR GUARDADO",
+          "La ubicación todavía es secreta",
+          ""
+        )}
+
+        <div class="location-secret-page">
+          <section class="location-secret-hero section-card">
+            <span>${uiIcon("pin")}</span>
+            <div>
+              <p class="eyebrow">Destino sorpresa</p>
+              <h3>Dejate llevar</h3>
+              <p>${escapeHTML(locationMainText)}</p>
+            </div>
+          </section>
+
+          <section class="location-secret-distance section-card">
+            ${uiIcon("road")}
+            <div>
+              <strong>A aproximadamente 1 hora de Capital</strong>
+              <p>El lugar está ubicado en Zona Norte.</p>
+            </div>
+          </section>
+
+          <button
+            type="button"
+            class="location-secret-transport section-card"
+            data-go="traslado">
+            <span>${uiIcon("transportBus")}</span>
+            <span>
+              <strong>Ver información de Traslados</strong>
+              <small>
+                Consultá las alternativas, puntos tentativos
+                y horarios.
+              </small>
+            </span>
+            <b aria-hidden="true">›</b>
+          </button>
+        </div>
+      `;
+    }
+
+    const lockedEyebrow = "PRÓXIMAMENTE";
+    const lockedTitle =
+      "Esta sorpresa todavía no se desbloqueó";
+    const lockedText =
+      "Volvé más adelante: Vani y Fede todavía guardan algunos secretos.";
 
     return `
       <style>
@@ -3704,9 +3778,11 @@
                 Nuestro mejor regalo es tu presencia 🥂
               </strong>
               <em>
-                Pero te dejamos opciones para que nos ayudes con la Luna de miel
-                <span class="home-gifts-plane" aria-hidden="true">
-                  ${uiIcon("plane")}
+                Pero te dejamos nuestros datos para nuestra Luna de miel
+                <span
+                  class="home-gifts-plane home-gifts-plane-emoji"
+                  aria-hidden="true">
+                  ✈️
                 </span>
               </em>
             </span>
@@ -5498,10 +5574,6 @@
     const rsvpDone =
       isCompetitionGuest(currentGuest) &&
       hasFinalRsvp(rsvp);
-    const myPoints =
-      calculateRanking()
-        .find(row => row.id === team.id)
-        ?.total || 0;
     const activityPoints = rsvpPointsForTeam(team.id);
     const microBonusPoints =
       rsvpDone &&
@@ -5575,6 +5647,12 @@
           TRIVIA_POINTS_PER_CORRECT
         )
       : 0;
+    const personalContribution =
+      rsvpTotalPoints +
+      musicEarnedPoints +
+      coupleEarnedPoints +
+      whoEarnedPoints;
+
     const currentGamesDone =
       rsvpDone &&
       musicDone &&
@@ -5621,9 +5699,10 @@
               : ""
           }
         </div>
-        <span>
-          <b>${myPoints}</b>
-          <small>puntos</small>
+        <span class="points-personal-counter">
+          <small>Tu aporte</small>
+          <b>${personalContribution}</b>
+          <em>puntos al equipo</em>
         </span>
       </section>
 
@@ -7061,7 +7140,7 @@
       ${sectionHeader(
         "DESTINO REVELADO",
         "Estancia Los Candiles",
-        "Ya podés abrir la ruta y empezar a preparar el viaje."
+        "El destino está a aproximadamente 1 hora de Capital, en Zona Norte."
       )}
 
       <section class="location-hero section-card">
@@ -7082,7 +7161,22 @@
           <strong>Viajando de forma particular</strong>
           <p>Usá el acceso a Maps para abrir la ruta desde tu ubicación. El día del evento también compartiremos cualquier indicación adicional necesaria.</p>
         </div>
-      </section>`;
+      </section>
+
+      <button
+        type="button"
+        class="location-transport-link section-card"
+        data-go="traslado">
+        ${uiIcon("transportBus")}
+        <span>
+          <strong>¿Elegiste Micro / Combi?</strong>
+          <small>
+            No necesitás preocuparte por la ubicación:
+            revisá toda la información de Traslados.
+          </small>
+        </span>
+        <b aria-hidden="true">›</b>
+      </button>`;
   }
 
   function locationStyles() {
@@ -7090,6 +7184,7 @@
       .location-hero{display:grid;grid-template-columns:60px minmax(0,1fr);gap:15px;align-items:center;padding:20px;border-color:rgba(116,51,68,.21);background:radial-gradient(circle at 90% 4%,rgba(201,170,114,.17),transparent 34%),linear-gradient(135deg,rgba(116,51,68,.075),rgba(255,253,248,.92))}
       .location-hero>span{width:58px;height:58px;display:grid;place-items:center;border-radius:18px;background:#743344;color:#fffaf2}.location-hero>span .ui-icon{width:29px;height:29px}.location-hero h3{margin:3px 0 4px;font-size:28px}.location-hero p:not(.eyebrow){margin:0;color:var(--muted);font-size:11px}.location-hero a{width:max-content;display:inline-flex;align-items:center;gap:7px;min-height:38px;margin-top:11px;padding:8px 12px;border-radius:11px;background:linear-gradient(145deg,#ddb96f,#bc8d3e);color:#3f1a22;font-size:10px;font-weight:900;text-decoration:none}.location-hero a .ui-icon{width:16px;height:16px}
       .location-note{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:start;margin-top:8px;padding:13px}.location-note>.ui-icon{width:24px;height:24px;color:#36556f}.location-note strong{display:block;font-size:13px}.location-note p{margin:3px 0 0;color:var(--muted);font-size:9px;line-height:1.4}
+      .location-transport-link{width:100%;display:grid;grid-template-columns:36px minmax(0,1fr) 12px;gap:9px;align-items:center;margin-top:8px;padding:10px 12px;border-color:rgba(49,83,110,.16);background:rgba(49,83,110,.045);color:#31536e;text-align:left;box-shadow:none}.location-transport-link>.ui-icon{width:22px;height:22px}.location-transport-link strong,.location-transport-link small{display:block}.location-transport-link strong{font-size:10.5px}.location-transport-link small{margin-top:2px;color:#64788a;font-size:8px;line-height:1.3}.location-transport-link>b{font-size:18px}
       @media(max-width:600px){.location-hero{grid-template-columns:45px minmax(0,1fr);padding:15px}.location-hero>span{width:43px;height:43px}.location-hero h3{font-size:22px}.location-hero a{width:100%;justify-content:center}}
     </style>`;
   }
@@ -10331,7 +10426,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32492 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32493 y volvé a intentar.`
           });
         }
       }

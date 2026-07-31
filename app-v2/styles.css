@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Regalos simplificado y hero azul
+   v32493 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Menú, identidad y tipografías
+   v32493 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Textos amigables y botones dorados legibles
+   v32493 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11113,7 +11113,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Sumá puntos, progreso y botones
+   v32493 · Sumá puntos, progreso y botones
    ============================================================ */
 
 /* Encabezado de Sumá puntos con fondo bordó */
@@ -11217,7 +11217,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Bloqueados visibles y Social
+   v32493 · Bloqueados visibles y Social
    ============================================================ */
 
 /* Ubicación y En viaje quedan visibles en el menú aunque estén bloqueados */
@@ -11228,7 +11228,7 @@ html[data-app-updating="true"] {
 }
 
 #mainMenu .nav-tabs button.is-section-locked .menu-item-icon::after {
-  content: "🔒" !important;
+  content: none !important;
   right: -4px !important;
   bottom: -4px !important;
   width: 15px !important;
@@ -11303,7 +11303,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Estados sutiles y capitanes con contraste
+   v32493 · Estados sutiles y capitanes con contraste
    ============================================================ */
 
 #view .guest-pill.captain-pill {
@@ -11412,7 +11412,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Capitanes, acordeón y Mi equipo
+   v32493 · Capitanes, acordeón y Mi equipo
    ============================================================ */
 
 /* El icono queda centrado respecto de toda la tarjeta */
@@ -11513,7 +11513,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Íconos de asistencia geométricamente centrados
+   v32493 · Íconos de asistencia geométricamente centrados
    ============================================================ */
 
 #view .guest-attendance-status {
@@ -11547,7 +11547,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Roles visibles y traslado pendiente
+   v32493 · Roles visibles y traslado pendiente
    ============================================================ */
 
 /* Rol debajo del nombre en Los seis equipos */
@@ -11660,7 +11660,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32492 · Asistencia optimizada
+   v32493 · Asistencia optimizada
    ============================================================ */
 
 /* Ritmo vertical consistente entre los campos */
@@ -11891,5 +11891,81 @@ html[data-app-updating="true"] {
   .choice-pill-with-icon > span > i .ui-icon {
     width: 20px !important;
     height: 20px !important;
+  }
+}
+
+
+/* ============================================================
+   v32493 · Inicio, aporte personal, menú y ubicación
+   ============================================================ */
+
+#view .home-gifts-plane-emoji {
+  display: inline-block !important;
+  font-size: 16px;
+  line-height: 1;
+  transform: rotate(-7deg);
+  filter: drop-shadow(0 1px 1px rgba(33,19,8,.18));
+}
+
+#view .points-personal-counter {
+  min-width: 76px;
+  display: grid !important;
+  justify-items: center;
+  gap: 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(230,199,128,.26);
+  border-radius: 12px;
+  background: rgba(255,255,255,.08);
+  text-align: center;
+}
+
+#view .points-personal-counter > small {
+  color: #e9cb82 !important;
+  font-size: 7px !important;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+#view .points-personal-counter > b {
+  margin: 1px 0 0;
+  color: #fffaf2;
+  font-size: 24px !important;
+  line-height: 1;
+}
+
+#view .points-personal-counter > em {
+  color: rgba(255,250,242,.72);
+  font-size: 6.5px;
+  font-style: normal;
+  line-height: 1.15;
+}
+
+#mainMenu .nav-tabs button.is-section-disabled {
+  opacity: .46 !important;
+  filter: grayscale(.92) saturate(.35) !important;
+}
+
+#mainMenu .nav-tabs button.is-section-disabled
+.menu-item-icon::after,
+#mainMenu .nav-tabs button.is-section-locked
+.menu-item-icon::after {
+  content: none !important;
+  display: none !important;
+}
+
+#mainMenu .nav-tabs button.is-section-disabled:hover,
+#mainMenu .nav-tabs button.is-section-disabled:focus-visible {
+  opacity: .62 !important;
+}
+
+@media(max-width:570px) {
+  #view .points-personal-counter {
+    min-width: 67px;
+    padding: 6px;
+  }
+
+  #view .points-personal-counter > b {
+    font-size: 21px !important;
   }
 }
