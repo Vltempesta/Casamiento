@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Regalos simplificado y hero azul
+   v32492 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Menú, identidad y tipografías
+   v32492 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Textos amigables y botones dorados legibles
+   v32492 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11113,7 +11113,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Sumá puntos, progreso y botones
+   v32492 · Sumá puntos, progreso y botones
    ============================================================ */
 
 /* Encabezado de Sumá puntos con fondo bordó */
@@ -11217,7 +11217,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Bloqueados visibles y Social
+   v32492 · Bloqueados visibles y Social
    ============================================================ */
 
 /* Ubicación y En viaje quedan visibles en el menú aunque estén bloqueados */
@@ -11303,7 +11303,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Estados sutiles y capitanes con contraste
+   v32492 · Estados sutiles y capitanes con contraste
    ============================================================ */
 
 #view .guest-pill.captain-pill {
@@ -11412,7 +11412,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Capitanes, acordeón y Mi equipo
+   v32492 · Capitanes, acordeón y Mi equipo
    ============================================================ */
 
 /* El icono queda centrado respecto de toda la tarjeta */
@@ -11513,7 +11513,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Íconos de asistencia geométricamente centrados
+   v32492 · Íconos de asistencia geométricamente centrados
    ============================================================ */
 
 #view .guest-attendance-status {
@@ -11547,7 +11547,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32491 · Roles visibles y traslado pendiente
+   v32492 · Roles visibles y traslado pendiente
    ============================================================ */
 
 /* Rol debajo del nombre en Los seis equipos */
@@ -11655,5 +11655,241 @@ html[data-app-updating="true"] {
 @media(max-width:650px) {
   #view .transport-choice-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   v32492 · Asistencia optimizada
+   ============================================================ */
+
+/* Ritmo vertical consistente entre los campos */
+#view .rsvp-form-compact {
+  padding: 13px 14px !important;
+  gap: 10px !important;
+}
+
+#view .rsvp-form-compact .form-grid {
+  row-gap: 12px !important;
+  column-gap: 8px !important;
+}
+
+#view .rsvp-form-compact .form-grid > label {
+  gap: 4px !important;
+  line-height: 1.22 !important;
+}
+
+#view .rsvp-form-compact .choice-field {
+  grid-column: 1 / -1;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.22 !important;
+}
+
+#view .rsvp-form-compact .choice-field legend {
+  margin: 0 0 7px !important;
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+
+#view .rsvp-form-compact .choice-group {
+  gap: 8px !important;
+}
+
+#view .rsvp-form-compact .choice-pill {
+  min-height: 42px !important;
+  padding: 8px 9px !important;
+  line-height: 1.2 !important;
+}
+
+/* Traslado: dos opciones principales y una tercera compacta */
+#view .rsvp-form-compact .transport-choice-grid {
+  grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  gap: 8px !important;
+}
+
+#view .rsvp-form-compact
+.transport-choice-grid > .choice-pill {
+  min-height: 58px !important;
+  border-radius: 14px !important;
+}
+
+#view .rsvp-form-compact
+.transport-choice-grid > .choice-pill:nth-child(3) {
+  grid-column: 1 / -1 !important;
+  min-height: 48px !important;
+}
+
+/* Iconos limpios, centrados y con una caja más liviana */
+#view .rsvp-form-compact
+.choice-pill-with-icon > span {
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+}
+
+#view .rsvp-form-compact
+.choice-pill-with-icon > span > i {
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(49,83,110,.14) !important;
+  border-radius: 11px !important;
+  background: rgba(49,83,110,.055) !important;
+  color: #36556f !important;
+}
+
+#view .rsvp-form-compact
+.choice-pill-with-icon > span > i .ui-icon {
+  width: 21px !important;
+  height: 21px !important;
+  stroke-width: 1.9 !important;
+}
+
+#view .rsvp-form-compact
+.choice-pill-with-icon > span > b {
+  font-size: 10.5px !important;
+  line-height: 1.18 !important;
+}
+
+#view .rsvp-form-compact
+.choice-pill-with-icon:has(input:checked) > span > i {
+  border-color: rgba(255,255,255,.30) !important;
+  background: rgba(255,255,255,.11) !important;
+  color: currentColor !important;
+}
+
+/* Cartel inicial: sólo aparece antes de elegir una opción */
+#view .transport-info-note {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 30px minmax(0,1fr) 12px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(49,83,110,.14);
+  border-radius: 12px;
+  background: rgba(49,83,110,.045);
+  color: #31536e;
+  text-align: left;
+  box-shadow: none;
+}
+
+#view .transport-info-note.hidden {
+  display: none !important;
+}
+
+#view .transport-info-note > span:first-child {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(49,83,110,.08);
+}
+
+#view .transport-info-note .ui-icon {
+  width: 16px;
+  height: 16px;
+}
+
+#view .transport-info-note > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+#view .transport-info-note strong {
+  color: #294862;
+  font-size: 9.5px;
+  line-height: 1.2;
+}
+
+#view .transport-info-note small {
+  color: #587086;
+  font-size: 8px;
+  line-height: 1.25;
+}
+
+#view .transport-info-note > b {
+  color: #31536e;
+  font-size: 17px;
+}
+
+/* El aviso de “Aún no lo decido” conserva su contenido,
+   pero ocupa menos altura */
+#view .transport-undecided-note {
+  grid-template-columns: 32px minmax(0,1fr) !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  padding: 9px 10px !important;
+}
+
+#view .transport-undecided-note > span {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+#view .transport-undecided-note p {
+  margin: 2px 0 5px !important;
+  line-height: 1.3 !important;
+}
+
+/* Separación clara antes de restricciones alimentarias */
+#view .rsvp-form-compact .diet-choice-field {
+  margin-top: 1px !important;
+}
+
+#view .rsvp-form-compact .diet-detail-label {
+  margin-top: 0 !important;
+  padding: 10px !important;
+  gap: 5px !important;
+}
+
+#view .rsvp-form-compact .diet-detail-label > span {
+  line-height: 1.2 !important;
+}
+
+@media(max-width:570px) {
+  #view .rsvp-form-compact {
+    padding: 12px !important;
+  }
+
+  #view .rsvp-form-compact .form-grid {
+    row-gap: 11px !important;
+  }
+
+  #view .rsvp-form-compact .transport-choice-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+
+  #view .rsvp-form-compact
+  .transport-choice-grid > .choice-pill {
+    min-height: 56px !important;
+    padding: 7px 6px !important;
+  }
+
+  #view .rsvp-form-compact
+  .transport-choice-grid > .choice-pill:nth-child(3) {
+    grid-column: 1 / -1 !important;
+    min-height: 46px !important;
+  }
+
+  #view .rsvp-form-compact
+  .choice-pill-with-icon > span > i {
+    width: 32px !important;
+    height: 32px !important;
+    flex-basis: 32px;
+  }
+
+  #view .rsvp-form-compact
+  .choice-pill-with-icon > span > i .ui-icon {
+    width: 20px !important;
+    height: 20px !important;
   }
 }

@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32491";
+  const CURRENT_APP_VERSION = "32492";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32491"
+        appVersion: CONFIG.APP_VERSION || "32492"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32491",
+      appVersion: "32492",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2787,6 +2787,10 @@
       mail: '<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>',
       sparkle: '<path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/>',
       hourglass: '<path d="M6 3h12M6 21h12"/><path d="M8 3c0 4 1.4 5.7 4 7 2.6-1.3 4-3 4-7"/><path d="M8 21c0-4 1.4-5.7 4-7 2.6 1.3 4 3 4 7"/>',
+      transportCar: '<path d="m6.5 10 1.4-3.5h8.2l1.4 3.5"/><rect x="5" y="9.5" width="14" height="8.5" rx="2.5"/><path d="M8 13h8"/><circle cx="8" cy="17.7" r="1.1"/><circle cx="16" cy="17.7" r="1.1"/>',
+      transportBus: '<rect x="5" y="3.5" width="14" height="16" rx="3"/><path d="M8 6.5h8M7.5 10.5h9M7 14.5h10"/><circle cx="8" cy="18.5" r="1.1"/><circle cx="16" cy="18.5" r="1.1"/>',
+      transportPending: '<circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.2a2.5 2.5 0 1 1 3.6 2.3c-.9.5-1.3 1.1-1.3 2.1"/><path d="M12 17.2h.01"/>',
+      infoCircle: '<circle cx="12" cy="12" r="9"/><path d="M12 10.5v6M12 7.5h.01"/>',
       star: '<path d="M12 3 14.6 8.3 20.5 9.2 16.2 13.3 17.2 19.2 12 16.4 6.8 19.2 7.8 13.3 3.5 9.2 9.4 8.3 12 3Z"/>',
       calendar: '<path d="M8 3h8"/><path d="M9 2v3M15 2v3"/><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="M8 13h3M8 16h5"/>',
       calendarCheck: '<path d="M8 3h8"/><path d="M9 2v3M15 2v3"/><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="m8 14 2.2 2.2L16 11"/>',
@@ -4352,7 +4356,7 @@
                 "transport",
                 "particular",
                 "Particular",
-                "carRoute",
+                "transportCar",
                 savedTransport,
                 true
               )}
@@ -4360,7 +4364,7 @@
                 "transport",
                 "combi",
                 "Micro / Combi",
-                "coach",
+                "transportBus",
                 savedTransport,
                 true
               )}
@@ -4368,11 +4372,28 @@
                 "transport",
                 "sin-decidir",
                 "Aún no lo decido",
-                "hourglass",
+                "transportPending",
                 savedTransport,
                 true
               )}
             </div>
+
+            <button
+              type="button"
+              class="transport-info-note ${
+                savedTransport
+                  ? "hidden"
+                  : ""
+              }"
+              data-transport-info-note
+              data-go="traslado">
+              <span>${uiIcon("infoCircle")}</span>
+              <span>
+                <strong>¿Querés conocer las opciones?</strong>
+                <small>Ver info en la sección Traslados</small>
+              </span>
+              <b aria-hidden="true">›</b>
+            </button>
 
             <div
               class="transport-undecided-note ${
@@ -4381,7 +4402,7 @@
                   : "hidden"
               }"
               data-transport-undecided-note>
-              <span>${uiIcon("hourglass")}</span>
+              <span>${uiIcon("transportPending")}</span>
               <div>
                 <strong>Definilo antes del 15/08</strong>
                 <p>
@@ -4394,10 +4415,6 @@
               </div>
             </div>
 
-            <small class="transport-choice-help">
-              Consultá puntos tentativos y horarios en la
-              sección Traslados.
-            </small>
           </fieldset>
 
 
@@ -4538,9 +4555,10 @@
 
   function rsvpStyles() {
     return `<style>
-      .rsvp-form-compact{padding:16px}.rsvp-form-compact .form-grid{gap:10px}.rsvp-form-compact label{gap:5px}.rsvp-form-compact input,.rsvp-form-compact select{min-height:42px}.rsvp-form-compact textarea{min-height:70px}
-      .choice-field{border:0;padding:0;margin:0}.rsvp-attendance-dependent.hidden{display:none!important}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}.transport-choice-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-      .choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
+      .rsvp-form-compact{padding:14px}.rsvp-form-compact .form-grid{row-gap:12px;column-gap:8px}.rsvp-form-compact label{gap:4px;line-height:1.2}.rsvp-form-compact input,.rsvp-form-compact select{min-height:40px}.rsvp-form-compact textarea{min-height:66px}
+      .choice-field{grid-column:1/-1;border:0;padding:0;margin:0}.rsvp-attendance-dependent.hidden{display:none!important}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;line-height:1.25;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}.transport-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+      .choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;line-height:1.2;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
+      .transport-choice-grid>.choice-pill{min-height:58px;border-radius:14px}.transport-choice-grid>.choice-pill:nth-child(3){grid-column:1/-1;min-height:48px}
       .pickup-zone-field{grid-column:1/-1;padding:11px!important;border:1px solid rgba(49,83,110,.14)!important;border-radius:14px;background:rgba(49,83,110,.035)}.pickup-zone-field.hidden{display:none}.pickup-zone-intro{margin:-1px 0 8px;color:var(--muted);font-size:8.5px;line-height:1.35}.pickup-zone-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.pickup-zone-help{display:block;margin-top:7px;color:#31536e;font-size:8px;font-weight:800}.rsvp-transport-zone{display:block;margin-top:2px;color:#31536e;font-size:8px;font-weight:900}
       .diet-detail-label{display:grid;gap:5px;margin-top:10px;padding:11px;border:1px solid rgba(132,104,68,.14);border-radius:14px;background:rgba(255,255,255,.35);transition:.18s}.diet-detail-label>span{font-size:12px;font-weight:900}.diet-detail-label small{color:var(--muted);font-size:9px}.diet-detail-label.is-disabled{background:rgba(120,120,120,.055);border-color:rgba(120,120,120,.13)}.diet-detail-label.is-disabled>span,.diet-detail-label.is-disabled small{color:#8b8782}.diet-detail-label textarea:disabled{background:rgba(120,120,120,.08)!important;color:#999!important;cursor:not-allowed}
       .rsvp-confirmed-compact{padding:16px;background:linear-gradient(180deg,rgba(255,253,248,.94),rgba(239,228,209,.80))}.rsvp-confirmed-head{display:flex;align-items:center;gap:11px}.rsvp-confirmed-head h4{margin:0 0 2px;font-size:20px}.rsvp-confirmed-head p{margin:0;font-size:11px}.rsvp-okmark{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(74,125,79,.10);border:1px solid rgba(74,125,79,.28);color:#426f47;font-size:21px;font-weight:1000}
@@ -4555,7 +4573,7 @@
       .rsvp-actions-row,.rsvp-form-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-actions-row button,.rsvp-form-actions button{min-height:37px;padding:8px 12px}
       .rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:37px;padding:8px 12px;border:1px solid rgba(54,85,111,.25);border-radius:999px;background:rgba(54,85,111,.07);color:#36556f!important;text-decoration:none;font-size:10px;font-weight:900;box-shadow:none}.rsvp-calendar-link .ui-icon{width:15px;height:15px}.rsvp-calendar-link-small{margin-left:auto}
       .rsvp-next-challenge{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:9px;padding:12px 14px;border-color:rgba(201,170,114,.35);background:linear-gradient(135deg,rgba(201,170,114,.10),rgba(255,253,248,.86))}.rsvp-next-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.15);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:19px;height:19px}.rsvp-next-challenge h4{margin:0 0 2px;font-size:17px}.rsvp-next-challenge p{margin:0;font-size:10px}.rsvp-next-challenge button{min-height:36px;padding:8px 11px;white-space:nowrap}
-      @media(max-width:650px){.transport-choice-grid{grid-template-columns:1fr}.pickup-zone-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
+      @media(max-width:650px){.transport-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.transport-choice-grid>.choice-pill:nth-child(3){grid-column:1/-1}.pickup-zone-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
     </style>`;
   }
 
@@ -9016,6 +9034,15 @@
           rsvpForm.querySelector(
             "[data-transport-undecided-note]"
           );
+        const transportInfoNote =
+          rsvpForm.querySelector(
+            "[data-transport-info-note]"
+          );
+
+        transportInfoNote?.classList.toggle(
+          "hidden",
+          Boolean(selectedTransport)
+        );
 
         undecidedNote?.classList.toggle(
           "hidden",
@@ -10304,7 +10331,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32491 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32492 y volvé a intentar.`
           });
         }
       }
