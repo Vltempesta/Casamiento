@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32490";
+  const CURRENT_APP_VERSION = "32491";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32490"
+        appVersion: CONFIG.APP_VERSION || "32491"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32490",
+      appVersion: "32491",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2555,7 +2555,6 @@
       asistencia: renderRSVP,
       traslado: renderTransport,
       ubicacion: renderLocation,
-      cronograma: renderSchedule,
       "en-viaje": renderTravel,
       reglas: renderRules,
       equipo: renderTeam,
@@ -2886,7 +2885,6 @@
     { route: "asistencia", key: "section-asistencia", title: "Asistencia", text: "Confirmación, traslado y restricciones.", defaultOpen: true },
     { route: "traslado", key: "transport-info", title: "Traslados", text: "Información de micros y viaje particular.", defaultOpen: true },
     { route: "ubicacion", key: "location-section", title: "Ubicación", text: "Locación, mapa e indicaciones para llegar.", defaultOpen: false },
-    { route: "cronograma", key: "schedule-section", title: "Cronograma", text: "Horarios principales del casamiento.", defaultOpen: true },
     { route: "en-viaje", key: "travel-section", title: "En viaje", text: "Consignas, playlist y trivias del recorrido.", defaultOpen: false },
     { route: "reglas", key: "rules-section", title: "Reglas", text: "Cómo se suman y restan puntos.", defaultOpen: true },
     { route: "puntos", key: "section-puntos", title: "Sumá puntos", text: "Juegos y desafíos.", defaultOpen: true },
@@ -3573,7 +3571,6 @@
           </div>
           <div class="wedding-day-command-actions">
             ${locationOpen ? `<button type="button" data-go="ubicacion">${uiIcon("pin")}<span>Cómo llegar</span></button>` : ""}
-            <button type="button" data-go="cronograma">${uiIcon("clock")}<span>Cronograma</span></button>
             <button type="button" data-go="traslado">${uiIcon("bus")}<span>Traslado</span></button>
           </div>
         </section>
@@ -3713,22 +3710,6 @@
           </button>
         ` : ""}
 
-        <button
-          type="button"
-          class="home-schedule-feature"
-          data-go="cronograma">
-          <span class="home-schedule-feature-icon">
-            ${uiIcon("clock")}
-          </span>
-          <span class="home-schedule-feature-copy">
-            <small>CRONOGRAMA</small>
-            <strong>Así va a ser el gran día</strong>
-            <em>
-              Guardá los horarios para no perderte nada.
-            </em>
-          </span>
-          <b aria-hidden="true">›</b>
-        </button>
       </section>
 
       ${(rsvpDone || challengesDone) ? `
@@ -3865,6 +3846,9 @@
     const usesMicro =
       rsvp.attendance === "si" &&
       ["combi", "micro"].includes(rsvp.transport);
+    const transportUndecided =
+      rsvp.attendance === "si" &&
+      rsvp.transport === "sin-decidir";
     const selectedZone =
       pickupZoneLabel(rsvp.pickupZone);
 
@@ -3883,7 +3867,7 @@
 
         <div class="transport-main-copy">
           <p class="eyebrow">VIAJÁ SIN PREOCUPARTE</p>
-          <h3>Viajá y volvé tranquilo</h3>
+          <h3>¡VIVÍ LA EXPERIENCIA COMPLETA!</h3>
           <p>
             El lugar queda lejos, así que queremos ponértelo fácil:
             elegí <strong>Micro / Combi</strong> y nosotros
@@ -3900,7 +3884,9 @@
               ${
                 usesMicro
                   ? "Revisar elección"
-                  : "Elegir traslado"
+                  : transportUndecided
+                    ? "Revisar opciones"
+                    : "Elegir traslado"
               }
             </button>
           </div>
@@ -3915,7 +3901,13 @@
                       : ""
                   }
                 </small>`
-              : ""
+              : transportUndecided
+                ? `
+                  <small class="transport-current-choice is-pending">
+                    ◷ Aún no lo decidiste · definilo antes del 15/08
+                  </small>
+                `
+                : ""
           }
         </div>
       </section>
@@ -4119,16 +4111,23 @@
         ["particular", "auto"].includes(
           saved.transport
         );
+      const usesUndecided =
+        saved.attendance === "si" &&
+        saved.transport === "sin-decidir";
 
       const transportSummaryCard =
         saved.attendance === "si"
           ? `
             ${
-              usesMicro
+              usesMicro || usesUndecided
                 ? `
                   <button
                     type="button"
-                    class="rsvp-transport-unified"
+                    class="rsvp-transport-unified ${
+                      usesUndecided
+                        ? "is-undecided"
+                        : ""
+                    }"
                     data-go="traslado">
                 `
                 : `
@@ -4140,12 +4139,20 @@
                 ${
                   usesMicro
                     ? uiIcon("coach")
-                    : uiIcon("carRoute")
+                    : usesUndecided
+                      ? uiIcon("hourglass")
+                      : uiIcon("carRoute")
                 }
               </span>
 
               <span class="rsvp-transport-unified-copy">
-                <small>Traslado elegido</small>
+                <small>
+                  ${
+                    usesUndecided
+                      ? "Traslado pendiente"
+                      : "Traslado elegido"
+                  }
+                </small>
                 <strong>${escapeHTML(selectedTransport)}</strong>
 
                 ${
@@ -4166,13 +4173,15 @@
                   ${
                     usesParticular
                       ? "El destino se informará el mismo día de la boda."
-                      : "Los horarios y puntos definitivos serán informados después del cierre de respuestas del 15 de agosto."
+                      : usesUndecided
+                        ? "Volvé a editar tu respuesta y definilo antes del 15/08. Consultá Traslados para ver las opciones."
+                        : "Los horarios y puntos definitivos serán informados después del cierre de respuestas del 15 de agosto."
                   }
                 </em>
               </span>
 
             ${
-              usesMicro
+              usesMicro || usesUndecided
                 ? "</button>"
                 : "</section>"
             }
@@ -4338,7 +4347,7 @@
             data-attendance-dependent
             ${attendanceDeclined ? "disabled" : ""}>
             <legend>¿Cómo pensás llegar?</legend>
-            <div class="choice-group choice-group-two">
+            <div class="choice-group transport-choice-grid">
               ${choicePillIcon(
                 "transport",
                 "particular",
@@ -4355,10 +4364,39 @@
                 savedTransport,
                 true
               )}
+              ${choicePillIcon(
+                "transport",
+                "sin-decidir",
+                "Aún no lo decido",
+                "hourglass",
+                savedTransport,
+                true
+              )}
             </div>
+
+            <div
+              class="transport-undecided-note ${
+                savedTransport === "sin-decidir"
+                  ? ""
+                  : "hidden"
+              }"
+              data-transport-undecided-note>
+              <span>${uiIcon("hourglass")}</span>
+              <div>
+                <strong>Definilo antes del 15/08</strong>
+                <p>
+                  Necesitamos tu elección antes de esa fecha
+                  para poder coordinar los traslados.
+                </p>
+                <button type="button" data-go="traslado">
+                  Ver Traslados
+                </button>
+              </div>
+            </div>
+
             <small class="transport-choice-help">
-              Los horarios y puntos de salida de los traslados
-              serán informados próximamente.
+              Consultá puntos tentativos y horarios en la
+              sección Traslados.
             </small>
           </fieldset>
 
@@ -4501,7 +4539,7 @@
   function rsvpStyles() {
     return `<style>
       .rsvp-form-compact{padding:16px}.rsvp-form-compact .form-grid{gap:10px}.rsvp-form-compact label{gap:5px}.rsvp-form-compact input,.rsvp-form-compact select{min-height:42px}.rsvp-form-compact textarea{min-height:70px}
-      .choice-field{border:0;padding:0;margin:0}.rsvp-attendance-dependent.hidden{display:none!important}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .choice-field{border:0;padding:0;margin:0}.rsvp-attendance-dependent.hidden{display:none!important}.choice-field legend{color:var(--ink);font-size:12px;font-weight:900;margin:0 0 7px}.choice-group{display:grid;gap:7px}.choice-group-two{grid-template-columns:repeat(2,minmax(0,1fr))}.transport-choice-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
       .choice-pill{cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;border:1px solid rgba(132,104,68,.22);background:rgba(255,255,255,.55);color:var(--ink);font-size:12px;font-weight:900;text-align:center;padding:9px}.choice-pill input{position:absolute;opacity:0;pointer-events:none}.choice-pill:has(input:checked){background:#743344;color:#fffaf0;border-color:#743344;box-shadow:0 0 0 3px rgba(116,51,68,.10)}
       .pickup-zone-field{grid-column:1/-1;padding:11px!important;border:1px solid rgba(49,83,110,.14)!important;border-radius:14px;background:rgba(49,83,110,.035)}.pickup-zone-field.hidden{display:none}.pickup-zone-intro{margin:-1px 0 8px;color:var(--muted);font-size:8.5px;line-height:1.35}.pickup-zone-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.pickup-zone-help{display:block;margin-top:7px;color:#31536e;font-size:8px;font-weight:800}.rsvp-transport-zone{display:block;margin-top:2px;color:#31536e;font-size:8px;font-weight:900}
       .diet-detail-label{display:grid;gap:5px;margin-top:10px;padding:11px;border:1px solid rgba(132,104,68,.14);border-radius:14px;background:rgba(255,255,255,.35);transition:.18s}.diet-detail-label>span{font-size:12px;font-weight:900}.diet-detail-label small{color:var(--muted);font-size:9px}.diet-detail-label.is-disabled{background:rgba(120,120,120,.055);border-color:rgba(120,120,120,.13)}.diet-detail-label.is-disabled>span,.diet-detail-label.is-disabled small{color:#8b8782}.diet-detail-label textarea:disabled{background:rgba(120,120,120,.08)!important;color:#999!important;cursor:not-allowed}
@@ -4517,7 +4555,7 @@
       .rsvp-actions-row,.rsvp-form-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-actions-row button,.rsvp-form-actions button{min-height:37px;padding:8px 12px}
       .rsvp-calendar-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:37px;padding:8px 12px;border:1px solid rgba(54,85,111,.25);border-radius:999px;background:rgba(54,85,111,.07);color:#36556f!important;text-decoration:none;font-size:10px;font-weight:900;box-shadow:none}.rsvp-calendar-link .ui-icon{width:15px;height:15px}.rsvp-calendar-link-small{margin-left:auto}
       .rsvp-next-challenge{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:9px;padding:12px 14px;border-color:rgba(201,170,114,.35);background:linear-gradient(135deg,rgba(201,170,114,.10),rgba(255,253,248,.86))}.rsvp-next-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(201,170,114,.15);color:#9a6e2f}.rsvp-next-icon .ui-icon{width:19px;height:19px}.rsvp-next-challenge h4{margin:0 0 2px;font-size:17px}.rsvp-next-challenge p{margin:0;font-size:10px}.rsvp-next-challenge button{min-height:36px;padding:8px 11px;white-space:nowrap}
-      @media(max-width:650px){.pickup-zone-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
+      @media(max-width:650px){.transport-choice-grid{grid-template-columns:1fr}.pickup-zone-grid{grid-template-columns:1fr}.rsvp-summary-grid{grid-template-columns:1fr}.rsvp-calendar-link-small{margin-left:0}.rsvp-form-actions>*{width:100%}.rsvp-next-challenge{grid-template-columns:38px minmax(0,1fr)}.rsvp-next-challenge button{grid-column:1/-1;width:100%}}
     </style>`;
   }
 
@@ -4721,6 +4759,7 @@
       "auto": "Particular",
       "combi": "Micro / Combi",
       "micro": "Micro / Combi",
+      "sin-decidir": "Aún no lo decido",
       "duermo": "Duermo en la estancia"
     };
     return labels[value] || value || "Sin cargar";
@@ -5327,9 +5366,15 @@
         `
         : "";
     const secondaryText =
-      options.hideAlias
-        ? ""
-        : `<small>${escapeHTML(aliasText)}</small>`;
+      options.showRole
+        ? `
+          <small class="guest-role-subtitle">
+            ${escapeHTML(visibleRole)}
+          </small>
+        `
+        : options.hideAlias
+          ? ""
+          : `<small>${escapeHTML(aliasText)}</small>`;
 
     let attendanceClass = "is-pending";
     let attendanceText = "Asistencia pendiente";
@@ -6784,6 +6829,7 @@
                       {
                         minimalIcon: true,
                         hideAlias: true,
+                        showRole: true,
                         showAttendanceStatus: true
                       }
                     )
@@ -7029,46 +7075,6 @@
       @media(max-width:600px){.location-hero{grid-template-columns:45px minmax(0,1fr);padding:15px}.location-hero>span{width:43px;height:43px}.location-hero h3{font-size:22px}.location-hero a{width:100%;justify-content:center}}
     </style>`;
   }
-
-  function renderSchedule() {
-    const schedule = [
-      { time: "18:00", title: "Llegada", detail: "Recepción de invitados." },
-      { time: "18:30", title: "Ceremonia", detail: "El momento más esperado." },
-      { time: "19:00", title: "Recepción + evento sorpresa", detail: "Comienza la experiencia." },
-      { time: "21:00", title: "Cena y fiesta", detail: "A comer, brindar y bailar." },
-      { time: "03:00", title: "Regreso", detail: "Nos despedimos… o seguimos cantando en el micro." }
-    ];
-
-    return `
-      ${scheduleStyles()}
-      ${sectionHeader(
-        "24 DE OCTUBRE",
-        "Así va a ser el gran día",
-        "Guardá estos horarios para no perderte nada."
-      )}
-
-      <section class="schedule-card section-card">
-        ${schedule.map((item, index) => `
-          <article class="schedule-row ${index === schedule.length - 1 ? "is-last" : ""}">
-            <time>${escapeHTML(item.time)}</time>
-            <span><i></i></span>
-            <div>
-              <strong>${escapeHTML(item.title)}</strong>
-              <p>${escapeHTML(item.detail)}</p>
-            </div>
-          </article>
-        `).join("")}
-      </section>`;
-  }
-
-  function scheduleStyles() {
-    return `<style>
-      .schedule-card{padding:11px 15px;background:linear-gradient(145deg,rgba(255,253,248,.93),rgba(239,228,209,.72))}
-      .schedule-row{display:grid;grid-template-columns:61px 24px minmax(0,1fr);gap:9px;align-items:stretch;min-height:69px}.schedule-row time{padding-top:15px;color:#743344;font-family:var(--font-title);font-size:17px;font-weight:900;text-align:right}.schedule-row>span{position:relative;display:flex;justify-content:center}.schedule-row>span::after{content:"";position:absolute;top:31px;bottom:-1px;width:2px;background:linear-gradient(#c9aa72,rgba(201,170,114,.25))}.schedule-row.is-last>span::after{display:none}.schedule-row>span i{position:relative;z-index:1;width:13px;height:13px;margin-top:18px;border:3px solid #fffaf2;border-radius:50%;background:#743344;box-shadow:0 0 0 2px rgba(116,51,68,.17)}.schedule-row>div{align-self:start;margin-top:9px;padding:9px 12px;border:1px solid rgba(132,104,68,.11);border-radius:12px;background:rgba(255,255,255,.44)}.schedule-row strong{display:block;font-size:14px}.schedule-row p{margin:3px 0 0;color:var(--muted);font-size:9px}
-      @media(max-width:500px){.schedule-card{padding:8px}.schedule-row{grid-template-columns:52px 20px minmax(0,1fr);gap:6px}.schedule-row time{font-size:15px}.schedule-row>div{padding:8px 10px}}
-    </style>`;
-  }
-
 
   function renderTravel() {
     const rsvp = state.rsvps[currentGuest.id] || {};
@@ -8205,7 +8211,7 @@
                   Forzar modo día del casamiento
                 </strong>
                 <small>
-                  Prioriza ubicación, cronograma y traslado.
+                  Prioriza ubicación y traslado.
                 </small>
               </span>
               <input
@@ -9006,6 +9012,15 @@
           rsvpForm.querySelector(
             "[data-pickup-zone]"
           );
+        const undecidedNote =
+          rsvpForm.querySelector(
+            "[data-transport-undecided-note]"
+          );
+
+        undecidedNote?.classList.toggle(
+          "hidden",
+          selectedTransport !== "sin-decidir"
+        );
 
         if (!fieldset) return;
 
@@ -9181,7 +9196,12 @@
 
         if (
           attending &&
-          !["particular", "combi", "micro"].includes(
+          ![
+            "particular",
+            "combi",
+            "micro",
+            "sin-decidir"
+          ].includes(
             transport
           )
         ) {
@@ -10284,7 +10304,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32490 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32491 y volvé a intentar.`
           });
         }
       }

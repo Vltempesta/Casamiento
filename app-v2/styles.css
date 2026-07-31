@@ -6294,7 +6294,7 @@ body.admin-modal-open { overflow:hidden; }
 
 
 /* ============================================================
-   v32474 · Ubicación, cronograma y cabecera de equipo
+   v32474 · Ubicación y cabecera de equipo
    ============================================================ */
 
 #mainScreen .topbar-person {
@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32490 · Regalos simplificado y hero azul
+   v32491 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32490 · Menú, identidad y tipografías
+   v32491 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32490 · Textos amigables y botones dorados legibles
+   v32491 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11113,57 +11113,8 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32490 · Cronograma, Sumá puntos, progreso y botones
+   v32491 · Sumá puntos, progreso y botones
    ============================================================ */
-
-/* Cronograma bordó con textos dorados y blancos */
-#view .schedule-card {
-  border-color: rgba(230,199,128,.32) !important;
-  background:
-    radial-gradient(
-      circle at 92% 0%,
-      rgba(230,199,128,.13),
-      transparent 34%
-    ),
-    linear-gradient(
-      145deg,
-      #6c2638,
-      #4f1827
-    ) !important;
-  box-shadow: 0 12px 28px rgba(79,24,39,.20) !important;
-}
-
-#view .schedule-row time {
-  color: #e9cb82 !important;
-}
-
-#view .schedule-row > span::after {
-  background:
-    linear-gradient(
-      #e6c780,
-      rgba(230,199,128,.24)
-    ) !important;
-}
-
-#view .schedule-row > span i {
-  border-color: #5b2030 !important;
-  background: #e6c780 !important;
-  box-shadow:
-    0 0 0 2px rgba(230,199,128,.22) !important;
-}
-
-#view .schedule-row > div {
-  border-color: rgba(255,255,255,.13) !important;
-  background: rgba(255,255,255,.075) !important;
-}
-
-#view .schedule-row strong {
-  color: #fffaf2 !important;
-}
-
-#view .schedule-row p {
-  color: rgba(255,250,242,.78) !important;
-}
 
 /* Encabezado de Sumá puntos con fondo bordó */
 #view .points-compact-head {
@@ -11266,7 +11217,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32490 · Bloqueados visibles, Cronograma en Inicio y Social
+   v32491 · Bloqueados visibles y Social
    ============================================================ */
 
 /* Ubicación y En viaje quedan visibles en el menú aunque estén bloqueados */
@@ -11297,89 +11248,6 @@ html[data-app-updating="true"] {
 #view .home-essential-location-locked:hover,
 #view .home-essential-location-locked:focus-visible {
   background: rgba(116,51,68,.045);
-}
-
-/* Cronograma pequeño y destacado debajo de Regalos */
-#view .home-schedule-feature {
-  appearance: none;
-  width: 100%;
-  min-height: 60px;
-  display: grid;
-  grid-template-columns: 38px minmax(0,1fr) 16px;
-  gap: 9px;
-  align-items: center;
-  margin-top: 8px;
-  padding: 9px 12px;
-  border: 1px solid rgba(230,199,128,.32);
-  border-radius: 15px;
-  background:
-    radial-gradient(
-      circle at 92% 0%,
-      rgba(230,199,128,.15),
-      transparent 39%
-    ),
-    linear-gradient(
-      135deg,
-      #6c2638,
-      #4f1827
-    );
-  color: #fffaf2;
-  text-align: left;
-  box-shadow: 0 8px 18px rgba(79,24,39,.15);
-}
-
-#view .home-schedule-feature:hover,
-#view .home-schedule-feature:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(79,24,39,.20);
-}
-
-#view .home-schedule-feature-icon {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  background: rgba(255,255,255,.10);
-  color: #e9cb82;
-}
-
-#view .home-schedule-feature-icon .ui-icon {
-  width: 19px;
-  height: 19px;
-}
-
-#view .home-schedule-feature-copy {
-  min-width: 0;
-  display: grid;
-  gap: 1px;
-}
-
-#view .home-schedule-feature-copy small {
-  color: #e9cb82;
-  font-size: 7px;
-  font-weight: 950;
-  letter-spacing: .11em;
-}
-
-#view .home-schedule-feature-copy strong {
-  color: #fffaf2;
-  font-family: var(--font-title);
-  font-size: 14px;
-  line-height: 1.12;
-}
-
-#view .home-schedule-feature-copy em {
-  color: rgba(255,250,242,.72);
-  font-size: 8px;
-  font-style: normal;
-  line-height: 1.25;
-}
-
-#view .home-schedule-feature > b {
-  color: #e9cb82;
-  font-size: 21px;
-  font-weight: 500;
 }
 
 /* El acceso a Social forma parte del mismo cartel Misión cumplida */
@@ -11422,11 +11290,6 @@ html[data-app-updating="true"] {
 }
 
 @media(max-width:570px) {
-  #view .home-schedule-feature {
-    grid-template-columns: 36px minmax(0,1fr) 15px;
-    min-height: 58px;
-    padding: 9px 10px;
-  }
 
   #view .points-compact-head.is-completed {
     grid-template-columns: 40px minmax(0,1fr) auto;
@@ -11440,7 +11303,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32490 · Estados sutiles y capitanes con contraste
+   v32491 · Estados sutiles y capitanes con contraste
    ============================================================ */
 
 #view .guest-pill.captain-pill {
@@ -11549,7 +11412,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32490 · Capitanes, acordeón y Mi equipo
+   v32491 · Capitanes, acordeón y Mi equipo
    ============================================================ */
 
 /* El icono queda centrado respecto de toda la tarjeta */
@@ -11650,7 +11513,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32490 · Íconos de asistencia geométricamente centrados
+   v32491 · Íconos de asistencia geométricamente centrados
    ============================================================ */
 
 #view .guest-attendance-status {
@@ -11679,5 +11542,118 @@ html[data-app-updating="true"] {
   #view .guest-attendance-status .guest-attendance-icon {
     width: 14px !important;
     height: 14px !important;
+  }
+}
+
+
+/* ============================================================
+   v32491 · Roles visibles y traslado pendiente
+   ============================================================ */
+
+/* Rol debajo del nombre en Los seis equipos */
+#view .guest-team-panel .guest-role-subtitle {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 7.5px !important;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+#view .guest-team-panel .captain-pill .guest-role-subtitle {
+  color: var(--captain-fg) !important;
+  opacity: .82;
+}
+
+/* Tres alternativas de traslado */
+#view .transport-choice-grid {
+  grid-template-columns: repeat(3,minmax(0,1fr));
+}
+
+#view .transport-undecided-note {
+  display: grid;
+  grid-template-columns: 34px minmax(0,1fr);
+  gap: 9px;
+  align-items: start;
+  margin-top: 8px;
+  padding: 10px 11px;
+  border: 1px solid rgba(153,104,36,.20);
+  border-radius: 13px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(201,170,114,.13),
+      rgba(255,253,248,.78)
+    );
+}
+
+#view .transport-undecided-note.hidden {
+  display: none !important;
+}
+
+#view .transport-undecided-note > span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(153,104,36,.11);
+  color: #8b6428;
+}
+
+#view .transport-undecided-note > span .ui-icon {
+  width: 17px;
+  height: 17px;
+}
+
+#view .transport-undecided-note strong {
+  display: block;
+  color: #6f4d1f;
+  font-size: 11px;
+}
+
+#view .transport-undecided-note p {
+  margin: 2px 0 6px;
+  color: var(--muted);
+  font-size: 8.5px;
+  line-height: 1.35;
+}
+
+#view .transport-undecided-note button {
+  min-height: 30px;
+  padding: 6px 9px;
+  border: 1px solid rgba(153,104,36,.18);
+  background: rgba(255,255,255,.62);
+  color: #6f4d1f;
+  box-shadow: none;
+  font-size: 8.5px;
+  font-weight: 900;
+}
+
+/* Resumen de asistencia cuando todavía falta elegir */
+#view .rsvp-transport-unified.is-undecided {
+  border-color: rgba(153,104,36,.22);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(201,170,114,.13),
+      rgba(255,253,248,.76)
+    );
+  color: #6f4d1f;
+}
+
+#view .rsvp-transport-unified.is-undecided
+.rsvp-transport-unified-icon {
+  background: rgba(153,104,36,.11);
+  color: #8b6428;
+}
+
+#view .transport-current-choice.is-pending {
+  color: #f0d18c;
+}
+
+@media(max-width:650px) {
+  #view .transport-choice-grid {
+    grid-template-columns: 1fr;
   }
 }
