@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32493";
+  const CURRENT_APP_VERSION = "32494";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32493"
+        appVersion: CONFIG.APP_VERSION || "32494"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32493",
+      appVersion: "32494",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -3016,68 +3016,327 @@
         );
 
       const locationMainText = usesMicro
-        ? "Elegiste vivir la experiencia completa en micro: no vas a necesitar saber la ubicación. ¡Dejate llevar!"
+        ? "Elegiste vivir la experiencia completa en micro. No necesitás conocer la ubicación: nosotros nos ocupamos del recorrido. ¡Dejate llevar!"
         : usesParticular
-          ? "Elegiste viajar de forma particular. La ubicación exacta se te revelará el mismo día de la boda."
-          : "Si elegís vivir la experiencia completa en micro, no vas a necesitar saber la ubicación: ¡dejate llevar! Si viajás de forma particular, se te revelará el mismo día de la boda.";
+          ? "Elegiste viajar de forma particular. Te revelaremos la ubicación exacta el mismo día de la boda."
+          : "En micro, no necesitás conocer la ubicación: solamente tenés que dejarte llevar. Si vas de forma particular, te la revelaremos el día de la boda.";
+
+      const locationStatus = usesMicro
+        ? "Tu traslado está resuelto"
+        : usesParticular
+          ? "La dirección llegará ese día"
+          : "Elegí cómo querés llegar";
 
       return `
         <style>
-          .location-secret-page{display:grid;gap:10px}
-          .location-secret-hero{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;padding:17px;border-color:rgba(116,51,68,.19);background:radial-gradient(circle at 92% 0%,rgba(201,170,114,.16),transparent 38%),linear-gradient(135deg,rgba(116,51,68,.07),rgba(255,253,248,.94))}
-          .location-secret-hero>span{width:50px;height:50px;display:grid;place-items:center;border-radius:15px;background:#743344;color:#fffaf2}
-          .location-secret-hero>span .ui-icon{width:24px;height:24px}
-          .location-secret-hero h3{margin:3px 0 4px;font-size:23px}
-          .location-secret-hero p:not(.eyebrow){margin:0;color:var(--muted);font-size:10px;line-height:1.42}
-          .location-secret-distance{display:grid;grid-template-columns:35px minmax(0,1fr);gap:9px;align-items:center;padding:11px 12px}
-          .location-secret-distance>.ui-icon{width:21px;height:21px;color:#36556f}
-          .location-secret-distance strong{display:block;font-size:11px}
-          .location-secret-distance p{margin:2px 0 0;color:var(--muted);font-size:8.5px;line-height:1.35}
-          .location-secret-transport{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr) 12px;gap:9px;align-items:center;padding:10px 11px;border-color:rgba(49,83,110,.16);background:rgba(49,83,110,.045);color:#31536e;text-align:left;box-shadow:none}
-          .location-secret-transport>span{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:rgba(49,83,110,.08)}
-          .location-secret-transport .ui-icon{width:18px;height:18px}
-          .location-secret-transport strong,.location-secret-transport small{display:block}
-          .location-secret-transport strong{font-size:10.5px}
-          .location-secret-transport small{margin-top:2px;color:#64788a;font-size:8px;line-height:1.25}
-          .location-secret-transport>b{font-size:18px}
-          @media(max-width:570px){.location-secret-hero{grid-template-columns:44px minmax(0,1fr);padding:14px}.location-secret-hero>span{width:42px;height:42px}.location-secret-hero h3{font-size:20px}}
+          .location-secret-page{
+            display:grid;
+            gap:9px;
+          }
+
+          .location-secret-heading{
+            padding:2px 3px 5px;
+          }
+
+          .location-secret-heading .eyebrow{
+            margin:0 0 4px;
+            color:#b4863e;
+            font-size:8px;
+            font-weight:950;
+            letter-spacing:.22em;
+          }
+
+          .location-secret-heading h2{
+            max-width:360px;
+            margin:0;
+            color:var(--ink);
+            font-family:var(--font-title);
+            font-size:29px;
+            line-height:1.02;
+          }
+
+          .location-secret-heading p:last-child{
+            margin:6px 0 0;
+            color:var(--muted);
+            font-size:9px;
+            line-height:1.35;
+          }
+
+          .location-secret-main{
+            position:relative;
+            overflow:hidden;
+            display:grid;
+            grid-template-columns:48px minmax(0,1fr);
+            gap:12px;
+            align-items:start;
+            padding:15px;
+            border-color:rgba(116,51,68,.17);
+            background:
+              radial-gradient(
+                circle at 96% 0%,
+                rgba(201,170,114,.18),
+                transparent 42%
+              ),
+              linear-gradient(
+                135deg,
+                rgba(116,51,68,.065),
+                rgba(255,253,248,.96)
+              );
+          }
+
+          .location-secret-main-icon{
+            width:46px;
+            height:46px;
+            display:grid;
+            place-items:center;
+            border-radius:14px;
+            background:#743344;
+            color:#fffaf2;
+            box-shadow:0 7px 15px rgba(82,29,43,.17);
+          }
+
+          .location-secret-main-icon .ui-icon{
+            width:22px;
+            height:22px;
+          }
+
+          .location-secret-main-copy{
+            min-width:0;
+          }
+
+          .location-secret-main-copy small{
+            display:block;
+            margin-bottom:2px;
+            color:#b4863e;
+            font-size:7.5px;
+            font-weight:950;
+            letter-spacing:.14em;
+            text-transform:uppercase;
+          }
+
+          .location-secret-main-copy h3{
+            margin:0 0 5px;
+            color:var(--ink);
+            font-family:var(--font-title);
+            font-size:20px;
+            line-height:1.08;
+          }
+
+          .location-secret-main-copy p{
+            margin:0;
+            color:#6d655d;
+            font-size:9.5px;
+            font-weight:650;
+            line-height:1.42;
+          }
+
+          .location-secret-facts{
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:8px;
+          }
+
+          .location-secret-fact{
+            display:grid;
+            grid-template-columns:31px minmax(0,1fr);
+            gap:7px;
+            align-items:center;
+            padding:9px 10px;
+          }
+
+          .location-secret-fact-icon{
+            width:30px;
+            height:30px;
+            display:grid;
+            place-items:center;
+            border-radius:9px;
+            background:rgba(49,83,110,.07);
+            color:#36556f;
+          }
+
+          .location-secret-fact-icon .ui-icon{
+            width:16px;
+            height:16px;
+          }
+
+          .location-secret-fact strong,
+          .location-secret-fact small{
+            display:block;
+          }
+
+          .location-secret-fact strong{
+            color:var(--ink);
+            font-size:9.5px;
+            line-height:1.15;
+          }
+
+          .location-secret-fact small{
+            margin-top:2px;
+            color:var(--muted);
+            font-size:7.5px;
+            line-height:1.2;
+          }
+
+          .location-secret-transport{
+            appearance:none;
+            width:100%;
+            display:grid;
+            grid-template-columns:36px minmax(0,1fr) 13px;
+            gap:9px;
+            align-items:center;
+            padding:10px 12px;
+            border:1px solid rgba(49,83,110,.15);
+            border-radius:14px;
+            background:
+              linear-gradient(
+                135deg,
+                rgba(49,83,110,.055),
+                rgba(255,255,255,.72)
+              );
+            color:#31536e;
+            text-align:left;
+            box-shadow:0 6px 14px rgba(41,61,78,.06);
+          }
+
+          .location-secret-transport-icon{
+            width:35px;
+            height:35px;
+            display:grid;
+            place-items:center;
+            border-radius:10px;
+            background:rgba(49,83,110,.09);
+          }
+
+          .location-secret-transport-icon .ui-icon{
+            width:18px;
+            height:18px;
+          }
+
+          .location-secret-transport-copy{
+            min-width:0;
+          }
+
+          .location-secret-transport-copy strong,
+          .location-secret-transport-copy small{
+            display:block;
+          }
+
+          .location-secret-transport-copy strong{
+            color:#294862;
+            font-size:10px;
+            line-height:1.15;
+          }
+
+          .location-secret-transport-copy small{
+            margin-top:2px;
+            color:#64788a;
+            font-size:7.5px;
+            line-height:1.25;
+          }
+
+          .location-secret-transport>b{
+            color:#31536e;
+            font-size:18px;
+            line-height:1;
+          }
+
+          @media(max-width:570px){
+            .location-secret-heading h2{
+              max-width:300px;
+              font-size:25px;
+            }
+
+            .location-secret-main{
+              grid-template-columns:42px minmax(0,1fr);
+              gap:10px;
+              padding:13px;
+            }
+
+            .location-secret-main-icon{
+              width:41px;
+              height:41px;
+              border-radius:12px;
+            }
+
+            .location-secret-main-copy h3{
+              font-size:18px;
+            }
+
+            .location-secret-main-copy p{
+              font-size:9px;
+            }
+
+            .location-secret-facts{
+              grid-template-columns:1fr;
+              gap:7px;
+            }
+
+            .location-secret-fact{
+              padding:8px 10px;
+            }
+
+            .location-secret-transport{
+              grid-template-columns:34px minmax(0,1fr) 12px;
+              padding:9px 10px;
+            }
+
+            .location-secret-transport-icon{
+              width:33px;
+              height:33px;
+            }
+          }
         </style>
 
-        ${sectionHeader(
-          "EL SECRETO MEJOR GUARDADO",
-          "La ubicación todavía es secreta",
-          ""
-        )}
-
         <div class="location-secret-page">
-          <section class="location-secret-hero section-card">
-            <span>${uiIcon("pin")}</span>
-            <div>
-              <p class="eyebrow">Destino sorpresa</p>
+          <header class="location-secret-heading">
+            <p class="eyebrow">EL SECRETO MEJOR GUARDADO</p>
+            <h2>La ubicación sigue siendo secreta</h2>
+            <p>El destino se revela en el momento justo.</p>
+          </header>
+
+          <section class="location-secret-main section-card">
+            <span class="location-secret-main-icon">
+              ${uiIcon("pin")}
+            </span>
+            <div class="location-secret-main-copy">
+              <small>Destino sorpresa</small>
               <h3>Dejate llevar</h3>
               <p>${escapeHTML(locationMainText)}</p>
             </div>
           </section>
 
-          <section class="location-secret-distance section-card">
-            ${uiIcon("road")}
-            <div>
-              <strong>A aproximadamente 1 hora de Capital</strong>
-              <p>El lugar está ubicado en Zona Norte.</p>
-            </div>
-          </section>
+          <div class="location-secret-facts">
+            <section class="location-secret-fact section-card">
+              <span class="location-secret-fact-icon">
+                ${uiIcon("road")}
+              </span>
+              <div>
+                <strong>Aproximadamente 1 hora</strong>
+                <small>Desde Capital</small>
+              </div>
+            </section>
+
+            <section class="location-secret-fact section-card">
+              <span class="location-secret-fact-icon">
+                ${uiIcon("pin")}
+              </span>
+              <div>
+                <strong>Zona Norte</strong>
+                <small>${escapeHTML(locationStatus)}</small>
+              </div>
+            </section>
+          </div>
 
           <button
             type="button"
-            class="location-secret-transport section-card"
+            class="location-secret-transport"
             data-go="traslado">
-            <span>${uiIcon("transportBus")}</span>
-            <span>
+            <span class="location-secret-transport-icon">
+              ${uiIcon("transportBus")}
+            </span>
+            <span class="location-secret-transport-copy">
               <strong>Ver información de Traslados</strong>
-              <small>
-                Consultá las alternativas, puntos tentativos
-                y horarios.
-              </small>
+              <small>Opciones, puntos tentativos y horarios.</small>
             </span>
             <b aria-hidden="true">›</b>
           </button>
@@ -10426,7 +10685,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32493 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32494 y volvé a intentar.`
           });
         }
       }
