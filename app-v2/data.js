@@ -2107,6 +2107,22 @@ window.WEDDING_APP_DATA = {
       ],
       "roleVisible": "Amiga",
       "displayRelation": "Amiga"
+    },
+    {
+      "id": "felipe-uribe",
+      "firstName": "Felipe",
+      "lastName": "Uribe",
+      "email": "",
+      "alias": "Feli",
+      "relation": "Amigo",
+      "team": "viento",
+      "role": "invitado",
+      "tags": [
+        "viento",
+        "trabajo-vani-y-fede"
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
     }
   ],
   "games": [

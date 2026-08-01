@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32495";
+  const CURRENT_APP_VERSION = "32497";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32495"
+        appVersion: CONFIG.APP_VERSION || "32497"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32495",
+      appVersion: "32497",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2786,6 +2786,7 @@
     const icons = {
       mail: '<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>',
       sparkle: '<path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/>',
+      mission: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3.5V6M20.5 12H18M12 18v2.5M6 12H3.5"/><path d="m14.8 9.2-5.6 5.6"/>',
       hourglass: '<path d="M6 3h12M6 21h12"/><path d="M8 3c0 4 1.4 5.7 4 7 2.6-1.3 4-3 4-7"/><path d="M8 21c0-4 1.4-5.7 4-7 2.6 1.3 4 3 4 7"/>',
       transportCar: '<path d="m6.5 10 1.4-3.5h8.2l1.4 3.5"/><rect x="5" y="9.5" width="14" height="8.5" rx="2.5"/><path d="M8 13h8"/><circle cx="8" cy="17.7" r="1.1"/><circle cx="16" cy="17.7" r="1.1"/>',
       transportBus: '<rect x="5" y="3.5" width="14" height="16" rx="3"/><path d="M8 6.5h8M7.5 10.5h9M7 14.5h10"/><circle cx="8" cy="18.5" r="1.1"/><circle cx="16" cy="18.5" r="1.1"/>',
@@ -4710,7 +4711,7 @@
             }"
             data-attendance-dependent
             ${attendanceDeclined ? "disabled" : ""}>
-            <legend>¿Cómo pensás llegar?</legend>
+            <legend>Traslado</legend>
 
             <button
               type="button"
@@ -4720,13 +4721,12 @@
                   : ""
               }"
               data-transport-info-note
-              data-go="traslado">
+              data-open-rsvp-transport-modal>
               <span>${uiIcon("transportBus")}</span>
               <span>
-                <strong>Viví la experiencia completa</strong>
+                <strong>¡VIVÍ LA EXPERIENCIA COMPLETA!</strong>
                 <small>
                   Te sugerimos elegir Micro / Combi.
-                  Ver información en Traslados.
                 </small>
               </span>
               <b aria-hidden="true">›</b>
@@ -4916,6 +4916,77 @@
           }
         </div>
       </form>
+
+      <div
+        id="rsvpTransportModal"
+        class="rsvp-transport-modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rsvpTransportModalTitle"
+        tabindex="-1">
+        <section class="rsvp-transport-dialog">
+          <button
+            type="button"
+            class="rsvp-transport-modal-close"
+            data-close-rsvp-transport-modal
+            aria-label="Cerrar">
+            ×
+          </button>
+
+          <div class="rsvp-transport-modal-hero">
+            <span class="rsvp-transport-modal-icon">
+              ${uiIcon("transportBus")}
+            </span>
+            <div>
+              <p class="eyebrow">VIAJÁ SIN PREOCUPARTE</p>
+              <h3 id="rsvpTransportModalTitle">
+                ¡VIVÍ LA EXPERIENCIA COMPLETA!
+              </h3>
+              <p>
+                Elegí <strong>Micro / Combi</strong> y nosotros
+                coordinamos la ida y el regreso para que solamente
+                tengas que disfrutar.
+              </p>
+              <span class="rsvp-transport-modal-bonus">
+                ${uiIcon("star")}
+                +20 puntos para tu equipo
+              </span>
+            </div>
+          </div>
+
+          <div class="rsvp-transport-modal-times">
+            <article>
+              <span>${uiIcon("hourglass")}</span>
+              <div>
+                <small>Salida estimada</small>
+                <strong>Entre 15:30 y 16:30</strong>
+                <p>El horario dependerá de la zona elegida.</p>
+              </div>
+            </article>
+
+            <article>
+              <span>${uiIcon("transportBus")}</span>
+              <div>
+                <small>Regreso</small>
+                <strong>03:00 HRS</strong>
+                <p>Volvemos al mismo punto de salida.</p>
+              </div>
+            </article>
+          </div>
+
+          <p class="rsvp-transport-modal-note">
+            Los puntos y horarios definitivos se informarán
+            después del cierre del 15 de agosto.
+          </p>
+
+          <button
+            type="button"
+            class="rsvp-transport-modal-done"
+            data-close-rsvp-transport-modal>
+            Entendido
+          </button>
+        </section>
+      </div>
     `;
   }
 
@@ -7795,18 +7866,45 @@
 
       <section class="gift-wish-card section-card">
         <span class="gift-wish-icon">
-          ${uiIcon("sparkle")}
+          ${uiIcon("mission")}
         </span>
+
         <div class="gift-wish-copy">
-          <p class="eyebrow">UN REGALO PARA NUESTRO PRIMER AÑO</p>
           <h3>Dejanos una misión para cumplir</h3>
           <p>
-            Podés regalarnos un deseo, un desafío o una actividad
-            para hacer durante nuestro primer año de casados.
+            Un deseo, desafío o actividad para realizar
+            durante nuestro primer año de casados.
           </p>
         </div>
 
-        <form id="giftWishForm" class="gift-wish-form">
+        ${
+          savedWishText
+            ? `
+              <div
+                class="gift-wish-saved"
+                data-gift-wish-summary>
+                <span>${uiIcon("checkCircle")}</span>
+                <div>
+                  <small>Tu propuesta</small>
+                  <p>${escapeHTML(savedWishText)}</p>
+                </div>
+                <button
+                  type="button"
+                  data-edit-gift-wish>
+                  Editar respuesta
+                </button>
+              </div>
+            `
+            : ""
+        }
+
+        <form
+          id="giftWishForm"
+          class="gift-wish-form ${
+            savedWishText
+              ? "hidden"
+              : ""
+          }">
           <label>
             Tu propuesta <small>(opcional)</small>
             <textarea
@@ -7814,16 +7912,13 @@
               maxlength="400"
               placeholder="Ej.: hacer una escapada sorpresa, cocinar juntos una receta nueva...">${escapeHTML(savedWishText)}</textarea>
           </label>
+
           <div class="gift-wish-actions">
             <small>
-              ${
-                savedWishText
-                  ? "Tu regalo quedó guardado. Podés actualizarlo."
-                  : "No es obligatorio completar esta actividad."
-              }
+              No es obligatorio completar esta actividad.
             </small>
             <button type="submit">
-              ${savedWishText ? "Actualizar regalo" : "Enviar regalo"}
+              ${savedWishText ? "Guardar cambios" : "Enviar regalo"}
             </button>
           </div>
         </form>
@@ -9294,6 +9389,16 @@
     }
 
     if (route === "regalos") {
+      $("[data-edit-gift-wish]")
+        ?.addEventListener("click", () => {
+          $("[data-gift-wish-summary]")
+            ?.classList.add("hidden");
+          $("#giftWishForm")
+            ?.classList.remove("hidden");
+          $("#giftWishForm textarea")
+            ?.focus();
+        });
+
       $("#giftWishForm")?.addEventListener("submit", event => {
         event.preventDefault();
         const form = event.currentTarget;
@@ -9433,6 +9538,50 @@
 
     if (route === "asistencia") {
       const rsvpForm = $("#rsvpForm");
+      const transportModal =
+        $("#rsvpTransportModal");
+
+      const closeTransportModal = () => {
+        transportModal?.classList.add("hidden");
+        document.body.classList.remove(
+          "rsvp-transport-modal-open"
+        );
+      };
+
+      $$("[data-open-rsvp-transport-modal]")
+        .forEach(button => {
+          button.addEventListener("click", () => {
+            transportModal?.classList.remove("hidden");
+            document.body.classList.add(
+              "rsvp-transport-modal-open"
+            );
+            transportModal?.focus();
+          });
+        });
+
+      transportModal?.addEventListener(
+        "click",
+        event => {
+          if (
+            event.target === transportModal ||
+            event.target.closest(
+              "[data-close-rsvp-transport-modal]"
+            )
+          ) {
+            closeTransportModal();
+          }
+        }
+      );
+
+      transportModal?.addEventListener(
+        "keydown",
+        event => {
+          if (event.key === "Escape") {
+            closeTransportModal();
+          }
+        }
+      );
+
       const updateAttendanceDependentFields = () => {
         if (!rsvpForm) return;
 
@@ -10817,7 +10966,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32495 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32497 y volvé a intentar.`
           });
         }
       }
