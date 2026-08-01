@@ -1740,6 +1740,22 @@ window.WEDDING_APP_DATA = {
       "displayRelation": "Amiga"
     },
     {
+      "id": "leandro-larrosa",
+      "firstName": "Leandro",
+      "lastName": "Larrosa",
+      "email": "",
+      "alias": "lean",
+      "relation": "Amigo",
+      "team": "agua",
+      "role": "invitado",
+      "tags": [
+        "agua",
+        "facultad-vani"
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
+    },
+    {
       "id": "lucia-benitez",
       "firstName": "Lucía",
       "lastName": "Benitez",
