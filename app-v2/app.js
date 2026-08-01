@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32499";
+  const CURRENT_APP_VERSION = "32501";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -17,10 +17,26 @@
     error: "Sin conexión"
   };
 
-  // Puntos enteros por persona, equilibrados por cantidad de jugadores activos por equipo.
-  // Fede, Vani y registros no jugadores/mascota quedan fuera del cálculo competitivo.
-  const RSVP_POINTS_BY_TEAM = { bosque: 13, fuego: 10, luz: 14, noche: 14, agua: 13, viento: 11 };
-  const PROFILE_POINTS_BY_TEAM = { bosque: 20, fuego: 15, luz: 21, noche: 21, agua: 19, viento: 16 };
+  // Asistencia y Canciones mantienen los valores vigentes por equipo.
+  // Las trivias se recalibran por jugadores competitivos activos.
+  // Fede, Vani y registros no jugadores/mascota quedan fuera del cálculo.
+  const RSVP_POINTS_BY_TEAM = {
+    bosque: 13,
+    fuego: 10,
+    luz: 14,
+    noche: 16,
+    agua: 13,
+    viento: 11
+  };
+
+  const MUSIC_POINTS_BY_TEAM = {
+    bosque: 13,
+    fuego: 10,
+    luz: 13,
+    noche: 15,
+    agua: 13,
+    viento: 11
+  };
 
   let currentGuest = null;
   let currentRoute = "inicio";
@@ -379,7 +395,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32499"
+        appVersion: CONFIG.APP_VERSION || "32501"
       })
     );
   }
@@ -823,8 +839,8 @@
     return RSVP_POINTS_BY_TEAM[teamId] ?? 10;
   }
 
-  function profilePointsForTeam(teamId) {
-    return PROFILE_POINTS_BY_TEAM[teamId] ?? 15;
+  function musicPointsForTeam(teamId) {
+    return MUSIC_POINTS_BY_TEAM[teamId] ?? 10;
   }
 
   function completedRsvpMembers(teamId) {
@@ -956,7 +972,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32499",
+      appVersion: "32501",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -3678,15 +3694,15 @@
 
   const TRIVIA_SCORE_TABLES = {
     "couple-trivia-test": {
-      bosque: [0, 15, 25, 40, 50, 65],
+      bosque: [0, 15, 30, 40, 55, 70],
       fuego: [0, 10, 20, 30, 40, 50],
       luz: [0, 15, 30, 40, 55, 70],
       noche: [0, 15, 30, 45, 60, 75],
-      agua: [0, 15, 25, 40, 50, 65],
+      agua: [0, 10, 25, 35, 50, 60],
       viento: [0, 10, 20, 30, 40, 50]
     },
     "who-is-who-trivia-test": {
-      bosque: [0, 15, 25, 40, 50, 65],
+      bosque: [0, 15, 30, 40, 55, 70],
       fuego: [0, 10, 20, 35, 45, 55],
       luz: [0, 15, 30, 40, 55, 70],
       noche: [0, 15, 30, 40, 55, 70],
@@ -5113,7 +5129,7 @@
           timestamp: submission.updatedAt,
           gameId: "auto-music-selection",
           teamId: submission.teamId,
-          points: rsvpPointsForTeam(submission.teamId),
+          points: musicPointsForTeam(submission.teamId),
           comment: `Juego musical completado · ${guest?.firstName || submission.guestId || "Invitado"}`,
           automatic: true
         });
@@ -5957,7 +5973,8 @@
     const rsvpDone =
       isCompetitionGuest(currentGuest) &&
       hasFinalRsvp(rsvp);
-    const activityPoints = rsvpPointsForTeam(team.id);
+    const attendancePoints = rsvpPointsForTeam(team.id);
+    const musicPoints = musicPointsForTeam(team.id);
     const microBonusPoints =
       rsvpDone &&
       rsvp.attendance === "si" &&
@@ -5966,7 +5983,7 @@
         : 0;
     const rsvpTotalPoints =
       rsvpDone
-        ? activityPoints + microBonusPoints
+        ? attendancePoints + microBonusPoints
         : 0;
     const musicOpen = isTriviaGameOpen("trivia-music");
     const triviaOpen = isTriviaGameOpen("trivia-couple");
@@ -5987,16 +6004,8 @@
       triviaSubmission("couple-trivia-test");
     const whoSubmission =
       triviaSubmission("who-is-who-trivia-test");
-    const storedMusicPoints = Number(
-      musicSubmission?.earnedPoints
-    );
     const musicEarnedPoints = musicDone
-      ? (
-          Number.isFinite(storedMusicPoints) &&
-          storedMusicPoints > 0
-            ? storedMusicPoints
-            : activityPoints
-        )
+      ? musicPoints
       : 0;
     const coupleEarnedPoints = triviaDone
       ? triviaPointsFor(
@@ -6113,10 +6122,10 @@
             progressText:rsvpDone
               ? (
                   microBonusPoints
-                    ? `${activityPoints} puntos por confirmar`
-                    : `${activityPoints} puntos obtenidos`
+                    ? `${attendancePoints} puntos por confirmar`
+                    : `${attendancePoints} puntos obtenidos`
                 )
-              : `${activityPoints} puntos por completar`,
+              : `${attendancePoints} puntos por completar`,
             bonusText:microBonusPoints
               ? `+${microBonusPoints} puntos extra por elegir micro · ${rsvpTotalPoints} puntos totales`
               : "",
@@ -6135,7 +6144,7 @@
             route:"musica",
             progressText:musicDone
               ? `${musicEarnedPoints} puntos obtenidos`
-              : `${activityPoints} puntos por completar`,
+              : `${musicPoints} puntos por completar`,
             editable:true,
             locked:!rsvpDone || !musicOpen
           })}
@@ -7683,7 +7692,10 @@
   }
 
   function renderRules() {
-    const teamPoints = rsvpPointsForTeam(currentGuest.team);
+    const attendancePoints =
+      rsvpPointsForTeam(currentGuest.team);
+    const musicPoints =
+      musicPointsForTeam(currentGuest.team);
 
     return `
       ${rulesStyles()}
@@ -7714,8 +7726,8 @@
           <span>Acción</span><span>Puntos</span><span>Cómo funciona</span>
         </div>
 
-        ${rulesRow("Confirmar asistencia", `+${teamPoints}`, "Respuesta definitiva por sí o por no. El valor está equilibrado por equipo.")}
-        ${rulesRow("Elegir canciones", `+${teamPoints}`, "Completar la propuesta musical para la boda y la entrada del equipo.")}
+        ${rulesRow("Confirmar asistencia", `+${attendancePoints}`, "Respuesta definitiva por sí o por no. El valor está equilibrado por equipo.")}
+        ${rulesRow("Elegir canciones", `+${musicPoints}`, "Completar la propuesta musical para la boda y la entrada del equipo.")}
         ${rulesRow("Viajar en micro", "+20", "Bonus adicional para quienes seleccionen el micro en Asistencia.")}
         ${rulesRow(
           "Trivia de los novios",
@@ -10045,7 +10057,7 @@
         event.preventDefault();
         const values = Object.fromEntries(new FormData(event.currentTarget).entries());
         const earnedPoints =
-          rsvpPointsForTeam(currentGuest.team);
+          musicPointsForTeam(currentGuest.team);
 
         const payload = {
           ...values,
@@ -10966,7 +10978,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32495 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32501 y volvé a intentar.`
           });
         }
       }
