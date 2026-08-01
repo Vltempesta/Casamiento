@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32497";
+  const CURRENT_APP_VERSION = "32498";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32497"
+        appVersion: CONFIG.APP_VERSION || "32498"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32497",
+      appVersion: "32498",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -2786,7 +2786,7 @@
     const icons = {
       mail: '<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>',
       sparkle: '<path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/>',
-      mission: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3.5V6M20.5 12H18M12 18v2.5M6 12H3.5"/><path d="m14.8 9.2-5.6 5.6"/>',
+      mission: '<circle cx="10.5" cy="13.5" r="7.5"/><circle cx="10.5" cy="13.5" r="3.2"/><path d="M21 3 10.5 13.5"/><path d="M15.5 3H21v5.5"/><path d="m10.5 13.5 4-4"/>',
       hourglass: '<path d="M6 3h12M6 21h12"/><path d="M8 3c0 4 1.4 5.7 4 7 2.6-1.3 4-3 4-7"/><path d="M8 21c0-4 1.4-5.7 4-7 2.6 1.3 4 3 4 7"/>',
       transportCar: '<path d="m6.5 10 1.4-3.5h8.2l1.4 3.5"/><rect x="5" y="9.5" width="14" height="8.5" rx="2.5"/><path d="M8 13h8"/><circle cx="8" cy="17.7" r="1.1"/><circle cx="16" cy="17.7" r="1.1"/>',
       transportBus: '<rect x="5" y="3.5" width="14" height="16" rx="3"/><path d="M8 6.5h8M7.5 10.5h9M7 14.5h10"/><circle cx="8" cy="18.5" r="1.1"/><circle cx="16" cy="18.5" r="1.1"/>',
@@ -7929,8 +7929,8 @@
         <div>
           <h3>Tu presencia es el mejor regalo</h3>
           <p>
-            Si además querés acompañarnos en nuestra próxima aventura,
-            te dejamos nuestros datos de transferencia.
+            Pero si querés ayudarnos a sumar kilómetros,
+            aventuras y recuerdos, te dejamos nuestros datos.
           </p>
         </div>
       </section>
@@ -10966,7 +10966,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32497 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32495 y volvé a intentar.`
           });
         }
       }
