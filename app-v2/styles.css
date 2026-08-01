@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Regalos simplificado y hero azul
+   v32495 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Menú, identidad y tipografías
+   v32495 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Textos amigables y botones dorados legibles
+   v32495 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11113,7 +11113,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Sumá puntos, progreso y botones
+   v32495 · Sumá puntos, progreso y botones
    ============================================================ */
 
 /* Encabezado de Sumá puntos con fondo bordó */
@@ -11217,7 +11217,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Bloqueados visibles y Social
+   v32495 · Bloqueados visibles y Social
    ============================================================ */
 
 /* Ubicación y En viaje quedan visibles en el menú aunque estén bloqueados */
@@ -11303,7 +11303,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Estados sutiles y capitanes con contraste
+   v32495 · Estados sutiles y capitanes con contraste
    ============================================================ */
 
 #view .guest-pill.captain-pill {
@@ -11412,7 +11412,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Capitanes, acordeón y Mi equipo
+   v32495 · Capitanes, acordeón y Mi equipo
    ============================================================ */
 
 /* El icono queda centrado respecto de toda la tarjeta */
@@ -11513,7 +11513,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Íconos de asistencia geométricamente centrados
+   v32495 · Íconos de asistencia geométricamente centrados
    ============================================================ */
 
 #view .guest-attendance-status {
@@ -11547,7 +11547,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Roles visibles y traslado pendiente
+   v32495 · Roles visibles y traslado pendiente
    ============================================================ */
 
 /* Rol debajo del nombre en Los seis equipos */
@@ -11660,7 +11660,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Asistencia optimizada
+   v32495 · Asistencia optimizada
    ============================================================ */
 
 /* Ritmo vertical consistente entre los campos */
@@ -11896,7 +11896,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32494 · Inicio, aporte personal, menú y ubicación
+   v32495 · Inicio, aporte personal, menú y ubicación
    ============================================================ */
 
 #view .home-gifts-plane-emoji {
@@ -11967,5 +11967,281 @@ html[data-app-updating="true"] {
 
   #view .points-personal-counter > b {
     font-size: 21px !important;
+  }
+}
+
+
+/* ============================================================
+   v32495 · Puntajes, RSVP y actividad de Regalos
+   ============================================================ */
+
+/* Inicio más limpio */
+#view .home-section-heading {
+  padding-top: 1px;
+}
+
+#view .home-gifts-feature-copy > strong {
+  margin: 0 !important;
+}
+
+/* Puntaje de trivia ajustado por equipo */
+#view .trivia-points-rule::after {
+  content: "Puntaje equilibrado según la cantidad de integrantes";
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 1.25;
+}
+
+/* Recomendación y opciones de traslado */
+#view .transport-experience-note {
+  margin: 0 0 9px !important;
+  border-color: rgba(201,170,114,.28) !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(201,170,114,.14),
+      rgba(255,253,248,.86)
+    ) !important;
+  color: #75531f !important;
+}
+
+#view .transport-experience-note > span:first-child {
+  background: rgba(201,170,114,.17) !important;
+  color: #8b6428 !important;
+}
+
+#view .transport-experience-note strong {
+  color: #694817 !important;
+}
+
+#view .rsvp-form-compact .transport-choice-grid {
+  grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+}
+
+#view .rsvp-form-compact
+.transport-choice-grid > .choice-pill:nth-child(3) {
+  grid-column: 1 / -1 !important;
+}
+
+#view .rsvp-form-compact
+.choice-pill-with-icon > span {
+  width: 100%;
+  align-items: center !important;
+}
+
+#view .choice-pill-icon-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+#view .choice-pill-icon-copy > b,
+#view .choice-pill-icon-copy > small {
+  display: block;
+}
+
+#view .choice-pill-icon-copy > small {
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1.22;
+}
+
+#view .choice-pill:has(input:checked)
+.choice-pill-icon-copy > small {
+  color: rgba(255,250,240,.78);
+}
+
+#view .choice-pill-with-icon.is-recommended {
+  position: relative;
+  border-color: rgba(116,51,68,.34) !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(116,51,68,.07),
+      rgba(201,170,114,.10)
+    ) !important;
+  box-shadow: 0 7px 16px rgba(78,35,45,.07);
+}
+
+#view .choice-pill-with-icon.is-recommended::after {
+  content: "RECOMENDADO";
+  position: absolute;
+  top: -7px;
+  right: 9px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #743344;
+  color: #fffaf2;
+  font-size: 6px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+#view .choice-pill-with-icon.is-recommended:has(input:checked) {
+  background: #743344 !important;
+}
+
+/* Regalos */
+#view .gift-page-heading {
+  padding: 2px 3px 7px;
+}
+
+#view .gift-page-heading h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 29px;
+  line-height: 1.05;
+}
+
+#view .gift-page-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+#view .gift-wish-card {
+  display: grid;
+  grid-template-columns: 46px minmax(0,1fr);
+  gap: 11px;
+  padding: 14px;
+  border-color: rgba(116,51,68,.18);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(201,170,114,.16),
+      transparent 40%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(116,51,68,.055),
+      rgba(255,253,248,.96)
+    );
+}
+
+#view .gift-wish-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #743344;
+  color: #fffaf2;
+}
+
+#view .gift-wish-icon .ui-icon {
+  width: 21px;
+  height: 21px;
+}
+
+#view .gift-wish-copy h3 {
+  margin: 2px 0 4px;
+  font-size: 20px;
+}
+
+#view .gift-wish-copy > p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+#view .gift-wish-form {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+#view .gift-wish-form label {
+  display: grid;
+  gap: 5px;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+#view .gift-wish-form label > small {
+  display: inline;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+#view .gift-wish-form textarea {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+  padding: 10px 11px;
+  border: 1px solid rgba(132,104,68,.18);
+  border-radius: 12px;
+  background: rgba(255,255,255,.72);
+  color: var(--ink);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+#view .gift-wish-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+#view .gift-wish-actions > small {
+  color: var(--muted);
+  font-size: 7.5px;
+  line-height: 1.3;
+}
+
+#view .gift-wish-actions > button {
+  min-height: 38px;
+  padding: 8px 13px;
+  border-radius: 11px;
+  background: linear-gradient(135deg,#e1bd65,#c89438);
+  color: #3c2a11;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+#view .gift-hero {
+  margin-top: 9px;
+}
+
+#view .gift-hero .eyebrow {
+  display: none !important;
+}
+
+@media(max-width:570px) {
+  #view .gift-page-heading h2 {
+    font-size: 25px;
+  }
+
+  #view .gift-wish-card {
+    grid-template-columns: 40px minmax(0,1fr);
+    gap: 9px;
+    padding: 12px;
+  }
+
+  #view .gift-wish-icon {
+    width: 39px;
+    height: 39px;
+  }
+
+  #view .gift-wish-copy h3 {
+    font-size: 18px;
+  }
+
+  #view .gift-wish-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #view .gift-wish-actions > button {
+    width: 100%;
   }
 }

@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32494";
+  const CURRENT_APP_VERSION = "32495";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -379,7 +379,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32494"
+        appVersion: CONFIG.APP_VERSION || "32495"
       })
     );
   }
@@ -956,7 +956,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32494",
+      appVersion: "32495",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -3675,7 +3675,42 @@
   }
 
 
-  const TRIVIA_POINTS_PER_CORRECT = 10;
+  const TRIVIA_SCORE_TABLES = {
+    "couple-trivia-test": {
+      bosque: [0, 15, 25, 40, 50, 65],
+      fuego: [0, 10, 20, 30, 40, 50],
+      luz: [0, 15, 30, 40, 55, 70],
+      noche: [0, 15, 30, 45, 60, 75],
+      agua: [0, 15, 25, 40, 50, 65],
+      viento: [0, 10, 20, 30, 40, 50]
+    },
+    "who-is-who-trivia-test": {
+      bosque: [0, 15, 25, 40, 50, 65],
+      fuego: [0, 10, 20, 35, 45, 55],
+      luz: [0, 15, 30, 40, 55, 70],
+      noche: [0, 15, 30, 40, 55, 70],
+      agua: [0, 15, 25, 40, 50, 65],
+      viento: [0, 10, 20, 35, 45, 55]
+    }
+  };
+
+  function triviaPointsFor(gameId, teamId, score) {
+    const table =
+      TRIVIA_SCORE_TABLES[gameId]?.[teamId] ||
+      [0, 10, 20, 30, 40, 50];
+    const safeScore = Math.max(
+      0,
+      Math.min(table.length - 1, Number(score || 0))
+    );
+    return Number(table[safeScore] || 0);
+  }
+
+  function triviaMaxPointsFor(gameId, teamId) {
+    const table =
+      TRIVIA_SCORE_TABLES[gameId]?.[teamId] ||
+      [0, 10, 20, 30, 40, 50];
+    return Number(table[table.length - 1] || 0);
+  }
 
   const SAMPLE_COUPLE_QUESTIONS = [
     {
@@ -3690,7 +3725,7 @@
     },
     {
       id: "escape-room",
-      question: "¿Qué tipo de actividad disfrutan especialmente cuando quieren ponerse a prueba?",
+      question: "¿Qué actividad disfrutan para ponerse a prueba?",
       options: [
         "Ir al karaoke",
         "Hacer salas de escape",
@@ -3700,7 +3735,7 @@
     },
     {
       id: "shared-passion",
-      question: "¿Qué pasión compartida fue protagonista de gran parte de sus años juntos?",
+      question: "¿Qué pasión comparten Vani y Fede?",
       options: [
         "Viajar",
         "Deportes",
@@ -3712,9 +3747,9 @@
       id: "dog",
       question: "¿Quién es el integrante de cuatro patas de la familia?",
       options: [
+        "Firu",
         "Simba",
-        "Coco",
-        "Milo"
+        "Loki"
       ],
       answer: "Simba"
     },
@@ -3936,7 +3971,6 @@
         aria-labelledby="homeEssentialTitle">
         <div class="home-section-heading">
           <div>
-            <p class="home-kicker">PARA TENER A MANO</p>
             <h3 id="homeEssentialTitle">Lo esencial</h3>
           </div>
         </div>
@@ -3978,7 +4012,7 @@
               <div>
                 <small>Ubicación</small>
                 <strong>¡Lugar secreto!</strong>
-                <p>Entrá para descubrir cuándo se revelará.</p>
+                <p>¡Próximamente se revelará!</p>
               </div>
             </button>
           `}
@@ -4004,7 +4038,7 @@
             <div>
               <small>Vestimenta</small>
               <strong>Elegante sport</strong>
-              <p>Lugar con mucho césped. ¡Vení con calzado cómodo!</p>
+              <p>Lugar con mucho césped. ¡Evitá taco aguja!</p>
             </div>
           </article>
 
@@ -4032,18 +4066,9 @@
               ${uiIcon("gift")}
             </span>
             <span class="home-gifts-feature-copy">
-              <small>Regalos</small>
               <strong>
                 Nuestro mejor regalo es tu presencia 🥂
               </strong>
-              <em>
-                Pero te dejamos nuestros datos para nuestra Luna de miel
-                <span
-                  class="home-gifts-plane home-gifts-plane-emoji"
-                  aria-hidden="true">
-                  ✈️
-                </span>
-              </em>
             </span>
             <b aria-hidden="true">›</b>
           </button>
@@ -4551,7 +4576,7 @@
       return `
         ${rsvpStyles()}
         ${sectionHeader(
-          "¿CONTAMOS CON VOS?",
+          "ASISTENCIA",
           "Asistencia confirmada",
           ""
         )}
@@ -4619,11 +4644,11 @@
     return `
       ${rsvpStyles()}
       ${sectionHeader(
-        "¿CONTAMOS CON VOS?",
+        "ASISTENCIA",
         hasSaved
           ? "Editar asistencia"
           : "Confirmar asistencia",
-        "Respondé antes del 15 de agosto y contanos cómo pensás llegar."
+        "Respondé antes del 15 de agosto."
       )}
 
       <form
@@ -4686,22 +4711,46 @@
             data-attendance-dependent
             ${attendanceDeclined ? "disabled" : ""}>
             <legend>¿Cómo pensás llegar?</legend>
+
+            <button
+              type="button"
+              class="transport-info-note transport-experience-note ${
+                savedTransport
+                  ? "hidden"
+                  : ""
+              }"
+              data-transport-info-note
+              data-go="traslado">
+              <span>${uiIcon("transportBus")}</span>
+              <span>
+                <strong>Viví la experiencia completa</strong>
+                <small>
+                  Te sugerimos elegir Micro / Combi.
+                  Ver información en Traslados.
+                </small>
+              </span>
+              <b aria-hidden="true">›</b>
+            </button>
+
             <div class="choice-group transport-choice-grid">
-              ${choicePillIcon(
-                "transport",
-                "particular",
-                "Particular",
-                "transportCar",
-                savedTransport,
-                true
-              )}
               ${choicePillIcon(
                 "transport",
                 "combi",
                 "Micro / Combi",
                 "transportBus",
                 savedTransport,
-                true
+                true,
+                "Ver Traslados para más detalles.",
+                "is-recommended"
+              )}
+              ${choicePillIcon(
+                "transport",
+                "particular",
+                "Particular",
+                "transportCar",
+                savedTransport,
+                true,
+                "Te informaremos el destino antes de la boda."
               )}
               ${choicePillIcon(
                 "transport",
@@ -4712,23 +4761,6 @@
                 true
               )}
             </div>
-
-            <button
-              type="button"
-              class="transport-info-note ${
-                savedTransport
-                  ? "hidden"
-                  : ""
-              }"
-              data-transport-info-note
-              data-go="traslado">
-              <span>${uiIcon("infoCircle")}</span>
-              <span>
-                <strong>¿Querés conocer las opciones?</strong>
-                <small>Ver info en la sección Traslados</small>
-              </span>
-              <b aria-hidden="true">›</b>
-            </button>
 
             <div
               class="transport-undecided-note ${
@@ -4924,10 +4956,12 @@
     label,
     icon,
     selected,
-    required = false
+    required = false,
+    description = "",
+    extraClass = ""
   ) {
     return `
-      <label class="choice-pill choice-pill-with-icon">
+      <label class="choice-pill choice-pill-with-icon ${escapeHTML(extraClass)}">
         <input
           type="radio"
           name="${escapeHTML(name)}"
@@ -4936,7 +4970,14 @@
           ${required ? "required" : ""}>
         <span>
           <i>${uiIcon(icon)}</i>
-          <b>${escapeHTML(label)}</b>
+          <span class="choice-pill-icon-copy">
+            <b>${escapeHTML(label)}</b>
+            ${
+              description
+                ? `<small>${escapeHTML(description)}</small>`
+                : ""
+            }
+          </span>
         </span>
       </label>`;
   }
@@ -5020,16 +5061,22 @@
           timestamp: submission.updatedAt,
           gameId: "auto-couple-trivia",
           teamId: submission.teamId,
-          points:
-            bestScore * TRIVIA_POINTS_PER_CORRECT,
+          points: triviaPointsFor(
+            "couple-trivia-test",
+            submission.teamId,
+            bestScore
+          ),
           comment:
             `Trivia Vani y Fede completada · ${
               guest?.firstName ||
               submission.guestId ||
               "Invitado"
             } · ${
-              bestScore *
-              TRIVIA_POINTS_PER_CORRECT
+              triviaPointsFor(
+                "couple-trivia-test",
+                submission.teamId,
+                bestScore
+              )
             } puntos`,
           automatic: true
         });
@@ -5047,16 +5094,22 @@
           timestamp: submission.updatedAt,
           gameId: "auto-who-is-who-trivia",
           teamId: submission.teamId,
-          points:
-            bestScore * TRIVIA_POINTS_PER_CORRECT,
+          points: triviaPointsFor(
+            "who-is-who-trivia-test",
+            submission.teamId,
+            bestScore
+          ),
           comment:
             `Trivia Vani o Fede completada · ${
               guest?.firstName ||
               submission.guestId ||
               "Invitado"
             } · ${
-              bestScore *
-              TRIVIA_POINTS_PER_CORRECT
+              triviaPointsFor(
+                "who-is-who-trivia-test",
+                submission.teamId,
+                bestScore
+              )
             } puntos`,
           automatic: true
         });
@@ -5875,37 +5928,31 @@
         )
       : 0;
     const coupleEarnedPoints = triviaDone
-      ? (
-          Math.max(
-            0,
-            Math.min(
-              SAMPLE_COUPLE_QUESTIONS.length,
-              Number(
-                coupleSubmission?.score ??
-                coupleSubmission?.bestScore ??
-                0
-              )
-            )
-          ) *
-          TRIVIA_POINTS_PER_CORRECT
+      ? triviaPointsFor(
+          "couple-trivia-test",
+          team.id,
+          coupleSubmission?.score ??
+          coupleSubmission?.bestScore ??
+          0
         )
       : 0;
     const whoEarnedPoints = whoTriviaDone
-      ? (
-          Math.max(
-            0,
-            Math.min(
-              WHO_IS_WHO_QUESTIONS.length,
-              Number(
-                whoSubmission?.score ??
-                whoSubmission?.bestScore ??
-                0
-              )
-            )
-          ) *
-          TRIVIA_POINTS_PER_CORRECT
+      ? triviaPointsFor(
+          "who-is-who-trivia-test",
+          team.id,
+          whoSubmission?.score ??
+          whoSubmission?.bestScore ??
+          0
         )
       : 0;
+    const coupleMaxPoints = triviaMaxPointsFor(
+      "couple-trivia-test",
+      team.id
+    );
+    const whoMaxPoints = triviaMaxPointsFor(
+      "who-is-who-trivia-test",
+      team.id
+    );
     const personalContribution =
       rsvpTotalPoints +
       musicEarnedPoints +
@@ -6034,7 +6081,7 @@
             route:"trivia-pareja",
             progressText:triviaDone
               ? `${coupleEarnedPoints} puntos obtenidos`
-              : "Hasta 50 puntos",
+              : `Hasta ${coupleMaxPoints} puntos`,
             editable:false,
             locked:!rsvpDone || !triviaOpen
           })}
@@ -6051,7 +6098,7 @@
             route:"trivia-quien",
             progressText:whoTriviaDone
               ? `${whoEarnedPoints} puntos obtenidos`
-              : "Hasta 50 puntos",
+              : `Hasta ${whoMaxPoints} puntos`,
             editable:false,
             locked:!rsvpDone || !whoTriviaOpen
           })}
@@ -6495,7 +6542,10 @@
               route:"trivia-pareja",
               eyebrow:"Siguiente desafío",
               title:"¿Cuánto conocés a Vani y Fede?",
-              text:"Respondé cinco preguntas y sumá hasta 50 puntos.",
+              text:`Respondé cinco preguntas y sumá hasta ${triviaMaxPointsFor(
+                "couple-trivia-test",
+                currentGuest.team
+              )} puntos.`,
               button:"Ir al desafío 2"
             })}
           </div>
@@ -6589,12 +6639,15 @@
           )
         )
       );
-      const earnedPoints =
-        correctAnswers *
-        TRIVIA_POINTS_PER_CORRECT;
-      const maxPoints =
-        maxScore *
-        TRIVIA_POINTS_PER_CORRECT;
+      const earnedPoints = triviaPointsFor(
+        "couple-trivia-test",
+        currentGuest.team,
+        correctAnswers
+      );
+      const maxPoints = triviaMaxPointsFor(
+        "couple-trivia-test",
+        currentGuest.team
+      );
 
       return `
         <article id="couple-trivia-game" class="trivia-game-card is-open trivia-quiz-card is-completed is-compact-completed">
@@ -6647,7 +6700,10 @@
 
           <p>
             Cinco preguntas, una sola oportunidad y hasta
-            <strong>50 puntos</strong> para tu equipo.
+            <strong>${triviaMaxPointsFor(
+              "couple-trivia-test",
+              currentGuest.team
+            )} puntos</strong> para tu equipo.
           </p>
 
           <div class="trivia-points-rule">
@@ -6721,12 +6777,15 @@
           )
         )
       );
-      const earnedPoints =
-        correctAnswers *
-        TRIVIA_POINTS_PER_CORRECT;
-      const maxPoints =
-        maxScore *
-        TRIVIA_POINTS_PER_CORRECT;
+      const earnedPoints = triviaPointsFor(
+        "who-is-who-trivia-test",
+        currentGuest.team,
+        correctAnswers
+      );
+      const maxPoints = triviaMaxPointsFor(
+        "who-is-who-trivia-test",
+        currentGuest.team
+      );
 
       return `
         <article id="who-is-who-game" class="trivia-game-card is-open trivia-quiz-card trivia-who-card is-completed is-compact-completed">
@@ -6780,7 +6839,10 @@
 
           <p>
             Cinco situaciones, dos posibles respuestas y hasta
-            <strong>50 puntos</strong> para tu equipo.
+            <strong>${triviaMaxPointsFor(
+              "who-is-who-trivia-test",
+              currentGuest.team
+            )} puntos</strong> para tu equipo.
           </p>
 
           <div class="trivia-points-rule">
@@ -7555,7 +7617,7 @@
     return `
       ${rulesStyles()}
       <button type="button" class="rules-back-to-points" data-go="puntos">
-        ${uiIcon("arrowLeft")}<span>Volver a Sumá puntos</span>
+        ${uiIcon("arrowLeft")}<span>Regresar a la sección de desafíos</span>
       </button>
       ${sectionHeader(
         "LAS REGLAS DEL JUEGO",
@@ -7584,8 +7646,16 @@
         ${rulesRow("Confirmar asistencia", `+${teamPoints}`, "Respuesta definitiva por sí o por no. El valor está equilibrado por equipo.")}
         ${rulesRow("Elegir canciones", `+${teamPoints}`, "Completar la propuesta musical para la boda y la entrada del equipo.")}
         ${rulesRow("Viajar en micro", "+20", "Bonus adicional para quienes seleccionen el micro en Asistencia.")}
-        ${rulesRow("Trivia de los novios", "+10 por acierto", "Cinco preguntas, con un máximo de 50 puntos.")}
-        ${rulesRow("Trivia Vani o Fede", "+10 por acierto", "Cinco preguntas, con un máximo de 50 puntos.")}
+        ${rulesRow(
+          "Trivia de los novios",
+          `Hasta +${triviaMaxPointsFor("couple-trivia-test", currentGuest.team)}`,
+          "El puntaje depende de los aciertos y está ajustado según la cantidad de integrantes del equipo."
+        )}
+        ${rulesRow(
+          "Trivia Vani o Fede",
+          `Hasta +${triviaMaxPointsFor("who-is-who-trivia-test", currentGuest.team)}`,
+          "El puntaje depende de los aciertos y está ajustado según la cantidad de integrantes del equipo."
+        )}
         ${rulesRow("Próximos desafíos", "Según consigna", "Cada actividad indicará cuántos puntos entrega.")}
         ${rulesRow("Bonus o penalizaciones", "+ / −", "Vani y Fede podrán sumar o restar puntos por juegos, actitud o incumplimiento de consignas.")}
       </section>
@@ -7706,27 +7776,66 @@
   }
 
   function renderGifts() {
+    const savedWish = triviaSubmission(
+      "gift-first-year-wish"
+    );
+    const savedWishText = String(
+      savedWish?.answer ||
+      savedWish?.comment ||
+      ""
+    ).trim();
+
     return `
       ${giftStyles()}
-      ${sectionHeader(
-        "casamiento",
-        "Regalos",
-        ""
-      )}
+
+      <header class="gift-page-heading">
+        <h2>Regalos</h2>
+        <p>Un recuerdo para acompañarnos en esta nueva etapa.</p>
+      </header>
+
+      <section class="gift-wish-card section-card">
+        <span class="gift-wish-icon">
+          ${uiIcon("sparkle")}
+        </span>
+        <div class="gift-wish-copy">
+          <p class="eyebrow">UN REGALO PARA NUESTRO PRIMER AÑO</p>
+          <h3>Dejanos una misión para cumplir</h3>
+          <p>
+            Podés regalarnos un deseo, un desafío o una actividad
+            para hacer durante nuestro primer año de casados.
+          </p>
+        </div>
+
+        <form id="giftWishForm" class="gift-wish-form">
+          <label>
+            Tu propuesta <small>(opcional)</small>
+            <textarea
+              name="wish"
+              maxlength="400"
+              placeholder="Ej.: hacer una escapada sorpresa, cocinar juntos una receta nueva...">${escapeHTML(savedWishText)}</textarea>
+          </label>
+          <div class="gift-wish-actions">
+            <small>
+              ${
+                savedWishText
+                  ? "Tu regalo quedó guardado. Podés actualizarlo."
+                  : "No es obligatorio completar esta actividad."
+              }
+            </small>
+            <button type="submit">
+              ${savedWishText ? "Actualizar regalo" : "Enviar regalo"}
+            </button>
+          </div>
+        </form>
+      </section>
 
       <section class="gift-hero section-card">
         <span>${uiIcon("gift")}</span>
-
         <div>
-          <p class="eyebrow">
-            MUCHAS GRACIAS!
-          </p>
-          <h3>
-            Tu presencia es el mejor regalo
-          </h3>
+          <h3>Tu presencia es el mejor regalo</h3>
           <p>
-            Pero si querés ayudarnos a sumar kilómetros,
-            aventuras y recuerdos, te dejamos nuestros datos.
+            Si además querés acompañarnos en nuestra próxima aventura,
+            te dejamos nuestros datos de transferencia.
           </p>
         </div>
       </section>
@@ -7738,33 +7847,13 @@
             <small>PARA NUESTRA PRÓXIMA AVENTURA</small>
             <h3>Transferencia</h3>
           </div>
-
-          <span class="gift-currency-badge">
-            PESOS / USD
-          </span>
+          <span class="gift-currency-badge">PESOS / USD</span>
         </div>
 
         <div class="gift-data-list">
-          ${giftDetailRow(
-            "Alias",
-            GIFT_DETAILS.alias,
-            "alias",
-            true
-          )}
-
-          ${giftDetailRow(
-            "CBU",
-            GIFT_DETAILS.cbu,
-            "cbu",
-            true
-          )}
-
-          ${giftDetailRow(
-            "Titular",
-            GIFT_DETAILS.holder,
-            "",
-            false
-          )}
+          ${giftDetailRow("Alias", GIFT_DETAILS.alias, "alias", true)}
+          ${giftDetailRow("CBU", GIFT_DETAILS.cbu, "cbu", true)}
+          ${giftDetailRow("Titular", GIFT_DETAILS.holder, "", false)}
         </div>
 
         <div class="gift-currency-note">
@@ -9205,6 +9294,45 @@
     }
 
     if (route === "regalos") {
+      $("#giftWishForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const wish = String(
+          new FormData(form).get("wish") || ""
+        ).trim();
+
+        if (!wish) {
+          toast("Escribí un deseo, desafío o actividad antes de enviarlo.");
+          form.querySelector('textarea[name="wish"]')?.focus();
+          return;
+        }
+
+        const payload = {
+          gameId: "gift-first-year-wish",
+          guestId: currentGuest.id,
+          teamId: currentGuest.team,
+          answer: wish.slice(0, 400),
+          comment: wish.slice(0, 400),
+          score: 0,
+          bestScore: 0,
+          earnedPoints: 0,
+          maxScore: 0,
+          updatedAt: new Date().toISOString()
+        };
+
+        void queueOptimisticWrite(
+          "saveGameSubmission",
+          payload,
+          {
+            writeKey: `game:${currentGuest.id}:gift-first-year-wish`,
+            successMessage: "",
+            afterRender: () => {
+              toast("¡Tu regalo quedó guardado!");
+            }
+          }
+        );
+      });
+
       $$("[data-copy-gift]").forEach(
         button => {
           button.addEventListener(
@@ -9822,9 +9950,11 @@
           answers,
           score,
           bestScore: score,
-          earnedPoints:
-            score *
-            TRIVIA_POINTS_PER_CORRECT,
+          earnedPoints: triviaPointsFor(
+            "couple-trivia-test",
+            currentGuest.team,
+            score
+          ),
           maxScore: SAMPLE_COUPLE_QUESTIONS.length,
           gameId: "couple-trivia-test",
           guestId: currentGuest.id,
@@ -9875,9 +10005,11 @@
           answers,
           score,
           bestScore: score,
-          earnedPoints:
-            score *
-            TRIVIA_POINTS_PER_CORRECT,
+          earnedPoints: triviaPointsFor(
+            "who-is-who-trivia-test",
+            currentGuest.team,
+            score
+          ),
           maxScore: WHO_IS_WHO_QUESTIONS.length,
           gameId: "who-is-who-trivia-test",
           guestId: currentGuest.id,
@@ -10685,7 +10817,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32494 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32495 y volvé a intentar.`
           });
         }
       }
