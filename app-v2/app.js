@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32503";
+  const CURRENT_APP_VERSION = "32504";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -395,7 +395,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32503"
+        appVersion: CONFIG.APP_VERSION || "32504"
       })
     );
   }
@@ -972,7 +972,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32503",
+      appVersion: "32504",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -8163,6 +8163,32 @@
           }`;
         }
       },
+      particular: {
+        title: "Viajan de forma particular",
+        filter: guest => {
+          const row = state.rsvps[guest.id];
+          return (
+            hasCompletedRsvp(row) &&
+            row.attendance === "si" &&
+            ["particular", "auto"].includes(row.transport)
+          );
+        },
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Particular`
+      },
+      undecidedTransport: {
+        title: "Aún no definieron el traslado",
+        filter: guest => {
+          const row = state.rsvps[guest.id];
+          return (
+            hasCompletedRsvp(row) &&
+            row.attendance === "si" &&
+            row.transport === "sin-decidir"
+          );
+        },
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Aún no lo decide`
+      },
       restrictions: {
         title: "Restricciones alimentarias",
         filter: guest => {
@@ -8185,6 +8211,511 @@
 
   function renderAdminPeopleModal() {
     return `<div id="adminPeopleModal" class="admin-people-modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminPeopleTitle"><div class="admin-people-dialog"><div class="admin-people-head"><div><p class="eyebrow">Detalle</p><h4 id="adminPeopleTitle">Personas</h4><p id="adminPeopleCount"></p></div><button type="button" class="admin-people-close" data-admin-modal-close aria-label="Cerrar">×</button></div><div id="adminPeopleList" class="admin-people-list"></div><button type="button" class="ghost-button admin-people-done" data-admin-modal-close>Cerrar</button></div></div>`;
+  }
+
+  function adminResponseRecords() {
+    const submissions = Object.values(
+      state.gameSubmissions || {}
+    ).filter(
+      submission =>
+        submission &&
+        !submission.resetMarker
+    );
+
+    const mapRecord = submission => {
+      const guest =
+        getGuestById(submission.guestId);
+      const team =
+        getTeam(
+          submission.teamId ||
+          guest?.team
+        );
+      const guestName =
+        guest
+          ? guestFullName(guest)
+          : (
+              submission.guestName ||
+              submission.guestId ||
+              "Invitado sin identificar"
+            );
+
+      return {
+        submission,
+        guest,
+        team,
+        guestName,
+        updatedAt:
+          submission.updatedAt ||
+          submission.timestamp ||
+          ""
+      };
+    };
+
+    const sorter = (a, b) =>
+      a.team.name.localeCompare(
+        b.team.name,
+        "es"
+      ) ||
+      a.guestName.localeCompare(
+        b.guestName,
+        "es"
+      );
+
+    const music = submissions
+      .filter(
+        submission =>
+          submission.gameId ===
+          "music-selection"
+      )
+      .map(mapRecord)
+      .filter(record =>
+        Boolean(
+          String(
+            record.submission.weddingSong ||
+            ""
+          ).trim() ||
+          String(
+            record.submission.teamEntranceSong ||
+            ""
+          ).trim()
+        )
+      )
+      .sort(sorter);
+
+    const gifts = submissions
+      .filter(
+        submission =>
+          submission.gameId ===
+          "gift-first-year-wish"
+      )
+      .map(mapRecord)
+      .filter(record =>
+        Boolean(
+          String(
+            record.submission.answer ||
+            record.submission.comment ||
+            ""
+          ).trim()
+        )
+      )
+      .sort(sorter);
+
+    return { music, gifts };
+  }
+
+  function renderAdminResponseItem(
+    record,
+    kind
+  ) {
+    const { submission, team, guestName } =
+      record;
+    const searchText = normalize(
+      [
+        guestName,
+        team.name,
+        submission.weddingSong,
+        submission.teamEntranceSong,
+        submission.answer,
+        submission.comment
+      ].filter(Boolean).join(" ")
+    );
+
+    const body = kind === "music"
+      ? `
+        <div class="admin-response-song-grid">
+          <span>
+            <small>Para bailar</small>
+            <strong>
+              ${escapeHTML(
+                submission.weddingSong ||
+                "Sin respuesta"
+              )}
+            </strong>
+          </span>
+          <span>
+            <small>Entrada del equipo</small>
+            <strong>
+              ${escapeHTML(
+                submission.teamEntranceSong ||
+                "Sin respuesta"
+              )}
+            </strong>
+          </span>
+        </div>
+      `
+      : `
+        <blockquote>
+          ${escapeHTML(
+            String(
+              submission.answer ||
+              submission.comment ||
+              ""
+            ).trim()
+          )}
+        </blockquote>
+      `;
+
+    return `
+      <article
+        class="admin-response-item"
+        data-admin-response-card
+        data-response-kind="${kind}"
+        data-response-team="${escapeHTML(team.id)}"
+        data-response-search="${escapeHTML(searchText)}"
+        style="--admin-response-accent:${team.accent}">
+        <header>
+          <span class="admin-response-team-logo">
+            ${teamLogo(
+              team,
+              "admin-response-logo"
+            )}
+          </span>
+          <div>
+            <strong>${escapeHTML(guestName)}</strong>
+            <small>
+              Equipo ${escapeHTML(team.name)}
+              ·
+              ${escapeHTML(
+                formatDateLabel(
+                  record.updatedAt
+                )
+              )}
+            </small>
+          </div>
+        </header>
+        ${body}
+      </article>
+    `;
+  }
+
+  function renderAdminResponses() {
+    const { music, gifts } =
+      adminResponseRecords();
+
+    return `
+      <section
+        class="section-card admin-response-toolbar">
+        <div class="admin-response-toolbar-copy">
+          <p class="eyebrow">Control de respuestas</p>
+          <h4>Buscar y filtrar</h4>
+          <p>
+            Revisá las propuestas musicales y
+            las misiones del primer año.
+          </p>
+        </div>
+
+        <label>
+          Buscar
+          <input
+            id="adminResponsesSearch"
+            type="search"
+            placeholder="Nombre, canción o mensaje">
+        </label>
+
+        <label>
+          Equipo
+          <select id="adminResponsesTeam">
+            <option value="all">
+              Todos los equipos
+            </option>
+            ${Object.values(DATA.teams)
+              .map(team => `
+                <option value="${team.id}">
+                  ${escapeHTML(team.name)}
+                </option>
+              `)
+              .join("")}
+          </select>
+        </label>
+
+        <button
+          id="adminResponsesRefresh"
+          type="button"
+          class="admin-response-refresh">
+          ${uiIcon("sync")}
+          <span>Actualizar</span>
+        </button>
+      </section>
+
+      <section class="admin-response-summary-grid">
+        <article>
+          <span>${uiIcon("music")}</span>
+          <div>
+            <small>Canciones recibidas</small>
+            <strong>${music.length}</strong>
+          </div>
+        </article>
+        <article>
+          <span>${uiIcon("mission")}</span>
+          <div>
+            <small>Misiones recibidas</small>
+            <strong>${gifts.length}</strong>
+          </div>
+        </article>
+      </section>
+
+      <section class="admin-response-columns">
+        <section
+          class="section-card admin-response-panel">
+          <header class="admin-response-panel-head">
+            <div>
+              <p class="eyebrow">
+                Desafío musical
+              </p>
+              <h4>Respuestas de canciones</h4>
+              <p>
+                <span id="adminMusicVisibleCount">
+                  ${music.length}
+                </span>
+                visibles
+              </p>
+            </div>
+            <button
+              type="button"
+              data-export-admin-responses="music">
+              ${uiIcon("download")}
+              <span>Exportar</span>
+            </button>
+          </header>
+
+          <div
+            class="admin-response-list"
+            data-admin-response-list="music">
+            ${
+              music.length
+                ? music
+                    .map(record =>
+                      renderAdminResponseItem(
+                        record,
+                        "music"
+                      )
+                    )
+                    .join("")
+                : `
+                  <div class="admin-response-empty">
+                    ${uiIcon("music")}
+                    <strong>
+                      Todavía no hay canciones.
+                    </strong>
+                  </div>
+                `
+            }
+          </div>
+
+          <div
+            id="adminMusicFilterEmpty"
+            class="admin-response-filter-empty hidden">
+            No hay canciones para ese filtro.
+          </div>
+        </section>
+
+        <section
+          class="section-card admin-response-panel">
+          <header class="admin-response-panel-head">
+            <div>
+              <p class="eyebrow">
+                Regalos
+              </p>
+              <h4>Misiones para el primer año</h4>
+              <p>
+                <span id="adminGiftVisibleCount">
+                  ${gifts.length}
+                </span>
+                visibles
+              </p>
+            </div>
+            <button
+              type="button"
+              data-export-admin-responses="gifts">
+              ${uiIcon("download")}
+              <span>Exportar</span>
+            </button>
+          </header>
+
+          <div
+            class="admin-response-list"
+            data-admin-response-list="gifts">
+            ${
+              gifts.length
+                ? gifts
+                    .map(record =>
+                      renderAdminResponseItem(
+                        record,
+                        "gift"
+                      )
+                    )
+                    .join("")
+                : `
+                  <div class="admin-response-empty">
+                    ${uiIcon("mission")}
+                    <strong>
+                      Todavía no hay misiones.
+                    </strong>
+                  </div>
+                `
+            }
+          </div>
+
+          <div
+            id="adminGiftFilterEmpty"
+            class="admin-response-filter-empty hidden">
+            No hay misiones para ese filtro.
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function buildAdminResponsesCsv(kind) {
+    const records =
+      adminResponseRecords()[
+        kind === "gifts"
+          ? "gifts"
+          : "music"
+      ];
+
+    const rows =
+      kind === "gifts"
+        ? [
+            [
+              "Nombre",
+              "Equipo",
+              "Misión para el primer año",
+              "Última actualización"
+            ],
+            ...records.map(record => [
+              record.guestName,
+              record.team.name,
+              String(
+                record.submission.answer ||
+                record.submission.comment ||
+                ""
+              ).trim(),
+              record.updatedAt
+            ])
+          ]
+        : [
+            [
+              "Nombre",
+              "Equipo",
+              "Canción para bailar",
+              "Canción para entrada del equipo",
+              "Última actualización"
+            ],
+            ...records.map(record => [
+              record.guestName,
+              record.team.name,
+              record.submission.weddingSong || "",
+              record.submission.teamEntranceSong || "",
+              record.updatedAt
+            ])
+          ];
+
+    return (
+      "\uFEFF" +
+      rows
+        .map(row =>
+          row.map(csvCell).join(";")
+        )
+        .join("\r\n")
+    );
+  }
+
+  function renderAdminLiveRanking() {
+    const ranking =
+      currentRankingTotals()
+        .sort(
+          (a, b) =>
+            b.total - a.total ||
+            getTeam(a.id).name.localeCompare(
+              getTeam(b.id).name,
+              "es"
+            )
+        );
+    const leaderPoints =
+      Number(ranking[0]?.total || 0);
+
+    return `
+      <section
+        id="adminLiveRanking"
+        class="section-card admin-live-ranking">
+        <header class="admin-live-ranking-head">
+          <span class="admin-live-ranking-icon">
+            ${uiIcon("ranking")}
+          </span>
+          <div>
+            <p class="eyebrow">
+              Operación en vivo
+            </p>
+            <h4>Ranking de equipos</h4>
+            <p>
+              Última sincronización:
+              ${
+                state.lastSyncAt
+                  ? escapeHTML(
+                      formatDateLabel(
+                        state.lastSyncAt
+                      )
+                    )
+                  : "pendiente"
+              }
+            </p>
+          </div>
+          <button
+            id="adminRankingRefresh"
+            type="button"
+            class="admin-ranking-refresh">
+            ${uiIcon("sync")}
+            <span>Actualizar ranking</span>
+          </button>
+        </header>
+
+        <div class="admin-live-ranking-list">
+          ${ranking.map((row, index) => {
+            const team = getTeam(row.id);
+            const gap =
+              leaderPoints -
+              Number(row.total || 0);
+
+            return `
+              <article
+                class="admin-live-ranking-row ${
+                  index === 0
+                    ? "is-leader"
+                    : ""
+                }"
+                style="--admin-rank-accent:${team.accent}">
+                <span class="admin-live-rank-position">
+                  ${index + 1}
+                </span>
+                <span class="admin-live-rank-logo">
+                  ${teamLogo(
+                    team,
+                    "admin-live-team-logo"
+                  )}
+                </span>
+                <div>
+                  <strong>
+                    ${escapeHTML(team.name)}
+                  </strong>
+                  <small>
+                    ${
+                      index === 0
+                        ? "Liderando"
+                        : `${gap} pts del líder`
+                    }
+                  </small>
+                </div>
+                <b>
+                  ${Number(row.total || 0)}
+                  <small>pts</small>
+                </b>
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
   }
 
   function movementActor(entry) {
@@ -8214,7 +8745,7 @@
     const entries = allPointEntries().slice(-12).reverse();
 
     return `
-      <section class="section-card admin-movements admin-movements-compact">
+      <section id="adminMovementsPanel" class="section-card admin-movements admin-movements-compact">
         <div class="card-title-row">
           <div><p class="eyebrow">Auditoría</p><h4>Movimientos recientes</h4></div>
           <span class="badge">${entries.length}</span>
@@ -8504,6 +9035,24 @@
       );
     }).length;
 
+    const particularCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return (
+        hasCompletedRsvp(rsvp) &&
+        rsvp.attendance === "si" &&
+        ["particular", "auto"].includes(rsvp.transport)
+      );
+    }).length;
+
+    const undecidedTransportCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+      return (
+        hasCompletedRsvp(rsvp) &&
+        rsvp.attendance === "si" &&
+        rsvp.transport === "sin-decidir"
+      );
+    }).length;
+
     const pickupZoneCounts = {
       "capital-obelisco": 0,
       "wilde": 0,
@@ -8572,8 +9121,26 @@
           icon: "star",
           eyebrow: "Administración",
           title: "Puntos y auditoría",
-          text: "Sumá o restá puntos y revisá los últimos movimientos."
+          text: "Operá los puntos, controlá los movimientos y seguí el ranking en vivo."
         })}
+
+        <section class="admin-points-ops-bar">
+          <div>
+            <p class="eyebrow">Centro operativo</p>
+            <strong>Control de puntos del evento</strong>
+          </div>
+          <nav aria-label="Accesos rápidos">
+            <button type="button" data-admin-scroll="scoreForm">
+              Cargar puntos
+            </button>
+            <button type="button" data-admin-scroll="adminMovementsPanel">
+              Auditoría
+            </button>
+            <button type="button" data-admin-scroll="adminLiveRanking">
+              Ranking
+            </button>
+          </nav>
+        </section>
 
         <form
           id="scoreForm"
@@ -8683,6 +9250,23 @@
         </form>
 
         ${renderAdminMovements()}
+
+        ${renderAdminLiveRanking()}
+      `;
+    }
+
+    if (adminSubsection === "responses") {
+      return `
+        ${adminHeader}
+
+        ${renderAdminSubsectionHeader({
+          icon: "music",
+          eyebrow: "Administración",
+          title: "Respuestas",
+          text: "Canciones propuestas y mensajes dejados en Regalos."
+        })}
+
+        ${renderAdminResponses()}
       `;
     }
 
@@ -9146,6 +9730,30 @@
 
         <button
           type="button"
+          class="admin-stat-button admin-particular-stat"
+          data-admin-list="particular">
+          <span>${uiIcon("car")}</span>
+          <div>
+            <small>Particular</small>
+            <strong>${particularCount}</strong>
+            <em>Ver</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="admin-stat-button admin-undecided-stat"
+          data-admin-list="undecidedTransport">
+          <span>${uiIcon("question")}</span>
+          <div>
+            <small>Aún no lo deciden</small>
+            <strong>${undecidedTransportCount}</strong>
+            <em>Ver</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
           class="admin-stat-button admin-restrictions-stat"
           data-admin-list="restrictions">
           <span>${uiIcon("food")}</span>
@@ -9214,6 +9822,23 @@
             <strong>Sumar puntos</strong>
             <em>
               Ajustes discrecionales y auditoría de movimientos
+            </em>
+          </span>
+          <b aria-hidden="true">›</b>
+        </button>
+
+        <button
+          type="button"
+          class="admin-subsection-launcher admin-subsection-launcher-responses"
+          data-admin-subsection="responses">
+          <span class="admin-subsection-launcher-icon">
+            ${uiIcon("music")}
+          </span>
+          <span>
+            <small>Mini sección</small>
+            <strong>Respuestas</strong>
+            <em>
+              Canciones favoritas y misiones de Regalos
             </em>
           </span>
           <b aria-hidden="true">›</b>
@@ -10586,6 +11211,7 @@
         adminSubsection = [
           "dashboard",
           "points",
+          "responses",
           "settings"
         ].includes(requested)
           ? requested
@@ -10626,6 +11252,176 @@
         renderCurrentRoute();
       });
     });
+
+    $$("[data-admin-scroll]").forEach(button => {
+      button.addEventListener("click", () => {
+        document
+          .getElementById(
+            button.dataset.adminScroll
+          )
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+      });
+    });
+
+    $("#adminRankingRefresh")
+      ?.addEventListener(
+        "click",
+        async event => {
+          const updated =
+            await syncWithAnimatedButton(
+              event.currentTarget
+            );
+
+          if (updated) {
+            renderCurrentRoute();
+            window.requestAnimationFrame(() => {
+              document
+                .getElementById(
+                  "adminLiveRanking"
+                )
+                ?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start"
+                });
+            });
+          }
+        }
+      );
+
+    $("#adminResponsesRefresh")
+      ?.addEventListener(
+        "click",
+        async event => {
+          const updated =
+            await syncWithAnimatedButton(
+              event.currentTarget
+            );
+
+          if (updated) {
+            renderCurrentRoute();
+          }
+        }
+      );
+
+    const applyAdminResponseFilters = () => {
+      const query = normalize(
+        $("#adminResponsesSearch")?.value || ""
+      );
+      const teamId =
+        $("#adminResponsesTeam")?.value ||
+        "all";
+      const visible = {
+        music: 0,
+        gift: 0
+      };
+      const total = {
+        music: 0,
+        gift: 0
+      };
+
+      $$("[data-admin-response-card]")
+        .forEach(card => {
+          const kind =
+            card.dataset.responseKind ||
+            "music";
+          total[kind] =
+            Number(total[kind] || 0) + 1;
+
+          const matchesQuery =
+            !query ||
+            String(
+              card.dataset.responseSearch ||
+              ""
+            ).includes(query);
+          const matchesTeam =
+            teamId === "all" ||
+            card.dataset.responseTeam ===
+              teamId;
+          const show =
+            matchesQuery &&
+            matchesTeam;
+
+          card.hidden = !show;
+
+          if (show) {
+            visible[kind] =
+              Number(visible[kind] || 0) + 1;
+          }
+        });
+
+      const musicCount =
+        $("#adminMusicVisibleCount");
+      const giftCount =
+        $("#adminGiftVisibleCount");
+
+      if (musicCount) {
+        musicCount.textContent =
+          String(visible.music || 0);
+      }
+      if (giftCount) {
+        giftCount.textContent =
+          String(visible.gift || 0);
+      }
+
+      $("#adminMusicFilterEmpty")
+        ?.classList.toggle(
+          "hidden",
+          !total.music ||
+          Boolean(visible.music)
+        );
+
+      $("#adminGiftFilterEmpty")
+        ?.classList.toggle(
+          "hidden",
+          !total.gift ||
+          Boolean(visible.gift)
+        );
+    };
+
+    $("#adminResponsesSearch")
+      ?.addEventListener(
+        "input",
+        applyAdminResponseFilters
+      );
+
+    $("#adminResponsesTeam")
+      ?.addEventListener(
+        "change",
+        applyAdminResponseFilters
+      );
+
+    $$("[data-export-admin-responses]")
+      .forEach(button => {
+        button.addEventListener("click", () => {
+          const kind =
+            button.dataset
+              .exportAdminResponses ===
+            "gifts"
+              ? "gifts"
+              : "music";
+          const date =
+            new Date()
+              .toISOString()
+              .slice(0, 10);
+
+          downloadFile(
+            kind === "gifts"
+              ? `misiones-regalos-${date}.csv`
+              : `canciones-invitados-${date}.csv`,
+            buildAdminResponsesCsv(kind),
+            "text/csv;charset=utf-8"
+          );
+
+          toast(
+            kind === "gifts"
+              ? "Misiones exportadas."
+              : "Canciones exportadas."
+          );
+        });
+      });
 
     $("#downloadFullBackup")?.addEventListener("click", downloadFullBackup);
     $("#restoreBackupInput")?.addEventListener("change", event => {
