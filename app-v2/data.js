@@ -1980,11 +1980,11 @@ window.WEDDING_APP_DATA = {
       "displayRelation": "Amigo"
     },
     {
-      "id": "daniel-masolini",
-      "firstName": "Daniel",
-      "lastName": "Masolini",
+      "id": "phillip-whelan",
+      "firstName": "Phillip",
+      "lastName": "Whelan",
       "email": "",
-      "alias": "Dani",
+      "alias": "Phillip",
       "relation": "Amigo",
       "team": "viento",
       "role": "invitado",
