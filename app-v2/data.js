@@ -1469,7 +1469,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "francisco",
       "firstName": "Francisco",
-      "lastName": "",
+      "lastName": "Ghisletti",
       "email": "",
       "alias": "Fran",
       "relation": "Amigo",
@@ -1501,7 +1501,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "pablo",
       "firstName": "Pablo",
-      "lastName": "",
+      "lastName": "Vizoso",
       "email": "",
       "alias": "Pablo",
       "relation": "Amigo",
