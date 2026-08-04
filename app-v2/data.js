@@ -2143,7 +2143,7 @@ window.WEDDING_APP_DATA = {
     {
       "id": "felipe-uribe",
       "firstName": "Felipe",
-      "lastName": "Uribe",
+      "lastName": "Salazar",
       "email": "",
       "alias": "Feli",
       "relation": "Amigo",
