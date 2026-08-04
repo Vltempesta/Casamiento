@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32504";
+  const CURRENT_APP_VERSION = "32506";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -395,7 +395,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32504"
+        appVersion: CONFIG.APP_VERSION || "32506"
       })
     );
   }
@@ -972,7 +972,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32504",
+      appVersion: "32506",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -8163,6 +8163,40 @@
           }`;
         }
       },
+      particular: {
+        title: "Eligieron traslado particular",
+        filter: guest => {
+          const row = state.rsvps[guest.id];
+
+          return (
+            hasCompletedRsvp(row) &&
+            row.attendance === "si" &&
+            ["particular", "auto"].includes(
+              row.transport
+            )
+          );
+        },
+        detail: guest =>
+          `Equipo ${
+            getTeam(guest.team).name
+          } · Viaja de forma particular`
+      },
+      "transport-undecided": {
+        title: "Aún no decidieron el traslado",
+        filter: guest => {
+          const row = state.rsvps[guest.id];
+
+          return (
+            hasCompletedRsvp(row) &&
+            row.attendance === "si" &&
+            row.transport === "sin-decidir"
+          );
+        },
+        detail: guest =>
+          `Equipo ${
+            getTeam(guest.team).name
+          } · Debe definirlo antes del 15 de agosto`
+      },
       restrictions: {
         title: "Restricciones alimentarias",
         filter: guest => {
@@ -8415,6 +8449,294 @@
     renderCurrentRoute();
   }
 
+
+  function adminSubmissionDate(submission = {}) {
+    return (
+      submission.updatedAt ||
+      submission.submittedAt ||
+      submission.timestamp ||
+      ""
+    );
+  }
+
+  function adminSubmissionGuest(submission = {}) {
+    return getGuestById(
+      submission.guestId ||
+      submission.userId ||
+      ""
+    );
+  }
+
+  function adminSubmissionGuestName(submission = {}) {
+    const guest = adminSubmissionGuest(submission);
+
+    return guest
+      ? guestFullName(guest)
+      : (
+          submission.guestName ||
+          submission.name ||
+          "Invitado"
+        );
+  }
+
+  function adminSubmissionTeam(submission = {}) {
+    const guest = adminSubmissionGuest(submission);
+    const teamId =
+      guest?.team ||
+      submission.teamId ||
+      submission.team ||
+      "";
+
+    return teamId
+      ? getTeam(teamId)
+      : null;
+  }
+
+  function renderAdminAnswerMeta(submission = {}) {
+    const team = adminSubmissionTeam(submission);
+    const date = adminSubmissionDate(submission);
+
+    return `
+      <span class="admin-answer-meta">
+        ${
+          team
+            ? `<i style="--answer-team:${
+                escapeHTML(team.accent || "#31536e")
+              }"></i>
+              ${escapeHTML(team.name)}`
+            : "Sin equipo"
+        }
+        ${
+          date
+            ? ` · ${escapeHTML(formatDateLabel(date))}`
+            : ""
+        }
+      </span>
+    `;
+  }
+
+  function renderAdminAnswers() {
+    const submissions = Object.values(
+      state.gameSubmissions || {}
+    );
+
+    const musicAnswers = submissions
+      .filter(
+        submission =>
+          submission?.gameId ===
+          "music-selection"
+      )
+      .filter(submission =>
+        Boolean(
+          String(
+            submission.weddingSong ||
+            submission.song ||
+            ""
+          ).trim() ||
+          String(
+            submission.teamEntranceSong ||
+            submission.entranceSong ||
+            submission.teamSong ||
+            ""
+          ).trim()
+        )
+      )
+      .sort(
+        (a, b) =>
+          new Date(adminSubmissionDate(b) || 0) -
+          new Date(adminSubmissionDate(a) || 0)
+      );
+
+    const giftAnswers = submissions
+      .filter(
+        submission =>
+          submission?.gameId ===
+          "gift-first-year-wish"
+      )
+      .filter(submission =>
+        Boolean(
+          String(
+            submission.answer ||
+            submission.comment ||
+            submission.wish ||
+            ""
+          ).trim()
+        )
+      )
+      .sort(
+        (a, b) =>
+          new Date(adminSubmissionDate(b) || 0) -
+          new Date(adminSubmissionDate(a) || 0)
+      );
+
+    return `
+      ${renderAdminSubsectionHeader({
+        icon: "chat",
+        eyebrow: "Administración",
+        title: "Respuestas",
+        text:
+          "Revisá las canciones propuestas y las misiones para el primer año."
+      })}
+
+      <section class="admin-answer-counters">
+        <article>
+          <span>${uiIcon("music")}</span>
+          <div>
+            <small>Canciones</small>
+            <strong>${musicAnswers.length}</strong>
+            <em>respuestas</em>
+          </div>
+        </article>
+
+        <article>
+          <span>${uiIcon("mission")}</span>
+          <div>
+            <small>Misiones</small>
+            <strong>${giftAnswers.length}</strong>
+            <em>respuestas</em>
+          </div>
+        </article>
+      </section>
+
+      <section class="section-card admin-answer-panel">
+        <div class="admin-answer-panel-head">
+          <span>${uiIcon("music")}</span>
+          <div>
+            <p class="eyebrow">Desafío musical</p>
+            <h4>Canciones propuestas</h4>
+            <p>
+              Canción para la boda y entrada del equipo.
+            </p>
+          </div>
+          <b>${musicAnswers.length}</b>
+        </div>
+
+        ${
+          musicAnswers.length
+            ? `
+              <div class="admin-answer-list">
+                ${musicAnswers.map(submission => {
+                  const weddingSong = String(
+                    submission.weddingSong ||
+                    submission.song ||
+                    ""
+                  ).trim();
+
+                  const teamSong = String(
+                    submission.teamEntranceSong ||
+                    submission.entranceSong ||
+                    submission.teamSong ||
+                    ""
+                  ).trim();
+
+                  return `
+                    <article class="admin-answer-item">
+                      <div class="admin-answer-person">
+                        <strong>
+                          ${escapeHTML(
+                            adminSubmissionGuestName(
+                              submission
+                            )
+                          )}
+                        </strong>
+                        ${renderAdminAnswerMeta(
+                          submission
+                        )}
+                      </div>
+
+                      <div class="admin-answer-values">
+                        <p>
+                          <small>Boda</small>
+                          <span>
+                            ${
+                              weddingSong
+                                ? escapeHTML(weddingSong)
+                                : "Sin propuesta"
+                            }
+                          </span>
+                        </p>
+                        <p>
+                          <small>Entrada del equipo</small>
+                          <span>
+                            ${
+                              teamSong
+                                ? escapeHTML(teamSong)
+                                : "Sin propuesta"
+                            }
+                          </span>
+                        </p>
+                      </div>
+                    </article>
+                  `;
+                }).join("")}
+              </div>
+            `
+            : `
+              <p class="admin-answer-empty">
+                Todavía no hay canciones propuestas.
+              </p>
+            `
+        }
+      </section>
+
+      <section class="section-card admin-answer-panel">
+        <div class="admin-answer-panel-head">
+          <span>${uiIcon("mission")}</span>
+          <div>
+            <p class="eyebrow">Regalos</p>
+            <h4>Misiones para el primer año</h4>
+            <p>
+              Deseos, desafíos y actividades para los novios.
+            </p>
+          </div>
+          <b>${giftAnswers.length}</b>
+        </div>
+
+        ${
+          giftAnswers.length
+            ? `
+              <div class="admin-answer-list admin-gift-answer-list">
+                ${giftAnswers.map(submission => {
+                  const message = String(
+                    submission.answer ||
+                    submission.comment ||
+                    submission.wish ||
+                    ""
+                  ).trim();
+
+                  return `
+                    <article class="admin-answer-item">
+                      <div class="admin-answer-person">
+                        <strong>
+                          ${escapeHTML(
+                            adminSubmissionGuestName(
+                              submission
+                            )
+                          )}
+                        </strong>
+                        ${renderAdminAnswerMeta(
+                          submission
+                        )}
+                      </div>
+
+                      <blockquote>
+                        ${escapeHTML(message)}
+                      </blockquote>
+                    </article>
+                  `;
+                }).join("")}
+              </div>
+            `
+            : `
+              <p class="admin-answer-empty">
+                Todavía no dejaron misiones para el primer año.
+              </p>
+            `
+        }
+      </section>
+    `;
+  }
+
   function renderAdmin() {
     if (!state.adminUnlocked) {
       return `
@@ -8503,6 +8825,29 @@
         ["combi", "micro"].includes(rsvp.transport)
       );
     }).length;
+
+    const particularCount = invitedGuests.filter(guest => {
+      const rsvp = state.rsvps[guest.id];
+
+      return (
+        hasCompletedRsvp(rsvp) &&
+        rsvp.attendance === "si" &&
+        ["particular", "auto"].includes(
+          rsvp.transport
+        )
+      );
+    }).length;
+
+    const undecidedTransportCount =
+      invitedGuests.filter(guest => {
+        const rsvp = state.rsvps[guest.id];
+
+        return (
+          hasCompletedRsvp(rsvp) &&
+          rsvp.attendance === "si" &&
+          rsvp.transport === "sin-decidir"
+        );
+      }).length;
 
     const pickupZoneCounts = {
       "capital-obelisco": 0,
@@ -8683,6 +9028,13 @@
         </form>
 
         ${renderAdminMovements()}
+      `;
+    }
+
+    if (adminSubsection === "answers") {
+      return `
+        ${adminHeader}
+        ${renderAdminAnswers()}
       `;
     }
 
@@ -9146,6 +9498,30 @@
 
         <button
           type="button"
+          class="admin-stat-button admin-particular-stat"
+          data-admin-list="particular">
+          <span>${uiIcon("transportCar")}</span>
+          <div>
+            <small>Particular</small>
+            <strong>${particularCount}</strong>
+            <em>Ver quiénes</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="admin-stat-button admin-undecided-stat"
+          data-admin-list="transport-undecided">
+          <span>${uiIcon("transportPending")}</span>
+          <div>
+            <small>Aún no lo deciden</small>
+            <strong>${undecidedTransportCount}</strong>
+            <em>Ver quiénes</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
           class="admin-stat-button admin-restrictions-stat"
           data-admin-list="restrictions">
           <span>${uiIcon("food")}</span>
@@ -9165,13 +9541,41 @@
             <p class="eyebrow">Planificación de traslados</p>
             <h3>Preferencias de salida</h3>
             <p>
-              ${combiCount} ${
-                combiCount === 1
-                  ? "persona eligió"
-                  : "personas eligieron"
-              } Micro / Combi.
+              ${combiCount} en Micro / Combi ·
+              ${particularCount} en Particular ·
+              ${undecidedTransportCount} aún no lo ${
+                undecidedTransportCount === 1
+                  ? "decidió"
+                  : "decidieron"
+              }.
             </p>
           </div>
+        </div>
+
+        <div class="admin-transport-choice-grid">
+          <button
+            type="button"
+            data-admin-list="micro">
+            <span>${uiIcon("transportBus")}</span>
+            <small>Micro / Combi</small>
+            <strong>${combiCount}</strong>
+          </button>
+
+          <button
+            type="button"
+            data-admin-list="particular">
+            <span>${uiIcon("transportCar")}</span>
+            <small>Particular</small>
+            <strong>${particularCount}</strong>
+          </button>
+
+          <button
+            type="button"
+            data-admin-list="transport-undecided">
+            <span>${uiIcon("transportPending")}</span>
+            <small>Aún no lo deciden</small>
+            <strong>${undecidedTransportCount}</strong>
+          </button>
         </div>
 
         <div class="admin-transport-demand-grid">
@@ -9214,6 +9618,23 @@
             <strong>Sumar puntos</strong>
             <em>
               Ajustes discrecionales y auditoría de movimientos
+            </em>
+          </span>
+          <b aria-hidden="true">›</b>
+        </button>
+
+        <button
+          type="button"
+          class="admin-subsection-launcher admin-subsection-launcher-answers"
+          data-admin-subsection="answers">
+          <span class="admin-subsection-launcher-icon">
+            ${uiIcon("chat")}
+          </span>
+          <span>
+            <small>Mini sección</small>
+            <strong>Respuestas</strong>
+            <em>
+              Canciones y misiones para el primer año
             </em>
           </span>
           <b aria-hidden="true">›</b>
@@ -10586,6 +11007,7 @@
         adminSubsection = [
           "dashboard",
           "points",
+          "answers",
           "settings"
         ].includes(requested)
           ? requested
@@ -10978,7 +11400,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32504 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32502 y volvé a intentar.`
           });
         }
       }

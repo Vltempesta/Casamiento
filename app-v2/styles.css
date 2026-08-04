@@ -10854,7 +10854,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Regalos simplificado y hero azul
+   v32506 · Regalos simplificado y hero azul
    ============================================================ */
 
 .gift-hero {
@@ -10900,7 +10900,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Menú, identidad y tipografías
+   v32506 · Menú, identidad y tipografías
    ============================================================ */
 
 #mainScreen .topbar-identity {
@@ -11052,7 +11052,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Textos amigables y botones dorados legibles
+   v32506 · Textos amigables y botones dorados legibles
    ============================================================ */
 
 #loginButton,
@@ -11113,7 +11113,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Sumá puntos, progreso y botones
+   v32506 · Sumá puntos, progreso y botones
    ============================================================ */
 
 /* Encabezado de Sumá puntos con fondo bordó */
@@ -11217,7 +11217,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Bloqueados visibles y Social
+   v32506 · Bloqueados visibles y Social
    ============================================================ */
 
 /* Ubicación y En viaje quedan visibles en el menú aunque estén bloqueados */
@@ -11303,7 +11303,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Estados sutiles y capitanes con contraste
+   v32506 · Estados sutiles y capitanes con contraste
    ============================================================ */
 
 #view .guest-pill.captain-pill {
@@ -11412,7 +11412,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Capitanes, acordeón y Mi equipo
+   v32506 · Capitanes, acordeón y Mi equipo
    ============================================================ */
 
 /* El icono queda centrado respecto de toda la tarjeta */
@@ -11513,7 +11513,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Íconos de asistencia geométricamente centrados
+   v32506 · Íconos de asistencia geométricamente centrados
    ============================================================ */
 
 #view .guest-attendance-status {
@@ -11547,7 +11547,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Roles visibles y traslado pendiente
+   v32506 · Roles visibles y traslado pendiente
    ============================================================ */
 
 /* Rol debajo del nombre en Los seis equipos */
@@ -11660,7 +11660,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Asistencia optimizada
+   v32506 · Asistencia optimizada
    ============================================================ */
 
 /* Ritmo vertical consistente entre los campos */
@@ -11896,7 +11896,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Inicio, aporte personal, menú y ubicación
+   v32506 · Inicio, aporte personal, menú y ubicación
    ============================================================ */
 
 #view .home-gifts-plane-emoji {
@@ -11972,7 +11972,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Puntajes, RSVP y actividad de Regalos
+   v32506 · Puntajes, RSVP y actividad de Regalos
    ============================================================ */
 
 /* Inicio más limpio */
@@ -12248,7 +12248,7 @@ html[data-app-updating="true"] {
 
 
 /* ============================================================
-   v32504 · Modal de Traslado y Regalos compactos
+   v32506 · Modal de Traslado y Regalos compactos
    ============================================================ */
 
 /* Cartel de recomendación de traslado */
@@ -12610,5 +12610,345 @@ body.rsvp-transport-modal-open {
   #view .gift-wish-saved button {
     grid-column: 1 / -1;
     width: 100%;
+  }
+}
+
+
+/* ============================================================
+   v32506 · Mini sección de Respuestas en Administración
+   ============================================================ */
+
+#view .admin-subsection-launcher-answers {
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      rgba(92,131,157,.14),
+      transparent 42%
+    ),
+    rgba(255,255,255,.76);
+}
+
+#view .admin-subsection-launcher-answers
+.admin-subsection-launcher-icon {
+  background: rgba(49,83,110,.10);
+  color: #31536e;
+}
+
+#view .admin-answer-counters {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+#view .admin-answer-counters article {
+  display: grid;
+  grid-template-columns: 38px minmax(0,1fr);
+  gap: 9px;
+  align-items: center;
+  padding: 11px;
+  border: 1px solid rgba(49,83,110,.10);
+  border-radius: 15px;
+  background: rgba(255,255,255,.70);
+  box-shadow: 0 7px 22px rgba(30,39,49,.055);
+}
+
+#view .admin-answer-counters article > span {
+  width: 37px;
+  height: 37px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(49,83,110,.08);
+  color: #31536e;
+}
+
+#view .admin-answer-counters .ui-icon {
+  width: 19px;
+  height: 19px;
+}
+
+#view .admin-answer-counters small,
+#view .admin-answer-counters em {
+  display: block;
+}
+
+#view .admin-answer-counters small {
+  color: var(--muted);
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+#view .admin-answer-counters strong {
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+}
+
+#view .admin-answer-counters em {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 7px;
+  font-style: normal;
+}
+
+#view .admin-answer-panel {
+  padding: 12px;
+}
+
+#view .admin-answer-panel + .admin-answer-panel {
+  margin-top: 10px;
+}
+
+#view .admin-answer-panel-head {
+  display: grid;
+  grid-template-columns: 38px minmax(0,1fr) auto;
+  gap: 9px;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(49,83,110,.09);
+}
+
+#view .admin-answer-panel-head > span {
+  width: 37px;
+  height: 37px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(49,83,110,.08);
+  color: #31536e;
+}
+
+#view .admin-answer-panel-head > span .ui-icon {
+  width: 19px;
+  height: 19px;
+}
+
+#view .admin-answer-panel-head h4 {
+  margin: 1px 0 2px;
+  font-size: 15px;
+}
+
+#view .admin-answer-panel-head p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 7.5px;
+  line-height: 1.3;
+}
+
+#view .admin-answer-panel-head > b {
+  min-width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(49,83,110,.08);
+  color: #31536e;
+  font-size: 10px;
+}
+
+#view .admin-answer-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+#view .admin-answer-item {
+  padding: 9px;
+  border: 1px solid rgba(49,83,110,.08);
+  border-radius: 12px;
+  background: rgba(49,83,110,.025);
+}
+
+#view .admin-answer-person {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+#view .admin-answer-person > strong {
+  color: var(--ink);
+  font-size: 10px;
+}
+
+#view .admin-answer-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 6.5px;
+  white-space: nowrap;
+}
+
+#view .admin-answer-meta i {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--answer-team,#31536e);
+}
+
+#view .admin-answer-values {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 6px;
+}
+
+#view .admin-answer-values p {
+  min-width: 0;
+  margin: 0;
+  padding: 7px 8px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.70);
+}
+
+#view .admin-answer-values small,
+#view .admin-answer-values span {
+  display: block;
+}
+
+#view .admin-answer-values small {
+  margin-bottom: 2px;
+  color: #9a6e2f;
+  font-size: 6px;
+  font-weight: 950;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+#view .admin-answer-values span {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 8.5px;
+  font-weight: 750;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+
+#view .admin-gift-answer-list blockquote {
+  margin: 0;
+  padding: 8px 9px;
+  border: 0;
+  border-left: 3px solid rgba(154,110,47,.35);
+  border-radius: 0 9px 9px 0;
+  background: rgba(154,110,47,.045);
+  color: var(--ink);
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+#view .admin-answer-empty {
+  margin: 9px 0 0;
+  padding: 12px;
+  border: 1px dashed rgba(49,83,110,.16);
+  border-radius: 11px;
+  color: var(--muted);
+  font-size: 8px;
+  text-align: center;
+}
+
+@media(max-width:570px) {
+  #view .admin-answer-person {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  #view .admin-answer-meta {
+    white-space: normal;
+  }
+
+  #view .admin-answer-values {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   v32506 · Indicadores de traslado en Administración
+   ============================================================ */
+
+#view .admin-particular-stat > span {
+  background: rgba(49,83,110,.09);
+  color: #31536e;
+}
+
+#view .admin-undecided-stat > span {
+  background: rgba(154,110,47,.10);
+  color: #8a6129;
+}
+
+#view .admin-particular-stat .ui-icon,
+#view .admin-undecided-stat .ui-icon {
+  width: 22px;
+  height: 22px;
+}
+
+#view .admin-transport-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 7px;
+  margin-top: 11px;
+}
+
+#view .admin-transport-choice-grid button {
+  display: grid;
+  grid-template-columns: 30px minmax(0,1fr) auto;
+  gap: 7px;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 9px;
+  border: 1px solid rgba(49,83,110,.12);
+  border-radius: 11px;
+  background: rgba(255,255,255,.48);
+  color: var(--ink);
+  box-shadow: none;
+  text-align: left;
+}
+
+#view .admin-transport-choice-grid button > span {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(49,83,110,.08);
+  color: #31536e;
+}
+
+#view .admin-transport-choice-grid button > span .ui-icon {
+  width: 16px;
+  height: 16px;
+}
+
+#view .admin-transport-choice-grid small {
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+#view .admin-transport-choice-grid strong {
+  color: #31536e;
+  font-family: var(--font-title);
+  font-size: 20px;
+}
+
+#view .admin-transport-choice-grid button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(49,83,110,.22);
+  background: rgba(255,255,255,.76);
+}
+
+@media(max-width:780px) {
+  #view .admin-transport-choice-grid {
+    grid-template-columns: 1fr;
   }
 }
