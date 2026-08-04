@@ -488,6 +488,22 @@ window.WEDDING_APP_DATA = {
       "displayRelation": "Prima"
     },
     {
+      "id": "gonzalo-greco",
+      "firstName": "Gonzalo",
+      "lastName": "Greco",
+      "email": "",
+      "alias": "Gonzalo",
+      "relation": "Amigo",
+      "team": "bosque",
+      "role": "invitado",
+      "tags": [
+        "bosque",
+        "familia-paterna-fede"
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
+    },
+    {
       "id": "ezequiel",
       "firstName": "Eze",
       "lastName": "Becerrica",
@@ -1980,11 +1996,11 @@ window.WEDDING_APP_DATA = {
       "displayRelation": "Amigo"
     },
     {
-      "id": "phillip-whelan",
-      "firstName": "Phillip",
-      "lastName": "Whelan",
+      "id": "daniel-masolini",
+      "firstName": "Daniel",
+      "lastName": "Masolini",
       "email": "",
-      "alias": "Phillip",
+      "alias": "Dani",
       "relation": "Amigo",
       "team": "viento",
       "role": "invitado",
@@ -2130,6 +2146,22 @@ window.WEDDING_APP_DATA = {
       "lastName": "Uribe",
       "email": "",
       "alias": "Feli",
+      "relation": "Amigo",
+      "team": "viento",
+      "role": "invitado",
+      "tags": [
+        "viento",
+        "trabajo-vani-y-fede"
+      ],
+      "roleVisible": "Amigo",
+      "displayRelation": "Amigo"
+    },
+    {
+      "id": "phillip-whelan",
+      "firstName": "Phillip",
+      "lastName": "Whelan",
+      "email": "",
+      "alias": "Phillip",
       "relation": "Amigo",
       "team": "viento",
       "role": "invitado",
