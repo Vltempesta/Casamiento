@@ -1,7 +1,7 @@
 (() => {
   const DATA = window.WEDDING_APP_DATA;
   const CONFIG = window.WEDDING_APP_CONFIG || {};
-  const CURRENT_APP_VERSION = "32505";
+  const CURRENT_APP_VERSION = "32506";
   const VERSION_CHECK_URL = "./version.json";
   const STORAGE_KEY = "vf_convocatoria_real_v2";
   const PENDING_WRITES_KEY = "vf_pending_writes_v1";
@@ -61,6 +61,7 @@
   let adminPreviewOriginalGuest = null;
   let adminSimulateWeddingDay = false;
   let adminSubsection = "dashboard";
+  let adminResponsesTeamId = "bosque";
   let appReloadingForUpdate = false;
   let serviceWorkerReloadTriggered = false;
   let selectedTeamViewId = null;
@@ -395,7 +396,7 @@
       STORAGE_KEY,
       JSON.stringify({
         currentGuestId: state.currentGuestId || null,
-        appVersion: CONFIG.APP_VERSION || "32505"
+        appVersion: CONFIG.APP_VERSION || "32506"
       })
     );
   }
@@ -972,7 +973,7 @@
     return {
       action,
       token: CONFIG.PUBLIC_WRITE_TOKEN || "",
-      appVersion: "32505",
+      appVersion: "32506",
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       submittedAt: new Date().toISOString(),
@@ -8132,34 +8133,149 @@
 
   function adminGuestListData(type) {
     const guests = DATA.guests.filter(isCompetitionGuest);
+
+    const isAttending = guest => {
+      const row = state.rsvps[guest.id];
+      return (
+        hasCompletedRsvp(row) &&
+        row.attendance === "si"
+      );
+    };
+
+    const usesMicro = guest => {
+      const row = state.rsvps[guest.id];
+      return (
+        isAttending(guest) &&
+        ["combi", "micro"].includes(row.transport)
+      );
+    };
+
     const definitions = {
-      attending: { title: "Confirmaron asistencia", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]) && state.rsvps[guest.id].attendance === "si", detail: guest => `Equipo ${getTeam(guest.team).name} · Asiste` },
-      answered: { title: "Respondieron la invitación", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]), detail: guest => `Equipo ${getTeam(guest.team).name} · ${attendanceLabel(state.rsvps[guest.id]?.attendance)}` },
-      declined: { title: "No asistirán", filter: guest => hasCompletedRsvp(state.rsvps[guest.id]) && state.rsvps[guest.id].attendance === "no", detail: guest => `Equipo ${getTeam(guest.team).name} · No asiste` },
-      unanswered: { title: "Todavía no respondieron", filter: guest => !hasCompletedRsvp(state.rsvps[guest.id]), detail: guest => `Equipo ${getTeam(guest.team).name} · Pendiente` },
-      micro: {
-        title: "Eligieron Micro / Combi",
+      attending: {
+        title: "Confirmaron asistencia",
+        filter: guest =>
+          isAttending(guest),
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Asiste`
+      },
+      answered: {
+        title: "Respondieron la invitación",
+        filter: guest =>
+          hasCompletedRsvp(state.rsvps[guest.id]),
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · ${
+            attendanceLabel(
+              state.rsvps[guest.id]?.attendance
+            )
+          }`
+      },
+      declined: {
+        title: "No asistirán",
         filter: guest => {
           const row = state.rsvps[guest.id];
-
           return (
             hasCompletedRsvp(row) &&
-            row.attendance === "si" &&
-            ["combi", "micro"].includes(
+            row.attendance === "no"
+          );
+        },
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · No asiste`
+      },
+      unanswered: {
+        title: "Todavía no respondieron",
+        filter: guest =>
+          !hasCompletedRsvp(state.rsvps[guest.id]),
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Pendiente`
+      },
+      micro: {
+        title: "Eligieron Micro / Combi",
+        filter: usesMicro,
+        detail: guest => {
+          const row = state.rsvps[guest.id] || {};
+          return `Equipo ${
+            getTeam(guest.team).name
+          } · ${
+            pickupZoneLabel(row.pickupZone) ||
+            "Zona sin definir"
+          }`;
+        }
+      },
+      particular: {
+        title: "Eligieron traslado particular",
+        filter: guest => {
+          const row = state.rsvps[guest.id];
+          return (
+            isAttending(guest) &&
+            ["particular", "auto"].includes(
               row.transport
             )
           );
         },
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Particular`
+      },
+      undecided: {
+        title: "Aún no decidieron el traslado",
+        filter: guest => {
+          const row = state.rsvps[guest.id];
+          return (
+            isAttending(guest) &&
+            (
+              row.transport === "sin-decidir" ||
+              !String(row.transport || "").trim()
+            )
+          );
+        },
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Traslado pendiente`
+      },
+      "micro-capital": {
+        title: "Micro / Combi · Capital",
+        filter: guest =>
+          usesMicro(guest) &&
+          state.rsvps[guest.id]?.pickupZone ===
+            "capital-obelisco",
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Capital Federal · Obelisco`
+      },
+      "micro-wilde": {
+        title: "Micro / Combi · Wilde",
+        filter: guest =>
+          usesMicro(guest) &&
+          state.rsvps[guest.id]?.pickupZone ===
+            "wilde",
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Wilde`
+      },
+      "micro-longchamps": {
+        title: "Micro / Combi · Longchamps",
+        filter: guest =>
+          usesMicro(guest) &&
+          state.rsvps[guest.id]?.pickupZone ===
+            "longchamps",
+        detail: guest =>
+          `Equipo ${getTeam(guest.team).name} · Longchamps`
+      },
+      "micro-undefined": {
+        title: "Micro / Combi · Zona sin definir",
+        filter: guest => {
+          if (!usesMicro(guest)) return false;
+          const zone =
+            state.rsvps[guest.id]?.pickupZone;
+          return ![
+            "capital-obelisco",
+            "wilde",
+            "longchamps"
+          ].includes(zone);
+        },
         detail: guest => {
-          const row =
-            state.rsvps[guest.id] || {};
-
+          const row = state.rsvps[guest.id] || {};
           return `Equipo ${
             getTeam(guest.team).name
           } · ${
-            pickupZoneLabel(
-              row.pickupZone
-            ) || "Zona sin definir"
+            pickupZoneLabel(row.pickupZone) ||
+            "Zona sin definir"
           }`;
         }
       },
@@ -8167,20 +8283,45 @@
         title: "Restricciones alimentarias",
         filter: guest => {
           const row = state.rsvps[guest.id];
-          return hasCompletedRsvp(row) && (
-            row.dietChoice === "si" ||
-            Boolean(String(row.diet || "").trim())
+          return (
+            hasCompletedRsvp(row) &&
+            (
+              row.dietChoice === "si" ||
+              Boolean(
+                String(row.diet || "").trim()
+              )
+            )
           );
         },
         detail: guest => {
           const row = state.rsvps[guest.id] || {};
-          const restriction = String(row.diet || "").trim() || "Restricción sin detalle";
-          return `Equipo ${getTeam(guest.team).name} · ${restriction}`;
+          const restriction =
+            String(row.diet || "").trim() ||
+            "Restricción sin detalle";
+          return `Equipo ${
+            getTeam(guest.team).name
+          } · ${restriction}`;
         }
       }
     };
-    const definition = definitions[type] || definitions.answered;
-    return { title: definition.title, guests: guests.filter(definition.filter).sort((x,y)=>guestFullName(x).localeCompare(guestFullName(y),"es")), detail: definition.detail };
+
+    const definition =
+      definitions[type] ||
+      definitions.answered;
+
+    return {
+      title: definition.title,
+      guests: guests
+        .filter(definition.filter)
+        .sort(
+          (x, y) =>
+            guestFullName(x).localeCompare(
+              guestFullName(y),
+              "es"
+            )
+        ),
+      detail: definition.detail
+    };
   }
 
   function renderAdminPeopleModal() {
@@ -8415,6 +8556,588 @@
     renderCurrentRoute();
   }
 
+  function renderAdminRankingSnapshot() {
+    const ranking = currentRankingTotals()
+      .map(row => ({
+        ...row,
+        team: getTeam(row.id)
+      }))
+      .sort(
+        (a, b) =>
+          b.total - a.total ||
+          a.team.name.localeCompare(
+            b.team.name,
+            "es"
+          )
+      );
+
+    const leaderTotal =
+      Number(ranking[0]?.total || 0);
+
+    return `
+      <section
+        class="section-card admin-ranking-snapshot">
+        <div class="admin-ranking-snapshot-head">
+          <div>
+            <p class="eyebrow">Ranking actual</p>
+            <h4>Posiciones de los equipos</h4>
+            <p>
+              Incluye puntos automáticos y ajustes
+              discrecionales.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            data-admin-refresh-ranking>
+            ${uiIcon("sync")}
+            <span>Actualizar</span>
+          </button>
+        </div>
+
+        <div class="admin-ranking-snapshot-list">
+          ${ranking.map((row, index) => {
+            const gap = Math.max(
+              0,
+              leaderTotal - Number(row.total || 0)
+            );
+
+            return `
+              <article
+                style="--admin-team-accent:${
+                  row.team.accent
+                }">
+                <span class="admin-ranking-position">
+                  ${index + 1}
+                </span>
+                ${teamLogo(
+                  row.team,
+                  "admin-ranking-team-logo"
+                )}
+                <div>
+                  <strong>
+                    ${escapeHTML(row.team.name)}
+                  </strong>
+                  <small>
+                    ${
+                      index === 0
+                        ? "Líder"
+                        : `${gap} pts del primero`
+                    }
+                  </small>
+                </div>
+                <b>
+                  ${Number(row.total || 0)}
+                  <small>pts</small>
+                </b>
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+
+  function adminSubmissionForGuest(
+    guestId,
+    gameId
+  ) {
+    return (
+      state.gameSubmissions[
+        `${guestId}::${gameId}`
+      ] || null
+    );
+  }
+
+
+  function adminLatestResponseDate(
+    guest,
+    records = []
+  ) {
+    const dates = records
+      .map(record =>
+        record?.updatedAt ||
+        record?.submittedAt ||
+        record?.timestamp ||
+        ""
+      )
+      .filter(Boolean)
+      .sort();
+
+    return dates.length
+      ? formatDateLabel(
+          dates[dates.length - 1]
+        )
+      : "Sin actividad registrada";
+  }
+
+
+  function adminResponseValue(
+    label,
+    value,
+    empty = "Pendiente"
+  ) {
+    const clean =
+      String(value ?? "").trim();
+
+    return `
+      <div class="admin-response-field">
+        <small>${escapeHTML(label)}</small>
+        <strong class="${
+          clean ? "" : "is-pending"
+        }">
+          ${escapeHTML(clean || empty)}
+        </strong>
+      </div>
+    `;
+  }
+
+
+  function renderAdminResponses() {
+    const validTeamIds =
+      Object.keys(DATA.teams);
+
+    if (
+      !validTeamIds.includes(
+        adminResponsesTeamId
+      )
+    ) {
+      adminResponsesTeamId =
+        validTeamIds[0] || "bosque";
+    }
+
+    const team =
+      getTeam(adminResponsesTeamId);
+
+    const guests = DATA.guests
+      .filter(
+        guest =>
+          isCompetitionGuest(guest) &&
+          guest.team === adminResponsesTeamId
+      )
+      .sort(sortGuestsForDisplay);
+
+    const responseCounts =
+      Object.fromEntries(
+        validTeamIds.map(teamId => {
+          const members =
+            teamCompetitionMembers(teamId);
+          const answered =
+            members.filter(guest =>
+              hasCompletedRsvp(
+                state.rsvps[guest.id]
+              )
+            ).length;
+
+          return [
+            teamId,
+            {
+              members: members.length,
+              answered
+            }
+          ];
+        })
+      );
+
+    const attending = guests.filter(
+      guest =>
+        state.rsvps[guest.id]?.attendance ===
+        "si"
+    ).length;
+
+    const declined = guests.filter(
+      guest =>
+        state.rsvps[guest.id]?.attendance ===
+        "no"
+    ).length;
+
+    const pending = guests.filter(
+      guest =>
+        !hasCompletedRsvp(
+          state.rsvps[guest.id]
+        )
+    ).length;
+
+    const musicDone = guests.filter(
+      guest =>
+        Boolean(
+          adminSubmissionForGuest(
+            guest.id,
+            "music-selection"
+          )
+        )
+    ).length;
+
+    const triviaOneDone = guests.filter(
+      guest =>
+        Boolean(
+          adminSubmissionForGuest(
+            guest.id,
+            "couple-trivia-test"
+          )
+        )
+    ).length;
+
+    const triviaTwoDone = guests.filter(
+      guest =>
+        Boolean(
+          adminSubmissionForGuest(
+            guest.id,
+            "who-is-who-trivia-test"
+          )
+        )
+    ).length;
+
+    return `
+      ${renderAdminSubsectionHeader({
+        icon: "chat",
+        eyebrow: "Administración",
+        title: "Respuestas por equipo",
+        text:
+          "Revisá asistencia, traslado, canciones, trivias y regalos, equipo por equipo."
+      })}
+
+      <section
+        class="section-card admin-response-team-selector">
+        <div>
+          <p class="eyebrow">
+            Segmentación
+          </p>
+          <h4>Elegí un equipo</h4>
+        </div>
+
+        <div class="admin-response-team-grid">
+          ${validTeamIds.map(teamId => {
+            const itemTeam =
+              getTeam(teamId);
+            const count =
+              responseCounts[teamId];
+
+            return `
+              <button
+                type="button"
+                class="${
+                  teamId ===
+                  adminResponsesTeamId
+                    ? "is-active"
+                    : ""
+                }"
+                data-admin-response-team="${
+                  teamId
+                }"
+                style="--admin-team-accent:${
+                  itemTeam.accent
+                }">
+                ${teamLogo(
+                  itemTeam,
+                  "admin-response-team-logo"
+                )}
+                <span>
+                  <strong>
+                    ${escapeHTML(itemTeam.name)}
+                  </strong>
+                  <small>
+                    ${count.answered}/${
+                      count.members
+                    } respondieron
+                  </small>
+                </span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </section>
+
+      <section
+        class="admin-response-summary"
+        style="--admin-team-accent:${
+          team.accent
+        }">
+        ${[
+          ["Integrantes", guests.length],
+          ["Asisten", attending],
+          ["No asisten", declined],
+          ["Pendientes", pending],
+          ["Canciones", musicDone],
+          ["Trivia 1", triviaOneDone],
+          ["Trivia 2", triviaTwoDone]
+        ].map(([label, value]) => `
+          <article>
+            <small>
+              ${escapeHTML(label)}
+            </small>
+            <strong>${value}</strong>
+          </article>
+        `).join("")}
+      </section>
+
+      <section
+        class="section-card admin-response-list-card">
+        <div class="admin-response-list-head">
+          ${teamLogo(
+            team,
+            "admin-response-list-team-logo"
+          )}
+          <div>
+            <p class="eyebrow">
+              Equipo ${escapeHTML(team.name)}
+            </p>
+            <h4>Respuestas individuales</h4>
+            <p>
+              Tocá cada persona para ver el detalle.
+            </p>
+          </div>
+        </div>
+
+        <div class="admin-response-list">
+          ${guests.map(guest => {
+            const rsvp =
+              state.rsvps[guest.id] || {};
+            const profile =
+              state.profiles[guest.id] || {};
+            const music =
+              adminSubmissionForGuest(
+                guest.id,
+                "music-selection"
+              );
+            const triviaOne =
+              adminSubmissionForGuest(
+                guest.id,
+                "couple-trivia-test"
+              );
+            const triviaTwo =
+              adminSubmissionForGuest(
+                guest.id,
+                "who-is-who-trivia-test"
+              );
+            const gift =
+              adminSubmissionForGuest(
+                guest.id,
+                "gift-first-year-wish"
+              );
+
+            const hasRsvp =
+              hasCompletedRsvp(rsvp);
+            const attendance =
+              hasRsvp
+                ? attendanceLabel(
+                    rsvp.attendance
+                  )
+                : "Sin responder";
+
+            const transport =
+              rsvp.attendance === "si"
+                ? transportLabel(
+                    rsvp.transport
+                  )
+                : "No corresponde";
+
+            const pickup =
+              ["combi", "micro"].includes(
+                rsvp.transport
+              )
+                ? (
+                    pickupZoneLabel(
+                      rsvp.pickupZone
+                    ) ||
+                    "Zona sin definir"
+                  )
+                : "No corresponde";
+
+            const restriction =
+              String(rsvp.diet || "").trim() ||
+              (
+                rsvp.dietChoice === "no"
+                  ? "Sin restricciones"
+                  : "Sin informar"
+              );
+
+            const attendanceClass =
+              rsvp.attendance === "si"
+                ? "is-attending"
+                : rsvp.attendance === "no"
+                  ? "is-declined"
+                  : "is-pending";
+
+            const latest =
+              adminLatestResponseDate(
+                guest,
+                [
+                  rsvp,
+                  profile,
+                  music,
+                  triviaOne,
+                  triviaTwo,
+                  gift
+                ]
+              );
+
+            return `
+              <details
+                class="admin-response-person">
+                <summary>
+                  <span
+                    class="admin-response-person-initial">
+                    ${escapeHTML(
+                      guest.firstName?.[0] ||
+                      "?"
+                    )}
+                  </span>
+
+                  <span
+                    class="admin-response-person-copy">
+                    <strong>
+                      ${escapeHTML(
+                        guestFullName(guest)
+                      )}
+                    </strong>
+                    <small>
+                      ${escapeHTML(
+                        guest.roleVisible ||
+                        guest.displayRelation ||
+                        guest.relation ||
+                        "Invitado"
+                      )}
+                    </small>
+                  </span>
+
+                  <span
+                    class="admin-response-status ${
+                      attendanceClass
+                    }">
+                    ${escapeHTML(attendance)}
+                  </span>
+
+                  <b aria-hidden="true">⌄</b>
+                </summary>
+
+                <div
+                  class="admin-response-person-body">
+                  <div
+                    class="admin-response-group">
+                    <h5>Asistencia y traslado</h5>
+                    <div
+                      class="admin-response-field-grid">
+                      ${adminResponseValue(
+                        "Asistencia",
+                        attendance
+                      )}
+                      ${adminResponseValue(
+                        "Traslado",
+                        transport
+                      )}
+                      ${adminResponseValue(
+                        "Zona de salida",
+                        pickup
+                      )}
+                      ${adminResponseValue(
+                        "Restricciones",
+                        restriction
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    class="admin-response-group">
+                    <h5>Canciones</h5>
+                    <div
+                      class="admin-response-field-grid">
+                      ${adminResponseValue(
+                        "Para la boda",
+                        music?.weddingSong,
+                        "No completó"
+                      )}
+                      ${adminResponseValue(
+                        "Entrada del equipo",
+                        music?.teamEntranceSong,
+                        "No completó"
+                      )}
+                      ${adminResponseValue(
+                        "Quiere escuchar",
+                        profile.songYes,
+                        "Sin respuesta"
+                      )}
+                      ${adminResponseValue(
+                        "No quiere escuchar",
+                        profile.songNo,
+                        "Sin respuesta"
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    class="admin-response-group">
+                    <h5>Trivias</h5>
+                    <div
+                      class="admin-response-field-grid">
+                      ${adminResponseValue(
+                        "¿Cuánto conocen?",
+                        triviaOne
+                          ? `${
+                              Number(
+                                triviaOne.score || 0
+                              )
+                            }/5 · ${
+                              triviaPointsFor(
+                                "couple-trivia-test",
+                                guest.team,
+                                triviaOne.score
+                              )
+                            } pts`
+                          : "",
+                        "No jugó"
+                      )}
+                      ${adminResponseValue(
+                        "¿Vani o Fede?",
+                        triviaTwo
+                          ? `${
+                              Number(
+                                triviaTwo.score || 0
+                              )
+                            }/5 · ${
+                              triviaPointsFor(
+                                "who-is-who-trivia-test",
+                                guest.team,
+                                triviaTwo.score
+                              )
+                            } pts`
+                          : "",
+                        "No jugó"
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    class="admin-response-group">
+                    <h5>Regalo para el primer año</h5>
+                    <p
+                      class="admin-response-gift-text ${
+                        gift ? "" : "is-pending"
+                      }">
+                      ${escapeHTML(
+                        gift?.answer ||
+                        gift?.comment ||
+                        "No dejó una misión."
+                      )}
+                    </p>
+                  </div>
+
+                  <small
+                    class="admin-response-updated">
+                    Última actividad:
+                    ${escapeHTML(latest)}
+                  </small>
+                </div>
+              </details>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+
   function renderAdmin() {
     if (!state.adminUnlocked) {
       return `
@@ -8504,6 +9227,37 @@
       );
     }).length;
 
+
+    const particularCount =
+      invitedGuests.filter(guest => {
+        const rsvp =
+          state.rsvps[guest.id];
+        return (
+          hasCompletedRsvp(rsvp) &&
+          rsvp.attendance === "si" &&
+          ["particular", "auto"].includes(
+            rsvp.transport
+          )
+        );
+      }).length;
+
+    const undecidedTransportCount =
+      invitedGuests.filter(guest => {
+        const rsvp =
+          state.rsvps[guest.id];
+        return (
+          hasCompletedRsvp(rsvp) &&
+          rsvp.attendance === "si" &&
+          (
+            rsvp.transport ===
+              "sin-decidir" ||
+            !String(
+              rsvp.transport || ""
+            ).trim()
+          )
+        );
+      }).length;
+
     const pickupZoneCounts = {
       "capital-obelisco": 0,
       "wilde": 0,
@@ -8572,8 +9326,10 @@
           icon: "star",
           eyebrow: "Administración",
           title: "Puntos y auditoría",
-          text: "Sumá o restá puntos y revisá los últimos movimientos."
+          text: "Consultá el ranking, sumá o restá puntos y revisá los últimos movimientos."
         })}
+
+        ${renderAdminRankingSnapshot()}
 
         <form
           id="scoreForm"
@@ -8683,6 +9439,14 @@
         </form>
 
         ${renderAdminMovements()}
+      `;
+    }
+
+    if (adminSubsection === "responses") {
+      return `
+        ${adminHeader}
+        ${renderAdminResponses()}
+        ${renderAdminPeopleModal()}
       `;
     }
 
@@ -9134,18 +9898,6 @@
 
         <button
           type="button"
-          class="admin-stat-button admin-combi-stat"
-          data-admin-list="micro">
-          <span>${uiIcon("bus")}</span>
-          <div>
-            <small>Micro</small>
-            <strong>${combiCount}</strong>
-            <em>Ver</em>
-          </div>
-        </button>
-
-        <button
-          type="button"
           class="admin-stat-button admin-restrictions-stat"
           data-admin-list="restrictions">
           <span>${uiIcon("food")}</span>
@@ -9153,6 +9905,45 @@
             <small>Restricciones</small>
             <strong>${restrictionsCount}</strong>
             <em>Ver detalle</em>
+          </div>
+        </button>
+      </section>
+
+      <section
+        class="admin-transport-overview">
+        <button
+          type="button"
+          data-admin-list="micro"
+          class="is-micro">
+          <span>${uiIcon("coach")}</span>
+          <div>
+            <small>Micro / Combi</small>
+            <strong>${combiCount}</strong>
+            <em>Ver personas</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          data-admin-list="particular"
+          class="is-particular">
+          <span>${uiIcon("carRoute")}</span>
+          <div>
+            <small>Particular</small>
+            <strong>${particularCount}</strong>
+            <em>Ver personas</em>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          data-admin-list="undecided"
+          class="is-undecided">
+          <span>${uiIcon("hourglass")}</span>
+          <div>
+            <small>Aún no lo deciden</small>
+            <strong>${undecidedTransportCount}</strong>
+            <em>Ver personas</em>
           </div>
         </button>
       </section>
@@ -9177,19 +9968,23 @@
         <div class="admin-transport-demand-grid">
           ${adminTransportZone(
             "Capital · Obelisco",
-            pickupZoneCounts["capital-obelisco"]
+            pickupZoneCounts["capital-obelisco"],
+            "micro-capital"
           )}
           ${adminTransportZone(
             "Wilde",
-            pickupZoneCounts.wilde
+            pickupZoneCounts.wilde,
+            "micro-wilde"
           )}
           ${adminTransportZone(
             "Longchamps",
-            pickupZoneCounts.longchamps
+            pickupZoneCounts.longchamps,
+            "micro-longchamps"
           )}
           ${adminTransportZone(
             "Sin definir",
-            pickupZoneCounts["sin-definir"]
+            pickupZoneCounts["sin-definir"],
+            "micro-undefined"
           )}
         </div>
 
@@ -9221,6 +10016,23 @@
 
         <button
           type="button"
+          class="admin-subsection-launcher admin-subsection-launcher-responses"
+          data-admin-subsection="responses">
+          <span class="admin-subsection-launcher-icon">
+            ${uiIcon("chat")}
+          </span>
+          <span>
+            <small>Mini sección</small>
+            <strong>Respuestas</strong>
+            <em>
+              Asistencia, traslado, juegos y regalos por equipo
+            </em>
+          </span>
+          <b aria-hidden="true">›</b>
+        </button>
+
+        <button
+          type="button"
           class="admin-subsection-launcher admin-subsection-launcher-settings"
           data-admin-subsection="settings">
           <span class="admin-subsection-launcher-icon">
@@ -9244,28 +10056,50 @@
         </div>
         <div>
           <p class="eyebrow">Lista oficial</p>
-          <h4>Exportar confirmados para el salón</h4>
+          <h4>Exportar lista oficial para el salón</h4>
           <p>
-            Confirmados con contacto,
-            traslado y restricciones.
+            Un archivo de Excel con hojas separadas
+            para Confirmados y No confirmados.
           </p>
         </div>
         <button
           id="exportOfficialGuests"
           type="button">
           ${uiIcon("download")}
-          <span>Exportar CSV</span>
+          <span>Exportar Excel</span>
         </button>
       </section>
     `;
   }
 
-  function adminTransportZone(label, value) {
+  function adminTransportZone(
+    label,
+    value,
+    listType = ""
+  ) {
+    const tag = listType
+      ? "button"
+      : "div";
+    const attributes = listType
+      ? `type="button" data-admin-list="${escapeHTML(
+          listType
+        )}"`
+      : "";
+
     return `
-      <div class="admin-transport-zone">
+      <${tag}
+        class="admin-transport-zone ${
+          listType ? "is-clickable" : ""
+        }"
+        ${attributes}>
         <span>${escapeHTML(label)}</span>
         <strong>${Number(value || 0)}</strong>
-      </div>
+        ${
+          listType
+            ? "<em>Ver personas</em>"
+            : ""
+        }
+      </${tag}>
     `;
   }
 
@@ -10586,6 +11420,7 @@
         adminSubsection = [
           "dashboard",
           "points",
+          "responses",
           "settings"
         ].includes(requested)
           ? requested
@@ -10601,6 +11436,42 @@
         });
       });
     });
+
+    $$("[data-admin-response-team]")
+      .forEach(button => {
+        button.addEventListener("click", () => {
+          const teamId =
+            button.dataset.adminResponseTeam;
+
+          if (!DATA.teams[teamId]) return;
+
+          adminResponsesTeamId = teamId;
+          renderCurrentRoute();
+
+          window.requestAnimationFrame(() => {
+            document
+              .querySelector(
+                ".admin-response-list-card"
+              )
+              ?.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+              });
+          });
+        });
+      });
+
+    $$("[data-admin-refresh-ranking]")
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          event => {
+            void syncWithAnimatedButton(
+              event.currentTarget
+            );
+          }
+        );
+      });
 
     $$('[data-app-setting]').forEach(input => {
       input.addEventListener("change", async () => {
@@ -10978,7 +11849,7 @@
             text:
               "Google Sheets no confirmó el reset.",
             detail:
-              `${state.lastRemoteError} Publicá Code.gs v32505 y volvé a intentar.`
+              `${state.lastRemoteError} Publicá Code.gs v32502 y volvé a intentar.`
           });
         }
       }
@@ -11270,34 +12141,47 @@
       }
     );
 
-    $("#exportOfficialGuests")?.addEventListener("click", async event => {
-      const button = event.currentTarget;
-      const original = button.innerHTML;
-      button.disabled = true;
-      button.innerHTML = `${uiIcon("sync")}<span>Actualizando datos…</span>`;
+    $("#exportOfficialGuests")
+      ?.addEventListener(
+        "click",
+        async event => {
+          const button =
+            event.currentTarget;
+          const original =
+            button.innerHTML;
 
-      await syncFromSheets(false);
+          button.disabled = true;
+          button.innerHTML =
+            `${uiIcon("sync")}<span>Actualizando datos…</span>`;
 
-      const confirmed = DATA.guests.filter(guest => {
-        const rsvp = state.rsvps[guest.id];
-        return isCompetitionGuest(guest) && hasCompletedRsvp(rsvp) && rsvp.attendance === "si";
-      }).length;
+          await syncFromSheets(false);
 
-      if (!confirmed) {
-        toast("Todavía no hay personas confirmadas para exportar.");
-        button.disabled = false;
-        button.innerHTML = original;
-        return;
-      }
+          const exportCounts =
+            officialGuestExportCounts();
 
-      const date = new Date().toISOString().slice(0, 10);
-      downloadFile(
-        `lista-oficial-casamiento-vani-fede-${date}.csv`,
-        buildOfficialGuestCsv(),
-        "text/csv;charset=utf-8"
+          const date =
+            new Date()
+              .toISOString()
+              .slice(0, 10);
+
+          downloadFile(
+            `lista-oficial-casamiento-vani-fede-${date}.xls`,
+            buildOfficialGuestWorkbook(),
+            "application/vnd.ms-excel;charset=utf-8"
+          );
+
+          toast(
+            `Excel exportado: ${
+              exportCounts.confirmed
+            } confirmados y ${
+              exportCounts.notConfirmed
+            } no confirmados.`
+          );
+
+          button.disabled = false;
+          button.innerHTML = original;
+        }
       );
-      toast(`Lista oficial exportada: ${confirmed} personas confirmadas.`);
-    });
 
     $("#lockAdminButton")?.addEventListener("click", () => {
       state.adminUnlocked = false;
@@ -11333,8 +12217,35 @@
     });
   }
 
-  function buildOfficialGuestCsv() {
-    const header = [
+  function officialGuestExportCounts() {
+    const guests =
+      DATA.guests.filter(
+        isCompetitionGuest
+      );
+
+    const confirmed =
+      guests.filter(guest => {
+        const rsvp =
+          state.rsvps[guest.id];
+        return (
+          hasCompletedRsvp(rsvp) &&
+          rsvp.attendance === "si"
+        );
+      }).length;
+
+    return {
+      confirmed,
+      notConfirmed:
+        Math.max(
+          0,
+          guests.length - confirmed
+        )
+    };
+  }
+
+
+  function officialGuestExportHeader() {
+    return [
       "Nombre",
       "Apellido",
       "Nombre completo",
@@ -11342,8 +12253,8 @@
       "Relación",
       "Email",
       "Teléfono",
-      "Asistencia",
-      "Traslado / micro",
+      "Estado de asistencia",
+      "Traslado",
       "Zona preferida de salida",
       "Restricciones alimenticias",
       "Canción que quiere escuchar",
@@ -11351,35 +12262,105 @@
       "Comida preferida",
       "Postre preferido",
       "Canción propuesta para la boda",
-      "Canción propuesta para entrada del equipo",
+      "Canción para entrada del equipo",
+      "Trivia 1",
+      "Puntos Trivia 1",
+      "Trivia 2",
+      "Puntos Trivia 2",
+      "Misión para el primer año",
       "Última actualización"
     ];
+  }
 
-    const rows = DATA.guests
+
+  function officialGuestExportRows(
+    mode = "confirmed"
+  ) {
+    return DATA.guests
       .filter(guest => {
-        const rsvp = state.rsvps[guest.id];
-        return isCompetitionGuest(guest) && hasCompletedRsvp(rsvp) && rsvp.attendance === "si";
+        if (!isCompetitionGuest(guest)) {
+          return false;
+        }
+
+        const rsvp =
+          state.rsvps[guest.id];
+        const confirmed =
+          hasCompletedRsvp(rsvp) &&
+          rsvp.attendance === "si";
+
+        return mode === "confirmed"
+          ? confirmed
+          : !confirmed;
       })
-      .sort((a, b) => `${a.lastName || ""} ${a.firstName || ""}`.localeCompare(
-        `${b.lastName || ""} ${b.firstName || ""}`,
-        "es"
-      ))
+      .sort((a, b) =>
+        `${a.lastName || ""} ${
+          a.firstName || ""
+        }`.localeCompare(
+          `${b.lastName || ""} ${
+            b.firstName || ""
+          }`,
+          "es"
+        )
+      )
       .map(guest => {
-        const rsvp = state.rsvps[guest.id] || {};
-        const profile = state.profiles[guest.id] || {};
-        const music = state.gameSubmissions[`${guest.id}::music-selection`] || {};
+        const rsvp =
+          state.rsvps[guest.id] || {};
+        const profile =
+          state.profiles[guest.id] || {};
+        const music =
+          adminSubmissionForGuest(
+            guest.id,
+            "music-selection"
+          ) || {};
+        const triviaOne =
+          adminSubmissionForGuest(
+            guest.id,
+            "couple-trivia-test"
+          );
+        const triviaTwo =
+          adminSubmissionForGuest(
+            guest.id,
+            "who-is-who-trivia-test"
+          );
+        const gift =
+          adminSubmissionForGuest(
+            guest.id,
+            "gift-first-year-wish"
+          );
+
+        const status =
+          hasCompletedRsvp(rsvp)
+            ? attendanceLabel(
+                rsvp.attendance
+              )
+            : "Pendiente de respuesta";
 
         return [
-          guest.firstName || rsvp.firstName || "",
-          guest.lastName || rsvp.lastName || "",
-          `${guest.firstName || rsvp.firstName || ""} ${guest.lastName || rsvp.lastName || ""}`.trim(),
+          guest.firstName ||
+            rsvp.firstName ||
+            "",
+          guest.lastName ||
+            rsvp.lastName ||
+            "",
+          guestFullName(guest),
           getTeam(guest.team).name,
-          guest.roleVisible || guest.displayRelation || guest.relation || "",
-          rsvp.email || guest.email || "",
+          guest.roleVisible ||
+            guest.displayRelation ||
+            guest.relation ||
+            "",
+          rsvp.email ||
+            guest.email ||
+            "",
           rsvp.phone || "",
-          attendanceLabel(rsvp.attendance),
-          transportLabel(rsvp.transport),
-          pickupZoneLabel(rsvp.pickupZone),
+          status,
+          rsvp.attendance === "si"
+            ? transportLabel(
+                rsvp.transport
+              )
+            : "",
+          pickupZoneLabel(
+            rsvp.pickupZone
+          ),
           rsvp.diet || "",
           profile.songYes || "",
           profile.songNo || "",
@@ -11387,16 +12368,184 @@
           profile.favoriteDessert || "",
           music.weddingSong || "",
           music.teamEntranceSong || "",
-          rsvp.updatedAt || ""
+          triviaOne
+            ? `${Number(
+                triviaOne.score || 0
+              )}/5`
+            : "",
+          triviaOne
+            ? triviaPointsFor(
+                "couple-trivia-test",
+                guest.team,
+                triviaOne.score
+              )
+            : "",
+          triviaTwo
+            ? `${Number(
+                triviaTwo.score || 0
+              )}/5`
+            : "",
+          triviaTwo
+            ? triviaPointsFor(
+                "who-is-who-trivia-test",
+                guest.team,
+                triviaTwo.score
+              )
+            : "",
+          gift?.answer ||
+            gift?.comment ||
+            "",
+          rsvp.updatedAt ||
+            music.updatedAt ||
+            triviaTwo?.updatedAt ||
+            triviaOne?.updatedAt ||
+            ""
         ];
       });
+  }
 
-    const separator = ";";
-    const csv = [header, ...rows]
-      .map(row => row.map(csvCell).join(separator))
-      .join("\r\n");
 
-    return "\uFEFF" + csv;
+  function excelXmlText(value) {
+    return String(value ?? "")
+      .replace(
+        /[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD]/g,
+        ""
+      )
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
+
+  function excelXmlCell(
+    value,
+    styleId = ""
+  ) {
+    const style = styleId
+      ? ` ss:StyleID="${styleId}"`
+      : "";
+
+    return `
+      <Cell${style}>
+        <Data ss:Type="String">${
+          excelXmlText(value)
+        }</Data>
+      </Cell>
+    `;
+  }
+
+
+  function excelXmlWorksheet(
+    name,
+    rows
+  ) {
+    const allRows = [
+      officialGuestExportHeader(),
+      ...rows
+    ];
+
+    return `
+      <Worksheet ss:Name="${
+        excelXmlText(name)
+      }">
+        <Table>
+          ${allRows.map((row, rowIndex) => `
+            <Row>
+              ${row.map(value =>
+                excelXmlCell(
+                  value,
+                  rowIndex === 0
+                    ? "Header"
+                    : "Body"
+                )
+              ).join("")}
+            </Row>
+          `).join("")}
+        </Table>
+        <WorksheetOptions
+          xmlns="urn:schemas-microsoft-com:office:excel">
+          <FreezePanes/>
+          <FrozenNoSplit/>
+          <SplitHorizontal>1</SplitHorizontal>
+          <TopRowBottomPane>1</TopRowBottomPane>
+          <ActivePane>2</ActivePane>
+          <ProtectObjects>False</ProtectObjects>
+          <ProtectScenarios>False</ProtectScenarios>
+        </WorksheetOptions>
+      </Worksheet>
+    `;
+  }
+
+
+  function buildOfficialGuestWorkbook() {
+    const confirmedRows =
+      officialGuestExportRows(
+        "confirmed"
+      );
+    const notConfirmedRows =
+      officialGuestExportRows(
+        "not-confirmed"
+      );
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+      <?mso-application progid="Excel.Sheet"?>
+      <Workbook
+        xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+        xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:x="urn:schemas-microsoft-com:office:excel"
+        xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+        xmlns:html="http://www.w3.org/TR/REC-html40">
+        <DocumentProperties
+          xmlns="urn:schemas-microsoft-com:office:office">
+          <Author>Vani y Fede</Author>
+          <Title>Lista oficial del casamiento</Title>
+          <Created>${
+            new Date().toISOString()
+          }</Created>
+        </DocumentProperties>
+        <Styles>
+          <Style ss:ID="Default" ss:Name="Normal">
+            <Alignment ss:Vertical="Center"/>
+            <Font ss:FontName="Arial" ss:Size="10"/>
+          </Style>
+          <Style ss:ID="Header">
+            <Alignment
+              ss:Horizontal="Center"
+              ss:Vertical="Center"
+              ss:WrapText="1"/>
+            <Font
+              ss:FontName="Arial"
+              ss:Size="10"
+              ss:Bold="1"
+              ss:Color="#FFFFFF"/>
+            <Interior
+              ss:Color="#743344"
+              ss:Pattern="Solid"/>
+          </Style>
+          <Style ss:ID="Body">
+            <Alignment
+              ss:Vertical="Top"
+              ss:WrapText="1"/>
+            <Borders>
+              <Border
+                ss:Position="Bottom"
+                ss:LineStyle="Continuous"
+                ss:Weight="1"
+                ss:Color="#E5D9C8"/>
+            </Borders>
+          </Style>
+        </Styles>
+        ${excelXmlWorksheet(
+          "Confirmados",
+          confirmedRows
+        )}
+        ${excelXmlWorksheet(
+          "No confirmados",
+          notConfirmedRows
+        )}
+      </Workbook>`;
   }
 
   function buildRsvpCsv() {
